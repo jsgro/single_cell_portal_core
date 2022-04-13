@@ -14,7 +14,7 @@ class MixpanelClient
   # see https://developer.mixpanel.com/reference/segmentation-query
   def self.fetch_segmentation_query(
     event: nil,
-    from_date: Date.today - 2.years,
+    from_date: '2020-10-01'.to_date,
     to_date: Date.today,
     unit: 'month',
     type: 'unique',

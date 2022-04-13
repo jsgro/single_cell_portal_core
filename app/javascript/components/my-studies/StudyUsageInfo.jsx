@@ -5,11 +5,15 @@ import Plotly from 'plotly.js-dist'
 import { fetchStudyUsage } from '~/lib/scp-api'
 import LoadingSpinner from '~/lib/LoadingSpinner'
 import { supportEmailLink } from '~/lib/error-utils'
+import InfoPopup from '~/lib/InfoPopup'
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
+import { faChevronUp, faChevronDown } from '@fortawesome/free-solid-svg-icons'
 
 /** display mixpanel stats for a given study */
 export default function StudyUsageInfo({ study }) {
   const [usageInfo, setUsageInfo] = useState(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [showTable, setShowTable] = useState(false)
   const [viewsGraphElementId] = useState(_uniqueId('study-usage-graph-'))
   const [downloadsGraphElementId] = useState(_uniqueId('study-usage-graph-'))
   const studyAccession = study.accession
@@ -59,7 +63,7 @@ export default function StudyUsageInfo({ study }) {
     <h3>Study statistics</h3>
     {studyAccession}: <a href={`/single_cell/study/${studyAccession}`}>{ study.name }</a><br/>
     <div className="text-center">
-      Users per month viewing this study.<br/>
+      Users per month viewing this study. <InfoPopup content="Unique users per month visiting the study overview page"/><br/>
       <LoadingSpinner isLoading={isLoading}/>
     </div>
     <div
@@ -69,7 +73,7 @@ export default function StudyUsageInfo({ study }) {
     ></div>
     <br/><br/>
     <div className="text-center">
-      File download events<br/>
+      File download events <InfoPopup content="Clicks on the single-file download button.  Bulk download stats are tracked, but not available in this view"/><br/>
       <LoadingSpinner isLoading={isLoading}/>
     </div>
     <div
@@ -79,7 +83,12 @@ export default function StudyUsageInfo({ study }) {
     ></div>
     <br/><br/>
     <div className="form-terra">
-      { !isLoading && <table className="table-terra compressed">
+      <h5 onClick={() => setShowTable(!showTable)}>
+        <span className="action">
+          { showTable ? <FontAwesomeIcon icon={faChevronUp}/> : <FontAwesomeIcon icon={faChevronDown}/> }
+        </span> Tabular Data
+      </h5>
+      { !isLoading && showTable && <table className="table-terra compressed">
         <thead>
           <tr>
             <td>Month</td>
@@ -97,7 +106,7 @@ export default function StudyUsageInfo({ study }) {
       </table> }
     </div> <br/>
     <div className="text-center">
-      If you would like more information about views, downloads, or other statistics for your studies, contact us at { supportEmailLink }
+      If you would like more information about views, downloads, or other statistics for your study, contact us at { supportEmailLink }
     </div>
   </div>
 }
