@@ -16,21 +16,24 @@ describe('Plot grouping function cache', () => {
       y: [4, 7],
       annotations: ['a', 'a'],
       cells: ['c1', 'c4'],
-      name: 'a'
+      name: 'a',
+      visible: true
     })
     expect(traces[1]).toEqual({
       x: [2, 5],
       y: [5, 8],
       annotations: ['b', 'b'],
       cells: ['c2', 'c5'],
-      name: 'b'
+      name: 'b',
+      visible: true
     })
     expect(traces[2]).toEqual({
       x: [3],
       y: [6],
       annotations: ['c'],
       cells: ['c3'],
-      name: 'c'
+      name: 'c',
+      visible: true
     })
 
     expect(countsByLabel).toEqual({ a: 2, b: 2, c: 1 })
@@ -92,9 +95,11 @@ describe('Plot grouping function cache', () => {
 
     const [allTraces] = PlotUtils.filterTrace({ trace: data, groupByAnnotation: true, hiddenTraces: [] })
     expect(allTraces.find(t => t.name === 'a').cells).toHaveLength(2)
+    expect(allTraces.find(t => t.name === 'a').visible).toEqual(true)
 
     const [traces] = PlotUtils.filterTrace({ trace: data, groupByAnnotation: true, hiddenTraces: ['a'] })
-    expect(traces.find(t => t.name === 'a').cells).toHaveLength(0)
+    expect(traces.find(t => t.name === 'a').cells).toHaveLength(2)
+    expect(['a', 'b', 'c'].map(name => traces.find(t => t.name === name).visible)).toEqual(['legendonly', true, true])
 
     const [traces2] = PlotUtils.filterTrace({
       trace: data, groupByAnnotation: true, hiddenTraces: ['a'], activeTraceLabel: 'b'
@@ -102,11 +107,10 @@ describe('Plot grouping function cache', () => {
     expect(traces2.map(t => t.name)).toEqual(['a', 'c', 'b'])
 
     const [traces3] = PlotUtils.filterTrace({ trace: data, groupByAnnotation: true, hiddenTraces: ['b', 'c'] })
-    expect(traces3.find(t => t.name === 'b').cells).toHaveLength(0)
-    expect(traces3.find(t => t.name === 'c').cells).toHaveLength(0)
+    expect(['a', 'b', 'c'].map(name => traces3.find(t => t.name === name).visible)).toEqual([true, 'legendonly', 'legendonly'])
 
     const [traces4] = PlotUtils.filterTrace({ trace: data, groupByAnnotation: true, hiddenTraces: ['b', 'c', 'a'] })
-    expect(traces4.map(t => t.cells.length)).toEqual([0, 0, 0])
+    expect(['a', 'b', 'c'].map(name => traces4.find(t => t.name === name).visible)).toEqual(['legendonly', 'legendonly', 'legendonly'])
   })
 
   it('sorts expression data ', async () => {
@@ -150,7 +154,8 @@ describe('Plot grouping function cache', () => {
       annotations: ['b', 'a'],
       cells: ['c2', 'c4'],
       expression: [4, 5.5],
-      name: 'main'
+      name: 'main',
+      visible: true
     })
 
     const [trace2] = PlotUtils.filterTrace({
