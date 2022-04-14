@@ -1,0 +1,55 @@
+{
+  "data": {
+    "x": [
+      1.0,
+      1.0
+    ],
+    "y": [
+      9480.2,
+      9481.2
+    ],
+    "cells": [
+      "AE_1",
+      "AE_2"
+    ],
+    "annotations": [
+      1.0,
+      1.0
+    ]
+  },
+  "pointSize": 3,
+  "userSpecifiedRanges": null,
+  "showClusterPointBorders": false,
+  "description": null,
+  "is3D": false,
+  "isSubsampled": false,
+  "isAnnotatedScatter": true,
+  "isCorrelatedScatter": false,
+  "isSpatial": false,
+  "numPoints": 2,
+  "axes": {
+    "titles": {
+      "x": null,
+      "y": "Expression"
+    },
+    "aspects": null
+  },
+  "hasCoordinateLabels": false,
+  "coordinateLabels": [],
+  "pointAlpha": 1.0,
+  "cluster": "cluster.tsv",
+  "genes": [
+    "ADCY5"
+  ],
+  "annotParams": {
+    "name": "Intensity",
+    "type": "numeric",
+    "scope": "cluster",
+    "values": [],
+    "identifier": "Intensity--numeric--cluster"
+  },
+  "subsample": "all",
+  "consensus": null,
+  "customColors": {},
+  "clusterFileId": "61a7e4a362561862ea13daa0"
+}

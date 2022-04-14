@@ -336,14 +336,13 @@ module Api
 
         # check if the name of the file has changed as we won't be able to tell after we saved
         name_changed = study_file.persisted? && study_file.name != safe_file_params[:name]
-
         # log the name properties to help with understanding SCP-4159
         MetricsService.log('file-update', {
           studyAccession: study.accession,
           message: 'name info',
           uploadFilename: safe_file_params[:upload_file_name],
           originalFilename: safe_file_params[:upload]&.original_filename,
-          filename: safe_file_params[:name],
+          fileName: safe_file_params[:name],
           fileId: study_file._id.to_s,
           fileType: study_file.file_type,
           fileSize: study_file.upload_file_size
@@ -355,13 +354,13 @@ module Api
         study_file.delay.invalidate_cache_by_file_type
 
         # if a gene list or cluster got updated, we need to update the associated records
-        if safe_file_params[:file_type] == 'Gene List' && name_changed
+        if study_file.file_type == 'Gene List' && name_changed
           precomputed_entry = PrecomputedScore.find_by(study_file: study_file)
           if precomputed_entry.present?
             logger.info "Updating gene list #{precomputed_entry.name} to match #{study_file[:name]}"
             precomputed_entry.update(name: study_file.name)
           end
-        elsif safe_file_params[:file_type] == 'Cluster' && name_changed
+        elsif study_file.file_type == 'Cluster' && name_changed
           cluster = ClusterGroup.find_by(study_file: study_file)
           if cluster.present?
             logger.info "Updating cluster #{cluster.name} to match #{study_file.name}"
@@ -374,7 +373,7 @@ module Api
           end
         end
 
-        if ['Expression Matrix', 'MM Coordinate Matrix'].include?(safe_file_params[:file_type]) && !safe_file_params[:y_axis_label].blank?
+        if ['Expression Matrix', 'MM Coordinate Matrix'].include?(study_file.file_type) && !safe_file_params[:y_axis_label].blank?
           # if user is supplying an expression axis label, update default options hash
           options = study.default_options.dup
           options.merge!(expression_label: safe_file_params[:y_axis_label])

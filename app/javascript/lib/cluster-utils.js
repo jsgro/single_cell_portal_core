@@ -70,12 +70,29 @@ export function getAnnotationDisplayName(annotation) {
   }
 }
 
-/** transmutes an annotation into a string identifier of form {name}--{type}--{scope} */
+/** Transforms annotation object to string identifier of form {name}--{type}--{scope} */
 export function getIdentifierForAnnotation(annotation) {
   if (!annotation) {
     return '----'
   }
   return `${annotation.id ? annotation.id : annotation.name}--${annotation.type}--${annotation.scope}`
+}
+
+/** Transforms string identifier of {name}--{type}--{scope} to annotation object */
+export function getAnnotationForIdentifier(identifier) {
+  if (!identifier) {
+    return null
+  }
+  const splitId = identifier.split('--')
+  let annotation = { name: '', type: '', scope: '' }
+  if (splitId.length > 1) {
+    annotation = {
+      name: splitId[0],
+      type: splitId[1],
+      scope: splitId[2]
+    }
+  }
+  return annotation
 }
 
 

@@ -769,7 +769,9 @@ module Api
           file_type = DirectoryListing.file_type_from_extension(file.name)
           directory_name = DirectoryListing.get_folder_name(file.name)
           if @file_extension_map.has_key?(directory_name) && !@file_extension_map.dig(directory_name, file_type).nil? &&
-            @file_extension_map.dig(directory_name, file_type) >= DirectoryListing::MIN_SIZE
+            @file_extension_map.dig(directory_name, file_type) >= DirectoryListing::MIN_SIZE &&
+            # for the root directory, only put sequence files in a block
+            (directory_name != '/' || DirectoryListing::PRIMARY_DATA_TYPES.include?(file_type))
             process_directory_listing_file(file, file_type)
           else
             # we are now dealing with singleton files or sequence data, so process accordingly (making sure to ignore directories)

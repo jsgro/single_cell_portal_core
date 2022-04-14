@@ -9,16 +9,19 @@ import { logScatterPlot } from '~/lib/scp-api-metrics'
 import { log } from '~/lib/metrics-api'
 import { useUpdateEffect } from '~/hooks/useUpdate'
 import PlotTitle from './PlotTitle'
-import ScatterPlotLegend, { getStyles } from './controls/ScatterPlotLegend'
+
+import ScatterPlotLegend from './controls/ScatterPlotLegend'
 import useErrorMessage from '~/lib/error-message'
 import { computeCorrelations } from '~/lib/stats'
 import { withErrorBoundary } from '~/lib/ErrorBoundary'
 import { getFeatureFlagsWithDefaults } from '~/providers/UserProvider'
-import { getPlotDimensions, defaultScatterColor } from '~/lib/plot'
+import PlotUtils from '~/lib/plot'
+const { getPlotDimensions, filterTrace, getLegendSortedLabels, getColorForLabel, sortTraceByExpression } = PlotUtils
+import PlotOptions from './plot-options'
+const { defaultScatterColor } = PlotOptions
 import LoadingSpinner from '~/lib/LoadingSpinner'
 import { formatFileForApi } from '~/components/upload/upload-utils'
 import { successNotification, failureNotification } from '~/lib/MessageModal'
-
 
 window.Plotly = Plotly
 
@@ -39,7 +42,7 @@ window.Plotly = Plotly
 function RawScatterPlot({
   studyAccession, cluster, annotation, subsample, consensus, genes, scatterColor, dimensionProps,
   isAnnotatedScatter=false, isCorrelatedScatter=false, isCellSelecting=false, plotPointsSelected, dataCache,
-  canEdit
+  canEdit, expressionFilter=[0, 1]
 }) {
   const [isLoading, setIsLoading] = useState(false)
   const [bulkCorrelation, setBulkCorrelation] = useState(null)
@@ -51,6 +54,7 @@ function RawScatterPlot({
   const [hiddenTraces, setHiddenTraces] = useState([])
   const [graphElementId] = useState(_uniqueId('study-scatter-'))
   const { ErrorComponent, setShowError, setErrorContent } = useErrorMessage()
+  const [activeTraceLabel, setActiveTraceLabel] = useState(null)
   // map of label name to color hex codes, for any labels the user has picked a color for
   const [editedCustomColors, setEditedCustomColors] = useState({})
 
@@ -133,18 +137,19 @@ function RawScatterPlot({
 
   /** Update legend counts and recompute traces, without recomputing layout */
   function updateCountsAndGetTraces(scatter) {
-    const [traces, labelCounts] = getPlotlyTraces({
+    const [traces, labelCounts, isRefGroup] = getPlotlyTraces({
       genes,
       isAnnotatedScatter,
       isCorrelatedScatter,
       scatterColor,
       editedCustomColors,
       hiddenTraces,
-      scatter
+      scatter,
+      activeTraceLabel,
+      expressionFilter
     })
-    setCountsByLabel(labelCounts)
-    const plotlyTraces = [traces]
-    return plotlyTraces
+    setCountsByLabel(isRefGroup ? labelCounts : null)
+    return traces
   }
 
   /** Process scatter plot data fetched from server */
@@ -203,12 +208,7 @@ function RawScatterPlot({
       genes,
       isAnnotatedScatter,
       isCorrelatedScatter
-    }).then(processScatterPlot).catch(error => {
-      Plotly.purge(graphElementId)
-      setErrorContent(error.message)
-      setShowError(true)
-      setIsLoading(false)
-    })
+    }).then(processScatterPlot)
   }, [cluster, annotation.name, subsample, consensus, genes.join(','), isAnnotatedScatter])
 
   // Handles custom scatter legend updates
@@ -221,7 +221,8 @@ function RawScatterPlot({
     }
     // look for updates of individual properties, so that we don't rerender if the containing array
     // happens to be a different instance
-  }, [hiddenTraces.join(','), Object.values(editedCustomColors).join(','), Object.values(customColors).join(',')])
+  }, [hiddenTraces.join(','), Object.values(editedCustomColors).join(','),
+    Object.values(customColors).join(','), activeTraceLabel, expressionFilter.join(',')])
 
   // Handles window resizing
   const widthAndHeight = getScatterDimensions(scatterData, dimensionProps, genes)
@@ -297,6 +298,8 @@ function RawScatterPlot({
             customColors={customColors}
             enableColorPicking={canEdit}
             saveCustomColors={saveCustomColors}
+            activeTraceLabel={activeTraceLabel}
+            setActiveTraceLabel={setActiveTraceLabel}
           />
         }
       </div>
@@ -358,7 +361,9 @@ function shouldReverseScale(scatterColor) {
   return shownColor !== 'Reds'
 }
 
-/** get the array of plotly traces for plotting */
+/** get the array of plotly traces for plotting
+ * returns [traces, countsByLabel, isRefGroup]
+*/
 function getPlotlyTraces({
   genes,
   isAnnotatedScatter,
@@ -371,90 +376,57 @@ function getPlotlyTraces({
     scatterColor: dataScatterColor,
     annotParams: { name: annotName, type: annotType },
     customColors = {}
-  }
+  },
+  activeTraceLabel,
+  expressionFilter
 }) {
-  const trace = {
+  const unfilteredTrace = {
     type: is3D ? 'scatter3d' : 'scattergl',
     mode: 'markers',
     x: data.x,
     y: data.y,
     annotations: data.annotations,
+    expression: data.expression,
     cells: data.cells,
     opacity: pointAlpha ? pointAlpha : 1
   }
   if (is3D) {
-    trace.z = data.z
+    unfilteredTrace.z = data.z
   }
 
-  let countsByLabel = null
 
   const isRefGroup = getIsRefGroup(annotType, genes, isCorrelatedScatter)
+  const isGeneExpressionForColor = !isCorrelatedScatter && !isAnnotatedScatter && genes.length
+
+  const [traces, countsByLabel, expRange] = filterTrace({
+    trace: unfilteredTrace,
+    hiddenTraces, groupByAnnotation: isRefGroup, activeTraceLabel, expressionFilter, expressionData: data.expression
+  })
 
   if (isRefGroup) {
-    // Use Plotly's groupby and filter transformation to make the traces
-    // note these transforms are deprecated in the latest Plotly versions
-    const [legendStyles, labelCounts] = getStyles(data, pointSize, customColors, editedCustomColors)
-    countsByLabel = labelCounts
-    trace.transforms = [
-      {
-        type: 'groupby',
-        groups: data.annotations,
-        styles: legendStyles
+    const labels = getLegendSortedLabels(countsByLabel)
+    traces.forEach(groupTrace => {
+      groupTrace.type = unfilteredTrace.type
+      groupTrace.mode = unfilteredTrace.mode
+      groupTrace.opacity = unfilteredTrace.opacity
+      const color = getColorForLabel(groupTrace.name, customColors, editedCustomColors, labels.indexOf(groupTrace.name))
+      groupTrace.marker = {
+        size: pointSize,
+        color
       }
-    ]
-
-    if (hiddenTraces.length > 0) {
-      trace.transforms.push({
-        type: 'filter',
-        target: data.annotations,
-        // For available operations, see:
-        // - https://github.com/plotly/plotly.js/blob/v2.5.1/src/transforms/filter.js
-        // - https://github.com/plotly/plotly.js/blob/v2.5.1/src/constants/filter_ops.js
-        // Plotly docs are rather sparse here.
-        operation: '}{',
-        value: hiddenTraces
-      })
-    }
+    })
   } else {
-    const isGeneExpressionForColor = genes.length && !isCorrelatedScatter && !isAnnotatedScatter
     // for non-clustered plots, we pass in a single trace with all the points
+    let workingTrace = traces[0]
     let colors
     if (isGeneExpressionForColor) {
-      // sort the points by order of expression
-      const expressionsWithIndices = new Array(data.expression.length)
-      for (let i = 0; i < data.expression.length; i++) {
-        expressionsWithIndices[i] = [data.expression[i], i]
-      }
-      expressionsWithIndices.sort((a, b) => a[0] - b[0])
-
-      // initialize the other arrays (see )
-      trace.x = new Array(data.expression.length)
-      trace.y = new Array(data.expression.length)
-      if (is3D) {
-        trace.z = new Array(data.expression.length)
-      }
-      trace.annotations = new Array(data.expression.length)
-      trace.cells = new Array(data.expression.length)
-
-      colors = new Array(data.expression.length)
-
-      // now that we know the indices, reorder the other data arrays
-      for (let i = 0; i < expressionsWithIndices.length; i++) {
-        const sortedIndex = expressionsWithIndices[i][1]
-        trace.x[i] = data.x[sortedIndex]
-        trace.y[i] = data.y[sortedIndex]
-        if (is3D) {
-          trace.z[i] = data.z[sortedIndex]
-        }
-        trace.cells[i] = data.cells[sortedIndex]
-        trace.annotations[i] = data.annotations[sortedIndex]
-        colors[i] = expressionsWithIndices[i][0]
-      }
+      workingTrace = sortTraceByExpression(workingTrace)
+      colors = workingTrace.expression
     } else {
-      colors = isGeneExpressionForColor ? data.expression : data.annotations
+      colors = isGeneExpressionForColor ? workingTrace.expression : workingTrace.annotations
     }
 
-    trace.marker = {
+    workingTrace.marker = {
       line: { color: 'rgb(40,40,40)', width: 0 },
       size: pointSize
     }
@@ -463,7 +435,7 @@ function getPlotlyTraces({
       const appliedScatterColor = getScatterColorToApply(dataScatterColor, scatterColor)
       const title = isGeneExpressionForColor ? axes.titles.magnitude : annotName
 
-      Object.assign(trace.marker, {
+      Object.assign(workingTrace.marker, {
         showscale: true,
         colorscale: appliedScatterColor,
         reversescale: shouldReverseScale(appliedScatterColor),
@@ -473,14 +445,23 @@ function getPlotlyTraces({
       // if expression values are all zero, set max/min manually so the zeros still look like zero
       // see SCP-2957
       if (genes.length && !colors.some(val => val !== 0)) {
-        trace.marker.cmin = 0
-        trace.marker.cmax = 1
+        workingTrace.marker.cmin = 0
+        workingTrace.marker.cmax = 1
+      } else {
+        if (expRange) {
+          // if the data was filtered, manually set the range to the unfiltered range
+          workingTrace.marker.cmin = expRange[0]
+          workingTrace.marker.cmax = expRange[1]
+        }
       }
     }
+    traces[0] = workingTrace
   }
-  addHoverLabel(trace, annotName, annotType, genes, isAnnotatedScatter, isCorrelatedScatter, axes)
+  traces.forEach(trace => {
+    addHoverLabel(trace, annotName, annotType, genes, isAnnotatedScatter, isCorrelatedScatter, axes)
+  })
 
-  return [trace, countsByLabel]
+  return [traces, countsByLabel, isRefGroup]
 }
 
 /** makes the data trace attributes (cells, trace name) available via hover text */

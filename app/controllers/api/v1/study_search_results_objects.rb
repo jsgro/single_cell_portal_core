@@ -60,6 +60,8 @@ module Api
           if @gene_results.present?
             study_obj[:gene_matches] = @gene_results[:genes_by_study][study.id].uniq
             study_obj[:can_visualize_clusters] = study.can_visualize_clusters?
+            study_obj[:default_annotation_id] = study.default_annotation
+            study_obj[:annotation_list] = AnnotationVizService.get_study_annotation_options(study, current_api_user)
           end
         else
           study_obj = {

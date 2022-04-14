@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react'
 import _uniqueId from 'lodash/uniqueId'
 
 import { log } from '~/lib/metrics-api'
-import { getColorBrewerColor } from '~/lib/plot'
+import PlotUtils from '~/lib/plot'
+const getColorBrewerColor = PlotUtils.getColorBrewerColor
 import DotPlotLegend from './DotPlotLegend'
 import { getAnnotationCellValuesURL, getExpressionHeatmapURL } from '~/lib/scp-api'
 import useErrorMessage, { morpheusErrorHandler } from '~/lib/error-message'

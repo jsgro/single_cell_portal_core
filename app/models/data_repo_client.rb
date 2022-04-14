@@ -394,7 +394,7 @@ class DataRepoClient < Struct.new(:access_token, :api_root, :storage, :expires_a
   # * *raises*
   #   - (ArgumentError) => if drs_id is not formatted correctly
   def parse_drs_id(drs_id)
-    raise ArgumentError.new("#{drs_id} is not a valid DRS id") unless drs_id.starts_with?(DRS_PREFIX)
+    raise ArgumentError.new("\"#{drs_id}\" is not a valid DRS ID") unless drs_id.starts_with?(DRS_PREFIX)
     drs_id.split(DRS_PREFIX).last
   end
 
@@ -414,10 +414,10 @@ class DataRepoClient < Struct.new(:access_token, :api_root, :storage, :expires_a
       # use array subtraction to find non-control values
       invalid = value - control
       if invalid.any?
-        raise ArgumentError.new("invalid values for #{name}: #{invalid.join(',')}, must be a member of #{control}")
+        raise ArgumentError.new("Invalid values for \"#{name}: #{invalid.join(',')}\", must be a member of \"#{control}\"")
       end
     else
-      raise ArgumentError.new("invalid value for #{name}: #{value}; must be a member of #{control}") if !control.include?(value)
+      raise ArgumentError.new("Invalid value for \"#{name}: #{value}\"; must be a member of \"#{control}\"") if !control.include?(value)
     end
   end
 end

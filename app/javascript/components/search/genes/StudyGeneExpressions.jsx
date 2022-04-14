@@ -4,22 +4,40 @@ import _clone from 'lodash/clone'
 import StudySearchResult, { getByline } from '~/components/search/results/StudySearchResult'
 import DotPlot from '~/components/visualization/DotPlot'
 import StudyViolinPlot from '~/components/visualization/StudyViolinPlot'
+import ScatterPlot from '~/components/visualization/ScatterPlot'
 import ClusterSelector from '~/components/visualization/controls/ClusterSelector'
 import AnnotationSelector from '~/components/visualization/controls/AnnotationSelector'
 import SubsampleSelector from '~/components/visualization/controls/SubsampleSelector'
 import ConsensusSelector from '~/components/visualization/controls/ConsensusSelector'
 import { fetchClusterOptions } from '~/lib/scp-api'
-import { getDefaultClusterParams, getAnnotationValues, emptyDataParams } from '~/lib/cluster-utils'
+import {
+  getDefaultClusterParams, getAnnotationValues, emptyDataParams, getAnnotationForIdentifier
+} from '~/lib/cluster-utils'
 
+/**
+ * Get annotations that aren't custom
+ *
+ * TODO (SCP-4242): Handle custom annotations in global gene search,
+ * then remove this function.
+ */
+function getBasicAnnotations(study) {
+  let basicAnnotationList = null
+  if (study.annotation_list?.can_visualize_clusters) {
+    basicAnnotationList = study.annotation_list
+    basicAnnotationList.annotations = basicAnnotationList.annotations.filter(a => a.scope !== 'user')
+  }
+  return basicAnnotationList
+}
 
 /** Renders expression data for a study.  This assumes that the study has a 'gene_matches' property
     to inform which genes to show data for
   */
 export default function StudyGeneExpressions({ study }) {
   const [clusterParams, setClusterParams] = useState(_clone(emptyDataParams))
-  const [annotationList, setAnnotationList] = useState(null)
+  const [annotationList, setAnnotationList] = useState(getBasicAnnotations(study))
   let controlClusterParams = _clone(clusterParams)
-
+  const defaultAnnotation = getAnnotationForIdentifier(study.default_annotation_id)
+  const defaultAnnotationIsNumeric = defaultAnnotation?.type === 'numeric'
   if (annotationList && !clusterParams.cluster) {
     // if the user hasn't specified anything yet, but we have the study defaults, use those
     controlClusterParams = Object.assign(controlClusterParams, getDefaultClusterParams(annotationList))
@@ -46,6 +64,15 @@ export default function StudyGeneExpressions({ study }) {
       genes={study.gene_matches}
       {...controlClusterParams}
       annotationValues={annotationValues}/>
+  } else if (defaultAnnotationIsNumeric) {
+    // render annotated scatter plot if study has default annotation of type "numeric"
+    studyRenderComponent = <ScatterPlot
+      studyAccession={study.accession}
+      genes={study.gene_matches}
+      {...clusterParams}
+      isAnnotatedScatter={true}
+      dimensionProps={{ verticalPad: 400 }}
+    />
   } else {
     // render violin for single genes or collapsed
     studyRenderComponent = <StudyViolinPlot

@@ -33,7 +33,7 @@ class ParseUtils
         end
         Delayed::Job.enqueue(UploadCleanupJob.new(study, archive_file, 0), run_at: 2.minutes.from_now)
       else
-        raise ArgumentError, "Unknown archive type: #{archive_path}; only .zip and .tar.gz archives are supported."
+        raise ArgumentError, "Unknown archive type \"#{archive_path}\"; only .zip and .tar.gz archives are supported."
       end
 
       files_created = []
