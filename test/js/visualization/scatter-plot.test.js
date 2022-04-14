@@ -47,7 +47,11 @@ it('shows custom legend with default group scatter plot', async () => {
     return Promise.resolve([response, CACHE_PERF_PARAMS])
   })
   const fakePlot = jest.spyOn(Plotly, 'react')
-  fakePlot.mockImplementation(() => {})
+  fakePlot.mockImplementation((id, traces, layout) => {
+    // graph updates are often done in-place using the plotly data stored on the element
+    // so we put it there
+    document.getElementById(id).data = traces
+  })
   const fakeLogScatter = jest.spyOn(ScpApiMetrics, 'logScatterPlot')
   fakeLogScatter.mockImplementation(() => {})
 
