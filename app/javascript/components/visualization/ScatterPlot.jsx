@@ -242,8 +242,6 @@ function RawScatterPlot({
       PlotUtils.sortTraces(plotlyTraces, activeTraceLabel)
       Plotly.react(graphElementId, plotlyTraces, scatterData.layout)
     }
-    // look for updates of individual properties, so that we don't rerender if the containing array
-    // happens to be a different instance
   }, [activeTraceLabel])
 
   // Handles window resizing
@@ -253,8 +251,6 @@ function RawScatterPlot({
     if (scatterData && !isLoading) {
       resizePlot()
     }
-    // look for updates of individual properties, so that we don't rerender if the containing array
-    // happens to be a different instance
   }, [widthAndHeight.height, widthAndHeight.width])
 
   // Handles Plotly `data` updates, e.g. changes in color profile

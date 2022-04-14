@@ -159,12 +159,13 @@ PlotUtils.updateTraceVisibility = function(traces, hiddenTraces) {
   })
 }
 
-PlotUtils.sortTraces = function(traces, activeTraceLabel) {
-  const unspecifiedIsActive = activeTraceLabel === UNSPECIFIED_ANNOTATION_NAME
-  /** Sort traces by number of cells (largest first), but always put the activeTraceLabel last
+/** Sort traces by number of cells (largest first), but always put the activeTraceLabel last
    * and the unspecified annotations first
    * If the activeLabel *is* the unspecified cells, then put them last
   */
+PlotUtils.sortTraces = function(traces, activeTraceLabel) {
+  const unspecifiedIsActive = activeTraceLabel === UNSPECIFIED_ANNOTATION_NAME
+  /** sort function for implementing the logic described above */
   function traceCountsSort(a, b) {
     if (activeTraceLabel === a.name || (UNSPECIFIED_ANNOTATION_NAME === b.name && !unspecifiedIsActive)) {return 1}
     if (activeTraceLabel === b.name || (UNSPECIFIED_ANNOTATION_NAME === a.name && !unspecifiedIsActive)) {return -1}
@@ -224,13 +225,6 @@ PlotUtils.getColorForLabel = function(label, customColors={}, editedCustomColors
   }
   return editedCustomColors[label] ?? customColors[label] ?? PlotUtils.getColorBrewerColor(i)
 }
-
-
-/** Returns an array of labels, sorted in the order in which they should be plotted (last is 'on top') */
-PlotUtils.getPlotSortedLabels = function(countsByLabel, activeTraceLabel) {
-
-}
-
 
 /** Returns an array of labels, sorted in the order in which they should be displayed in the legend */
 PlotUtils.getLegendSortedLabels = function(countsByLabel) {
