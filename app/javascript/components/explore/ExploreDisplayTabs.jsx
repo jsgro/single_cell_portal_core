@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import _clone from 'lodash/clone'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faLink, faArrowLeft, faCog, faTimes, faDna, faUndo } from '@fortawesome/free-solid-svg-icons'
-
+import Modal from 'react-bootstrap/lib/Modal'
 
 import StudyGeneField from './StudyGeneField'
 import ClusterSelector from '~/components/visualization/controls/ClusterSelector'
@@ -45,6 +45,41 @@ const tabList = [
   { key: 'images', label: 'Images' }
 ]
 
+// /** Pick groups of cells for differential expression (DE) */
+// function DeGroupPicker() {
+//   // whether to show the color picker modal
+//   const [showDeGroupPicker, setShowDeGroupPicker] = useState(false)
+//   // the current user-picked (though not necessarily saved) color
+//   // note that the color picker components do not allow invalid inputs, so we don't need to do any additional validation
+//   // const [pickedColor, setPickedColor] = useState(iconColor)
+
+//   return (
+//     <Modal
+//       id='de-group-picker-modal'
+//       show={showDeGroupPicker}
+//       onHide={() => setShowDeGroupPicker(false)}
+//       animation={false}
+//       bsSize='small'>
+//       <Modal.Body>
+//         <div className="flexbox-align-center flexbox-column">
+//           <span>Select color</span>
+//           {/* <span className="flexbox-align-center">
+//           #<HexColorInput color={pickedGroup} onChange={setPickedColor}/>
+//           &nbsp;
+//             <span className="preview-block" style={{ background: pickedGroup }}></span>
+//           </span>
+//           <HexDeGroupPicker color={pickedGroup} onChange={setPickedColor}/> */}
+//         </div>
+//       </Modal.Body>
+//       <Modal.Footer>
+//         <button className="btn btn-primary" onClick={handleColorPicked}>OK</button>
+//         <button className="btn terra-btn-secondary" onClick={() => setShowDeGroupPicker(false)}>Cancel</button>
+//       </Modal.Footer>
+//     </Modal>
+//   )
+// }
+
+
 /**
  * Renders the gene search box and the tab selection
  * Responsible for determining which tabs are available for a given view of the study
@@ -71,6 +106,22 @@ export default function ExploreDisplayTabs({
   const [isCellSelecting, setIsCellSelecting] = useState(false)
   // a plotly points_selected event
   const [currentPointsSelected, setCurrentPointsSelected] = useState(null)
+  const [showDeGroupPicker, setShowDeGroupPicker] = useState(false)
+
+  console.log('exploreInfo')
+  console.log(exploreInfo)
+  console.log('exploreParams')
+  console.log(exploreParams)
+  console.log('exploreParamsWithDefaults')
+  console.log(exploreParamsWithDefaults)
+  console.log('')
+  console.log('')
+  console.log('')
+  console.log('')
+
+  // TODO: Remove this placeholder before opening PR
+  const hasDE = studyAccession === 'SCP134'
+
   const plotContainerClass = 'explore-plot-tab-content'
 
   const {
@@ -439,13 +490,44 @@ export default function ExploreDisplayTabs({
             exploreParams={exploreParamsWithDefaults}
             updateExploreParams={updateExploreParams}
             allGenes={exploreInfo ? exploreInfo.uniqueGenes : []}/>
+          <br/>
+          {hasDE &&
+              <button
+                onClick={() => {setShowDeGroupPicker(true)}}
+              >Differential expression</button>
+          }
+          {showDeGroupPicker &&
+            <Modal
+              id='de-group-picker-modal'
+              show={showDeGroupPicker}
+              onHide={() => setShowDeGroupPicker(false)}
+              animation={false}
+              bsSize='small'>
+              <Modal.Body>
+                <div className="flexbox-align-center flexbox-column">
+                  <span>Choose two groups of cells to compare</span>
+                  {/* <span className="flexbox-align-center">
+      #<HexColorInput color={pickedGroup} onChange={setPickedColor}/>
+      &nbsp;
+        <span className="preview-block" style={{ background: pickedGroup }}></span>
+      </span>
+      <HexDeGroupPicker color={pickedGroup} onChange={setPickedColor}/> */}
+                </div>
+              </Modal.Body>
+              <Modal.Footer>
+                <button className="btn btn-primary" onClick={console.log('ok') /** handleColorPicked */}>OK</button>
+                <button className="btn terra-btn-secondary" onClick={() => setShowDeGroupPicker(false)}>Cancel</button>
+              </Modal.Footer>
+            </Modal>
+          }
+          <br/><br/>
           <button className="action"
             onClick={clearExploreParams}
             title="reset all view options"
             data-analytics-name="explore-view-options-reset">
             <FontAwesomeIcon icon={faUndo}/> Reset view
           </button>
-          <br/><br/>
+          {/* <br/><br/> */}
           <button onClick={() => copyLink(routerLocation)}
             className="action"
             data-toggle="tooltip"
