@@ -57,6 +57,7 @@ function RawScatterPlot({
   const [activeTraceLabel, setActiveTraceLabel] = useState(null)
   // map of label name to color hex codes, for any labels the user has picked a color for
   const [editedCustomColors, setEditedCustomColors] = useState({})
+  const [splitArrayTraces, setSplitArrayTraces] = useState(false)
 
   /**
    * Handle user interaction with one or more labels in legend.
@@ -146,7 +147,8 @@ function RawScatterPlot({
       hiddenTraces,
       scatter,
       activeTraceLabel,
-      expressionFilter
+      expressionFilter,
+      splitArrayTraces
     })
     setCountsByLabel(isRefGroup ? labelCounts : null)
     return traces
@@ -186,6 +188,7 @@ function RawScatterPlot({
         }
       })
     }
+    scatter.hasArrayLabels = scatter.data.annotations.some(annot => annot.includes('|'))
 
     if (clusterResponse) {
       setScatterData(scatter)
@@ -222,7 +225,7 @@ function RawScatterPlot({
     // look for updates of individual properties, so that we don't rerender if the containing array
     // happens to be a different instance
   }, [Object.values(editedCustomColors).join(','),
-    Object.values(customColors).join(','), expressionFilter.join(',')])
+    Object.values(customColors).join(','), expressionFilter.join(','), splitArrayTraces])
 
   useUpdateEffect(() => {
     // Don't update if graph hasn't loaded
@@ -318,6 +321,9 @@ function RawScatterPlot({
             saveCustomColors={saveCustomColors}
             activeTraceLabel={activeTraceLabel}
             setActiveTraceLabel={setActiveTraceLabel}
+            hasArrayLabels={scatterData.hasArrayLabels}
+            splitArrayTraces={splitArrayTraces}
+            setSplitArrayTraces={setSplitArrayTraces}
           />
         }
       </div>
@@ -396,7 +402,8 @@ function getPlotlyTraces({
     customColors = {}
   },
   activeTraceLabel,
-  expressionFilter
+  expressionFilter,
+  splitArrayTraces
 }) {
   const unfilteredTrace = {
     type: is3D ? 'scatter3d' : 'scattergl',
@@ -418,7 +425,8 @@ function getPlotlyTraces({
 
   const [traces, countsByLabel, expRange] = filterTrace({
     trace: unfilteredTrace,
-    hiddenTraces, groupByAnnotation: isRefGroup, activeTraceLabel, expressionFilter, expressionData: data.expression
+    hiddenTraces, groupByAnnotation: isRefGroup, activeTraceLabel,
+    expressionFilter, expressionData: data.expression, splitArrayTraces
   })
 
   if (isRefGroup) {

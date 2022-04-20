@@ -143,7 +143,8 @@ function getShowHideEnabled(hiddenTraces, countsByLabel) {
 export default function ScatterPlotLegend({
   name, height, countsByLabel, correlations, hiddenTraces,
   updateHiddenTraces, customColors, editedCustomColors, setEditedCustomColors,
-  enableColorPicking=false, saveCustomColors, activeTraceLabel, setActiveTraceLabel
+  enableColorPicking=false, saveCustomColors, activeTraceLabel, setActiveTraceLabel,
+  splitArrayTraces, setSplitArrayTraces, hasArrayLabels
 }) {
   // is the user currently in color-editing mode
   const [showColorControls, setShowColorControls] = useState(false)
@@ -239,6 +240,24 @@ export default function ScatterPlotLegend({
           </>
           }
         </div>
+        { hasArrayLabels &&
+          <div>
+            { splitArrayTraces &&
+              <a
+                role="button"
+                data-analytics-name='split-traces-unsplit'
+                onClick={() => {setSplitArrayTraces(false)}}
+              >Merge array labels</a>
+            }
+            { !splitArrayTraces &&
+              <a
+                role="button"
+                data-analytics-name='split-traces-split'
+                onClick={() => {setSplitArrayTraces(true)}}
+              >Split array labels</a>
+            }
+          </div>
+        }
         { enableColorPicking &&
           <div>
             { showColorControls &&

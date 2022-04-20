@@ -67,13 +67,16 @@ function emptyTrace(expectedLength, hasZvalues, hasExpression) {
  */
 PlotUtils.filterTrace = function({
   trace, hiddenTraces=[], groupByAnnotation=false,
-  activeTraceLabel, expressionFilter, expressionData
+  activeTraceLabel, expressionFilter, expressionData, splitArrayTraces
 }) {
   const isHidingByLabel = hiddenTraces && hiddenTraces.length
   const isFilteringByExpression = expressionFilter && expressionData &&
     (expressionFilter[0] !== 0 || expressionFilter[1] !== 1)
   const hasZvalues = !!trace.z
   const hasExpression = !!trace.expression
+  if (splitArrayTraces) {
+    trace = PlotUtils.splitTraceByAnnotationArray(trace, hasZvalues)
+  }
   const oldLength = trace.x.length
   // if grouping by annotation, traceMap is a hash of annotation names to traces
   // otherwise, traceMap will just have a single 'all' trace
@@ -98,16 +101,8 @@ PlotUtils.filterTrace = function({
   let expMin = 99999999
   let expMax = -99999999
   if (isFilteringByExpression) {
-    // find the max and min so we can rescale
-    for (let i = 0; i < expressionData.length; i++) {
-      const expValue = expressionData[i]
-      if (expValue < expMin) {
-        expMin = expValue
-      }
-      if (expValue > expMax) {
-        expMax = expValue
-      }
-    }
+    expMin = PlotUtils.arrayMin(expressionData)
+    expMax = PlotUtils.arrayMax(expressionData)
     // convert the expressionFilter, which is on a 0-1 scale, to the expression scale
     const totalRange = expMax - expMin
     expFilterMin = expMin + totalRange * expressionFilter[0]
@@ -151,6 +146,59 @@ PlotUtils.filterTrace = function({
   PlotUtils.updateTraceVisibility(traces, hiddenTraces)
   const expRange = isFilteringByExpression ? [expMin, expMax] : null
   return [traces, countsByLabel, expRange]
+}
+
+/** split array-based (|-delimited) annotations into separate points */
+PlotUtils.splitTraceByAnnotationArray = function(trace, hasZvalues) {
+  const hasExpression = !!trace.expression
+  const newTrace = {
+    x: [],
+    y: [],
+    annotations: [],
+    cells: []
+  }
+  if (hasZvalues) {
+    newTrace.z = []
+  }
+  if (hasExpression) {
+    newTrace.expression = []
+  }
+  const useJitter = true
+  const jitterFraction = 200
+  // jitter will place cells in a 3x3 grid whose center is the actual coordinate
+  const xJitterMods = [0, -1, 1, 1, -1, -1, 0, 1, 0]
+  const yJitterMods = [0, -1, -1, 1, 1, 0, -1, 0, 1]
+  let xJitter = 0
+  let yJitter = 0
+  if (useJitter) {
+    const xRange = [PlotUtils.arrayMin(trace.x), PlotUtils.arrayMax(trace.x)]
+    const yRange = [PlotUtils.arrayMin(trace.y), PlotUtils.arrayMax(trace.y)]
+    xJitter = (xRange[1] - xRange[0]) / jitterFraction
+    yJitter = (yRange[1] - yRange[0]) / jitterFraction
+  }
+
+  // iterate over each point, and if the annotation is pipe-delimited, split it out
+  for (let i = 0; i < trace.x.length; i++) {
+    const subAnnotations = trace.annotations[i].split('|')
+    subAnnotations.forEach((annot, annotIndex) => {
+      if (useJitter) {
+        newTrace.x.push(trace.x[i] + xJitter * xJitterMods[annotIndex])
+        newTrace.y.push(trace.y[i] + yJitter * yJitterMods[annotIndex])
+      } else {
+        newTrace.x.push(trace.x[i])
+        newTrace.y.push(trace.y[i])
+      }
+      if (hasZvalues) {
+        newTrace.z.push(trace.z[i])
+      }
+      if (hasExpression) {
+        newTrace.expression.push(trace.expression[i])
+      }
+      newTrace.cells.push(trace.cells[i])
+      newTrace.annotations.push(annot)
+    })
+  }
+  return newTrace
 }
 
 PlotUtils.updateTraceVisibility = function(traces, hiddenTraces) {
