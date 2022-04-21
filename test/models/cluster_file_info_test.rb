@@ -2,8 +2,10 @@ require 'test_helper'
 
 class ClusterFileInfoTest < ActiveSupport::TestCase
   before(:all) do
+    @user = FactoryBot.create(:api_user, test_array: @@users_to_clean)
     @study = FactoryBot.create(:detached_study,
       name_prefix: 'Basic Cluster Study',
+      user: @user,
       test_array: @@studies_to_clean)
   end
 
