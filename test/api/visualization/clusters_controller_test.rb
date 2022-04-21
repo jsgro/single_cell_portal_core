@@ -96,6 +96,7 @@ class ClustersControllerTest < ActionDispatch::IntegrationTest
       "genes"=>[],
       "annotParams"=>{"name"=>"foo", "type"=>"group", "scope"=>"cluster", "values"=>["bar", "baz"], "identifier"=>"foo--group--cluster"},
       "subsample"=>"all",
+      "splitLabelArrays"=>false,
       "consensus"=>nil}, json)
   end
 

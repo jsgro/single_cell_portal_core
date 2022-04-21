@@ -12,29 +12,27 @@ class ClusterFileInfo
 
   # decode string back to Hash
   def custom_colors_as_hash
-    if !custom_colors
-      return {}
-    end
-    JSON.parse(custom_colors.gsub('=>', ':'))
+    ActiveSupport::JSON.decode(custom_colors || '{}')
   end
 
    # decode string back to Hash
    def annotation_split_defaults_as_hash
-    if !annotation_split_defaults
-      return {}
-    end
-    JSON.parse(annotation_split_defaults.gsub('=>', ':'))
+    ActiveSupport::JSON.decode(annotation_split_defaults || '{}')
   end
 
   # This is called before the data is saved to the DB to ensure the file hashes are encoded as JSON strings
   # This is necessary to work around MongoDBs constraints on '.' and '$' in hash keys
   def stringify_hashes
     if self.custom_colors.is_a?(Hash)
-      self.custom_colors = custom_colors.to_json
+      self.custom_colors = ActiveSupport::JSON.encode(custom_colors)
     end
     if self.annotation_split_defaults.is_a?(Hash)
-      self.annotation_split_defaults = annotation_split_defaults.to_json
+      self.annotation_split_defaults = ActiveSupport::JSON.encode(annotation_split_defaults)
     end
+    # because these fields have type String, Rails may have already auto-converted a hash using .to_s,
+    # in which case it will have Ruby-style => in it.  But we want it as json.
+    self.custom_colors = custom_colors&.gsub('=>', ':')
+    self.annotation_split_defaults = annotation_split_defaults&.gsub('=>', ':')
   end
 
   # merges in a color update to the custom_colors hash
