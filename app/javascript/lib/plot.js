@@ -148,7 +148,9 @@ PlotUtils.filterTrace = function({
   return [traces, countsByLabel, expRange]
 }
 
-/** split array-based (|-delimited) annotations into separate points */
+/** split array-based (|-delimited) annotations into separate points.  this function is essentially a no-op
+ * for labels that do not have | delimtiters
+ */
 PlotUtils.splitTraceByAnnotationArray = function(trace, hasZvalues) {
   const hasExpression = !!trace.expression
   const newTrace = {
@@ -163,31 +165,32 @@ PlotUtils.splitTraceByAnnotationArray = function(trace, hasZvalues) {
   if (hasExpression) {
     newTrace.expression = []
   }
-  const useJitter = true
-  const jitterFraction = 200
+
+  // the jitterFraction controls the amount of displacement of points as a fraction of the graph width
+  // The value of 400 was picked because assuming that point size
+  // is ~3px, and the graph is rendered ~800px tall/wide, a displacement of 800/400 = ~2px is enough to push
+  // the points far enough apart to be seen individually, but still be associated with each other.
+  // this may be made more sophisticated later.
+  const jitterFraction = 400
   // jitter will place cells in a 3x3 grid whose center is the actual coordinate
   const xJitterMods = [0, -1, 1, 1, -1, -1, 0, 1, 0]
   const yJitterMods = [0, -1, -1, 1, 1, 0, -1, 0, 1]
   let xJitter = 0
   let yJitter = 0
-  if (useJitter) {
-    const xRange = [PlotUtils.arrayMin(trace.x), PlotUtils.arrayMax(trace.x)]
-    const yRange = [PlotUtils.arrayMin(trace.y), PlotUtils.arrayMax(trace.y)]
-    xJitter = (xRange[1] - xRange[0]) / jitterFraction
-    yJitter = (yRange[1] - yRange[0]) / jitterFraction
-  }
+
+  const xRange = [PlotUtils.arrayMin(trace.x), PlotUtils.arrayMax(trace.x)]
+  const yRange = [PlotUtils.arrayMin(trace.y), PlotUtils.arrayMax(trace.y)]
+  xJitter = (xRange[1] - xRange[0]) / jitterFraction
+  yJitter = (yRange[1] - yRange[0]) / jitterFraction
+
 
   // iterate over each point, and if the annotation is pipe-delimited, split it out
   for (let i = 0; i < trace.x.length; i++) {
     const subAnnotations = trace.annotations[i].split('|')
     subAnnotations.forEach((annot, annotIndex) => {
-      if (useJitter) {
-        newTrace.x.push(trace.x[i] + xJitter * xJitterMods[annotIndex])
-        newTrace.y.push(trace.y[i] + yJitter * yJitterMods[annotIndex])
-      } else {
-        newTrace.x.push(trace.x[i])
-        newTrace.y.push(trace.y[i])
-      }
+      newTrace.x.push(trace.x[i] + xJitter * xJitterMods[annotIndex % 9])
+      newTrace.y.push(trace.y[i] + yJitter * yJitterMods[annotIndex % 9])
+
       if (hasZvalues) {
         newTrace.z.push(trace.z[i])
       }
