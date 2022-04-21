@@ -286,15 +286,17 @@ class SearchFacet
     where(visible: true)
   end
 
-  # find a match for a facet based off of a term, e.g. 'Mus musculus' => SearchFacet.find_by(identifer: 'species')
-  def self.find_facet_from_term(term)
+  # find all facet matches based off of a term, e.g. 'Mus musculus' => [SearchFacet.find_by(identifer: 'species')]
+  def self.find_facets_from_term(term)
+    facets = []
     all.each do |facet|
+      find_match_from_filter
       filter_list = facet.filters_with_external.any? ? :filters_with_external : :filters
       if facet.filters_match?(term, filter_list: filter_list)
-        return facet
+        facets << facet unless facets.include? facet
       end
     end
-    nil # no match is found
+    facets
   end
 
   # helper for rendering correct list of filters for a given user

@@ -217,7 +217,6 @@ module Api
             @studies = search_match_obj[:studies]
             @match_by_data = search_match_obj[:results_matched_by_data]
             logger.info "Found #{@studies.count} studies in keyword search: #{@studies.pluck(:accession)}"
-
           end
           # all of our terms were accessions, so this is a "cached" query, and we want to return
           # results in the exact order specified in the accessions array
@@ -533,7 +532,7 @@ module Api
             'numResults:scp:text': matches_by_text.length,
             'numResults:scp:author': matches_by_author.length
           }
-          
+
           studies = base_studies.any_of(matches_by_text, matches_by_accession, matches_by_author)
           return {:studies => studies, :results_matched_by_data => results_matched_by_data}
 
@@ -573,7 +572,7 @@ module Api
           # no matching query case, so perform normal text-index search
           studies= base_studies.any_of({:$text => {:$search => terms}}, {:accession.in => accessions})
           return {:studies => studies, :results_matched_by_data => {}}
-    
+
         end
       end
 
@@ -760,6 +759,20 @@ module Api
           end
         end
         matching_filters
+      end
+
+      # take a keyword and match to a possible search facet/filter
+      # will return a single hash with keys as facet names, and values as an array of filter matches
+      def self.match_facet_filters_from_keywords(term_list)
+        terms = term_list || []
+        filters_by_facet = {}
+        terms.each do |term|
+          facets = SearchFacet.find_facets_from_term(term)
+          next if facets.empty?
+
+
+        end
+        filters_by_facet
       end
 
       # build a map of facet filter matches to studies for computing simplistic weights for scoring
