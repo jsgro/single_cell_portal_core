@@ -144,7 +144,7 @@ export default function ScatterPlotLegend({
   name, height, countsByLabel, correlations, hiddenTraces,
   updateHiddenTraces, customColors, editedCustomColors, setEditedCustomColors,
   enableColorPicking=false, saveCustomColors, activeTraceLabel, setActiveTraceLabel,
-  splitArrayTraces, setSplitArrayTraces, hasArrayLabels
+  splitLabelArrays, setSplitLabelArrays, hasArrayLabels
 }) {
   // is the user currently in color-editing mode
   const [showColorControls, setShowColorControls] = useState(false)
@@ -242,18 +242,18 @@ export default function ScatterPlotLegend({
         </div>
         { hasArrayLabels &&
           <div>
-            { splitArrayTraces &&
+            { splitLabelArrays &&
               <a
                 role="button"
                 data-analytics-name='split-traces-unsplit'
-                onClick={() => {setSplitArrayTraces(false)}}
+                onClick={() => {setSplitLabelArrays(false)}}
               >Merge array labels</a>
             }
-            { !splitArrayTraces &&
+            { !splitLabelArrays &&
               <a
                 role="button"
                 data-analytics-name='split-traces-split'
-                onClick={() => {setSplitArrayTraces(true)}}
+                onClick={() => {setSplitLabelArrays(true)}}
               >Split array labels</a>
             }
           </div>
