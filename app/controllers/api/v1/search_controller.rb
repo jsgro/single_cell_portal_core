@@ -521,11 +521,12 @@ module Api
       def self.generate_mongo_query_by_context(terms:, base_studies:, accessions:, query_context:)
         case query_context
         when :keyword
-          author_match_study_ids = Author.where(:$text => {:$search => terms}).pluck(:study_id)
+          author_match_study_ids = Author.where(:$text => { :$search => terms }).pluck(:study_id)
 
-          matches_by_text = base_studies.where({:$text => {:$search => terms}})
-          matches_by_accession =  base_studies.where({:accession.in => accessions})
-          matches_by_author = base_studies.where({:id.in => author_match_study_ids})
+          matches_by_text = base_studies.where({ :$text => { :$search => terms } })
+          all_accessions = accessions + get_accessions_from_term_conversion(terms.split)
+          matches_by_accession = base_studies.where({ :accession.in => all_accessions })
+          matches_by_author = base_studies.where({ :id.in => author_match_study_ids })
 
           results_matched_by_data = {
             'numResults:scp:accession': matches_by_accession.length,
@@ -534,16 +535,19 @@ module Api
           }
 
           studies = base_studies.any_of(matches_by_text, matches_by_accession, matches_by_author)
-          return {:studies => studies, :results_matched_by_data => results_matched_by_data}
+          return { studies: studies, results_matched_by_data: results_matched_by_data }
 
         when :phrase
           study_regex = escape_terms_for_regex(term_list: terms)
-          author_match_study_ids = Author.any_of({first_name: study_regex}, {last_name: study_regex}, {institution: study_regex}).pluck(:study_id)
+          author_match_study_ids = Author.any_of({ first_name: study_regex },
+                                                 { last_name: study_regex },
+                                                 { institution: study_regex }).pluck(:study_id)
 
-          matches_by_name = base_studies.any_of({name: study_regex})
-          matches_by_description = base_studies.any_of({description: study_regex})
-          matches_by_accession = base_studies.any_of({:accession.in => accessions})
-          matches_by_author = base_studies.any_of({:id.in => author_match_study_ids})
+          matches_by_name = base_studies.any_of({ name: study_regex })
+          matches_by_description = base_studies.any_of({ description: study_regex })
+          all_accessions = accessions + get_accessions_from_term_conversion(terms)
+          matches_by_accession = base_studies.where({ :accession.in => all_accessions })
+          matches_by_author = base_studies.any_of({ :id.in => author_match_study_ids })
 
           results_matched_by_data = {
             'numResults:scp:accession': matches_by_accession.length,
@@ -556,24 +560,37 @@ module Api
           results_matched_by_data['numResults:scp'] = studies.length # Total number of SCP results
           # Azul study results to be added with SCP-4202
 
-          return {:studies => studies, :results_matched_by_data => results_matched_by_data}
+          return { studies: studies, results_matched_by_data: results_matched_by_data }
 
         when :inferred
           # in order to maintain the same behavior as normal facets, we run each facet separately and get matching accessions
           # this gives us an array of arrays of matching accessions; now find the intersection (:&)
-          filters = terms.values.map {|keywords| escape_terms_for_regex(term_list: keywords)}
-          accessions_by_filter = filters.map {|filter| base_studies.any_of({name: filter}, {description: filter})
-                                                           .where(:accession.nin => accessions).pluck(:accession)}
+          filters = terms.values.map { |keywords| escape_terms_for_regex(term_list: keywords) }
+          accessions_by_filter = filters.map {|filter| base_studies.any_of({ name: filter }, { description: filter })
+                                                                   .where(:accession.nin => accessions)
+                                                                   .pluck(:accession) }
 
           studies = base_studies.where(:accession.in => accessions_by_filter.inject(:&))
-          return {:studies => studies, :results_matched_by_data => {}}
+          return { studies: studies, results_matched_by_data: {} }
 
         else
           # no matching query case, so perform normal text-index search
-          studies= base_studies.any_of({:$text => {:$search => terms}}, {:accession.in => accessions})
-          return {:studies => studies, :results_matched_by_data => {}}
-
+          studies = base_studies.any_of({ :$text => { :$search => terms } }, { :accession.in => accessions })
+          return { studies: studies, results_matched_by_data: {} }
         end
+      end
+
+      # take the output from :match_facet_filters_from_keywords and match to any possible CellMetadatum in the database
+      # will return an array of study accessions to append to :generate_mongo_query_by_context
+      def self.get_accessions_from_term_conversion(terms)
+        accessions = []
+        match_facet_filters_from_terms(terms).each do |identifier, values|
+          # we need to look in '__ontology_label' entries as well as these will include plain text entries
+          metadata_names = [identifier, "#{identifier}__ontology_label"]
+          matches = CellMetadatum.where(:name.in => metadata_names, :values.in => values)
+          accessions += matches.map { |meta| meta.study.accession }
+        end
+        accessions
       end
 
       # generate query string for BQ
@@ -751,26 +768,31 @@ module Api
             matching_filters = {min: min_value, max: max_value, unit: requested_unit}
           end
         else
-          filters_list = facet.filters_with_external.any? ? facet.filters_with_external : facet.filters
-          filters_list.each do |filter|
-            if filter_values.include?(filter[:id]) || filter_values.include?(filter[:name])
-              matching_filters << filter
-            end
+          filters_list = facet.filters_with_external.any? ? :filters_with_external : :filters
+          filter_values.each do |filter|
+            matching_filters += facet.find_filter_matches(filter, filter_list: filters_list)
           end
+          matching_filters.uniq!
         end
         matching_filters
       end
 
-      # take a keyword and match to a possible search facet/filter
+      # take a term and match to a possible search facet/filter
       # will return a single hash with keys as facet names, and values as an array of filter matches
-      def self.match_facet_filters_from_keywords(term_list)
+      def self.match_facet_filters_from_terms(term_list)
         terms = term_list || []
         filters_by_facet = {}
         terms.each do |term|
           facets = SearchFacet.find_facets_from_term(term)
           next if facets.empty?
 
+          facets.each do |facet|
+            matches = facet.find_filter_word_matches(term, filter_list: :filters_with_external)
+            next if matches.empty?
 
+            filters_by_facet[facet.identifier] ||= []
+            filters_by_facet[facet.identifier] += matches
+          end
         end
         filters_by_facet
       end

@@ -290,7 +290,6 @@ class SearchFacet
   def self.find_facets_from_term(term)
     facets = []
     all.each do |facet|
-      find_match_from_filter
       filter_list = facet.filters_with_external.any? ? :filters_with_external : :filters
       if facet.filters_match?(term, filter_list: filter_list)
         facets << facet unless facets.include? facet
@@ -355,6 +354,12 @@ class SearchFacet
   # find all possible matches for a partial filter value
   def find_filter_matches(filter_value, filter_list: :filters)
     flatten_filters(filter_list).select { |filter| filter.match(/#{filter_value}/i) }.map(&:to_s)
+  end
+
+  # matches on whole words/phrases for terms to filter list
+  def find_filter_word_matches(filter_value, filter_list: :filters)
+    sanitized_value = filter_value.downcase
+    flatten_filters(filter_list).select { |f| f == sanitized_value || f.split.include?(sanitized_value) }
   end
 
   # flatten all filter ids/values into a single array
