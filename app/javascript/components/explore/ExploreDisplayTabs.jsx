@@ -2,7 +2,7 @@ import React, { useState } from 'react'
 import _clone from 'lodash/clone'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faLink, faArrowLeft, faCog, faTimes, faDna, faUndo } from '@fortawesome/free-solid-svg-icons'
-import Modal from 'react-bootstrap/lib/Modal'
+
 
 import StudyGeneField from './StudyGeneField'
 import ClusterSelector from '~/components/visualization/controls/ClusterSelector'
@@ -30,6 +30,8 @@ import InferCNVIdeogram from '~/components/visualization/InferCNVIdeogram'
 import useResizeEffect from '~/hooks/useResizeEffect'
 import { log } from '~/lib/metrics-api'
 
+import DeGroupPicker from '~/components/visualization/controls/DeGroupPicker'
+// import Modal from 'react-bootstrap/lib/Modal'
 
 const tabList = [
   { key: 'loading', label: 'loading...' },
@@ -497,28 +499,15 @@ export default function ExploreDisplayTabs({
               >Differential expression</button>
           }
           {showDeGroupPicker &&
-            <Modal
-              id='de-group-picker-modal'
-              show={showDeGroupPicker}
-              onHide={() => setShowDeGroupPicker(false)}
-              animation={false}
-              bsSize='small'>
-              <Modal.Body>
-                <div className="flexbox-align-center flexbox-column">
-                  <span>Choose two groups of cells to compare</span>
-                  {/* <span className="flexbox-align-center">
-      #<HexColorInput color={pickedGroup} onChange={setPickedColor}/>
-      &nbsp;
-        <span className="preview-block" style={{ background: pickedGroup }}></span>
-      </span>
-      <HexDeGroupPicker color={pickedGroup} onChange={setPickedColor}/> */}
-                </div>
-              </Modal.Body>
-              <Modal.Footer>
-                <button className="btn btn-primary" onClick={console.log('ok') /** handleColorPicked */}>OK</button>
-                <button className="btn terra-btn-secondary" onClick={() => setShowDeGroupPicker(false)}>Cancel</button>
-              </Modal.Footer>
-            </Modal>
+            // <Modal>
+            //   <Modal.Body>
+            //     <div>hi</div>
+            //   </Modal.Body>
+            // </Modal>
+            <DeGroupPicker
+              exploreInfo={exploreInfo}
+              setShowDeGroupPicker={setShowDeGroupPicker}
+            />
           }
           <br/><br/>
           <button className="action"
