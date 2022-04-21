@@ -56,7 +56,7 @@ class ClusterFileInfoTest < ActiveSupport::TestCase
     cluster_file.update!(cluster_file_info: ClusterFileInfo.new(annotation_split_defaults: nil))
     cluster_info = cluster_file.cluster_file_info
     assert_nil cluster_info.annotation_split_defaults
-    assert_equal({}, cluster_info.annotation_split_defaults)
+    assert_equal({}, cluster_info.annotation_split_defaults_as_hash)
 
   end
 end
