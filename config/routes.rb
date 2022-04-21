@@ -44,6 +44,7 @@ Rails.application.routes.draw do
               post 'sync', to: 'studies#sync_study'
               get 'manifest', to: 'studies#generate_manifest'
               get 'file_info', to: 'studies#file_info'
+              get 'usage_stats', to: 'studies#usage_stats'
             end
 
             resource :explore, controller: 'visualization/explore', only: [:show] do
@@ -208,6 +209,7 @@ Rails.application.routes.draw do
         get 'load_annotation_options', to: 'studies#load_annotation_options', as: :load_annotation_options
         post 'update_default_options', to: 'studies#update_default_options', as: :update_default_options
         get 'manifest', to: 'studies#generate_manifest', as: :generate_manifest
+        get 'usage_stats', to: 'studies#usage_stats', as: :usage_stats
       end
     end
 

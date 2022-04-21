@@ -87,7 +87,7 @@ function GenomeView({ studyAccession, bamFileName, uniqueGenes, isVisible, updat
 
   return <div>
     { isLoading &&
-      <LoadingSpinner data-testid="genome-view-loading-icon"/>
+      <LoadingSpinner testId="genome-view-loading-icon"/>
     }
     <div>
       <div id={igvContainerId}></div>

@@ -33,6 +33,10 @@ module SingleCellPortal
 
     config.autoload_paths << Rails.root.join('lib')
 
+    # for all non-prod environments, use the development mixpanel API
+    config.mixpanel_service_account = 'scp_terra_dev.f25a4f.mp-service-account'
+    config.mixpanel_project_id = 2085496
+
     # custom exceptions handling to render responses based on controller
     # uncaught API errors will now render as JSON responses w/ 500 status
     # normal controller errors will show 500 page, except in development environment (will show normal error page)

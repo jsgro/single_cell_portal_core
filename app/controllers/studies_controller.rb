@@ -861,6 +861,9 @@ class StudiesController < ApplicationController
     render plain: manifest_obj
   end
 
+  def usage_stats
+  end
+
   # adding new study_file entries based on remote files in GCP
   def sync_study_file
     @study_file = @study.study_files.build

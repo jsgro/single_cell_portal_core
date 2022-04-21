@@ -119,6 +119,9 @@ Rails.application.configure do
   # Enable profiling and flamegraphs via rack-mini-profiler
   config.profile_performance = false
 
+  config.mixpanel_service_account = 'scp_terra_prod.df6bde.mp-service-account'
+  config.mixpanel_project_id = 2120588
+
   # DNS rebinding/host header injection protection
   # CIDR ip ranges from https://cloud.google.com/load-balancing/docs/health-checks#firewall_rules
   config.hosts = [
