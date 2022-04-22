@@ -8,6 +8,7 @@ class ReportsServiceTest < ActiveSupport::TestCase
     @basic_study = FactoryBot.create(:detached_study,
                                      name_prefix: 'report service test',
                                      test_array: @@studies_to_clean,
+                                     public: false,
                                      user: @user)
     @study_metadata_file = FactoryBot.create(:metadata_file,
                                              use_metadata_convention: true,
@@ -35,6 +36,23 @@ class ReportsServiceTest < ActiveSupport::TestCase
     assert_equal 'test.edu', basic_study_row[:owner_domain]
     assert_equal true, basic_study_row[:metadata_convention]
     assert_equal true, basic_study_row[:has_raw_counts]
+    assert_nil basic_study_row[:last_initialized]
+    assert_nil basic_study_row[:last_public]
+
+    # check that the public history column correctly reflect updates
+    @basic_study.update!(public: true)
+    report_data = ReportsService.study_data
+    basic_study_row = report_data.select {|r| r[:id] == @basic_study.id}.first
+    last_public_time = basic_study_row[:last_public]
+    assert last_public_time > 1.minute.ago
+    assert last_public_time < 1.minute.from_now
+
+    @basic_study.update!(public: false)
+
+    @basic_study.update!(public: true)
+    report_data = ReportsService.study_data
+    basic_study_row = report_data.select {|r| r[:id] == @basic_study.id}.first
+    assert basic_study_row[:last_public] > last_public_time
   end
 
   test 'get_report returns tsv' do
