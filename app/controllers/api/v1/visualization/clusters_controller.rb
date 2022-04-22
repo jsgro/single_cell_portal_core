@@ -235,8 +235,10 @@ module Api
           }
 
           coordinate_labels = ClusterVizService.load_cluster_group_coordinate_labels(cluster)
-          custom_colors = cluster.study_file.cluster_file_info&.decoded_custom_colors || {}
+          custom_colors = cluster.study_file.cluster_file_info&.custom_colors_as_hash || {}
           custom_annotation_colors = custom_colors[annotation[:name]] || {}
+          annotation_split_defaults = cluster.study_file.cluster_file_info&.annotation_split_defaults_as_hash || {}
+          split_label_arrays = annotation_split_defaults[annotation[:name]] || false
           {
             data: plot_data,
             pointSize: study.default_cluster_point_size,
@@ -259,7 +261,8 @@ module Api
             subsample: subsample.nil? ? 'all' : subsample,
             consensus: consensus,
             customColors: custom_annotation_colors,
-            clusterFileId: cluster.study_file_id.to_s
+            clusterFileId: cluster.study_file_id.to_s,
+            splitLabelArrays: split_label_arrays
           }
         end
 
