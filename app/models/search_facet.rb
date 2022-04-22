@@ -359,7 +359,9 @@ class SearchFacet
   # matches on whole words/phrases for terms to filter list
   def find_filter_word_matches(filter_value, filter_list: :filters)
     sanitized_value = filter_value.downcase
-    flatten_filters(filter_list).select { |f| f == sanitized_value || f.split.include?(sanitized_value) }
+    flatten_filters(filter_list).select do |filter|
+      filter.downcase == sanitized_value || filter.split.map(&:downcase).include?(sanitized_value)
+    end
   end
 
   # flatten all filter ids/values into a single array
