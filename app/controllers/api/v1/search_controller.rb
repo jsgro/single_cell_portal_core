@@ -283,7 +283,8 @@ module Api
         when :keyword
           @studies = @studies.sort_by do |study|
             if study.is_a? Study
-              -study.search_weight(@term_list)[:total]
+              # combine text hits with metadata match totals to get real weight
+              -(study.search_weight(@term_list)[:total] + @metadata_matches.dig(study.accession, :facet_search_weight))
             else
               -study[:term_matches][:total]
             end
@@ -595,10 +596,14 @@ module Api
             accession = metadata.study.accession
             accessions_to_filters[accession] ||= {}
             matched_values = values & metadata.values
-            matched_filters = matched_values.map { |val| { id: val, name: val} } # mimic facet filter matches for UI
+            matched_filters = matched_values.map { |val| { id: val, name: val } } # mimic facet filter matches for UI
             metadata_name = metadata.name.chomp('__ontology_label') # for better labels in UI
             accessions_to_filters[accession][metadata_name] = matched_filters
           end
+        end
+        # compute weights for sorting, which is equivalent to the total number of filter matches
+        accessions_to_filters.each do |accession, results|
+          accessions_to_filters[accession][:facet_search_weight] = results.values.flatten.size
         end
         accessions_to_filters
       end
