@@ -768,11 +768,12 @@ module Api
             matching_filters = {min: min_value, max: max_value, unit: requested_unit}
           end
         else
-          filters_list = facet.filters_with_external.any? ? :filters_with_external : :filters
-          filter_values.each do |filter|
-            matching_filters += facet.find_filter_matches(filter, filter_list: filters_list)
+          filters_list = facet.filters_with_external.any? ? facet.filters_with_external : facet.filters
+          filters_list.each do |filter|
+            if filter_values.include?(filter[:id]) || filter_values.include?(filter[:name])
+              matching_filters << filter
+            end
           end
-          matching_filters.uniq!
         end
         matching_filters
       end
