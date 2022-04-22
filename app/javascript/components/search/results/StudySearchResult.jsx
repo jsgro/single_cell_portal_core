@@ -216,8 +216,9 @@ export function logSelectSearchResult(study, logProps={}) {
   logProps.numSearches = numSearches
 
   // Number of selections done for the current search.  Users can click
-  // multiple results for a given search, e.g. via "Open in new tab", and this
-  // property lets us account for that when analyzing CTR and related  metrics.
+  // multiple results for a given search, e.g. via command key + click, and
+  // this property lets us account for that when analyzing CTR and related
+  // metrics.
   if (numSearches !== prevNumSearches) {
     numSearchSelections = 1
     prevNumSearches = numSearches
