@@ -174,7 +174,7 @@ function studyTypeBadge(study) {
   }
 }
 
-let prevNumSearches = 0
+let prevNumSearches = -1
 let numSearchSelections = 0
 
 /**
