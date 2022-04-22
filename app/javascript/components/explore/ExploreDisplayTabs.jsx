@@ -323,6 +323,7 @@ export default function ExploreDisplayTabs({
                 <Heatmap
                   studyAccession={studyAccession}
                   {... exploreParamsWithDefaults}
+                  geneLists={exploreInfo.geneLists}
                   dimensions={getPlotDimensions({ showViewOptionsControls })}
                 />
               </div>

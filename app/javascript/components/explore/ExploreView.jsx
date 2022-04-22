@@ -48,7 +48,7 @@ function RoutableExploreTab({ studyAccession }) {
     // default to the first gene list
     if ((exploreInfo && exploreInfo.annotationList.clusters.length === 0 &&
       exploreInfo.geneLists.length && !exploreParams.tab && !exploreParams.geneList)) {
-      updateExploreParams({ geneList: exploreInfo.geneLists[0] })
+      updateExploreParams({ geneList: exploreInfo.geneLists[0].name })
     }
   }, [exploreInfo?.geneLists])
 

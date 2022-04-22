@@ -138,14 +138,16 @@ module Api
           spatial_group_options = ClusterVizService.load_spatial_options(study)
           image_options = ClusterVizService.load_image_options(study)
           bam_bundle_list = study.study_file_bundles.where(bundle_type: 'BAM').pluck(:original_file_list)
-
+          precomputed_scores = ActiveRecordUtils.pluck_to_hash(
+            study.study_files.where(file_type: 'Gene List'), [:name, :y_axis_label, :heatmap_absolute_scaling, :description]
+          )
           {
             cluster: cluster,
             taxonNames: study.expressed_taxon_names,
             inferCNVIdeogramFiles: ideogram_files,
             bamBundleList: bam_bundle_list,
             uniqueGenes: study.unique_genes,
-            geneLists: study.precomputed_scores.pluck(:name),
+            geneLists: precomputed_scores,
             annotationList: AnnotationVizService.get_study_annotation_options(study, user),
             clusterGroupNames: ClusterVizService.load_cluster_group_options(study),
             spatialGroups: spatial_group_options,

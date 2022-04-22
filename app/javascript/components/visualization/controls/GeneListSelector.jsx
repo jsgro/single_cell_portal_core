@@ -8,7 +8,7 @@ const noneSelected = 'None selected...'
 
 /** takes the server response and returns gene list options suitable for react-select */
 function getGeneListOptions(studyGeneLists) {
-  const assignLabelsAndValues = x => ({ label: x, value: x })
+  const assignLabelsAndValues = geneList => ({ label: geneList.name, value: geneList.name })
   return [{ label: noneSelected, value: '' }].concat(studyGeneLists.map(assignLabelsAndValues))
 }
 

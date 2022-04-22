@@ -19,7 +19,8 @@ import LoadingSpinner from '~/lib/LoadingSpinner'
   * @param geneList {string} a string for the gene list (precomputed score) to be retrieved.
  */
 function RawHeatmap({
-  studyAccession, genes=[], cluster, annotation={}, subsample, geneList, heatmapFit, heatmapRowCentering
+  studyAccession, genes=[], cluster, annotation={}, subsample, geneList,
+  geneLists, heatmapFit, heatmapRowCentering
 }) {
   const [graphId] = useState(_uniqueId('heatmap-'))
   const morpheusHeatmap = useRef(null)
@@ -33,9 +34,11 @@ function RawHeatmap({
   const { ErrorComponent, setShowError, setErrorContent } = useErrorMessage()
   // we can't render until we know what the cluster is, since morpheus requires the annotation name
   // so don't try until we've received this, unless we're showing a Gene List
-  const canRender = cluster || geneList
+  const canRender = !!cluster || !!geneList
   let annotationCellValuesURL
   // determine where we get our column headers from
+  let description = ''
+  let yAxisLabel = ''
   if (!geneList) {
     annotationCellValuesURL = getAnnotationCellValuesURL({
       studyAccession,
@@ -46,6 +49,9 @@ function RawHeatmap({
       subsample
     })
   } else {
+    const geneListInfo = geneLists.find(gl => gl.name === geneList)
+    description = geneListInfo.description
+    yAxisLabel = geneListInfo.y_axis_label
     annotationCellValuesURL = getGeneListColsURL({ studyAccession, geneList })
     // For baffling reasons, morpheus will not render a geneList heatmap correctly unless
     // there is another parameter on the query string. Despite the fact that I've confirmed the
@@ -97,11 +103,14 @@ function RawHeatmap({
   }, [heatmapFit])
 
   return (
-    <div className="plot">
-      { ErrorComponent }
-      { canRender &&
-        <div id={graphId} className="heatmap-graph" style={{ minWidth: '80vw' }}></div> }
-      { !canRender && <LoadingSpinner/> }
+    <div>
+      <div className="text-center">{description}</div>
+      <div className="plot">
+        { ErrorComponent }
+        <LoadingSpinner isLoading={!canRender}>
+          <div id={graphId} className="heatmap-graph" style={{ minWidth: '80vw' }}></div>
+        </LoadingSpinner>
+      </div>
     </div>
   )
 }
