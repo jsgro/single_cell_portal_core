@@ -368,7 +368,7 @@ export function RawUploadWizard({ studyAccession, name }) {
               </div>
             </div>
             { !formState && <div className="padded text-center">
-              <LoadingSpinner data-testid="upload-wizard-spinner"/>
+              <LoadingSpinner testId="upload-wizard-spinner"/>
             </div> }
             { !!formState && <div>
               <currentStep.component

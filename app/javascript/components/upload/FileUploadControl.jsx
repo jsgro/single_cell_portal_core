@@ -55,7 +55,7 @@ export default function FileUploadControl({
     buttonClass = 'fileinput-button btn btn-primary'
   }
   if (fileValidation.validating) {
-    buttonText = <LoadingSpinner data-testid="file-validation-spinner"/>
+    buttonText = <LoadingSpinner testId="file-validation-spinner"/>
   }
 
   let inputAcceptExts = allowedFileExts

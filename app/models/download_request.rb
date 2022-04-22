@@ -15,23 +15,27 @@ class DownloadRequest
 
   # This is called before the data is saved to the DB to ensure the file hashes are encoded as JSON strings
   # This is necessary to work around MongoDBs constraints on '.' and '$' in hash keys
-  def stringify_hashes 
+  def stringify_hashes
     if self.azul_files.is_a?(Hash)
       self.azul_files = ActiveSupport::JSON.encode(azul_files)
     end
     if self.tdr_files.is_a?(Hash)
       self.tdr_files = ActiveSupport::JSON.encode(tdr_files)
     end
-  end
-  
-  # decode JSON-ified TDR files back into their original hash format
-  def tdr_files_as_hash
-    ActiveSupport::JSON.decode(tdr_files.gsub('=>', ':'))
+    # because these fields have type String, Rails may have already auto-converted a hash using .to_s,
+    # in which case it will have Ruby-style => in it.  But we want it as json.
+    self.azul_files = azul_files&.gsub('=>', ':')
+    self.tdr_files = tdr_files&.gsub('=>', ':')
   end
 
-  # decode JSON-ified azul files back into their original hash format
+  # decode JSON-ified TDR files back into their original array-of-hashes format
+  def tdr_files_as_hash
+    ActiveSupport::JSON.decode(tdr_files || '{}')
+  end
+
+  # decode JSON-ified azul files back into their original array-of-hashes format
   def azul_files_as_hash
-    ActiveSupport::JSON.decode(azul_files.gsub('=>', ':'))
+    ActiveSupport::JSON.decode(azul_files || '{}')
   end
 
 end

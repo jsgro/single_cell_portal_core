@@ -729,6 +729,13 @@ export function buildFacetsFromQueryString(facetsParamString) {
   return facets
 }
 
+/** retrieve usage info for the given study */
+export async function fetchStudyUsage(studyId, mock=false) {
+  const [usageInfo] = await scpApi(`/studies/${studyId}/usage_stats`, defaultInit(), mock)
+  return usageInfo
+}
+
+
 /** returns the current branding group as specified by the url  */
 export function getBrandingGroup() {
   const queryParams = queryString.parse(window.location.search)

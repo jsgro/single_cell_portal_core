@@ -3,24 +3,36 @@ class ClusterFileInfo
 
   embedded_in :study_file
 
-  field :custom_colors, type: Hash, default: {}
+  field :custom_colors, type: String
+  # hash of annotation names to booleans of whether the annotation should, by default, be shown split
+  # on pipes (assuming it is array-based).  Unspecified is treated as false by the front end
+  field :annotation_split_defaults, type: String
 
-  COLOR_ENCODE_TRANSFORM = %i[encode64 decode64]
+  before_save :stringify_hashes
 
-  # decode base64 annotation/label names back into human-readable text
-  def decoded_custom_colors
-    self.class.transform_custom_colors(custom_colors, :decode64)
+  # decode string back to Hash
+  def custom_colors_as_hash
+    ActiveSupport::JSON.decode(custom_colors || '{}')
   end
 
-  # helper to transform a nested custom color hash to/from base64
-  def self.transform_custom_colors(hash, transform = :encode64)
-    raise ArgumentError, "\"#{transform}]\" is not a valid transform" unless COLOR_ENCODE_TRANSFORM.include?(transform)
+   # decode string back to Hash
+   def annotation_split_defaults_as_hash
+    ActiveSupport::JSON.decode(annotation_split_defaults || '{}')
+  end
 
-    hash.map do |key, nested_hash|
-      {
-        Base64.send(transform, key) => nested_hash.map { |k, v| { Base64.send(transform, k) => v } }.reduce({}, :merge)
-      }
-    end.reduce({}, :merge)
+  # This is called before the data is saved to the DB to ensure the file hashes are encoded as JSON strings
+  # This is necessary to work around MongoDBs constraints on '.' and '$' in hash keys
+  def stringify_hashes
+    if self.custom_colors.is_a?(Hash)
+      self.custom_colors = ActiveSupport::JSON.encode(custom_colors)
+    end
+    if self.annotation_split_defaults.is_a?(Hash)
+      self.annotation_split_defaults = ActiveSupport::JSON.encode(annotation_split_defaults)
+    end
+    # because these fields have type String, Rails may have already auto-converted a hash using .to_s,
+    # in which case it will have Ruby-style => in it.  But we want it as json.
+    self.custom_colors = custom_colors&.gsub('=>', ':')
+    self.annotation_split_defaults = annotation_split_defaults&.gsub('=>', ':')
   end
 
   # merges in a color update to the custom_colors hash
@@ -33,12 +45,9 @@ class ClusterFileInfo
   # merge_color_updates(file, { 'annot1': { 'label2': '#334499'}}) will delete the prior custom color for label1
   # but will leave the entry for 'annot2' unchanged.
   def self.merge_color_updates(study_file, update_colors)
-    previous_colors = study_file.cluster_file_info&.custom_colors || {}
-
-    # base64 endcode all keys to avoid MongoDB exception due to key names with periods (.) in them
-    encoded_updates = transform_custom_colors(update_colors)
+    previous_colors = study_file.cluster_file_info&.custom_colors_as_hash || {}
 
     # Consider validating that values are valid color hex codes, etc...
-    previous_colors.merge(encoded_updates)
+    previous_colors.merge(update_colors)
   end
 end

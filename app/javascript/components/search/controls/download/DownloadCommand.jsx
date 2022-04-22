@@ -40,7 +40,7 @@ export default function DownloadCommand({ fileIds=[], azulFiles }) {
       isLoading &&
       <div className="text-center">
         Authorizing<br/>
-        <LoadingSpinner data-testid="bulk-download-loading-icon"/>
+        <LoadingSpinner testId="bulk-download-loading-icon"/>
       </div>
     }
     {

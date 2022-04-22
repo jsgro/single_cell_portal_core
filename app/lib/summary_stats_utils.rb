@@ -106,7 +106,11 @@ class SummaryStatsUtils
           break
         end
       end
-      jobs = ApplicationController.papi_client.list_pipelines(page_token: jobs.next_page_token) if !all_from_range
+      if all_from_range || jobs.next_page_token.blank?
+        break
+      else
+        jobs = ApplicationController.papi_client.list_pipelines(page_token: jobs.next_page_token)
+      end
     end
     ingest_jobs
   end
