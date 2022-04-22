@@ -63,7 +63,8 @@ class ReportsService
 
     history_hash = ReportsService.study_histories
     study_hash.keys.each do |study_id|
-      study_hash[study_id][:last_public] = history_hash[study_id] ? history_hash[study_id][:last_public] : nil
+      study_hash[study_id][:last_public] = history_hash.dig(study_id, :last_public)
+      study_hash[study_id][:last_initialized] = history_hash.dig(study_id, :last_initialized)
       study_hash[study_id][:last_initialized] = history_hash[study_id] ? history_hash[study_id][:last_initialized] : nil
     end
 
