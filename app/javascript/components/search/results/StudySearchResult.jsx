@@ -174,6 +174,9 @@ function studyTypeBadge(study) {
   }
 }
 
+let prevNumSearches = 0
+let numSearchSelections = 0
+
 /**
  * Log analytics about search result selection to Mixpanel
  *
@@ -211,6 +214,16 @@ export function logSelectSearchResult(study, logProps={}) {
   // Number of searches done before this result was selected.
   // This is needed to easily analyze changes in click-through rate (CTR).
   logProps.numSearches = numSearches
+
+  // Number of selections done for the current search.  Users can click
+  // multiple results for a given search, e.g. via "Open in new tab", and this
+  // property lets us account for that when analyzing CTR and related  metrics.
+  if (numSearches != prevNumSearches) {
+    numSearchSelections = 1
+    prevNumSearches = numSearches
+  }
+  logProps.numSearchSelections = numSearchSelections
+  numSearchSelections += 1
 
   // We don't log study name, like Terra doesn't log workspace name, as it
   // might contain PII per original DSP Mixpanel design doc:
