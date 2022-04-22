@@ -147,7 +147,7 @@ describe('Apply applies all changes made in the search panel', () => {
           'HeterogeneityCD4TCells', 'AcuteSkinInflammation'
         ],
         'results:presetSearch': null,
-        'numSearchSelections': 0,
+        'numSearchSelections': 1,
         'numSearches': 0,
         'results:numResults:scp:accession': 0,
         'results:numResults:scp:text': 3,
