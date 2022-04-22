@@ -205,6 +205,7 @@ module Api
                                                                   accessions: possible_accessions, query_context: :phrase)
             @studies = search_match_obj[:studies]
             @match_by_data = search_match_obj[:results_matched_by_data]
+            @metadata_matches = search_match_obj[:metadata_matches]
             logger.info "Found #{@studies.count} studies in phrase search: #{@studies.pluck(:accession)}"
           else
             # filter & reconstitute query w/o stop words
@@ -216,6 +217,7 @@ module Api
 
             @studies = search_match_obj[:studies]
             @match_by_data = search_match_obj[:results_matched_by_data]
+            @metadata_matches = search_match_obj[:metadata_matches]
             logger.info "Found #{@studies.count} studies in keyword search: #{@studies.pluck(:accession)}"
           end
           # all of our terms were accessions, so this is a "cached" query, and we want to return
@@ -524,7 +526,8 @@ module Api
           author_match_study_ids = Author.where(:$text => { :$search => terms }).pluck(:study_id)
 
           matches_by_text = base_studies.where({ :$text => { :$search => terms } })
-          all_accessions = accessions + get_accessions_from_term_conversion(terms.split)
+          metadata_matches = get_studies_from_term_conversion(terms.split)
+          all_accessions = accessions + metadata_matches.keys
           matches_by_accession = base_studies.where({ :accession.in => all_accessions })
           matches_by_author = base_studies.where({ :id.in => author_match_study_ids })
 
@@ -535,8 +538,7 @@ module Api
           }
 
           studies = base_studies.any_of(matches_by_text, matches_by_accession, matches_by_author)
-          return { studies: studies, results_matched_by_data: results_matched_by_data }
-
+          { studies: studies, results_matched_by_data: results_matched_by_data, metadata_matches: metadata_matches }
         when :phrase
           study_regex = escape_terms_for_regex(term_list: terms)
           author_match_study_ids = Author.any_of({ first_name: study_regex },
@@ -545,7 +547,8 @@ module Api
 
           matches_by_name = base_studies.any_of({ name: study_regex })
           matches_by_description = base_studies.any_of({ description: study_regex })
-          all_accessions = accessions + get_accessions_from_term_conversion(terms)
+          metadata_matches = get_studies_from_term_conversion(terms)
+          all_accessions = accessions + metadata_matches.keys
           matches_by_accession = base_studies.where({ :accession.in => all_accessions })
           matches_by_author = base_studies.any_of({ :id.in => author_match_study_ids })
 
@@ -560,7 +563,7 @@ module Api
           results_matched_by_data['numResults:scp'] = studies.length # Total number of SCP results
           # Azul study results to be added with SCP-4202
 
-          return { studies: studies, results_matched_by_data: results_matched_by_data }
+          { studies: studies, results_matched_by_data: results_matched_by_data, metadata_matches: metadata_matches }
 
         when :inferred
           # in order to maintain the same behavior as normal facets, we run each facet separately and get matching accessions
@@ -576,21 +579,28 @@ module Api
         else
           # no matching query case, so perform normal text-index search
           studies = base_studies.any_of({ :$text => { :$search => terms } }, { :accession.in => accessions })
-          return { studies: studies, results_matched_by_data: {} }
+          { studies: studies, results_matched_by_data: {}, metadata_matches: {} }
         end
       end
 
       # take the output from :match_facet_filters_from_keywords and match to any possible CellMetadatum in the database
-      # will return an array of study accessions to append to :generate_mongo_query_by_context
-      def self.get_accessions_from_term_conversion(terms)
-        accessions = []
+      # will return a hash of accessions to matched metadata entries
+      def self.get_studies_from_term_conversion(terms)
+        accessions_to_filters = {}
         match_facet_filters_from_terms(terms).each do |identifier, values|
           # we need to look in '__ontology_label' entries as well as these will include plain text entries
           metadata_names = [identifier, "#{identifier}__ontology_label"]
           matches = CellMetadatum.where(:name.in => metadata_names, :values.in => values)
-          accessions += matches.map { |meta| meta.study.accession }
+          matches.each do |metadata|
+            accession = metadata.study.accession
+            accessions_to_filters[accession] ||= {}
+            matched_values = values & metadata.values
+            matched_filters = matched_values.map { |val| { id: val, name: val} } # mimic facet filter matches for UI
+            metadata_name = metadata.name.chomp('__ontology_label') # for better labels in UI
+            accessions_to_filters[accession][metadata_name] = matched_filters
+          end
         end
-        accessions
+        accessions_to_filters
       end
 
       # generate query string for BQ

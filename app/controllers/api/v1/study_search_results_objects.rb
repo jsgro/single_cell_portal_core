@@ -46,6 +46,10 @@ module Api
             search_weight = study.search_weight(@term_list)
             study_obj[:term_matches] = search_weight[:terms].keys
             study_obj[:term_search_weight] = search_weight[:total]
+            # also incorporate converted terms => facets for badges
+            if @metadata_matches.present?
+              study_obj[:facet_matches] = @metadata_matches[study.accession]
+            end
           end
           # if this is an inferred match, use :term_matches for highlighting, but set :inferred_match to true
           if @inferred_accessions.present? && @inferred_accessions.include?(study.accession)
