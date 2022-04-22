@@ -15,9 +15,9 @@ function getGeneListOptions(studyGeneLists) {
 
 /**
   Renders a gene list selector.
-    @param geneList: requested gene list to load.
-    @param studyGeneLists: collection of all gene lists for a study
-    @param updateGeneList: update function to set the gene list
+    @param {String} geneList: requested gene list to load.
+    @param {Array} studyGeneLists: collection of all gene lists for a study
+    @param {Function} updateGeneList: update function to set the gene list
  */
 export default function GeneListSelector({
   geneList,

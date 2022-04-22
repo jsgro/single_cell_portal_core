@@ -122,7 +122,7 @@ export default function ExploreDisplayTabs({
   console.log('')
 
   // TODO: Remove this placeholder before opening PR
-  const hasDE = studyAccession === 'SCP134'
+  const hasDE = true // studyAccession === 'SCP134'
 
   const plotContainerClass = 'explore-plot-tab-content'
 
