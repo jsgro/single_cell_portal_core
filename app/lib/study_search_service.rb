@@ -68,17 +68,18 @@ class StudySearchService
 
       matches_by_text = base_studies.where({ :$text => { :$search => terms } })
       metadata_matches = get_studies_from_term_conversion(terms.split)
-      all_accessions = accessions + metadata_matches.keys
-      matches_by_accession = base_studies.where({ :accession.in => all_accessions })
+      matches_by_metadata = base_studies.where({ :accession.in => metadata_matches.keys })
+      matches_by_accession = base_studies.where({ :accession.in => accessions })
       matches_by_author = base_studies.where({ :id.in => author_match_study_ids })
 
       results_matched_by_data = {
         'numResults:scp:accession': matches_by_accession.length,
         'numResults:scp:text': matches_by_text.length,
-        'numResults:scp:author': matches_by_author.length
+        'numResults:scp:author': matches_by_author.length,
+        'numResults:scp:metadata': metadata_matches.keys.length
       }
 
-      studies = base_studies.any_of(matches_by_text, matches_by_accession, matches_by_author)
+      studies = base_studies.any_of(matches_by_text, matches_by_accession, matches_by_author, matches_by_metadata)
       { studies: studies, results_matched_by_data: results_matched_by_data, metadata_matches: metadata_matches }
     when :phrase
       study_regex = escape_terms_for_regex(term_list: terms)
@@ -89,18 +90,21 @@ class StudySearchService
       matches_by_name = base_studies.any_of({ name: study_regex })
       matches_by_description = base_studies.any_of({ description: study_regex })
       metadata_matches = get_studies_from_term_conversion(terms)
-      all_accessions = accessions + metadata_matches.keys
-      matches_by_accession = base_studies.where({ :accession.in => all_accessions })
+      matches_by_metadata = base_studies.where({ :accession.in => metadata_matches.keys })
+      matches_by_accession = base_studies.where({ :accession.in => accessions })
       matches_by_author = base_studies.any_of({ :id.in => author_match_study_ids })
 
+      # see above for notes on counts
       results_matched_by_data = {
         'numResults:scp:accession': matches_by_accession.length,
         'numResults:scp:name': matches_by_name.length,
         'numResults:scp:description': matches_by_description.length,
-        'numResults:scp:author': matches_by_author.length
+        'numResults:scp:author': matches_by_author.length,
+        'numResults:scp:metadata': metadata_matches.keys.length
       }
 
-      studies = base_studies.any_of(matches_by_name, matches_by_description, matches_by_accession, matches_by_author)
+      studies = base_studies.any_of(matches_by_name, matches_by_description, matches_by_accession,
+                                    matches_by_author, matches_by_metadata)
       results_matched_by_data['numResults:scp'] = studies.length # Total number of SCP results
       # Azul study results to be added with SCP-4202
 

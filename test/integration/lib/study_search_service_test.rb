@@ -57,7 +57,7 @@ class StudySearchServiceTest < ActiveSupport::TestCase
     end
     found_studies = query[:studies].pluck(:accession).sort
     assert_equal @base_studies.pluck(:accession).sort, found_studies
-    assert_equal 1, query[:results_matched_by_data]['numResults:scp:accession'.to_sym]
+    assert_equal 1, query[:results_matched_by_data]['numResults:scp:metadata'.to_sym]
     metadata_accession = @metadata_study.accession
     assert query[:metadata_matches].keys == [metadata_accession]
     expected_filters = [
@@ -76,7 +76,7 @@ class StudySearchServiceTest < ActiveSupport::TestCase
       assert query.keys.include?(key_name)
     end
     found_studies = query[:studies].pluck(:accession)
-    assert_equal 1, query[:results_matched_by_data]['numResults:scp:accession'.to_sym]
+    assert_equal 1, query[:results_matched_by_data]['numResults:scp:metadata'.to_sym]
     metadata_accession = @metadata_study.accession
     assert_equal [metadata_accession], found_studies
     assert query[:metadata_matches].keys == [metadata_accession]
@@ -92,6 +92,7 @@ class StudySearchServiceTest < ActiveSupport::TestCase
                                                                accessions: accessions, query_context: '')
     found_studies = query[:studies].pluck(:accession)
     assert_equal accessions, found_studies
+    puts query[:results_matched_by_data]
   end
 
   test 'should find studies by converting keyword search' do
