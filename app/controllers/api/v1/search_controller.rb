@@ -288,7 +288,7 @@ module Api
           @studies = @studies.sort_by do |study|
             if study.is_a? Study
               # combine text hits with metadata match totals to get real weight
-              metadata_weight = @metadata_matches.dig(study.accession, :facet_search_weight) || 0
+              metadata_weight = @metadata_matches.dig(study.accession, :facet_search_weight).to_i
               -(study.search_weight(@term_list)[:total] + metadata_weight)
             else
               -study[:term_matches][:total]
@@ -309,7 +309,9 @@ module Api
         when :facet
           @studies = @studies.sort_by do |study|
             accession = self.class.get_study_accession(study)
-            -@studies_by_facet[accession][:facet_search_weight]
+            metadata_weight = @metadata_matches.present? ?
+                                @metadata_matches.dig(study.accession, :facet_search_weight).to_i : 0
+            -(@studies_by_facet[accession][:facet_search_weight] + metadata_weight)
           end
         when :recent
           @studies = @studies.sort_by(&:created_at).reverse

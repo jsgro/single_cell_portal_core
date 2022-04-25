@@ -99,8 +99,9 @@ module Api
         study_data = existing_data || {}
         merged_match_data = {}
         all_keys = (study_data.keys + new_data.keys).uniq
-        all_keys.delete(:facet_search_weight) # we will compute this at the end
         all_keys.each do |facet_name|
+          next if facet_name.to_s == 'facet_search_weight'
+
           merged_match_data[facet_name] ||= []
           merged_match_data[facet_name] += study_data[facet_name] if study_data[facet_name].present?
           merged_match_data[facet_name] += new_data[facet_name] if new_data[facet_name].present?
