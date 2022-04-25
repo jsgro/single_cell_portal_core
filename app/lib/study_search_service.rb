@@ -55,4 +55,124 @@ class StudySearchService
     end
     gene_array.map(&:strip)
   end
+
+  # generate a Mongoid::Criteria object to perform a keyword/exact phrase search based on contextual use case
+  # supports the following query_contexts: :keyword (individual terms), :phrase (quoted phrases & keywords)
+  # and :inferred (converting a facet-based query to keywords)
+  # will scope the query based off of :base_studies, and include/exclude studies matching
+  # :accessions based on the :query_context (included by default, but excluded in :inferred to avoid duplicates)
+  def self.generate_mongo_query_by_context(terms:, base_studies:, accessions:, query_context:)
+    case query_context
+    when :keyword
+      author_match_study_ids = Author.where(:$text => { :$search => terms }).pluck(:study_id)
+
+      matches_by_text = base_studies.where({ :$text => { :$search => terms } })
+      metadata_matches = get_studies_from_term_conversion(terms.split)
+      all_accessions = accessions + metadata_matches.keys
+      matches_by_accession = base_studies.where({ :accession.in => all_accessions })
+      matches_by_author = base_studies.where({ :id.in => author_match_study_ids })
+
+      results_matched_by_data = {
+        'numResults:scp:accession': matches_by_accession.length,
+        'numResults:scp:text': matches_by_text.length,
+        'numResults:scp:author': matches_by_author.length
+      }
+
+      studies = base_studies.any_of(matches_by_text, matches_by_accession, matches_by_author)
+      { studies: studies, results_matched_by_data: results_matched_by_data, metadata_matches: metadata_matches }
+    when :phrase
+      study_regex = escape_terms_for_regex(term_list: terms)
+      author_match_study_ids = Author.any_of({ first_name: study_regex },
+                                             { last_name: study_regex },
+                                             { institution: study_regex }).pluck(:study_id)
+
+      matches_by_name = base_studies.any_of({ name: study_regex })
+      matches_by_description = base_studies.any_of({ description: study_regex })
+      metadata_matches = get_studies_from_term_conversion(terms)
+      all_accessions = accessions + metadata_matches.keys
+      matches_by_accession = base_studies.where({ :accession.in => all_accessions })
+      matches_by_author = base_studies.any_of({ :id.in => author_match_study_ids })
+
+      results_matched_by_data = {
+        'numResults:scp:accession': matches_by_accession.length,
+        'numResults:scp:name': matches_by_name.length,
+        'numResults:scp:description': matches_by_description.length,
+        'numResults:scp:author': matches_by_author.length
+      }
+
+      studies = base_studies.any_of(matches_by_name, matches_by_description, matches_by_accession, matches_by_author)
+      results_matched_by_data['numResults:scp'] = studies.length # Total number of SCP results
+      # Azul study results to be added with SCP-4202
+
+      { studies: studies, results_matched_by_data: results_matched_by_data, metadata_matches: metadata_matches }
+
+    when :inferred
+      # in order to maintain the same behavior as normal facets, we run each facet separately and get matching accessions
+      # this gives us an array of arrays of matching accessions; now find the intersection (:&)
+      filters = terms.values.map { |keywords| escape_terms_for_regex(term_list: keywords) }
+      accessions_by_filter = filters.map {|filter| base_studies.any_of({ name: filter }, { description: filter })
+                                                               .where(:accession.nin => accessions)
+                                                               .pluck(:accession) }
+
+      studies = base_studies.where(:accession.in => accessions_by_filter.inject(:&))
+      return { studies: studies, results_matched_by_data: {} }
+
+    else
+      # no matching query case, so perform normal text-index search
+      studies = base_studies.any_of({ :$text => { :$search => terms } }, { :accession.in => accessions })
+      { studies: studies, results_matched_by_data: {}, metadata_matches: {} }
+    end
+  end
+
+  # take the output from :match_facet_filters_from_keywords and match to any possible CellMetadatum in the database
+  # will return a hash of accessions to matched metadata entries
+  def self.get_studies_from_term_conversion(terms)
+    accessions_to_filters = {}
+    filter_data = match_facet_filters_from_terms(terms)
+    filter_data.each do |identifier, values|
+      # we need to look in '__ontology_label' entries as well as these will include plain text entries
+      metadata_names = [identifier, "#{identifier}__ontology_label"]
+      matches = CellMetadatum.where(:name.in => metadata_names, :values.in => values)
+      matches.each do |metadata|
+        accession = metadata.study.accession
+        accessions_to_filters[accession] ||= {}
+        matched_values = values & metadata.values
+        matched_filters = matched_values.map { |val| { id: val, name: val } } # mimic facet filter matches for UI
+        metadata_name = metadata.name.chomp('__ontology_label') # for better labels in UI
+        accessions_to_filters[accession][metadata_name] = matched_filters
+      end
+    end
+    # compute weights for sorting, which is equivalent to the total number of filter matches
+    accessions_to_filters.each do |accession, results|
+      accessions_to_filters[accession][:facet_search_weight] = results.values.flatten.size
+    end
+    accessions_to_filters.with_indifferent_access
+  end
+
+  # take a term and match to a possible search facet/filter
+  # will return a single hash with keys as facet names, and values as an array of filter matches
+  def self.match_facet_filters_from_terms(term_list)
+    terms = term_list || []
+    filters_by_facet = {}
+    terms.each do |term|
+      facets = SearchFacet.find_facets_from_term(term)
+      next if facets.empty?
+
+      facets.each do |facet|
+        filter_list = facet.filters_with_external.any? ? :filters_with_external : :filters
+        matches = facet.find_filter_word_matches(term, filter_list: filter_list)
+        next if matches.empty?
+
+        filters_by_facet[facet.identifier] ||= []
+        filters_by_facet[facet.identifier] += matches
+      end
+    end
+    filters_by_facet.with_indifferent_access
+  end
+
+  # escape regular expression control characters from list of search terms and format for search
+  def self.escape_terms_for_regex(term_list:)
+    escaped_terms = term_list.map {|term| Regexp.quote term}
+    /(#{escaped_terms.join('|')})/i
+  end
 end
