@@ -6,7 +6,7 @@ import FacetControl from 'components/search/controls/FacetControl'
 import KeywordSearch from 'components/search/controls/KeywordSearch'
 import { PropsStudySearchProvider } from 'providers/StudySearchProvider'
 
-import { logSelectSearchResult } from 'components/search/results/StudySearchResult'
+import { logSelectSearchResult } from '~/lib/search-metrics'
 import * as MetricsApi from '~/lib/metrics-api'
 
 

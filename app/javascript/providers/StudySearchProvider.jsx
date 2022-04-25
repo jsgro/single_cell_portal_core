@@ -60,19 +60,6 @@ export function getNumFacetsAndFilters(facets) {
   return [numFacets, numFilters]
 }
 
-/** Converts raw searched terms to an array */
-export function formatTerms(terms) {
-  if (typeof terms === 'undefined' || terms === null) {return []}
-  return terms.trim().split(/[, ]/).filter(term => term.length > 0)
-}
-
-/** Determine if search has any parameters, i.e. terms or filters */
-export function hasSearchParams(params) {
-  const numTerms = formatTerms(params.terms).length
-  const [numFacets, numFilters] = getNumFacetsAndFilters(params.facets)
-  return numTerms + numFacets + numFilters > 0
-}
-
 /** returns the applied (i.e. sent to server for search) params for the given facet object */
 export function getAppliedParamsForFacet(facet, searchContext) {
   let appliedParams = []
