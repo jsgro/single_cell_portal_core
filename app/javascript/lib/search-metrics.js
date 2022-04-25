@@ -217,8 +217,8 @@ export function logSelectSearchResult(study, logProps={}) {
   // multiple results for a given search, e.g. via command key + click, and
   // this property lets us account for that when analyzing CTR and related
   // metrics.
-  logProps.numSearchSelections = numSearchSelections
   numSearchSelections += 1
+  logProps.numSearchSelections = numSearchSelections
 
   // We don't log study name, like Terra doesn't log workspace name, as it
   // might contain PII per original DSP Mixpanel design doc:
