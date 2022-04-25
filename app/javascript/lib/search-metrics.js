@@ -3,7 +3,6 @@ import camelcaseKeys from 'camelcase-keys'
 import { getNumFacetsAndFilters } from '~/providers/StudySearchProvider'
 import { log } from '~/lib/metrics-api'
 
-let prevNumSearches = -1
 let numSearchSelections = 0
 
 // See note in logSearch
@@ -138,6 +137,7 @@ export function logSearch(type, searchParams, perfTimes, searchResults) {
   }
 
   numSearches += 1 // Number of searches insofar as usage analytics is concerned
+  numSearchSelections = 0 // Number of selected results for the current search
 
   const {
     terms, termString, numTerms,
@@ -217,10 +217,6 @@ export function logSelectSearchResult(study, logProps={}) {
   // multiple results for a given search, e.g. via command key + click, and
   // this property lets us account for that when analyzing CTR and related
   // metrics.
-  if (numSearches !== prevNumSearches) {
-    numSearchSelections = 1
-    prevNumSearches = numSearches
-  }
   logProps.numSearchSelections = numSearchSelections
   numSearchSelections += 1
 
