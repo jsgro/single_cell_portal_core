@@ -48,6 +48,52 @@ class StudySearchServiceTest < ActiveSupport::TestCase
                                        convention_name: 'Alexandria Metadata Convention', convention_version: '2.2.0')
   end
 
+  test 'should generate query for keyword search' do
+    terms = 'cell'
+    query = StudySearchService.generate_mongo_query_by_context(terms: terms, base_studies: @base_studies,
+                                                               accessions: [], query_context: :keyword)
+    %i[studies metadata_matches results_matched_by_data].each do |key_name|
+      assert query.keys.include?(key_name)
+    end
+    found_studies = query[:studies].pluck(:accession).sort
+    assert_equal @base_studies.pluck(:accession).sort, found_studies
+    assert_equal 1, query[:results_matched_by_data]['numResults:scp:accession'.to_sym]
+    metadata_accession = @metadata_study.accession
+    assert query[:metadata_matches].keys == [metadata_accession]
+    expected_filters = [
+      { id: 'B cell', name: 'B cell' }.with_indifferent_access,
+      { id: 'amacrine cell', name: 'amacrine cell' }.with_indifferent_access,
+      { id: 'retinal cone cell', name: 'retinal cone cell' }.with_indifferent_access
+    ]
+    assert_equal expected_filters, query[:metadata_matches][metadata_accession][:cell_type]
+  end
+
+  test 'should generate query for phrase search' do
+    terms = ['amacrine cell']
+    query = StudySearchService.generate_mongo_query_by_context(terms: terms, base_studies: @base_studies,
+                                                               accessions: [], query_context: :phrase)
+    %i[studies metadata_matches results_matched_by_data].each do |key_name|
+      assert query.keys.include?(key_name)
+    end
+    found_studies = query[:studies].pluck(:accession)
+    assert_equal 1, query[:results_matched_by_data]['numResults:scp:accession'.to_sym]
+    metadata_accession = @metadata_study.accession
+    assert_equal [metadata_accession], found_studies
+    assert query[:metadata_matches].keys == [metadata_accession]
+    expected_filters = [
+      { id: 'amacrine cell', name: 'amacrine cell' }.with_indifferent_access,
+    ]
+    assert_equal expected_filters, query[:metadata_matches][metadata_accession][:cell_type]
+  end
+
+  test 'should generate query for accession-based search' do
+    accessions = [@name_study.accession]
+    query = StudySearchService.generate_mongo_query_by_context(terms: '', base_studies: @base_studies,
+                                                               accessions: accessions, query_context: '')
+    found_studies = query[:studies].pluck(:accession)
+    assert_equal accessions, found_studies
+  end
+
   test 'should find studies by converting keyword search' do
     matched_studies = StudySearchService.get_studies_from_term_conversion(['cell'])
     assert matched_studies[@metadata_study.accession].present?
