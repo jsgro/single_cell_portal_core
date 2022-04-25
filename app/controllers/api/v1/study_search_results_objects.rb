@@ -39,8 +39,9 @@ module Api
               (params[:scpbr].present? ? "?scpbr=#{params[:scpbr]}" : '')
           }
           if @studies_by_facet.present? && @studies_by_facet[study.accession].present?
-            # faceted search was run, so append filter matches
-            merged_data = merge_facet_matches(study_obj[:facet_matches], @studies_by_facet[study.accession])
+            # faceted search was run, so append filter matches after merging
+            merged_data = Api::V1::StudySearchResultsObjects.merge_facet_matches(study_obj[:facet_matches],
+                                                                                 @studies_by_facet[study.accession])
             study_obj[:facet_matches] = merged_data
           end
           if params[:terms].present?
@@ -49,7 +50,8 @@ module Api
             study_obj[:term_search_weight] = search_weight[:total]
             # also incorporate converted terms => facets for badges
             if @metadata_matches.present? && @metadata_matches[study.accession].present?
-              merged_data = merge_facet_matches(study_obj[:facet_matches], @metadata_matches[study.accession])
+              merged_data = Api::V1::StudySearchResultsObjects.merge_facet_matches(study_obj[:facet_matches],
+                                                                                   @metadata_matches[study.accession])
               study_obj[:facet_matches] = merged_data
             end
           end
@@ -93,18 +95,20 @@ module Api
       end
 
       # merge in multiple facet match data objects into a single merged entity for a given study
-      def merge_facet_matches(existing_data, new_data)
+      def self.merge_facet_matches(existing_data, new_data)
         study_data = existing_data || {}
         merged_match_data = {}
+        puts study_data
+        puts new_data
         all_keys = (study_data.keys + new_data.keys).uniq
         all_keys.delete(:facet_search_weight) # we will compute this at the end
         all_keys.each do |facet_name|
           merged_match_data[facet_name] ||= []
           merged_match_data[facet_name] += study_data[facet_name] if study_data[facet_name].present?
           merged_match_data[facet_name] += new_data[facet_name] if new_data[facet_name].present?
+          merged_match_data[facet_name].uniq! { |filter| filter[:name] }
         end
-        label = :facet_search_weight
-        merged_match_data[label] = study_data[label].to_i + new_data[label].to_i
+        merged_match_data[:facet_search_weight] = merged_match_data.values.flatten.size
         merged_match_data
       end
     end
