@@ -98,8 +98,6 @@ module Api
       def self.merge_facet_matches(existing_data, new_data)
         study_data = existing_data || {}
         merged_match_data = {}
-        puts study_data
-        puts new_data
         all_keys = (study_data.keys + new_data.keys).uniq
         all_keys.delete(:facet_search_weight) # we will compute this at the end
         all_keys.each do |facet_name|
