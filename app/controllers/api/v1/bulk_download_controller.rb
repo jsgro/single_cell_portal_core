@@ -3,7 +3,9 @@ module Api
     class BulkDownloadController < ApiBaseController
       before_action :authenticate_api_user!
 
-      DEFAULT_BULK_FILE_TYPES = ['Cluster', 'Metadata', 'Expression Matrix', 'MM Coordinate Matrix', '10X Genes File', '10X Barcodes File']
+      DEFAULT_BULK_FILE_TYPES = [
+        'Cluster', 'Metadata', 'Expression Matrix', 'MM Coordinate Matrix', '10X Genes File', '10X Barcodes File'
+      ].freeze
 
       swagger_path '/bulk_download/auth_code' do
         operation :post do
@@ -57,18 +59,17 @@ module Api
         half_hour = 1800 # seconds
 
         totat = current_api_user.create_totat(half_hour, api_v1_bulk_download_generate_curl_config_path)
-        valid_params = params.permit({ file_ids: [], azul_files: {} }).to_h
 
         # discard any empty Azul entries - this can happen if row is selected, but no file types are checked
-        if valid_params[:azul_files].present?
-          valid_azul_files = valid_params[:azul_files].reject { |_, files| files.empty? }
+        if bulk_download_params[:azul_files].present?
+          valid_azul_files = bulk_download_params.to_unsafe_hash[:azul_files].reject { |_, files| files.empty? }
         end
 
         # for now, we don't do any permissions validation on the param values -- we'll do that during the actual download, since
         # quota/files/permissions may change between the creation of the download and the actual download.
         auth_download = DownloadRequest.create!(
           auth_code: totat[:totat],
-          file_ids: valid_params[:file_ids],
+          file_ids: bulk_download_params[:file_ids],
           azul_files: valid_azul_files,
           user_id: current_api_user.id
         )
@@ -460,6 +461,12 @@ module Api
           # fallback case, return empty array to prevent downstream errors
           []
         end
+      end
+
+      private
+
+      def bulk_download_params
+        params.require(:bulk_download).permit(file_ids: [], azul_files: {})
       end
     end
   end
