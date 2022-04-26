@@ -7,6 +7,7 @@ import Modal from 'react-bootstrap/lib/Modal'
 import Select from '~/lib/InstrumentedSelect'
 import { clusterSelectStyle } from '~/lib/cluster-utils'
 import { newlineRegex } from '~/lib/validation/io'
+import { fetchBucketFile } from '~/lib/scp-api'
 
 // value to render in select menu if user has not selected a gene list
 const noneSelected = 'Select a group'
@@ -17,7 +18,7 @@ function getSimpleOptions(stringArray) {
   return [{ label: noneSelected, value: '' }].concat(stringArray.map(assignLabelsAndValues))
 }
 
-const nonAlphaNumericRE = /W/ig
+const nonAlphaNumericRE = /\W/g
 
 /** Pick groups of cells for differential expression (DE) */
 export default function DeGroupPicker({ exploreInfo, setShowDeGroupPicker, updateDeGroup }) {
@@ -31,28 +32,37 @@ export default function DeGroupPicker({ exploreInfo, setShowDeGroupPicker, updat
   const [group, setGroup] = useState(noneSelected)
 
   /** Update group in DE picker */
-  async function updateGroup(newGroup) {
+  async function fetchGroup() {
+    const bucketId = exploreInfo?.bucketId
+
     // <cluster_name>--<annotation_name>--<group_name>--<annotation_scope>--<method>.tsv
-    //
     const deFileName = `${[
       exploreInfo?.annotationList?.default_cluster,
       annotation.name,
-      newGroup,
-      annotation.scope
+      group,
+      'wilcoxon'
+      // annotation.scope
     ]
       .map(s => s.replaceAll(nonAlphaNumericRE, '_'))
       .join('--') }.tsv`
 
-    const bucketId = exploreInfo?.bucketId
+    const deFilePath = `_scp-internal/de/${deFileName}`.replaceAll('/', '%2F')
 
     const gcsUrlBase = 'https://www.googleapis.com/storage/v1/b/'
-    const deUrl = `${gcsUrlBase}${bucketId}/o/${deFileName}`
+    const deUrl = `${gcsUrlBase}${bucketId}/o/${deFilePath}?alt=media`
 
-    const data = await fetch(deUrl)
+
+    console.log('deUrl')
+    console.log(deUrl)
+    const data = await fetchBucketFile(bucketId, deFilePath)
     const tsv = await data.text()
+    console.log('tsv')
+    console.log(tsv)
     const tsvLines = tsv.split(newlineRegex)
+
     // `<cluster_name>--<annotation_name>--<group_name>--<annotation_scope>--<method>.tsv
     // fetchDeFromBucket()
+    setShowDeGroupPicker(false)
   }
 
   console.log('group')
@@ -89,7 +99,7 @@ export default function DeGroupPicker({ exploreInfo, setShowDeGroupPicker, updat
         </div>
       </Modal.Body>
       <Modal.Footer>
-        <button className="btn btn-primary" onClick={() => {}}>OK</button>
+        <button className="btn btn-primary" onClick={() => {fetchGroup()}}>OK</button>
         <button className="btn terra-btn-secondary" onClick={() => setShowDeGroupPicker(false)}>Cancel</button>
       </Modal.Footer>
     </Modal>

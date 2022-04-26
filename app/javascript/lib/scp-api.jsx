@@ -326,7 +326,7 @@ export async function deleteStudyFile(studyAccession, fileId, mock=false) {
  * @param {String} bucketName bucket name
  * @param {String} fileName file name
 */
-export async function fetchBucketFile(bucketName, fileName, maxBytes=null, mock=false) {
+export async function fetchBucketFile(bucketName, fileName, maxBytes=null, token=null, mock=false) {
   const init = {
     method: 'GET',
     headers: {

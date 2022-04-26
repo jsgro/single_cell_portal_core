@@ -6,6 +6,9 @@
       window.SCP.readOnlyToken = '<%= get_read_access_token(@study, current_user) %>'
     }
   <% end %>
+
+  // TODO: Feature-flag this for DE, refine before making GA
+  window.SCP.readOnlyToken = '<%= get_read_access_token(@study, current_user) %>'
 </script>
 
 
