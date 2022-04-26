@@ -12,9 +12,9 @@ import * as queryString from 'query-string'
 
 import { getAccessToken } from '~/providers/UserProvider'
 import {
-  logSearch, logDownloadAuthorization, logCreateUserAnnotation,
-  mapFiltersForLogging
+  logDownloadAuthorization, logCreateUserAnnotation
 } from './scp-api-metrics'
+import { logSearch, mapFiltersForLogging } from './search-metrics'
 import { showMessage } from '~/lib/MessageModal'
 
 // If true, returns mock data for all API responses.  Only for dev.

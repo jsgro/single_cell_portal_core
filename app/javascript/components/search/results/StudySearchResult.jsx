@@ -1,15 +1,11 @@
 /* eslint-disable require-jsdoc */
 import React from 'react'
-import camelcaseKeys from 'camelcase-keys'
-
 
 import { getDisplayNameForFacet } from '~/providers/SearchFacetProvider'
-import { log } from '~/lib/metrics-api'
-import { numSearches, getSearchQueryLogProps } from '~/lib/scp-api-metrics'
+import { logSelectSearchResult } from '~/lib/search-metrics'
 
 export const descriptionCharacterLimit = 750
 export const summaryWordLimit = 150
-
 
 const lengthOfHighlightTag = 21
 
@@ -172,94 +168,6 @@ function studyTypeBadge(study) {
     return <span className="badge badge-secondary study-type" data-toggle="tooltip"
       title={'Study from Human Cell Atlas'}> Human Cell Atlas </span>
   }
-}
-
-/**
- * Log analytics about search result selection to Mixpanel
- *
- * This logging differentiates properties about the selected result from
- * properties about other aspects of the search -- e.g. the full result set
- * and query -- by prefixing the latter with a "namespace", i.e. `results:`.
- *
- * @param {Object} study Selected result
- * @param {Object} logProps Other properties to log
- *
- * TODO (SCP-4256): Refine search result selection logging
- * TODO (SCP-4257): Eliminate duplicate default/custom search event logging
- */
-export function logSelectSearchResult(study, logProps={}) {
-  logProps = Object.assign(
-    {
-      studyAccession: study.accession,
-      context: 'study',
-      scope: 'global'
-    },
-    study,
-    logProps
-  )
-  delete logProps.accession // Redundant with more-conventional studyAccession
-
-  Object.entries(logProps.results).forEach(([key, value]) => {
-    if (['termList', 'geneList'].includes(key)) {
-      // Redundant with pre-existing `terms` and `genes` Mixpanel props
-      return
-    }
-    logProps[`results:${key}`] = value
-  })
-  delete logProps.results // Remove nested property; flattened above
-
-  // Number of searches done before this result was selected.
-  // This is needed to easily analyze changes in click-through rate (CTR).
-  logProps.numSearches = numSearches
-
-  // We don't log study name, like Terra doesn't log workspace name, as it
-  // might contain PII per original DSP Mixpanel design doc:
-  // https://docs.google.com/document/d/1di8uwv-nDMNJp83Gs9Q_mlZp3q1DFboXGPLzbsbPyn8/edit
-  delete logProps.name
-  delete logProps.study_url // Has name
-  delete logProps.description // Too similar to name
-  delete logProps['results:studies'] // Includes above
-
-  // Objects can't be queried in Mixpanel, so flatten matchByData
-  if (logProps['results:matchByData'] !== null) {
-    Object.entries(logProps['results:matchByData']).forEach(([key, value]) => {
-      logProps[`results:${key}`] = value
-    })
-  }
-  delete logProps['results:matchByData']
-
-  const logPropsByRailsKey = {
-    'results:totalStudies': 'results:numTotalStudies',
-    'results:totalPages': 'results:numTotalPages',
-    'results:gene_count': 'results:numGenes',
-    'results:cell_count': 'results:numCells',
-    'gene_count': 'numGenes',
-    'cell_count': 'numCells'
-  }
-  let refinedLogProps = {}
-  Object.entries(logProps).forEach(([key, value]) => {
-    if (key in logPropsByRailsKey) {
-      key = logPropsByRailsKey[key]
-    }
-    refinedLogProps[key] = value
-  })
-
-  refinedLogProps = camelcaseKeys(refinedLogProps)
-
-  const searchQueryLogProps = getSearchQueryLogProps(
-    logProps['results:terms'],
-    logProps['results:genes'],
-    {} // logProps['results:facets'] // TODO as part of SCP-4256
-  )
-
-  // Distinguish query parameters from "results" parameters
-  Object.entries(searchQueryLogProps).forEach(([key, value]) => {
-    delete refinedLogProps[`results:${key}`]
-    refinedLogProps[`query:${key}`] = value
-  })
-  delete refinedLogProps[`results:facets`] // Refactor as part of SCP-4256
-
-  log('select-search-result', refinedLogProps)
 }
 
 /** Displays a brief summary of a study, with a link to the study page */
