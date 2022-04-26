@@ -23,7 +23,7 @@ export default function KeywordSearch({ keywordPrompt }) {
   const [showTextSearchHelpModal, setTextShowSearchHelpModal] = useState(false)
 
   const textSearchModalContent = (<div>
-    <h4 className="text-center">Keyword search</h4>
+    <h4 className="text-center">Text search</h4>
     <p>Use the search box below to perform a text-based search on study titles, descriptions, authors*, and metadata.</p>
     <ul>
       <li>
@@ -69,7 +69,7 @@ export default function KeywordSearch({ keywordPrompt }) {
       className='study-keyword-search'
     >
       <span className='text-search search-title'>
-        Search by keyword {textSearchLink}
+        Search by text {textSearchLink}
       </span>
       <InputGroup>
         <input
