@@ -23,13 +23,15 @@ export default function KeywordSearch({ keywordPrompt }) {
   const [showTextSearchHelpModal, setTextShowSearchHelpModal] = useState(false)
 
   const textSearchModalContent = (<div>
-    <h4 className="text-center">Title, author, and description search</h4>
-    <p>Use the search box below to perform a text-based search on study titles, descriptions and authors*.</p>
+    <h4 className="text-center">Keyword search</h4>
+    <p>Use the search box below to perform a text-based search on study titles, descriptions, authors*, and metadata.</p>
     <ul>
-      <li>A search without quotes (i.e. not wrapped in &quot;) will return any study that contains any of the specified terms.</li>
-      <li>To search for an exact phrase within a study title or description use quotes around the entire phrase like:</li>
+      <li>
+        A search without quotes (i.e. not wrapped in &quot;) will return any study that contains any of the specified terms.
+      </li>
+      <li>To search for an exact phrase within studies use quotes around the entire phrase like:</li>
       <p>&quot;single cell&quot;</p>
-      <li> To search for studies that contain an exact phrase and/or the other search terms, combine single terms and quoted phrases like:</li>
+      <li>To search for studies that contain an exact phrase and/or the other search terms, combine single terms and quoted phrases like:</li>
       <p>&quot;single cell&quot; Smith</p>
     </ul>
     <p>* Structured data for authors is new in SCP, and many studies lack it, so author search results may be limited.</p>
@@ -67,7 +69,7 @@ export default function KeywordSearch({ keywordPrompt }) {
       className='study-keyword-search'
     >
       <span className='text-search search-title'>
-        Title, author, and description search {textSearchLink}
+        Search by keyword {textSearchLink}
       </span>
       <InputGroup>
         <input

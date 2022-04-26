@@ -138,6 +138,8 @@ class StudySearchService
       metadata_names = [identifier, "#{identifier}__ontology_label"]
       matches = CellMetadatum.where(:name.in => metadata_names, :values.in => values)
       matches.each do |metadata|
+        next if metadata.study.queued_for_deletion
+
         accession = metadata.study.accession
         accessions_to_filters[accession] ||= {}
         matched_values = values & metadata.values
