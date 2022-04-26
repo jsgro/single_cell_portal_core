@@ -30,7 +30,8 @@ class StudySearchServiceTest < ActiveSupport::TestCase
     @filters = [
       { id: 'CL_0000236', name: 'B cell' },
       { id: 'CL_0000561', name: 'amacrine cell' },
-      { id: 'CL_0000573', name: 'retinal cone cell' }
+      { id: 'CL_0000573', name: 'retinal cone cell' },
+      { id: 'CL_0000103', name: 'bipolar neuron' }
     ]
     @search_facet = SearchFacet.create(name: 'Cell type', identifier: 'cell_type',
                                        filters: @filters,
@@ -92,19 +93,19 @@ class StudySearchServiceTest < ActiveSupport::TestCase
                                                                accessions: accessions, query_context: '')
     found_studies = query[:studies].pluck(:accession)
     assert_equal accessions, found_studies
-    puts query[:results_matched_by_data]
   end
 
   test 'should find studies by converting keyword search' do
     matched_studies = StudySearchService.get_studies_from_term_conversion(['cell'])
     assert matched_studies[@metadata_study.accession].present?
-    assert_equal (@filters.map { |f| f[:name] }),
-                 (matched_studies[@metadata_study.accession][:cell_type].map { |f| f[:name] })
+    expected_results = @filters.map { |filter| filter[:name] }.select { |f| f =~ /cell/ }
+    assert_equal expected_results, matched_studies[@metadata_study.accession][:cell_type].map { |f| f[:name] }
   end
 
   test 'should match facet filters from terms' do
     cell_matches = StudySearchService.match_facet_filters_from_terms(%w[cell])
-    expected_match = { cell_type: @filters.map { |f| f[:name] } }.with_indifferent_access
+    expected_filters = @filters.map { |filter| filter[:name] }.select { |f| f =~ /cell/ }
+    expected_match = { cell_type: expected_filters }.with_indifferent_access
     assert_equal expected_match, cell_matches
     amacrine_match = StudySearchService.match_facet_filters_from_terms(%w[amacrine])
     expected_match = { cell_type: ['amacrine cell'] }.with_indifferent_access
