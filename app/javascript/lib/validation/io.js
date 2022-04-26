@@ -11,6 +11,8 @@
 
 import { gunzip, strFromU8 } from 'fflate'
 
+export const newlineRegex = /\r?\n/
+
 export const oneMiB = 1024 * 1024 // 1 MiB, i.e. mebibyte
 export const oneGiB = oneMiB * 1024 // 1 GiB, i.e. gebibyte
 export const DEFAULT_CHUNK_SIZE = oneMiB

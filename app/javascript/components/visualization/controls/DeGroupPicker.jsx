@@ -6,9 +6,10 @@ import Modal from 'react-bootstrap/lib/Modal'
 
 import Select from '~/lib/InstrumentedSelect'
 import { clusterSelectStyle } from '~/lib/cluster-utils'
+import { newlineRegex } from '~/lib/validation/io'
 
 // value to render in select menu if user has not selected a gene list
-const noneSelected = 'Select a group...'
+const noneSelected = 'Select a group'
 
 /** Takes array of strings, converts it to list options suitable for react-select */
 function getSimpleOptions(stringArray) {
@@ -16,21 +17,46 @@ function getSimpleOptions(stringArray) {
   return [{ label: noneSelected, value: '' }].concat(stringArray.map(assignLabelsAndValues))
 }
 
+const nonAlphaNumericRE = /W/ig
+
 /** Pick groups of cells for differential expression (DE) */
-export default function DeGroupPicker({ exploreInfo, setShowDeGroupPicker }) {
+export default function DeGroupPicker({ exploreInfo, setShowDeGroupPicker, updateDeGroup }) {
   console.log('in DeGroupPicker, exploreInfo:')
   console.log(exploreInfo)
-  const groups = exploreInfo?.annotationList?.default_annotation?.values ?? []
+  const annotation = exploreInfo?.annotationList?.default_annotation
+  const groups = annotation?.values ?? []
 
   // const [groupOptions, setGroupOptions] = useState(getGroupOptions(groups))
 
-  const [group, setGroup] = useState(groups[0])
+  const [group, setGroup] = useState(noneSelected)
 
   /** Update group in DE picker */
-  function updateGroup(newGroup) {
-    console.log('in updateGroup')
-    setGroup(newGroup)
+  async function updateGroup(newGroup) {
+    // <cluster_name>--<annotation_name>--<group_name>--<annotation_scope>--<method>.tsv
+    //
+    const deFileName = `${[
+      exploreInfo?.annotationList?.default_cluster,
+      annotation.name,
+      newGroup,
+      annotation.scope
+    ]
+      .map(s => s.replaceAll(nonAlphaNumericRE, '_'))
+      .join('--') }.tsv`
+
+    const bucketId = exploreInfo?.bucketId
+
+    const gcsUrlBase = 'https://www.googleapis.com/storage/v1/b/'
+    const deUrl = `${gcsUrlBase}${bucketId}/o/${deFileName}`
+
+    const data = await fetch(deUrl)
+    const tsv = await data.text()
+    const tsvLines = tsv.split(newlineRegex)
+    // `<cluster_name>--<annotation_name>--<group_name>--<annotation_scope>--<method>.tsv
+    // fetchDeFromBucket()
   }
+
+  console.log('group')
+  console.log(group)
 
   return (
     <Modal
@@ -51,7 +77,7 @@ export default function DeGroupPicker({ exploreInfo, setShowDeGroupPicker }) {
             }}
             // getOptionLabel={group1 => group1}
             // getOptionValue={group1 => group1}
-            onChange={newGroup => updateGroup(newGroup)}
+            onChange={newGroup => setGroup(newGroup.value)}
             styles={clusterSelectStyle}
           />
           {/* <span className="flexbox-align-center">
