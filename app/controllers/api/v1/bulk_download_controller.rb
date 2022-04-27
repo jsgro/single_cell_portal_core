@@ -16,18 +16,26 @@ module Api
           key :description, 'Create and return a one-time authorization code (OTAC) to identify a user for bulk downloads'
           key :operationId, 'bulk_download_auth_code_path'
           parameter do
-            key :name, :file_ids
-            key :type, :string
+            key :name, :bulk_download
+            key :type, :object
             key :in, :body
-            key :description, 'Comma-delimited list of StudyFile IDs (such as returned from the summary endpoint)'
-            key :required, true
-          end
-          parameter do
-            key :name, :tdr_files
-            key :type, :json
-            key :in, :body
-            key :description, 'Hash of file arrays to download from TDR, keyed by accession. Each file should specify URL and name'
-            key :required, true
+            schema do
+              property :file_ids do
+                key :type, :string
+                key :description, 'Comma-delimited list of StudyFile IDs (such as returned from the summary endpoint)'
+                key :required, true
+                key :example, "6269614d94ec8f18bd30f94a,6269614e94ec8f18bd30f94b,6269614f94ec8f18bd30f94c"
+              end
+              property :tdr_files do
+                key :type, :object
+                key :description, 'Hash of file arrays to download from TDR, keyed by accession. Each file should specify name, file_type, and project_id'
+                key :required, true
+                key :example, "{ HCAProjectName: [{'project_id': 'a39728aa-70a0-4201-b0a2-81b7badf3e71', " \
+                              "'name': 'HCAProjectName.tsv', 'file_type': 'Project Manifest', 'count': 1}, " \
+                              "{'project_id': 'a39728aa-70a0-4201-b0a2-81b7badf3e71', 'file_format': 'loom', " \
+                              "'file_type': 'analysis_file', 'count'=>2}]}"
+              end
+            end
           end
           response 200 do
             key :description, 'One-time auth code and time interval, in seconds'
