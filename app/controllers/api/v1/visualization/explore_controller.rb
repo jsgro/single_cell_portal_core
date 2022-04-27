@@ -139,7 +139,8 @@ module Api
           image_options = ClusterVizService.load_image_options(study)
           bam_bundle_list = study.study_file_bundles.where(bundle_type: 'BAM').pluck(:original_file_list)
           precomputed_scores = ActiveRecordUtils.pluck_to_hash(
-            study.study_files.where(file_type: 'Gene List'), [:name, :y_axis_label, :heatmap_absolute_scaling, :description]
+            study.study_files.where(file_type: 'Gene List'),
+              [:name, :heatmap_file_info, :description]
           )
           {
             cluster: cluster,
@@ -148,6 +149,7 @@ module Api
             bamBundleList: bam_bundle_list,
             uniqueGenes: study.unique_genes,
             geneLists: precomputed_scores,
+            precomputedHeatmapLabel: study.default_options[:precomputed_heatmap_label],
             annotationList: AnnotationVizService.get_study_annotation_options(study, user),
             clusterGroupNames: ClusterVizService.load_cluster_group_options(study),
             spatialGroups: spatial_group_options,

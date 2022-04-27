@@ -22,7 +22,8 @@ function getGeneListOptions(studyGeneLists) {
 export default function GeneListSelector({
   geneList,
   studyGeneLists,
-  updateGeneList
+  updateGeneList,
+  selectLabel='Precomputed heatmaps'
 }) {
   if (!studyGeneLists || studyGeneLists.length === 0) {
     return <></>
@@ -30,7 +31,7 @@ export default function GeneListSelector({
   const geneListOptions = getGeneListOptions(studyGeneLists)
   return (
     <div className="form-group">
-      <label className="labeled-select">Gene Lists
+      <label className="labeled-select">{selectLabel}
         <Select
           data-analytics-name="gene-list-select"
           value={{

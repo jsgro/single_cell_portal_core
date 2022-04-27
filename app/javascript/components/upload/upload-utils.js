@@ -47,7 +47,8 @@ export function newStudyFileObj(studyId) {
     description: '',
     parse_status: 'unparsed',
     spatial_cluster_associations: [],
-    expression_file_info: {}
+    expression_file_info: {},
+    heatmap_file_info: {}
   }
 }
 
@@ -77,6 +78,14 @@ export function formatFileFromServer(file) {
     file.expression_file_info = {
       is_raw_counts: false,
       raw_counts_associations: []
+    }
+  }
+  if (file.file_type === 'Gene List' && !file.heatmap_file_info) {
+    // some legacy studies will not have supplemental expression file info
+    file.heatmap_file_info = {
+      custom_coloring: false,
+      color_min: -1,
+      color_max: 1
     }
   }
   return file

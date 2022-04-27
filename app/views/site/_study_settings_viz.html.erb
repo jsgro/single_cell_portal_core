@@ -40,6 +40,12 @@
           <%= opts.text_field :expression_label, value: @study.default_options[:expression_label], placeholder: @study.default_expression_label, class: 'form-control' %>
         </div>
       </div>
+      <div class="form-group row">
+        <div class="col-sm-12">
+          <%= opts.label :precomputed_heatmap_label, 'Precomputed heatmap menu label' %>&nbsp;<span class="fas fa-question-circle" data-toggle="tooltip" data-placement="right" title='This is displayed above the list of uploaded precomputed heatmaps.'></span> <br />
+          <%= opts.text_field :precomputed_heatmap_label, value: @study.default_options[:precomputed_heatmap_label], placeholder: 'Precomputed heatmaps', class: 'form-control' %>
+        </div>
+      </div>
     <% end %>
   </div>
   <script type="text/javascript" nonce="<%= content_security_policy_script_nonce %>">

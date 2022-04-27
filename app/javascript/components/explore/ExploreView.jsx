@@ -43,15 +43,6 @@ function RoutableExploreTab({ studyAccession }) {
 
   useEffect(() => {loadStudyData()}, [studyAccession])
 
-  useEffect(() => {
-    // if the user hasn't selected anything, and there are genelists to view, but no clusters
-    // default to the first gene list
-    if ((exploreInfo && exploreInfo.annotationList.clusters.length === 0 &&
-      exploreInfo.geneLists.length && !exploreParams.tab && !exploreParams.geneList)) {
-      updateExploreParams({ geneList: exploreInfo.geneLists[0].name })
-    }
-  }, [exploreInfo?.geneLists])
-
   return (
     <div className="study-explore">
       <MessageModal/>

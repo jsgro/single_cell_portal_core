@@ -5,15 +5,19 @@ import { AddFileButton } from './form-components'
 
 const DEFAULT_NEW_GENE_LIST_FILE = {
   file_type: 'Gene List',
-  heatmap_absolute_scaling: false,
+  heatmap_file_info: {
+    custom_scaling: false,
+    color_min: -1,
+    color_max: 1
+  },
   options: {}
 }
 
 const geneListFileFilter = file => file.file_type === 'Gene List'
 
 export default {
-  title: 'Precomputed expression stats',
-  header: 'Precomputed expression stats',
+  title: 'Precomputed heatmaps',
+  header: 'Precomputed heatmaps',
   name: 'geneLists',
   component: GeneListForm,
   fileFilter: geneListFileFilter
@@ -52,8 +56,8 @@ function GeneListForm({
               Example file
             </a>
             <br/>
-            By default, the dropdown name for these files will be "Gene lists",
-            you can customize that in <a href={`/study/${formState.study.accession}#study-settings`} target="_blank">study settings</a>
+            By default, the dropdown name for these files is "Precomputed heatmaps."
+            Customize that dropdown name in 'View Options' of <a href={`/single_cell/study/${formState.study.accession}#study-settings`} target="_blank">study settings</a>
           </p>
         </div>
       </div>

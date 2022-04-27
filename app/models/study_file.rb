@@ -71,9 +71,11 @@ class StudyFile
   belongs_to :study_file_bundle, optional: true
   embeds_one :expression_file_info
   embeds_one :cluster_file_info, cascade_callbacks: true
+  embeds_one :heatmap_file_info
 
   accepts_nested_attributes_for :expression_file_info
   accepts_nested_attributes_for :cluster_file_info
+  accepts_nested_attributes_for :heatmap_file_info
   validate :show_exp_file_info_errors
 
   # field definitions
@@ -97,7 +99,7 @@ class StudyFile
   field :z_axis_min, type: Integer
   field :z_axis_max, type: Integer
   field :is_spatial, type: Boolean, default: false
-  field :heatmap_absolute_scaling, type: Boolean, default: false
+
   # for spatial files, the ids of cluster files that correspond to this file for default display
   field :spatial_cluster_associations, type: Array, default: []
   field :queued_for_deletion, type: Boolean, default: false
