@@ -76,9 +76,8 @@ export function renderHeatmap({
 */
 export function refitHeatmap(morpheusHeatmap, fit='') {
   if (morpheusHeatmap && morpheusHeatmap.fitToWindow) {
-    if (fit === '') {
-      morpheusHeatmap.resetZoom()
-    } else {
+    morpheusHeatmap.resetZoom()
+    if (fit !== '') {
       morpheusHeatmap.fitToWindow({
         fitRows: fit === 'rows' || fit === 'both',
         fitColumns: fit === 'cols' || fit === 'both',

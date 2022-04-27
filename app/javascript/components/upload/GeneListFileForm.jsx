@@ -30,7 +30,7 @@ export default function GeneListFileForm({
   }}>
     <TextFormField label="Name" fieldName="name" file={file} updateFile={updateFile}/>
     <TextFormField label="Description (shown above heatmap)" fieldName="description" file={file} updateFile={updateFile}/>
-    <TextFormField label="Computed value name (legend label)" fieldName="y_axis_label" file={file} updateFile={updateFile}/>
+    <TextFormField label="Computed value name (legend label)" fieldName="heatmap_file_info.legend_label" file={file} updateFile={updateFile}/>
     <div className="form-group">
       <label>Color scale</label><br/>
       <label className="sublabel">

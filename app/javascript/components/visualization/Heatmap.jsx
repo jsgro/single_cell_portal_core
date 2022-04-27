@@ -71,7 +71,7 @@ function RawHeatmap({
   ])
 
   useUpdateEffect(() => {
-    refitHeatmap(morpheusHeatmap?.current)
+    refitHeatmap(morpheusHeatmap?.current, heatmapFit)
   }, [heatmapFit])
 
   return (

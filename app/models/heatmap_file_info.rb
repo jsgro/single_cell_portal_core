@@ -7,4 +7,5 @@ class HeatmapFileInfo
   field :custom_scaling, type: Boolean, default: false
   field :color_min, type: Float
   field :color_max, type: Float
+  field :legend_label, type: String
 end

@@ -4,8 +4,6 @@ import _uniqueId from 'lodash/uniqueId'
 import { log } from '~/lib/metrics-api'
 import { renderHeatmap, refitHeatmap } from '~/lib/morpheus-heatmap'
 import { getExpressionHeatmapURL, getGeneListColsURL } from '~/lib/scp-api'
-import PlotUtils from '~/lib/plot'
-const { dotPlotColorScheme } = PlotUtils
 import { useUpdateEffect } from '~/hooks/useUpdate'
 import useErrorMessage from '~/lib/error-message'
 import { withErrorBoundary } from '~/lib/ErrorBoundary'
@@ -31,11 +29,11 @@ function RawGeneListHeatmap({
   // we can't render until we know what the cluster is, since morpheus requires the annotation name
   // so don't try until we've received this, unless we're showing a Gene List
   const canRender = !!geneListName && geneLists.length
-  const isCustomScaling = heatmapRowCentering === true || heatmapRowCentering === 'true'
+
   const geneListInfo = geneLists.find(gl => gl.name === geneListName)
   const description = geneListInfo?.description
-  const yAxisLabel = geneListInfo?.y_axis_label
   const annotationCellValuesURL = getGeneListColsURL({ studyAccession, geneList: geneListName })
+  const isCustomScaling = heatmapRowCentering === true || heatmapRowCentering === 'true'
   const colorMin = isCustomScaling ? geneListInfo.heatmap_file_info?.color_min : null
   const colorMax = isCustomScaling ? geneListInfo.heatmap_file_info?.color_max : null
   // For baffling reasons, morpheus will not render a geneList heatmap correctly unless
@@ -68,7 +66,7 @@ function RawGeneListHeatmap({
   ])
 
   useUpdateEffect(() => {
-    refitHeatmap(morpheusHeatmap?.current)
+    refitHeatmap(morpheusHeatmap?.current, heatmapFit)
   }, [heatmapFit])
 
 
@@ -82,9 +80,7 @@ function RawGeneListHeatmap({
         { ErrorComponent }
         <LoadingSpinner isLoading={!canRender}>
           <div id={graphId} className="heatmap-graph" style={{ minWidth: '80vw' }}></div>
-
         </LoadingSpinner>
-        <HeatmapLegend label={yAxisLabel} minLabel={colorMin ?? undefined} maxLabel={colorMax ?? undefined}/>
       </div>
 
     </div>
@@ -95,35 +91,3 @@ function RawGeneListHeatmap({
 const GeneListHeatmap = withErrorBoundary(RawGeneListHeatmap)
 export default GeneListHeatmap
 
-/** renders an svg legend for a dotplot with color and size indicators */
-function HeatmapLegend({ label='Scaled expression', minLabel='min', maxLabel='max' }) {
-  const gradientId = _uniqueId('heatmapGrad-')
-  const colorBarWidth = 100
-  const numberYPos = 54
-  const labelTextYPos = 25
-  const heatmapColorScheme = {
-    // Blue, white, red.  These red and blue hues are accessible, per WCAG.
-    colors: ['#0000BB', '#f6f6f6', '#FF0000'],
-    values: [0, 0.5, 1]
-  }
-
-  return (
-    <svg className="dot-plot-legend-container">
-      <g className="dp-legend-color" transform="translate(200, 0)">
-        <linearGradient id={gradientId} x1="0%" y1="0%" x2="100%" y2="0%">
-          {
-            heatmapColorScheme.colors.map((color, i) => {
-              const value = dotPlotColorScheme.values[i] * 100
-              const offset = `${value}%`
-              return <stop offset={offset} stopColor={color} key={i}/>
-            })
-          }
-        </linearGradient>
-        <text x="0" y={labelTextYPos}>{label}</text>
-        <rect fill={`url(#${gradientId})`} x="0" y="30" width={colorBarWidth} height="14"/>
-        <text x="-1" y={numberYPos}>{minLabel}</text>
-        <text x={colorBarWidth} y={numberYPos} textAnchor="end">{maxLabel}</text>
-      </g>
-    </svg>
-  )
-}
