@@ -81,7 +81,7 @@ export function formatFileFromServer(file) {
     }
   }
   if (file.file_type === 'Gene List' && !file.heatmap_file_info) {
-    // some legacy studies will not have supplemental expression file info
+    // some legacy studies will not have supplemental heatmap file info
     file.heatmap_file_info = {
       custom_coloring: false,
       color_min: -1,

@@ -16,7 +16,6 @@ import LoadingSpinner from '~/lib/LoadingSpinner'
   * @param cluster {string} the name of the cluster, or blank/null for the study's default
   * @param annotation {obj} an object with name, type, and scope attributes
   * @param subsample {string} a string for the subsampel to be retrieved.
-  * @param geneList {string} a string for the gene list (precomputed score) to be retrieved.
  */
 function RawHeatmap({
   studyAccession, genes=[], cluster, annotation={}, subsample, heatmapFit, heatmapRowCentering

@@ -13,11 +13,8 @@ import LoadingSpinner from '~/lib/LoadingSpinner'
 
 
 /** renders a morpheus powered heatmap for the given params
-  * @param genes {Array[String]} array of gene names
-  * @param cluster {string} the name of the cluster, or blank/null for the study's default
-  * @param annotation {obj} an object with name, type, and scope attributes
-  * @param subsample {string} a string for the subsampel to be retrieved.
   * @param geneList {string} a string for the gene list (precomputed score) to be retrieved.
+  * @param geneLists {Array} array of gene list information, such as returned by the explore_controller
  */
 function RawGeneListHeatmap({
   studyAccession, geneList: geneListName,
@@ -125,8 +122,7 @@ function HeatmapLegend({ label='Scaled expression', minLabel='min', maxLabel='ma
         <text x="0" y={labelTextYPos}>{label}</text>
         <rect fill={`url(#${gradientId})`} x="0" y="30" width={colorBarWidth} height="14"/>
         <text x="-1" y={numberYPos}>{minLabel}</text>
-        <text x={colorBarWidth - 25} y={numberYPos}>{maxLabel}</text>
-
+        <text x={colorBarWidth} y={numberYPos} textAnchor="end">{maxLabel}</text>
       </g>
     </svg>
   )

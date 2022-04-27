@@ -182,7 +182,8 @@ export default function ExploreDisplayTabs({
       updateExploreParams({
         geneList: geneListName,
         heatmapRowCentering: geneListInfo.heatmap_file_info?.custom_scaling,
-        heatmapFit: 'rows'
+        heatmapFit: 'rows',
+        genes: []
       })
     }
   }

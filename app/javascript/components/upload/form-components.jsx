@@ -19,10 +19,10 @@ export function AddFileButton({ newFileTemplate, addNewFile }) {
 export function TextFormField({ label, fieldName, file, updateFile }) {
   const fieldId = `${fieldName}-input-${file._id}`
   let value = file[fieldName] ? file[fieldName] : ''
-  if (fieldName.includes('.')) {
+  const [objName, nestedPropName] = fieldName.split('.')
+  if (nestedPropName) {
     // handle a nested property like 'heatmap_file_info.custom_scaling'
-    const [objName, propName] = fieldName.split('.')
-    value = file[objName][propName] ? file[objName][propName] : ''
+    value = file[objName][nestedPropName] ? file[objName][nestedPropName] : ''
   }
   return <div className="form-group">
     <label htmlFor={fieldId}>{label}</label><br/>
@@ -32,11 +32,10 @@ export function TextFormField({ label, fieldName, file, updateFile }) {
       value={value}
       onChange={event => {
         const update = {}
-        if (fieldName.includes('.')) {
+        if (nestedPropName) {
           // handle a nested property like 'heatmap_file_info.custom_scaling'
-          const [objName, propName] = fieldName.split('.')
           update[objName] = {}
-          update[objName][propName] = event.target.value
+          update[objName][nestedPropName] = event.target.value
         } else {
           update[fieldName] = event.target.value
         }
