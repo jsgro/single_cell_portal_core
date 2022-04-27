@@ -421,11 +421,4 @@ class BulkDownloadControllerTest < ActionDispatch::IntegrationTest
     assert_equal [@basic_study.accession, study.accession].sort, scp_accessions.sort
     assert_equal %w[FakeHCAProject AnotherFakeHCAProject].sort, hca_accessions.sort
   end
-
-  test 'should sanitize parameters for auth_code endpoint' do
-    good_params = {
-      file_ids: [BSON::ObjectId.new, BSON::ObjectId.new],
-
-    }
-  end
 end
