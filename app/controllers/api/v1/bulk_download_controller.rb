@@ -33,7 +33,7 @@ module Api
                 key :example, "{ HCAProjectName: [{'project_id': 'a39728aa-70a0-4201-b0a2-81b7badf3e71', " \
                               "'name': 'HCAProjectName.tsv', 'file_type': 'Project Manifest', 'count': 1}, " \
                               "{'project_id': 'a39728aa-70a0-4201-b0a2-81b7badf3e71', 'file_format': 'loom', " \
-                              "'file_type': 'analysis_file', 'count'=>2}]}"
+                              "'file_type': 'analysis_file', 'count': 2}]}"
               end
             end
           end
