@@ -12,9 +12,9 @@ import * as queryString from 'query-string'
 
 import { getAccessToken } from '~/providers/UserProvider'
 import {
-  logSearch, logDownloadAuthorization, logCreateUserAnnotation,
-  mapFiltersForLogging
+  logDownloadAuthorization, logCreateUserAnnotation
 } from './scp-api-metrics'
+import { logSearch, mapFiltersForLogging } from './search-metrics'
 import { showMessage } from '~/lib/MessageModal'
 
 // If true, returns mock data for all API responses.  Only for dev.
@@ -728,6 +728,13 @@ export function buildFacetsFromQueryString(facetsParamString) {
   }
   return facets
 }
+
+/** retrieve usage info for the given study */
+export async function fetchStudyUsage(studyId, mock=false) {
+  const [usageInfo] = await scpApi(`/studies/${studyId}/usage_stats`, defaultInit(), mock)
+  return usageInfo
+}
+
 
 /** returns the current branding group as specified by the url  */
 export function getBrandingGroup() {

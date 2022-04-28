@@ -6,7 +6,7 @@ import FacetControl from 'components/search/controls/FacetControl'
 import KeywordSearch from 'components/search/controls/KeywordSearch'
 import { PropsStudySearchProvider } from 'providers/StudySearchProvider'
 
-import { logSelectSearchResult } from 'components/search/results/StudySearchResult'
+import { logSelectSearchResult } from '~/lib/search-metrics'
 import * as MetricsApi from '~/lib/metrics-api'
 
 
@@ -147,6 +147,7 @@ describe('Apply applies all changes made in the search panel', () => {
           'HeterogeneityCD4TCells', 'AcuteSkinInflammation'
         ],
         'results:presetSearch': null,
+        'numSearchSelections': 1,
         'numSearches': 0,
         'results:numResults:scp:accession': 0,
         'results:numResults:scp:text': 3,

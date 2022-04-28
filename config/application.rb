@@ -29,9 +29,13 @@ module SingleCellPortal
     config.middleware.use Rack::Brotli
 
     # Docker image for file parsing via scp-ingest-pipeline
-    config.ingest_docker_image = 'gcr.io/broad-singlecellportal-staging/scp-ingest-pipeline:1.17.1'
+    config.ingest_docker_image = 'gcr.io/broad-singlecellportal-staging/scp-ingest-pipeline:1.17.2'
 
     config.autoload_paths << Rails.root.join('lib')
+
+    # for all non-prod environments, use the development mixpanel API
+    config.mixpanel_service_account = 'scp_terra_dev.f25a4f.mp-service-account'
+    config.mixpanel_project_id = 2085496
 
     # custom exceptions handling to render responses based on controller
     # uncaught API errors will now render as JSON responses w/ 500 status

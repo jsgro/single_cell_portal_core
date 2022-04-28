@@ -57,6 +57,7 @@ function RawScatterPlot({
   const [activeTraceLabel, setActiveTraceLabel] = useState(null)
   // map of label name to color hex codes, for any labels the user has picked a color for
   const [editedCustomColors, setEditedCustomColors] = useState({})
+  const [splitLabelArrays, setSplitLabelArrays] = useState(null)
 
   /**
    * Handle user interaction with one or more labels in legend.
@@ -146,7 +147,8 @@ function RawScatterPlot({
       hiddenTraces,
       scatter,
       activeTraceLabel,
-      expressionFilter
+      expressionFilter,
+      splitLabelArrays: splitLabelArrays ?? scatter.splitLabelArrays
     })
     setCountsByLabel(isRefGroup ? labelCounts : null)
     return traces
@@ -187,6 +189,8 @@ function RawScatterPlot({
       })
     }
 
+    scatter.hasArrayLabels = scatter.annotParams.type === 'group' && scatter.data.annotations.some(annot => annot.includes('|'))
+
     if (clusterResponse) {
       setScatterData(scatter)
       setShowError(false)
@@ -222,7 +226,7 @@ function RawScatterPlot({
     // look for updates of individual properties, so that we don't rerender if the containing array
     // happens to be a different instance
   }, [Object.values(editedCustomColors).join(','),
-    Object.values(customColors).join(','), expressionFilter.join(',')])
+    Object.values(customColors).join(','), expressionFilter.join(','), splitLabelArrays])
 
   useUpdateEffect(() => {
     // Don't update if graph hasn't loaded
@@ -318,6 +322,9 @@ function RawScatterPlot({
             saveCustomColors={saveCustomColors}
             activeTraceLabel={activeTraceLabel}
             setActiveTraceLabel={setActiveTraceLabel}
+            hasArrayLabels={scatterData.hasArrayLabels}
+            splitLabelArrays={splitLabelArrays}
+            setSplitLabelArrays={setSplitLabelArrays}
           />
         }
       </div>
@@ -328,7 +335,7 @@ function RawScatterPlot({
       </p>
       {
         isLoading &&
-        <LoadingSpinner data-testid={`${graphElementId}-loading-icon`}/>
+        <LoadingSpinner testId={`${graphElementId}-loading-icon`}/>
       }
     </div>
   )
@@ -396,7 +403,8 @@ function getPlotlyTraces({
     customColors = {}
   },
   activeTraceLabel,
-  expressionFilter
+  expressionFilter,
+  splitLabelArrays
 }) {
   const unfilteredTrace = {
     type: is3D ? 'scatter3d' : 'scattergl',
@@ -418,7 +426,8 @@ function getPlotlyTraces({
 
   const [traces, countsByLabel, expRange] = filterTrace({
     trace: unfilteredTrace,
-    hiddenTraces, groupByAnnotation: isRefGroup, activeTraceLabel, expressionFilter, expressionData: data.expression
+    hiddenTraces, groupByAnnotation: isRefGroup, activeTraceLabel,
+    expressionFilter, expressionData: data.expression, splitLabelArrays
   })
 
   if (isRefGroup) {

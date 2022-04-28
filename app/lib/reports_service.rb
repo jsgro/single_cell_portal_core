@@ -6,7 +6,7 @@ class ReportsService
       service_method: :study_data,
       data_columns: %i[accession created_at cell_count user_id public view_count
                        owner_domain owner_email admin_owned metadata_convention
-                       metadata_file_created has_raw_counts]
+                       metadata_file_created has_raw_counts last_public last_initialized]
     }
   }.freeze
 
@@ -60,6 +60,30 @@ class ReportsService
         study_hash[study_id][:has_raw_counts] ||= is_raw_counts.present? ? is_raw_counts['is_raw_counts'] : false
       end
     end
+
+    history_hash = ReportsService.study_histories
+    study_hash.keys.each do |study_id|
+      study_hash[study_id][:last_public] = history_hash.dig(study_id, :last_public)
+      study_hash[study_id][:last_initialized] = history_hash.dig(study_id, :last_initialized)
+      study_hash[study_id][:last_initialized] = history_hash[study_id] ? history_hash[study_id][:last_initialized] : nil
+    end
+
     study_hash.values
+  end
+
+  def self.study_histories()
+    study_hash = {}
+    public_histories = HistoryTracker.where(scope: 'study', 'modified.public': true).order_by(created_at: :asc)
+    public_histories.each do |history|
+      study_id = history.association_chain[0]['id'].to_s
+      study_hash[study_id] = {last_public: history.created_at}
+    end
+    initialized_histories = HistoryTracker.where(scope: 'study', 'modified.initialized': true).order_by(created_at: :asc)
+    initialized_histories.each do |history|
+      study_id = history.association_chain[0]['id'].to_s
+      study_hash[study_id] ||= {}
+      study_hash[study_id][:last_initialized] = history.created_at
+    end
+    study_hash
   end
 end
