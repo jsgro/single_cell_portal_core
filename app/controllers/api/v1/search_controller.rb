@@ -201,23 +201,28 @@ module Api
           if @search_terms.include?('"')
             @term_list = self.class.extract_phrases_from_search(query_string: @search_terms)
             logger.info "Performing phrase-based search using #{@term_list}"
-            search_match_obj = self.class.generate_mongo_query_by_context(terms: @term_list, base_studies: @viewable,
-                                                                  accessions: possible_accessions, query_context: :phrase)
+            search_match_obj = ::StudySearchService.generate_mongo_query_by_context(terms: @term_list,
+                                                                                    base_studies: @viewable,
+                                                                                    accessions: possible_accessions,
+                                                                                    query_context: :phrase)
             @studies = search_match_obj[:studies]
             @match_by_data = search_match_obj[:results_matched_by_data]
+            @metadata_matches = search_match_obj[:metadata_matches]
             logger.info "Found #{@studies.count} studies in phrase search: #{@studies.pluck(:accession)}"
           else
             # filter & reconstitute query w/o stop words
             @term_list = self.class.reject_stop_words_from_terms(@search_terms.split)
             sanitized_terms = @term_list.join(' ')
             logger.info "Performing keyword-based search using #{@term_list}"
-            search_match_obj = self.class.generate_mongo_query_by_context(terms: sanitized_terms, base_studies: @viewable,
-                                                                  accessions: possible_accessions, query_context: :keyword)
+            search_match_obj = ::StudySearchService.generate_mongo_query_by_context(terms: sanitized_terms,
+                                                                                    base_studies: @viewable,
+                                                                                    accessions: possible_accessions,
+                                                                                    query_context: :keyword)
 
             @studies = search_match_obj[:studies]
             @match_by_data = search_match_obj[:results_matched_by_data]
+            @metadata_matches = search_match_obj[:metadata_matches]
             logger.info "Found #{@studies.count} studies in keyword search: #{@studies.pluck(:accession)}"
-
           end
           # all of our terms were accessions, so this is a "cached" query, and we want to return
           # results in the exact order specified in the accessions array
@@ -246,7 +251,7 @@ module Api
 
         # filter the studies by genes if asked
         if params[:genes].present?
-          @gene_results = StudySearchService.find_studies_by_gene_param(params[:genes], @studies.pluck(:id))
+          @gene_results = ::StudySearchService.find_studies_by_gene_param(params[:genes], @studies.pluck(:id))
           @studies = @studies.where(:id.in => @gene_results[:study_ids])
         end
 
@@ -282,7 +287,9 @@ module Api
         when :keyword
           @studies = @studies.sort_by do |study|
             if study.is_a? Study
-              -study.search_weight(@term_list)[:total]
+              # combine text hits with metadata match totals to get real weight
+              metadata_weight = @metadata_matches.dig(study.accession, :facet_search_weight).to_i
+              -(study.search_weight(@term_list)[:total] + metadata_weight)
             else
               -study[:term_matches][:total]
             end
@@ -302,7 +309,9 @@ module Api
         when :facet
           @studies = @studies.sort_by do |study|
             accession = self.class.get_study_accession(study)
-            -@studies_by_facet[accession][:facet_search_weight]
+            metadata_weight = @metadata_matches.present? ?
+                                @metadata_matches.dig(study.accession, :facet_search_weight).to_i : 0
+            -(@studies_by_facet[accession][:facet_search_weight] + metadata_weight)
           end
         when :recent
           @studies = @studies.sort_by(&:created_at).reverse
@@ -329,10 +338,10 @@ module Api
           if facets_to_keywords.any?
             @inferred_terms = facets_to_keywords.values.flatten
             logger.info "Running inferred search using #{facets_to_keywords}"
-            search_match_obj = self.class.generate_mongo_query_by_context(terms: facets_to_keywords,
-                                                                          base_studies: @viewable,
-                                                                          accessions: @matching_accessions,
-                                                                          query_context: :inferred)
+            search_match_obj = ::StudySearchService.generate_mongo_query_by_context(terms: facets_to_keywords,
+                                                                                    base_studies: @viewable,
+                                                                                    accessions: @matching_accessions,
+                                                                                    query_context: :inferred)
             @inferred_studies = search_match_obj[:studies]
             @match_by_data = search_match_obj[:results_matched_by_data]
             @inferred_accessions = @inferred_studies.pluck(:accession)
@@ -506,75 +515,6 @@ module Api
       # exclude known stop words from a list of terms to increase search result relevance
       def self.reject_stop_words_from_terms(terms)
         terms&.reject { |t| ::StudySearchService::STOP_WORDS.include? t } || []
-      end
-
-      # escape regular expression control characters from list of search terms and format for search
-      def self.escape_terms_for_regex(term_list:)
-        escaped_terms = term_list.map {|term| Regexp.quote term}
-        /(#{escaped_terms.join('|')})/i
-      end
-
-      # generate a Mongoid::Criteria object to perform a keyword/exact phrase search based on contextual use case
-      # supports the following query_contexts: :keyword (individual terms), :phrase (quoted phrases & keywords)
-      # and :inferred (converting a facet-based query to keywords)
-      # will scope the query based off of :base_studies, and include/exclude studies matching
-      # :accessions based on the :query_context (included by default, but excluded in :inferred to avoid duplicates)
-      def self.generate_mongo_query_by_context(terms:, base_studies:, accessions:, query_context:)
-        case query_context
-        when :keyword
-          author_match_study_ids = Author.where(:$text => {:$search => terms}).pluck(:study_id)
-
-          matches_by_text = base_studies.where({:$text => {:$search => terms}})
-          matches_by_accession =  base_studies.where({:accession.in => accessions})
-          matches_by_author = base_studies.where({:id.in => author_match_study_ids})
-
-          results_matched_by_data = {
-            'numResults:scp:accession': matches_by_accession.length,
-            'numResults:scp:text': matches_by_text.length,
-            'numResults:scp:author': matches_by_author.length
-          }
-          
-          studies = base_studies.any_of(matches_by_text, matches_by_accession, matches_by_author)
-          return {:studies => studies, :results_matched_by_data => results_matched_by_data}
-
-        when :phrase
-          study_regex = escape_terms_for_regex(term_list: terms)
-          author_match_study_ids = Author.any_of({first_name: study_regex}, {last_name: study_regex}, {institution: study_regex}).pluck(:study_id)
-
-          matches_by_name = base_studies.any_of({name: study_regex})
-          matches_by_description = base_studies.any_of({description: study_regex})
-          matches_by_accession = base_studies.any_of({:accession.in => accessions})
-          matches_by_author = base_studies.any_of({:id.in => author_match_study_ids})
-
-          results_matched_by_data = {
-            'numResults:scp:accession': matches_by_accession.length,
-            'numResults:scp:name': matches_by_name.length,
-            'numResults:scp:description': matches_by_description.length,
-            'numResults:scp:author': matches_by_author.length
-          }
-
-          studies = base_studies.any_of(matches_by_name, matches_by_description, matches_by_accession, matches_by_author)
-          results_matched_by_data['numResults:scp'] = studies.length # Total number of SCP results
-          # Azul study results to be added with SCP-4202
-
-          return {:studies => studies, :results_matched_by_data => results_matched_by_data}
-
-        when :inferred
-          # in order to maintain the same behavior as normal facets, we run each facet separately and get matching accessions
-          # this gives us an array of arrays of matching accessions; now find the intersection (:&)
-          filters = terms.values.map {|keywords| escape_terms_for_regex(term_list: keywords)}
-          accessions_by_filter = filters.map {|filter| base_studies.any_of({name: filter}, {description: filter})
-                                                           .where(:accession.nin => accessions).pluck(:accession)}
-
-          studies = base_studies.where(:accession.in => accessions_by_filter.inject(:&))
-          return {:studies => studies, :results_matched_by_data => {}}
-
-        else
-          # no matching query case, so perform normal text-index search
-          studies= base_studies.any_of({:$text => {:$search => terms}}, {:accession.in => accessions})
-          return {:studies => studies, :results_matched_by_data => {}}
-    
-        end
       end
 
       # generate query string for BQ

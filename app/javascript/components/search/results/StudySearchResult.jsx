@@ -136,7 +136,7 @@ function facetMatchBadges(study) {
               } else {
                 return filter.name
               }
-            }).join(',')
+            }).join(', ')
           }
         </span>)
     })}

@@ -286,15 +286,16 @@ class SearchFacet
     where(visible: true)
   end
 
-  # find a match for a facet based off of a term, e.g. 'Mus musculus' => SearchFacet.find_by(identifer: 'species')
-  def self.find_facet_from_term(term)
+  # find all facet matches based off of a term, e.g. 'Mus musculus' => [SearchFacet.find_by(identifer: 'species')]
+  def self.find_facets_from_term(term)
+    facets = []
     all.each do |facet|
       filter_list = facet.filters_with_external.any? ? :filters_with_external : :filters
       if facet.filters_match?(term, filter_list: filter_list)
-        return facet
+        facets << facet unless facets.include? facet
       end
     end
-    nil # no match is found
+    facets
   end
 
   # helper for rendering correct list of filters for a given user
@@ -353,6 +354,14 @@ class SearchFacet
   # find all possible matches for a partial filter value
   def find_filter_matches(filter_value, filter_list: :filters)
     flatten_filters(filter_list).select { |filter| filter.match(/#{filter_value}/i) }.map(&:to_s)
+  end
+
+  # matches on whole words/phrases for terms to filter list
+  def find_filter_word_matches(filter_value, filter_list: :filters)
+    sanitized_value = filter_value.downcase
+    flatten_filters(filter_list).select do |filter|
+      filter.downcase == sanitized_value || filter.split.map(&:downcase).include?(sanitized_value)
+    end
   end
 
   # flatten all filter ids/values into a single array
