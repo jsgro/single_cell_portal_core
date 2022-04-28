@@ -20,10 +20,49 @@ function getSimpleOptions(stringArray) {
 
 const nonAlphaNumericRE = /\W/g
 
+/**
+ * Fetch array of gene differential expression data
+ *
+ * Each element in the array is DE data for the gene in this row
+ *   name: Gene name
+ *   score: Differential expression score assigned by Scanpy.
+ *   log2FoldChange: Log-2 fold change.  How many times more expression (1 = 2, 2 = 4, 3 = 8).
+ *   pval: p-value.  Statistical significance of the `score` value.
+ *   pvalAdj: Adjusted p-value.  p-value adjusted for false discovery rate (FDR).
+ *   pctNzGroup: Percent non-zero, group.  % of cells with non-zero expression in selected group.
+ *   pctNzReference: Percent non-zero, reference.  % of cells with non-zero expression in non-selected groups.
+ **/
+async function fetchDeGenes(bucketId, deFileName) {
+  const deFilePath = `_scp-internal/de/${deFileName}`.replaceAll('/', '%2F')
+
+  const data = await fetchBucketFile(bucketId, deFilePath)
+  const tsv = await data.text()
+  const tsvLines = tsv.split(newlineRegex)
+  const deGenes = []
+  for (let i = 1; i < tsvLines.length; i++) {
+    // Each element in this array is DE data for the gene in this row
+    const [
+      index, // eslint-disable-line
+      name, score, log2FoldChange, pval, pvalAdj, pctNzGroup, pctNzReference
+    ] = tsvLines[i].split('\t')
+    const deGene = {
+      score, log2FoldChange, pval, pvalAdj, pctNzGroup, pctNzReference
+    }
+    Object.entries(deGene).forEach(([k, v]) => {
+      // Cast numeric string values as floats
+      deGene[k] = parseFloat(v)
+    })
+    deGene.name = name
+    deGenes.push(deGene)
+  }
+
+  return deGenes.slice(0, 20)
+}
+
 /** Pick groups of cells for differential expression (DE) */
-export default function DeGroupPicker({ exploreInfo, setShowDeGroupPicker, updateDeGroup }) {
-  console.log('in DeGroupPicker, exploreInfo:')
-  console.log(exploreInfo)
+export default function DeGroupPicker({
+  exploreInfo, setShowDeGroupPicker, setDeGroup, setDeGenes
+}) {
   const annotation = exploreInfo?.annotationList?.default_annotation
   const groups = annotation?.values ?? []
 
@@ -32,7 +71,7 @@ export default function DeGroupPicker({ exploreInfo, setShowDeGroupPicker, updat
   const [group, setGroup] = useState(noneSelected)
 
   /** Update group in DE picker */
-  async function fetchGroup() {
+  async function updateDeGroup() {
     const bucketId = exploreInfo?.bucketId
 
     // <cluster_name>--<annotation_name>--<group_name>--<annotation_scope>--<method>.tsv
@@ -46,27 +85,14 @@ export default function DeGroupPicker({ exploreInfo, setShowDeGroupPicker, updat
       .map(s => s.replaceAll(nonAlphaNumericRE, '_'))
       .join('--') }.tsv`
 
-    const deFilePath = `_scp-internal/de/${deFileName}`.replaceAll('/', '%2F')
+    const deGenes = await fetchDeGenes(bucketId, deFileName)
 
-    const gcsUrlBase = 'https://www.googleapis.com/storage/v1/b/'
-    const deUrl = `${gcsUrlBase}${bucketId}/o/${deFilePath}?alt=media`
-
-
-    console.log('deUrl')
-    console.log(deUrl)
-    const data = await fetchBucketFile(bucketId, deFilePath)
-    const tsv = await data.text()
-    console.log('tsv')
-    console.log(tsv)
-    const tsvLines = tsv.split(newlineRegex)
+    setDeGroup(group)
+    setDeGenes(deGenes)
 
     // `<cluster_name>--<annotation_name>--<group_name>--<annotation_scope>--<method>.tsv
-    // fetchDeFromBucket()
     setShowDeGroupPicker(false)
   }
-
-  console.log('group')
-  console.log(group)
 
   return (
     <Modal
@@ -99,7 +125,7 @@ export default function DeGroupPicker({ exploreInfo, setShowDeGroupPicker, updat
         </div>
       </Modal.Body>
       <Modal.Footer>
-        <button className="btn btn-primary" onClick={() => {fetchGroup()}}>OK</button>
+        <button className="btn btn-primary" onClick={() => {updateDeGroup()}}>OK</button>
         <button className="btn terra-btn-secondary" onClick={() => setShowDeGroupPicker(false)}>Cancel</button>
       </Modal.Footer>
     </Modal>

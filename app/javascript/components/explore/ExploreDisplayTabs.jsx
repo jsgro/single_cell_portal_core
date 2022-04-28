@@ -47,41 +47,6 @@ const tabList = [
   { key: 'images', label: 'Images' }
 ]
 
-// /** Pick groups of cells for differential expression (DE) */
-// function DeGroupPicker() {
-//   // whether to show the color picker modal
-//   const [showDeGroupPicker, setShowDeGroupPicker] = useState(false)
-//   // the current user-picked (though not necessarily saved) color
-//   // note that the color picker components do not allow invalid inputs, so we don't need to do any additional validation
-//   // const [pickedColor, setPickedColor] = useState(iconColor)
-
-//   return (
-//     <Modal
-//       id='de-group-picker-modal'
-//       show={showDeGroupPicker}
-//       onHide={() => setShowDeGroupPicker(false)}
-//       animation={false}
-//       bsSize='small'>
-//       <Modal.Body>
-//         <div className="flexbox-align-center flexbox-column">
-//           <span>Select color</span>
-//           {/* <span className="flexbox-align-center">
-//           #<HexColorInput color={pickedGroup} onChange={setPickedColor}/>
-//           &nbsp;
-//             <span className="preview-block" style={{ background: pickedGroup }}></span>
-//           </span>
-//           <HexDeGroupPicker color={pickedGroup} onChange={setPickedColor}/> */}
-//         </div>
-//       </Modal.Body>
-//       <Modal.Footer>
-//         <button className="btn btn-primary" onClick={handleColorPicked}>OK</button>
-//         <button className="btn terra-btn-secondary" onClick={() => setShowDeGroupPicker(false)}>Cancel</button>
-//       </Modal.Footer>
-//     </Modal>
-//   )
-// }
-
-
 /**
  * Renders the gene search box and the tab selection
  * Responsible for determining which tabs are available for a given view of the study
@@ -108,18 +73,10 @@ export default function ExploreDisplayTabs({
   const [isCellSelecting, setIsCellSelecting] = useState(false)
   // a plotly points_selected event
   const [currentPointsSelected, setCurrentPointsSelected] = useState(null)
-  const [showDeGroupPicker, setShowDeGroupPicker] = useState(false)
 
-  console.log('exploreInfo')
-  console.log(exploreInfo)
-  console.log('exploreParams')
-  console.log(exploreParams)
-  console.log('exploreParamsWithDefaults')
-  console.log(exploreParamsWithDefaults)
-  console.log('')
-  console.log('')
-  console.log('')
-  console.log('')
+  const [showDeGroupPicker, setShowDeGroupPicker] = useState(false)
+  const [deGenes, setDeGenes] = useState(null)
+  const [deGroup, setDeGroup] = useState(null)
 
   // TODO: Remove this placeholder before opening PR
   const hasDE = true // studyAccession === 'SCP134'
@@ -424,81 +381,95 @@ export default function ExploreDisplayTabs({
         </div>
         <div className={showViewOptionsControls ? 'col-md-2 ' : 'hidden'}>
           <div className="view-options-toggle">
-            <FontAwesomeIcon className="fa-lg" icon={faCog}/> OPTIONS
+            {!deGenes && <><FontAwesomeIcon className="fa-lg" icon={faCog}/> OPTIONS</>}
+            {deGenes && <>Differential expression</>}
             <button className="action"
               onClick={toggleViewOptions}
               title="Hide options"
               data-analytics-name="view-options-hide">
               <FontAwesomeIcon className="fa-lg" icon={faTimes}/>
             </button>
+            {deGenes &&
+            <button className="action fa-lg"
+              onClick={() => setDeGenes(null)}
+              // title="Exit DE view, see Options"
+              data-toggle="tooltip"
+              data-analytics-name="exit-de-view">
+              <FontAwesomeIcon icon={faArrowLeft}/>
+            </button>
+            }
           </div>
-          <div>
-            <div className={showClusterControls ? '' : 'hidden'}>
-              <ClusterSelector
-                annotationList={annotationList}
-                cluster={exploreParamsWithDefaults.cluster}
-                annotation={exploreParamsWithDefaults.annotation}
-                updateClusterParams={updateClusterParams}
-                spatialGroups={exploreInfo ? exploreInfo.spatialGroups : []}/>
-              {hasSpatialGroups &&
+
+          {!deGenes &&
+          <>
+            <div>
+              <div className={showClusterControls ? '' : 'hidden'}>
+                <ClusterSelector
+                  annotationList={annotationList}
+                  cluster={exploreParamsWithDefaults.cluster}
+                  annotation={exploreParamsWithDefaults.annotation}
+                  updateClusterParams={updateClusterParams}
+                  spatialGroups={exploreInfo ? exploreInfo.spatialGroups : []}/>
+                {hasSpatialGroups &&
                 <SpatialSelector allSpatialGroups={exploreInfo.spatialGroups}
                   spatialGroups={exploreParamsWithDefaults.spatialGroups}
                   updateSpatialGroups={spatialGroups => updateClusterParams({ spatialGroups })}/>
-              }
-              <AnnotationSelector
-                annotationList={annotationList}
-                cluster={exploreParamsWithDefaults.cluster}
-                annotation={exploreParamsWithDefaults.annotation}
-                updateClusterParams={updateClusterParams}/>
-              { shownTab === 'scatter' && <CreateAnnotation
-                isSelecting={isCellSelecting}
-                setIsSelecting={setIsCellSelecting}
-                annotationList={exploreInfo ? exploreInfo.annotationList : null}
-                currentPointsSelected={currentPointsSelected}
-                cluster={exploreParamsWithDefaults.cluster}
-                annotation={exploreParamsWithDefaults.annotation}
-                subsample={exploreParamsWithDefaults.subsample}
-                updateClusterParams={updateClusterParams}
-                setAnnotationList={setAnnotationList}
-                studyAccession={studyAccession}/>
-              }
-              <SubsampleSelector
-                annotationList={annotationList}
-                cluster={exploreParamsWithDefaults.cluster}
-                subsample={exploreParamsWithDefaults.subsample}
-                updateClusterParams={updateClusterParams}/>
-            </div>
-            { exploreInfo?.geneLists?.length > 0 &&
+                }
+                <AnnotationSelector
+                  annotationList={annotationList}
+                  cluster={exploreParamsWithDefaults.cluster}
+                  annotation={exploreParamsWithDefaults.annotation}
+                  updateClusterParams={updateClusterParams}/>
+                { shownTab === 'scatter' && <CreateAnnotation
+                  isSelecting={isCellSelecting}
+                  setIsSelecting={setIsCellSelecting}
+                  annotationList={exploreInfo ? exploreInfo.annotationList : null}
+                  currentPointsSelected={currentPointsSelected}
+                  cluster={exploreParamsWithDefaults.cluster}
+                  annotation={exploreParamsWithDefaults.annotation}
+                  subsample={exploreParamsWithDefaults.subsample}
+                  updateClusterParams={updateClusterParams}
+                  setAnnotationList={setAnnotationList}
+                  studyAccession={studyAccession}/>
+                }
+                <SubsampleSelector
+                  annotationList={annotationList}
+                  cluster={exploreParamsWithDefaults.cluster}
+                  subsample={exploreParamsWithDefaults.subsample}
+                  updateClusterParams={updateClusterParams}/>
+              </div>
+              { exploreInfo?.geneLists?.length > 0 &&
               <GeneListSelector
                 geneList={exploreParamsWithDefaults.geneList}
                 studyGeneLists={exploreInfo.geneLists}
                 updateGeneList={updateGeneList}/>
-            }
-            { exploreParams.genes.length > 1 && !['genome', 'infercnv-genome'].includes(shownTab) &&
+              }
+              { exploreParams.genes.length > 1 && !['genome', 'infercnv-genome'].includes(shownTab) &&
               <ExploreConsensusSelector
                 consensus={exploreParamsWithDefaults.consensus}
                 updateConsensus={consensus => updateExploreParams({ consensus })}/>
-            }
-            { !!exploreInfo?.inferCNVIdeogramFiles &&
+              }
+              { !!exploreInfo?.inferCNVIdeogramFiles &&
                 <InferCNVIdeogramSelector
                   inferCNVIdeogramFile={exploreParamsWithDefaults.ideogramFileId}
                   studyInferCNVIdeogramFiles={exploreInfo.inferCNVIdeogramFiles}
                   updateInferCNVIdeogramFile={updateInferCNVIdeogramFile}
                 />
-            }
-          </div>
-          <PlotDisplayControls
-            shownTab={shownTab}
-            exploreParams={exploreParamsWithDefaults}
-            updateExploreParams={updateExploreParams}
-            allGenes={exploreInfo ? exploreInfo.uniqueGenes : []}/>
-          <br/>
-          {hasDE &&
+              }
+            </div>
+            <PlotDisplayControls
+              shownTab={shownTab}
+              exploreParams={exploreParamsWithDefaults}
+              updateExploreParams={updateExploreParams}
+              allGenes={exploreInfo ? exploreInfo.uniqueGenes : []}/>
+            <br/>
+            {hasDE &&
               <button
+                className="btn btn-primary"
                 onClick={() => {setShowDeGroupPicker(true)}}
               >Differential expression</button>
-          }
-          {showDeGroupPicker &&
+            }
+            {showDeGroupPicker &&
             // <Modal>
             //   <Modal.Body>
             //     <div>hi</div>
@@ -507,22 +478,57 @@ export default function ExploreDisplayTabs({
             <DeGroupPicker
               exploreInfo={exploreInfo}
               setShowDeGroupPicker={setShowDeGroupPicker}
+              setDeGenes={setDeGenes}
+              setDeGroup={setDeGroup}
             />
+            }
+            <br/><br/>
+            <button className="action"
+              onClick={clearExploreParams}
+              title="reset all view options"
+              data-analytics-name="explore-view-options-reset">
+              <FontAwesomeIcon icon={faUndo}/> Reset view
+            </button>
+            <button onClick={() => copyLink(routerLocation)}
+              className="action"
+              data-toggle="tooltip"
+              title="copy a link to this visualization to the clipboard">
+              <FontAwesomeIcon icon={faLink}/> Get link
+            </button>
+          </>
           }
-          <br/><br/>
-          <button className="action"
-            onClick={clearExploreParams}
-            title="reset all view options"
-            data-analytics-name="explore-view-options-reset">
-            <FontAwesomeIcon icon={faUndo}/> Reset view
-          </button>
-          {/* <br/><br/> */}
-          <button onClick={() => copyLink(routerLocation)}
-            className="action"
-            data-toggle="tooltip"
-            title="copy a link to this visualization to the clipboard">
-            <FontAwesomeIcon icon={faLink}/> Get link
-          </button>
+          {deGenes &&
+          <>
+            <p>{deGroup} vs. other groups</p>
+            <table className="table table-terra">
+              <thead>
+                <th>Name</th>
+                <th>log<sub>2</sub>(FC)</th>
+                <th>Adj. p-value</th>
+              </thead>
+              <tbody>
+                {deGenes.map(deGene => {
+                  return (
+                    <tr>
+                      <td style={{ padding: '2px' }}>
+                        <a
+                          analytics-name="de-gene-link"
+                          href="#"
+                          onClick={event => {
+                            searchGenes([deGene.name])
+                            event.preventDefault()
+                          }}>{
+                            deGene.name
+                          }</a></td>
+                      <td style={{ padding: '2px' }}>{deGene.score}</td>
+                      <td style={{ padding: '2px' }}>{deGene.pvalAdj}</td>
+                    </tr>)
+                })}
+              </tbody>
+            </table>
+            {/* <button onClick={() => {setDeGenes(null)}}>Clear</button> */}
+          </>
+          }
         </div>
       </div>
     </>
