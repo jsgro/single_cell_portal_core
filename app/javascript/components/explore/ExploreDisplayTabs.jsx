@@ -29,6 +29,7 @@ import { getAnnotationValues, getDefaultSpatialGroupsForCluster } from '~/lib/cl
 import RelatedGenesIdeogram from '~/components/visualization/RelatedGenesIdeogram'
 import InferCNVIdeogram from '~/components/visualization/InferCNVIdeogram'
 import useResizeEffect from '~/hooks/useResizeEffect'
+import LoadingSpinner from '~/lib/LoadingSpinner'
 import { log } from '~/lib/metrics-api'
 
 
@@ -181,8 +182,8 @@ export default function ExploreDisplayTabs({
     } else {
       updateExploreParams({
         geneList: geneListName,
-        heatmapRowCentering: geneListInfo.heatmap_file_info?.custom_scaling,
-        heatmapFit: 'cols',
+        heatmapRowCentering: '',
+        heatmapFit: 'both',
         genes: []
       })
     }
@@ -395,7 +396,7 @@ export default function ExploreDisplayTabs({
             }
             { enabledTabs.includes('loading') &&
               <div className={shownTab === 'loading' ? '' : 'hidden'}>
-                <FontAwesomeIcon icon={faDna} className="gene-load-spinner"/>
+                <LoadingSpinner testId="explore-spinner"/>
               </div>
             }
           </div>
@@ -546,5 +547,6 @@ export function getEnabledTabs(exploreInfo, exploreParams) {
   if (!exploreInfo) {
     enabledTabs = ['loading']
   }
+
   return { enabledTabs, isGeneList, isGene, isMultiGene, hasIdeogramOutputs }
 }

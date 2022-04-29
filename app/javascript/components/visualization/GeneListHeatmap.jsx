@@ -74,7 +74,7 @@ function RawGeneListHeatmap({
     <div>
       <div>
         <h5 className="text-center heatmap-title">{geneListName}</h5>
-        <div className="text-center"> { description } </div>
+        <div className="text-center">{ description }</div>
       </div>
       <div className="plot">
         { ErrorComponent }
