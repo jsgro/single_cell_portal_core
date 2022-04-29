@@ -44,7 +44,7 @@ function GeneListForm({
       <div className="col-md-12">
         <div className="form-terra">
           <p>
-            A list of genes and any computed expression values (mean, median, etc.) across any clusters, for visualization as a heatmap.
+            A list of genes and any computed expression values (mean, median, etc.) across any clusters, for visualization as a heatmap
           </p>
           <pre>
             GENE NAMES&#9;Cluster1&#9;Cluster2<br/>Grm2&#9;6.39&#9;1.96<br/>C1ql3&#9;6.66&#9;2.05
@@ -56,8 +56,8 @@ function GeneListForm({
               Example file
             </a>
             <br/>
-            By default, the dropdown name for these files is "Precomputed heatmaps."
-            Customize that dropdown name in 'View Options' of <a href={`/single_cell/study/${formState.study.accession}#study-settings`} target="_blank">study settings</a>
+            By default, the dropdown name for these files is "Precomputed heatmaps".
+            Customize that dropdown name in "View options" of <a href={`/single_cell/study/${formState.study.accession}#study-settings`} target="_blank">study settings</a>
           </p>
         </div>
       </div>

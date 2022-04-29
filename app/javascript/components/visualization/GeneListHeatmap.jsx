@@ -11,7 +11,7 @@ import LoadingSpinner from '~/lib/LoadingSpinner'
 
 
 /** renders a morpheus powered heatmap for the given params
-  * @param geneList {string} a string for the gene list (precomputed score) to be retrieved.
+  * @param geneList {String} a string for the gene list (precomputed score) to be retrieved.
   * @param geneLists {Array} array of gene list information, such as returned by the explore_controller
  */
 function RawGeneListHeatmap({
