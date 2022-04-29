@@ -426,8 +426,8 @@ async function parseFile(file, fileType, fileOptions={}, sizeProps={}) {
     if (error instanceof ParseException) {
       parseResult.issues.push(['error', error.key, error.message])
     } else if (error instanceof TypeError) {
-      const msg = 'File cannot be uploaded in it\'s current state. Please reach out for assistance'
-      parseResult.issues.push(['error', 'type-error', msg])
+      const msg = 'File cannot be uploaded in its current state. Please reach out for assistance.'
+      parseResult.issues.push(['error', 'parse:unhandled:js-typeerror', msg])
     } else {
       parseResult.issues.push(['error', 'parse:unhandled', error.message])
     }
