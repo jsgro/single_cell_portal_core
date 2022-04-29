@@ -500,7 +500,7 @@ export default function ExploreDisplayTabs({
           {deGenes &&
           <>
             <p>{deGroup} vs. other groups</p>
-            <table className="table table-terra">
+            <table className="table table-terra table-scp-de">
               <thead>
                 <th>Name</th>
                 <th>log<sub>2</sub>(FC)</th>
@@ -510,7 +510,7 @@ export default function ExploreDisplayTabs({
                 {deGenes.map(deGene => {
                   return (
                     <tr>
-                      <td style={{ padding: '2px' }}>
+                      <td>
                         <a
                           analytics-name="de-gene-link"
                           href="#"
@@ -520,8 +520,8 @@ export default function ExploreDisplayTabs({
                           }}>{
                             deGene.name
                           }</a></td>
-                      <td style={{ padding: '2px' }}>{deGene.score}</td>
-                      <td style={{ padding: '2px' }}>{deGene.pvalAdj}</td>
+                      <td>{deGene.score}</td>
+                      <td>{deGene.pvalAdj}</td>
                     </tr>)
                 })}
               </tbody>
