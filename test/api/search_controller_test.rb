@@ -488,4 +488,35 @@ class SearchControllerTest < ActionDispatch::IntegrationTest
     filtered_terms = Api::V1::SearchController.reject_stop_words_from_terms(mixed_query)
     assert_equal terms, filtered_terms
   end
+
+  test 'should support all sorting options' do
+    # use Azul mocks for faster tests
+    # TODO: migrate all other search tests to use Azul mocks (SCP-4328)
+    tcell_json = File.open(Rails.root.join('test/test_data/azul/human_tcell.json')).read
+    human_tcell_response = JSON.parse(tcell_json).with_indifferent_access
+    mock_azul_facets = {
+      genusSpecies: {
+        is: ['Homo sapiens']
+      }
+    }.with_indifferent_access
+
+    # test all 3 sorting options
+    ['recent', 'popular', 'foo', nil].each do |sort_order|
+      mock = Minitest::Mock.new
+      mock.expect :format_query_from_facets, mock_azul_facets, [Array]
+      mock.expect :merge_query_objects, mock_azul_facets, [Hash, nil]
+      mock.expect :projects, human_tcell_response, [Hash]
+      ApplicationController.stub :hca_azul_client, mock do
+        facet_query = "species:#{HOMO_SAPIENS_FILTER[:id]}"
+        execute_http_request(:get,
+                             api_v1_search_path(
+                               type: 'study',
+                               facets: facet_query,
+                               order: sort_order.to_s
+                             ))
+        assert_response :success
+        mock.verify
+      end
+    end
+  end
 end
