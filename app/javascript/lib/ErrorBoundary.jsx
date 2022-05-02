@@ -1,6 +1,8 @@
 import React, { Component } from 'react'
 import { logError } from '~/lib/metrics-api'
 import { supportEmailLink } from '~/lib/error-utils'
+import { logJSFetchErrorToSentry } from '~/lib/sentry-logging'
+
 /** convert to readable message  e.g.
  * "foobar is not defined    in ResultsPanel (at HomePageContent.js:22)"
  */
@@ -27,7 +29,10 @@ export default class ErrorBoundary extends Component {
 
   /** log an error, and then update the display to show the error */
   componentDidCatch(error, info) {
+    // log error to Mixpanel
     logError(readableErrorMessage(error, info))
+    // log error to Sentry
+    logJSFetchErrorToSentry(readableErrorMessage(error, info), info)
     this.setState({ error, info })
   }
 

@@ -2,6 +2,8 @@ import React from 'react'
 import ReactDOM from 'react-dom'
 import morpheus from 'morpheus-app'
 import { Spinner } from 'spin.js'
+import * as Sentry from '@sentry/react'
+import { BrowserTracing } from '@sentry/tracing'
 
 import '~/styles/application.scss'
 import HomePageContent from '~/components/HomePageContent'
@@ -23,6 +25,15 @@ import {
 import * as ScpApi from '~/lib/scp-api'
 
 window.SCP = window.SCP ? window.SCP : {}
+
+// Initialize Sentry to enable logging JS errors to Sentry
+Sentry.init({
+  dsn: 'https://a713dcf8bbce4a26aa1fe3bf19008d26@o54426.ingest.sentry.io/1424198',
+  integrations: [new BrowserTracing()],
+
+  // send 100% of the transactions to Sentry since they will only occur on errors
+  tracesSampleRate: 1.0
+})
 
 document.addEventListener('DOMContentLoaded', () => {
   // Logs only page views for faceted search UI
