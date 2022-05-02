@@ -265,7 +265,8 @@ module Api
 
         # perform Azul search if there are facets/terms provided by user
         # run this before inferred search so that they are weighted and sorted correctly
-        if @facets.present? || @term_list.present?
+        # skip if user is searching inside a collection
+        if (@facets.present? || @term_list.present?) && @selected_branding_group.nil?
           begin
             @studies, @studies_by_facet = ::AzulSearchService.append_results_to_studies(@studies,
                                                                                         selected_facets: @facets,
