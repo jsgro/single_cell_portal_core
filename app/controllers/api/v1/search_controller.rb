@@ -339,6 +339,7 @@ module Api
 
         # save list of study accessions for bulk_download/bulk_download_size calls, in order of results
         @matching_accessions = @studies.map { |study| self.class.get_study_accession(study) }
+        logger.info "Total matching accessions from all non-inferred searches: #{@matching_accessions}"
 
         # if a user ran a faceted search, attempt to infer results by converting filter display values to keywords
         # Do not run inferred search if we have a preset search with an accession list
