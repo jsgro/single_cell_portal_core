@@ -8,6 +8,8 @@
   <% end %>
 
   // TODO: Feature-flag this for DE, refine before making GA
+  // TODO (SCP-4321): Refine logic to enable fetching file from bucket, e.g. perhaps
+  //   by incorporating forthcoming `hasDE` attribute on study model
   window.SCP.readOnlyToken = '<%= get_read_access_token(@study, current_user) %>'
 </script>
 

@@ -77,7 +77,8 @@ export default function ExploreDisplayTabs({
   const [deGroup, setDeGroup] = useState(null)
 
   // TODO: Remove this placeholder before opening PR
-  const hasDE = true // studyAccession === 'SCP134'
+  // TODO (SCP-4321): Incorporate hasDE attribute from forthcoming update to an API response
+  const hasDE = true
 
   const plotContainerClass = 'explore-plot-tab-content'
 

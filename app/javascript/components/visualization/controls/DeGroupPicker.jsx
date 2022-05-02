@@ -23,7 +23,11 @@ const nonAlphaNumericRE = /\W/g
 /**
  * Fetch array of gene differential expression data
  *
- * Each element in the array is DE data for the gene in this row
+ * @param {String} bucketId Identifier for study's Google bucket
+ * @param {String} deFileName Name of differential expression file
+ * @param {Integer} numGenes Number of genes to include in returned deGenes array
+ *
+ * @return {Array} deGenes Array of DE gene objects, each with properties:
  *   name: Gene name
  *   score: Differential expression score assigned by Scanpy.
  *   log2FoldChange: Log-2 fold change.  How many times more expression (1 = 2, 2 = 4, 3 = 8).
@@ -32,9 +36,11 @@ const nonAlphaNumericRE = /\W/g
  *   pctNzGroup: Percent non-zero, group.  % of cells with non-zero expression in selected group.
  *   pctNzReference: Percent non-zero, reference.  % of cells with non-zero expression in non-selected groups.
  **/
-async function fetchDeGenes(bucketId, deFileName) {
+async function fetchDeGenes(bucketId, deFileName, numGenes=20) {
   const deFilePath = `_scp-internal/de/${deFileName}`.replaceAll('/', '%2F')
 
+  // TODO (SCP-4321): Perhaps refine logic for fetching file from bucket, e.g. perhaps add
+  //  token parameter to fetchFileFromBucket
   const data = await fetchBucketFile(bucketId, deFilePath)
   const tsv = await data.text()
   const tsvLines = tsv.split(newlineRegex)
@@ -50,13 +56,14 @@ async function fetchDeGenes(bucketId, deFileName) {
     }
     Object.entries(deGene).forEach(([k, v]) => {
       // Cast numeric string values as floats
+      // TODO (SCP-4321): Add `pValPretty` and `pValAdjPretty` with '< 0.001' instead of 0
       deGene[k] = parseFloat(v)
     })
     deGene.name = name
     deGenes.push(deGene)
   }
 
-  return deGenes.slice(0, 20)
+  return deGenes.slice(0, numGenes)
 }
 
 /** Pick groups of cells for differential expression (DE) */
@@ -72,13 +79,13 @@ export default function DeGroupPicker({
   async function updateDeGroup() {
     const bucketId = exploreInfo?.bucketId
 
+    // TODO (SCP-4321): Incorporate any updates to this general file name structure
     // <cluster_name>--<annotation_name>--<group_name>--<annotation_scope>--<method>.tsv
     const deFileName = `${[
       exploreInfo?.annotationList?.default_cluster,
       annotation.name,
       group,
       'wilcoxon'
-      // annotation.scope
     ]
       .map(s => s.replaceAll(nonAlphaNumericRE, '_'))
       .join('--') }.tsv`
@@ -91,6 +98,8 @@ export default function DeGroupPicker({
     setShowDeGroupPicker(false)
   }
 
+  // TODO (SCP-4321): Replace modal with dropdown at top of DE panel at right
+  // TODO (SCP-4321): Move ← icon to left
   return (
     <Modal
       id='de-group-picker-modal'
