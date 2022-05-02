@@ -3,7 +3,6 @@ import _clone from 'lodash/clone'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faLink, faArrowLeft, faCog, faTimes, faDna, faUndo } from '@fortawesome/free-solid-svg-icons'
 
-
 import StudyGeneField from './StudyGeneField'
 import ClusterSelector from '~/components/visualization/controls/ClusterSelector'
 import AnnotationSelector from '~/components/visualization/controls/AnnotationSelector'
@@ -31,7 +30,6 @@ import useResizeEffect from '~/hooks/useResizeEffect'
 import { log } from '~/lib/metrics-api'
 
 import DeGroupPicker from '~/components/visualization/controls/DeGroupPicker'
-// import Modal from 'react-bootstrap/lib/Modal'
 
 const tabList = [
   { key: 'loading', label: 'loading...' },
@@ -392,7 +390,6 @@ export default function ExploreDisplayTabs({
             {deGenes &&
             <button className="action fa-lg"
               onClick={() => setDeGenes(null)}
-              // title="Exit DE view, see Options"
               data-toggle="tooltip"
               data-analytics-name="exit-de-view">
               <FontAwesomeIcon icon={faArrowLeft}/>
@@ -470,11 +467,6 @@ export default function ExploreDisplayTabs({
               >Differential expression</button>
             }
             {showDeGroupPicker &&
-            // <Modal>
-            //   <Modal.Body>
-            //     <div>hi</div>
-            //   </Modal.Body>
-            // </Modal>
             <DeGroupPicker
               exploreInfo={exploreInfo}
               setShowDeGroupPicker={setShowDeGroupPicker}
@@ -485,14 +477,14 @@ export default function ExploreDisplayTabs({
             <br/><br/>
             <button className="action"
               onClick={clearExploreParams}
-              title="reset all view options"
+              title="Reset all view options"
               data-analytics-name="explore-view-options-reset">
               <FontAwesomeIcon icon={faUndo}/> Reset view
             </button>
             <button onClick={() => copyLink(routerLocation)}
               className="action"
               data-toggle="tooltip"
-              title="copy a link to this visualization to the clipboard">
+              title="Copy a link to this visualization to the clipboard">
               <FontAwesomeIcon icon={faLink}/> Get link
             </button>
           </>
@@ -526,7 +518,6 @@ export default function ExploreDisplayTabs({
                 })}
               </tbody>
             </table>
-            {/* <button onClick={() => {setDeGenes(null)}}>Clear</button> */}
           </>
           }
         </div>

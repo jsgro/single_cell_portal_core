@@ -66,8 +66,6 @@ export default function DeGroupPicker({
   const annotation = exploreInfo?.annotationList?.default_annotation
   const groups = annotation?.values ?? []
 
-  // const [groupOptions, setGroupOptions] = useState(getGroupOptions(groups))
-
   const [group, setGroup] = useState(noneSelected)
 
   /** Update group in DE picker */
@@ -90,7 +88,6 @@ export default function DeGroupPicker({
     setDeGroup(group)
     setDeGenes(deGenes)
 
-    // `<cluster_name>--<annotation_name>--<group_name>--<annotation_scope>--<method>.tsv
     setShowDeGroupPicker(false)
   }
 
@@ -111,17 +108,9 @@ export default function DeGroupPicker({
               label: group === '' ? noneSelected : group,
               value: group
             }}
-            // getOptionLabel={group1 => group1}
-            // getOptionValue={group1 => group1}
             onChange={newGroup => setGroup(newGroup.value)}
             styles={clusterSelectStyle}
           />
-          {/* <span className="flexbox-align-center">
-      #<HexColorInput color={pickedGroup} onChange={setPickedColor}/>
-      &nbsp;
-        <span className="preview-block" style={{ background: pickedGroup }}></span>
-      </span>
-      <HexDeGroupPicker color={pickedGroup} onChange={setPickedColor}/> */}
         </div>
       </Modal.Body>
       <Modal.Footer>
