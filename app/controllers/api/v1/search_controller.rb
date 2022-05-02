@@ -244,7 +244,15 @@ module Api
           # build up map of study matches by facet & filter value (for adding labels in UI)
           @studies_by_facet = self.class.match_studies_by_facet(query_results, @facets)
           # uniquify result list as one study may match multiple facets/filters
-          @convention_accessions = query_results.map {|match| match[:study_accession]}.uniq
+          @convention_accessions = query_results.map { |match| match[:study_accession] }.uniq
+          # report on matches for metadata, ensuring we don't double-count some accessions
+          # this can happen if we get a term converstion to metadata match
+          @match_by_data ||= {}
+          existing_metadata_matches = @metadata_matches.try(:keys) || []
+          total_metadata_matches = (existing_metadata_matches + @convention_accessions).uniq
+          existing_total_matches = @match_by_data['numResults:scp'].to_i
+          @match_by_data['numResults:scp:metadata'] = total_metadata_matches.size
+          @match_by_data['numResults:scp'] = existing_total_matches + total_metadata_matches.size
           logger.info "Found #{@convention_accessions.count} matching studies from BQ job #{job_id}: #{@convention_accessions}"
           @studies = @studies.where(:accession.in => @convention_accessions)
         end
@@ -268,10 +276,14 @@ module Api
         # skip if user is searching inside a collection
         if (@facets.present? || @term_list.present?) && @selected_branding_group.nil?
           begin
-            @studies, @studies_by_facet = ::AzulSearchService.append_results_to_studies(@studies,
-                                                                                        selected_facets: @facets,
-                                                                                        terms: @term_list,
-                                                                                        facet_map: @studies_by_facet)
+            azul_results = ::AzulSearchService.append_results_to_studies(@studies,
+                                                                         selected_facets: @facets,
+                                                                         terms: @term_list,
+                                                                         facet_map: @studies_by_facet,
+                                                                         results_matched_by_data: @match_by_data)
+            @studies = azul_results[:studies]
+            @studies_by_facet = azul_results[:facet_map]
+            @matches_by_data = azul_results[:results_matched_by_data]
             # @studies, @studies_by_facet = ::TdrSearchService.append_results_to_studies(@studies,
             #                                                                             selected_facets: @facets,
             #                                                                             terms: @term_list,
@@ -327,7 +339,6 @@ module Api
 
         # save list of study accessions for bulk_download/bulk_download_size calls, in order of results
         @matching_accessions = @studies.map { |study| self.class.get_study_accession(study) }
-        logger.info "Total matching accessions from all non-inferred searches: #{@matching_accessions}"
 
         # if a user ran a faceted search, attempt to infer results by converting filter display values to keywords
         # Do not run inferred search if we have a preset search with an accession list
@@ -344,7 +355,6 @@ module Api
                                                                                     accessions: @matching_accessions,
                                                                                     query_context: :inferred)
             @inferred_studies = search_match_obj[:studies]
-            @match_by_data = search_match_obj[:results_matched_by_data]
             @inferred_accessions = @inferred_studies.pluck(:accession)
             logger.info "Found #{@inferred_accessions.count} inferred matches: #{@inferred_accessions}"
             @matching_accessions += @inferred_accessions

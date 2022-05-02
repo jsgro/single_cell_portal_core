@@ -80,6 +80,9 @@ class StudySearchService
       }
 
       studies = base_studies.any_of(matches_by_text, matches_by_accession, matches_by_author, matches_by_metadata)
+      results_matched_by_data['numResults:scp'] = studies.length
+      results_matched_by_data['numResults:total'] = studies.length
+
       { studies: studies, results_matched_by_data: results_matched_by_data, metadata_matches: metadata_matches }
     when :phrase
       study_regex = escape_terms_for_regex(term_list: terms)
@@ -105,8 +108,8 @@ class StudySearchService
 
       studies = base_studies.any_of(matches_by_name, matches_by_description, matches_by_accession,
                                     matches_by_author, matches_by_metadata)
-      results_matched_by_data['numResults:scp'] = studies.length # Total number of SCP results
-      # Azul study results to be added with SCP-4202
+      results_matched_by_data['numResults:scp'] = studies.length
+      results_matched_by_data['numResults:total'] = studies.length
 
       { studies: studies, results_matched_by_data: results_matched_by_data, metadata_matches: metadata_matches }
 
