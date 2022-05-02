@@ -28,6 +28,7 @@ import RelatedGenesIdeogram from '~/components/visualization/RelatedGenesIdeogra
 import InferCNVIdeogram from '~/components/visualization/InferCNVIdeogram'
 import useResizeEffect from '~/hooks/useResizeEffect'
 import { log } from '~/lib/metrics-api'
+import { getFeatureFlagsWithDefaults } from '~/providers/UserProvider'
 
 import DeGroupPicker from '~/components/visualization/controls/DeGroupPicker'
 
@@ -76,9 +77,13 @@ export default function ExploreDisplayTabs({
   const [deGenes, setDeGenes] = useState(null)
   const [deGroup, setDeGroup] = useState(null)
 
-  // TODO: Remove this placeholder before opening PR
-  // TODO (SCP-4321): Incorporate hasDE attribute from forthcoming update to an API response
-  const hasDE = true
+  let hasDE = false
+  const flags = getFeatureFlagsWithDefaults()
+  if (flags.differential_expression_frontend) {
+    // TODO (SCP-4321): In addition to feature flag, check hasDE attribute
+    // from forthcoming update to an API response
+    hasDE = true
+  }
 
   const plotContainerClass = 'explore-plot-tab-content'
 
@@ -460,22 +465,26 @@ export default function ExploreDisplayTabs({
               exploreParams={exploreParamsWithDefaults}
               updateExploreParams={updateExploreParams}
               allGenes={exploreInfo ? exploreInfo.uniqueGenes : []}/>
-            <br/>
             {hasDE &&
+            <>
+              <br/>
               <button
                 className="btn btn-primary"
                 onClick={() => {setShowDeGroupPicker(true)}}
               >Differential expression</button>
+            </>
             }
             {showDeGroupPicker &&
-            <DeGroupPicker
-              exploreInfo={exploreInfo}
-              setShowDeGroupPicker={setShowDeGroupPicker}
-              setDeGenes={setDeGenes}
-              setDeGroup={setDeGroup}
-            />
+            <>
+              <DeGroupPicker
+                exploreInfo={exploreInfo}
+                setShowDeGroupPicker={setShowDeGroupPicker}
+                setDeGenes={setDeGenes}
+                setDeGroup={setDeGroup}
+              />
+              <br/><br/>
+            </>
             }
-            <br/><br/>
             <button className="action"
               onClick={clearExploreParams}
               title="Reset all view options"
@@ -495,9 +504,11 @@ export default function ExploreDisplayTabs({
             <p>{deGroup} vs. other groups</p>
             <table className="table table-terra table-scp-de">
               <thead>
-                <th>Name</th>
-                <th>log<sub>2</sub>(FC)</th>
-                <th>Adj. p-value</th>
+                <tr>
+                  <th>Name</th>
+                  <th>log<sub>2</sub>(FC)</th>
+                  <th>Adj. p-value</th>
+                </tr>
               </thead>
               <tbody>
                 {deGenes.map(deGene => {

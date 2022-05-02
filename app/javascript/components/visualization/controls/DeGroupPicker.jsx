@@ -1,7 +1,4 @@
 import React, { useState } from 'react'
-import _clone from 'lodash/clone'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faLink, faArrowLeft, faCog, faTimes, faDna, faUndo } from '@fortawesome/free-solid-svg-icons'
 import Modal from 'react-bootstrap/lib/Modal'
 
 import Select from '~/lib/InstrumentedSelect'
