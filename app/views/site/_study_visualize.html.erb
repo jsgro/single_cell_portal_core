@@ -10,7 +10,7 @@
   // TODO: Feature-flag this for DE, refine before making GA
   // TODO (SCP-4321): Refine logic to enable fetching file from bucket, e.g. perhaps
   //   by incorporating forthcoming `hasDE` attribute on study model
-  <% if current_user.feature_flag_for('differential_expression_frontend') %>
+  <% if current_user && current_user.feature_flag_for('differential_expression_frontend') %>
     window.SCP.readOnlyToken = '<%= get_read_access_token(@study, current_user) %>'
   <% end %>
 </script>
