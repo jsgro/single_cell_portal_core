@@ -15,8 +15,8 @@ setUptoLog()
  * @param {Object} response - the response object from a failed JS fetch call
  * @param {String} titleInfo - extra info for the title of the Sentry event
  */
-export function logJSFetchExceptionToSentry(response, titleInfo) {
-  if (['development', 'test'].includes(env)) { // || !ENV['SENTRY_DSN']
+export function logJSFetchExceptionToSentry(response, titleInfo = {}) {
+  if (['development', 'test'].includes(env)) {
     return
   }
   // add details from the response to the 'response info' object that will be logged in Sentry
@@ -36,8 +36,8 @@ export function logJSFetchExceptionToSentry(response, titleInfo) {
  * @param {Object} response - the response object from a failed JS fetch call
  * @param {String} titleInfo - extra info for the title of the Sentry event
  */
-export function logJSFetchErrorToSentry(error, titleInfo) {
-  if (['development', 'test'].includes(env)) { // || !ENV['SENTRY_DSN']
+export function logJSFetchErrorToSentry(error, titleInfo = {}) {
+  if (['development', 'test'].includes(env)) {
     return
   }
   Sentry.captureException(new Error(`${error}: ${titleInfo}`))
