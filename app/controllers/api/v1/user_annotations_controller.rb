@@ -4,7 +4,7 @@ module Api
     class UserAnnotationsController < ApiBaseController
       include Concerns::ApiCaching
 
-      before_action :set_current_api_user!
+      before_action :authenticate_api_user!
       before_action :set_study
       before_action :check_study_view_permission
 

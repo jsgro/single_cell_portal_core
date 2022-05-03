@@ -265,7 +265,8 @@ module Api
 
         # perform Azul search if there are facets/terms provided by user
         # run this before inferred search so that they are weighted and sorted correctly
-        if @facets.present? || @term_list.present?
+        # skip if user is searching inside a collection
+        if (@facets.present? || @term_list.present?) && @selected_branding_group.nil?
           begin
             @studies, @studies_by_facet = ::AzulSearchService.append_results_to_studies(@studies,
                                                                                         selected_facets: @facets,
@@ -308,24 +309,29 @@ module Api
           @studies = @studies.sort_by { |study| @accession_list.index(study.accession) }
         when :facet
           @studies = @studies.sort_by do |study|
-            accession = self.class.get_study_accession(study)
+            accession = self.class.get_study_attribute(study, :accession)
             metadata_weight = @metadata_matches.present? ?
-                                @metadata_matches.dig(study.accession, :facet_search_weight).to_i : 0
+                                @metadata_matches.dig(accession, :facet_search_weight).to_i : 0
             -(@studies_by_facet[accession][:facet_search_weight] + metadata_weight)
           end
         when :recent
-          @studies = @studies.sort_by(&:created_at).reverse
+          @studies = @studies.sort_by { |study| self.class.get_study_attribute(study, :created_at) }.reverse
         when :popular
-          @studies = @studies.sort_by(&:view_count).reverse
+          @studies = @studies.sort_by { |study| self.class.get_study_attribute(study, :view_count) }.reverse
         else
           # we have sort_type of :none, so order by most recent initialized studies
           # in order to sort by multiple attributes, use array notation to indicate which attribute to sort by first
           # boolean values must be converted to an integer in order for this to work
-          @studies = @studies.sort_by { |study| [study.initialized? ? 1 : 0, study.created_at] }.reverse
+          @studies = @studies.sort_by do |study|
+            [
+              self.class.get_study_attribute(study, :initialized) ? 1 : 0,
+              self.class.get_study_attribute(study, :created_at)
+            ]
+          end.reverse
         end
 
         # save list of study accessions for bulk_download/bulk_download_size calls, in order of results
-        @matching_accessions = @studies.map { |study| self.class.get_study_accession(study) }
+        @matching_accessions = @studies.map { |study| self.class.get_study_attribute(study, :accession) }
         logger.info "Total matching accessions from all non-inferred searches: #{@matching_accessions}"
 
         # if a user ran a faceted search, attempt to infer results by converting filter display values to keywords
@@ -351,7 +357,7 @@ module Api
           end
         end
 
-        @matching_accessions = @studies.map { |study| self.class.get_study_accession(study) }
+        @matching_accessions = @studies.map { |study| self.class.get_study_attribute(study, :accession) }
 
         logger.info "Final list of matching studies: #{@matching_accessions}"
         @results = @studies.paginate(page: params[:page], per_page: Study.per_page)
@@ -490,9 +496,13 @@ module Api
         end
       end
 
-      # extract study accession, accounting for source (SCP vs. external)
-      def self.get_study_accession(search_result)
-        search_result.try(:accession) || search_result[:accession]
+      # extract study attribute (like accession) accounting for source (SCP vs. external)
+      def self.get_study_attribute(search_result, attribute)
+        if search_result.is_a?(Study)
+          search_result.send(attribute)
+        else
+          search_result[attribute]
+        end
       end
 
       # extract any "quoted phrases" from query string and tokenize terms

@@ -23,7 +23,7 @@ export async function readFileBytes(file, startByte=0, chunkSize=DEFAULT_CHUNK_S
 
   const arrayBuffer = await blob.arrayBuffer()
 
-  const enc = new TextDecoder('utf-8')
+  const enc = new TextDecoder('utf-8', { fatal: true })
   const stringContent = enc.decode(arrayBuffer)
 
   return stringContent

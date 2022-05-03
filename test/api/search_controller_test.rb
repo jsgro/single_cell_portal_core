@@ -155,6 +155,26 @@ class SearchControllerTest < ActionDispatch::IntegrationTest
     assert_equal source_facets, matched_facets, "Did not match on correct facets; expected #{source_facets} but found #{matched_facets}"
   end
 
+  test 'should not query azul when collection is present' do
+    branding_group = FactoryBot.create(:branding_group, user_list: [@user])
+    terms = 'COVID-19'
+    mock = Minitest::Mock.new
+    mock.expect(:get_results, {}, [[], [terms]])
+    AzulSearchService.stub(:append_results_to_studies, mock) do
+      assert_raises MockExpectationError do
+        execute_http_request(:get,
+                             api_v1_search_path(
+                               type: 'study',
+                               terms: terms,
+                               scpbr: branding_group.name_as_id
+                             ))
+        assert_response :success
+        # this should raise a MockExpectationError as :get_results will not be called, as no Azul search was performed
+        mock.verify
+      end
+    end
+  end
+
   test 'should return search results using numeric facets' do
     facet = SearchFacet.find_by(identifier: 'organism_age')
     facet.update_filter_values! # in case there is a race condition with parsing & facet updates
@@ -467,5 +487,36 @@ class SearchControllerTest < ActionDispatch::IntegrationTest
     mixed_query = terms + stop_words
     filtered_terms = Api::V1::SearchController.reject_stop_words_from_terms(mixed_query)
     assert_equal terms, filtered_terms
+  end
+
+  test 'should support all sorting options' do
+    # use Azul mocks for faster tests
+    # TODO: migrate all other search tests to use Azul mocks (SCP-4328)
+    tcell_json = File.open(Rails.root.join('test/test_data/azul/human_tcell.json')).read
+    human_tcell_response = JSON.parse(tcell_json).with_indifferent_access
+    mock_azul_facets = {
+      genusSpecies: {
+        is: ['Homo sapiens']
+      }
+    }.with_indifferent_access
+
+    # test all 3 sorting options
+    ['recent', 'popular', 'foo', nil].each do |sort_order|
+      mock = Minitest::Mock.new
+      mock.expect :format_query_from_facets, mock_azul_facets, [Array]
+      mock.expect :merge_query_objects, mock_azul_facets, [Hash, nil]
+      mock.expect :projects, human_tcell_response, [Hash]
+      ApplicationController.stub :hca_azul_client, mock do
+        facet_query = "species:#{HOMO_SAPIENS_FILTER[:id]}"
+        execute_http_request(:get,
+                             api_v1_search_path(
+                               type: 'study',
+                               facets: facet_query,
+                               order: sort_order.to_s
+                             ))
+        assert_response :success
+        mock.verify
+      end
+    end
   end
 end
