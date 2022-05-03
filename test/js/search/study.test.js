@@ -72,7 +72,7 @@ describe('Facet match badges', () => {
     ))
     expect(container.getElementsByClassName('facet-match')).toHaveLength(2)
     expect(container.getElementsByClassName('facet-match')[0].textContent.trim()).toEqual('blood')
-    expect(container.getElementsByClassName('facet-match')[1].textContent.trim()).toEqual('mouse,human')
+    expect(container.getElementsByClassName('facet-match')[1].textContent.trim()).toEqual('mouse, human')
   })
 
   it('renders badges for numeric facets', async () => {

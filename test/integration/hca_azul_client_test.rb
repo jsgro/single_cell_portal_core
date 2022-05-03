@@ -194,13 +194,13 @@ class HcaAzulClientTest < ActiveSupport::TestCase
     expected_filters = expected_matches.map { |f| { id: f, name: f }.with_indifferent_access }
     expected_facets = [{ id: 'disease', filters: expected_filters, keyword_conversion: true }.with_indifferent_access]
     mock = Minitest::Mock.new
-    mock.expect :nil?, false
     mock.expect :find_filter_matches, expected_matches, ['cancer', { filter_list: :filters_with_external }]
     mock.expect :identifier, 'disease'
     # handle :with_indifferent_access calls
     mock.expect :is_a?, true, [Class]
     mock.expect :nested_under_indifferent_access, nil
-    SearchFacet.stub :find_facet_from_term, mock do
+    # pass mock in array to handle .empty? and .each calls
+    SearchFacet.stub :find_facets_from_term, [mock] do
       query = @hca_azul_client.format_facet_query_from_keyword(terms)
       mock.verify
       query.each { |facet| facet.delete(:db_facet) }
@@ -222,14 +222,15 @@ class HcaAzulClientTest < ActiveSupport::TestCase
     expected_matches = ['cervical cancer', 'colorectal cancer', 'lower gum cancer', 'lung cancer', 'mandibular cancer',
                         'tongue cancer']
     mock = Minitest::Mock.new
-    mock.expect :nil?, false
     mock.expect :find_filter_matches, expected_matches, ['cancer', { filter_list: :filters_with_external }]
     mock.expect :identifier, 'disease'
     # handle :with_indifferent_access calls
     mock.expect :is_a?, true, [Class]
     mock.expect :nested_under_indifferent_access, nil
-    SearchFacet.stub :find_facet_from_term, mock do
+    # pass mock in array to handle .empty? and .each calls
+    SearchFacet.stub :find_facets_from_term, [mock] do
       term_facets = @hca_azul_client.format_facet_query_from_keyword(%w[cancer])
+      mock.verify
       # merge in search facet to handle :is_numeric? call
       term_facets.first[:db_facet] = SearchFacet.find_or_create_by(identifier: 'disease', data_type: 'string')
       term_query = @hca_azul_client.format_query_from_facets(term_facets)

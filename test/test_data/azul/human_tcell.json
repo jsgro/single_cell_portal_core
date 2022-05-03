@@ -251,6 +251,11 @@
           "totalCells": null
         }
       ],
+      "dates": [
+        {
+          "submissionDate": "2019-09-13T17:52:10.963000Z"
+        }
+      ],
       "fileTypeSummaries": [
         {
           "format": "csv",

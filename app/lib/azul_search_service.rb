@@ -39,6 +39,7 @@ class AzulSearchService
     project_results = client.projects(query: query_json)
     project_results['hits'].each do |entry|
       entry_hash = entry.with_indifferent_access
+      submission_date = entry_hash[:dates].first[:submissionDate]
       project_hash = entry_hash[:projects].first # there will only ever be one project here
       short_name = project_hash[:projectShortname]
       project_id = project_hash[:projectId]
@@ -48,6 +49,8 @@ class AzulSearchService
         name: project_hash[:projectTitle],
         description: project_hash[:projectDescription],
         hca_project_id: project_id,
+        created_at: submission_date, # for sorting purposes
+        view_count: 0, # for sorting purposes
         facet_matches: {},
         term_matches: {},
         file_information: [
