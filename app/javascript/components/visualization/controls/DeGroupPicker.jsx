@@ -6,7 +6,7 @@ import { clusterSelectStyle } from '~/lib/cluster-utils'
 import { newlineRegex } from '~/lib/validation/io'
 import { fetchBucketFile } from '~/lib/scp-api'
 
-// value to render in select menu if user has not selected a gene list
+// Value to show in menu if user has not selected a group for DE
 const noneSelected = 'Select a group'
 
 /** Takes array of strings, converts it to list options suitable for react-select */
