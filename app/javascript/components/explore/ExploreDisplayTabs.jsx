@@ -39,7 +39,7 @@ const tabList = [
   { key: 'annotatedScatter', label: 'Annotated scatter' },
   { key: 'correlatedScatter', label: 'Correlation' },
   { key: 'distribution', label: 'Distribution' },
-  { key: 'dotplot', label: 'Dot Plot' },
+  { key: 'dotplot', label: 'Dot plot' },
   { key: 'heatmap', label: 'Heatmap' },
   { key: 'geneListHeatmap', label: 'Precomputed heatmap' },
   { key: 'spatial', label: 'Spatial' },

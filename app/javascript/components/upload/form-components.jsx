@@ -18,11 +18,11 @@ export function AddFileButton({ newFileTemplate, addNewFile }) {
 /** renders a basic label->value text field in a bootstrap form control */
 export function TextFormField({ label, fieldName, file, updateFile }) {
   const fieldId = `${fieldName}-input-${file._id}`
-  let value = file[fieldName] ? file[fieldName] : ''
+  let value = file[fieldName] ?? ''
   const [objName, nestedPropName] = fieldName.split('.')
   if (nestedPropName) {
     // handle a nested property like 'heatmap_file_info.custom_scaling'
-    value = file[objName][nestedPropName] ? file[objName][nestedPropName] : ''
+    value = file[objName][nestedPropName] ?? ''
   }
   return <div className="form-group">
     <label htmlFor={fieldId}>{label}</label><br/>

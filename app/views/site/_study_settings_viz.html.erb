@@ -1,11 +1,12 @@
-<% if @study.can_visualize_clusters? && @study.default_cluster.present? %>
-  <h3>Default view options</h3>
-  <p class="help-block">
-    Configure basic visualization defaults, such as what the default expression axis label, cluster, annotation,
-    color profile, and cluster point display properties are when someone views your study.
-  </p>
-  <div id="default-study-options-form">
-    <%= f.fields_for :default_options do |opts| %>
+
+<h3>Default view options</h3>
+<p class="help-block">
+  Configure basic visualization defaults, such as what the default expression axis label, cluster, annotation,
+  color profile, and cluster point display properties are when someone views your study.
+</p>
+<div id="default-study-options-form">
+  <%= f.fields_for :default_options do |opts| %>
+    <% if @study.can_visualize_clusters? && @study.default_cluster.present? %>
       <div class="form-group row">
         <div class="col-sm-4">
           <%= opts.label :cluster, 'Default cluster' %><br />
@@ -40,6 +41,46 @@
           <%= opts.text_field :expression_label, value: @study.default_options[:expression_label], placeholder: @study.default_expression_label, class: 'form-control' %>
         </div>
       </div>
+      <script type="text/javascript" nonce="<%= content_security_policy_script_nonce %>">
+        $('#study_default_options_annotation').change(function() {
+          var annotType = $(this).val().split('--')[1];
+          var colorProfile = $('#study_default_options_color_profile');
+          if (annotType == 'group') {
+            colorProfile.val('');
+            colorProfile.attr('disabled', true);
+          } else {
+            colorProfile.attr('disabled', false);
+          }
+        });
+
+        $('#study_default_options_cluster_point_alpha').change(function () {
+          var formElement = $(this);
+          var alpha = parseFloat(formElement.val());
+          if (alpha < 0) {
+            formElement.val(0.0);
+          } else if (alpha > 1) {
+            formElement.val(1.0);
+          }
+        });
+
+        $('#study_default_options_cluster').change(function(){
+          var cluster = $(this).val();
+          $.get("<%= load_annotation_options_study_path(@study) %>?cluster=" + cluster, function() {
+            $(document).ready(function() {
+              var newAnnotType = $('#study_default_options_annotation').val().split('--')[1];
+              var colorProfile = $('#study_default_options_color_profile');
+              if (newAnnotType == 'group') {
+                colorProfile.val('');
+                colorProfile.attr('disabled', true);
+              } else {
+                colorProfile.attr('disabled', false);
+              }
+            });
+          })
+        });
+      </script>
+    <% end %>
+    <% if @study.has_gene_lists? %>
       <div class="form-group row">
         <div class="col-sm-12">
           <%= opts.label :precomputed_heatmap_label, 'Precomputed heatmap menu label' %>&nbsp;<span class="fas fa-question-circle" data-toggle="tooltip" data-placement="right" title='This is displayed above the list of uploaded precomputed heatmaps.'></span> <br />
@@ -47,43 +88,8 @@
         </div>
       </div>
     <% end %>
-  </div>
-  <script type="text/javascript" nonce="<%= content_security_policy_script_nonce %>">
-    $('#study_default_options_annotation').change(function() {
-      var annotType = $(this).val().split('--')[1];
-      var colorProfile = $('#study_default_options_color_profile');
-      if (annotType == 'group') {
-        colorProfile.val('');
-        colorProfile.attr('disabled', true);
-      } else {
-        colorProfile.attr('disabled', false);
-      }
-    });
-
-    $('#study_default_options_cluster_point_alpha').change(function () {
-      var formElement = $(this);
-      var alpha = parseFloat(formElement.val());
-      if (alpha < 0) {
-        formElement.val(0.0);
-      } else if (alpha > 1) {
-        formElement.val(1.0);
-      }
-    });
-
-    $('#study_default_options_cluster').change(function(){
-      var cluster = $(this).val();
-      $.get("<%= load_annotation_options_study_path(@study) %>?cluster=" + cluster, function() {
-        $(document).ready(function() {
-          var newAnnotType = $('#study_default_options_annotation').val().split('--')[1];
-          var colorProfile = $('#study_default_options_color_profile');
-          if (newAnnotType == 'group') {
-            colorProfile.val('');
-            colorProfile.attr('disabled', true);
-          } else {
-            colorProfile.attr('disabled', false);
-          }
-        });
-      })
-    });
-  </script>
-<% end %>
+  <% end %>
+  <% if (!@study.can_visualize_clusters? || !@study.default_cluster.present?) && !@study.has_gene_lists? %>
+    No options are available for this study -- options are only available if clusters or precomputed heatmaps have been uploaded.
+  <% end %>
+</div>
