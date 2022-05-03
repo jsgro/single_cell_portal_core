@@ -246,7 +246,7 @@ module Api
           # uniquify result list as one study may match multiple facets/filters
           @convention_accessions = query_results.map { |match| match[:study_accession] }.uniq
           # report on matches for metadata, ensuring we don't double-count some accessions
-          # this can happen if we get a term converstion to metadata match
+          # this can happen if we get a term conversion to metadata match
           @match_by_data ||= {}
           existing_metadata_matches = @metadata_matches.try(:keys) || []
           total_metadata_matches = (existing_metadata_matches + @convention_accessions).uniq
