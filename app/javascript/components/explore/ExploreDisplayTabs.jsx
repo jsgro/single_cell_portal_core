@@ -467,11 +467,11 @@ export default function ExploreDisplayTabs({
               allGenes={exploreInfo ? exploreInfo.uniqueGenes : []}/>
             {hasDE &&
             <>
-              <br/>
               <button
                 className="btn btn-primary"
                 onClick={() => {setShowDeGroupPicker(true)}}
               >Differential expression</button>
+              <br/><br/>
             </>
             }
             {showDeGroupPicker &&
@@ -482,7 +482,6 @@ export default function ExploreDisplayTabs({
                 setDeGenes={setDeGenes}
                 setDeGroup={setDeGroup}
               />
-              <br/><br/>
             </>
             }
             <button className="action"
