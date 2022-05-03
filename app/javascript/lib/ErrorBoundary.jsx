@@ -32,7 +32,7 @@ export default class ErrorBoundary extends Component {
     // log error to Mixpanel
     logError(readableErrorMessage(error, info))
     // log error to Sentry
-    logJSFetchErrorToSentry(readableErrorMessage(error, info), info)
+    logJSFetchErrorToSentry(error, readableErrorMessage(error, info))
     this.setState({ error, info })
   }
 

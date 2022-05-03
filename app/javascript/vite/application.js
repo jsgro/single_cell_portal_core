@@ -17,6 +17,7 @@ import RawAssociationSelect from '~/components/upload/RawAssociationSelect'
 import { getFeatureFlagsWithDefaults } from '~/providers/UserProvider'
 import checkMissingAuthToken from '~/lib/user-auth-tokens'
 import ValidateFile from '~/lib/validation/validate-file'
+import getSCPContext from '~/providers/SCPContextProvider'
 const { validateRemoteFile } = ValidateFile
 
 import {
@@ -34,6 +35,22 @@ Sentry.init({
   // send 100% of the transactions to Sentry since they will only occur on errors
   tracesSampleRate: 1.0
 })
+
+// set the logger tag to reflect that the errors are from the frontend
+Sentry.setTag('logger', 'app-frontend')
+
+// set the scope for Sentry to the current environment
+Sentry.configureScope(scope =>
+  scope.addEventProcessor(
+    event =>
+      new Promise(resolve =>
+        resolve({
+          ...event,
+          environment: getSCPContext().environment
+        })
+      )
+  )
+)
 
 document.addEventListener('DOMContentLoaded', () => {
   // Logs only page views for faceted search UI
