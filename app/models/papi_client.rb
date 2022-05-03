@@ -41,8 +41,8 @@ class PapiClient < Struct.new(:project, :service_account_credentials, :service)
   def initialize(project=self.class.compute_project, service_account_credentials=self.class.get_primary_keyfile)
 
     credentials = {
-        scope: GOOGLE_SCOPES,
-        json_key_io: File.open(service_account_credentials)
+      scope: GOOGLE_SCOPES,
+      json_key_io: File.open(service_account_credentials)
     }
 
     authorizer = Google::Auth::ServiceAccountCredentials.make_creds(credentials)
@@ -101,11 +101,11 @@ class PapiClient < Struct.new(:project, :service_account_credentials, :service)
     resources = create_resources_object(regions: ['us-central1'])
     command_line = get_command_line(study_file: study_file, action: action, user_metrics_uuid: user.metrics_uuid)
     labels = {
-        study_accession: accession,
-        user_id: user.id.to_s,
-        file_id: study_file.id.to_s,
-        action: action,
-        docker_image: AdminConfiguration.get_ingest_docker_image
+      study_accession: accession,
+      user_id: user.id.to_s,
+      file_id: study_file.id.to_s,
+      action: action,
+      docker_image: AdminConfiguration.get_ingest_docker_image
     }
     environment = set_environment_variables
     action = create_actions_object(commands: command_line, environment: environment)
@@ -142,8 +142,8 @@ class PapiClient < Struct.new(:project, :service_account_credentials, :service)
   #   - (Google::Apis::GenomicsV2alpha1::RunPipelineRequest)
   def create_run_pipeline_request_object(pipeline:, labels: {})
     Google::Apis::GenomicsV2alpha1::RunPipelineRequest.new(
-        pipeline: pipeline,
-        labels: labels
+      pipeline: pipeline,
+      labels: labels
     )
   end
 
@@ -159,10 +159,10 @@ class PapiClient < Struct.new(:project, :service_account_credentials, :service)
   #   - (Google::Apis::GenomicsV2alpha1::Pipeline)
   def create_pipeline_object(actions:, environment:, resources:, timeout: nil)
     Google::Apis::GenomicsV2alpha1::Pipeline.new(
-        actions: actions,
-        environment: environment,
-        resources: resources,
-        timeout: timeout
+      actions: actions,
+      environment: environment,
+      resources: resources,
+      timeout: timeout
     )
   end
 
@@ -184,12 +184,12 @@ class PapiClient < Struct.new(:project, :service_account_credentials, :service)
   #   - (Google::Apis::GenomicsV2alpha1::Action)
   def create_actions_object(commands: [], environment: {}, flags: [], labels: {}, timeout: nil)
     Google::Apis::GenomicsV2alpha1::Action.new(
-        commands: commands,
-        environment: environment,
-        flags: flags,
-        image_uri: AdminConfiguration.get_ingest_docker_image,
-        labels: labels,
-        timeout: timeout
+      commands: commands,
+      environment: environment,
+      flags: flags,
+      image_uri: AdminConfiguration.get_ingest_docker_image,
+      labels: labels,
+      timeout: timeout
     )
   end
 
@@ -206,13 +206,13 @@ class PapiClient < Struct.new(:project, :service_account_credentials, :service)
   #   - (Hash) => Hash of required environment variables
   def set_environment_variables
     {
-        'DATABASE_HOST' => ENV['MONGO_INTERNAL_IP'],
-        'MONGODB_USERNAME' => 'single_cell',
-        'MONGODB_PASSWORD' => ENV['PROD_DATABASE_PASSWORD'],
-        'DATABASE_NAME' => Mongoid::Config.clients["default"]["database"],
-        'GOOGLE_PROJECT_ID' => project,
-        'SENTRY_DSN' => ENV['SENTRY_DSN'],
-        'BARD_HOST_URL' => Rails.application.config.bard_host_url
+      'DATABASE_HOST' => ENV['MONGO_INTERNAL_IP'],
+      'MONGODB_USERNAME' => 'single_cell',
+      'MONGODB_PASSWORD' => ENV['PROD_DATABASE_PASSWORD'],
+      'DATABASE_NAME' => Mongoid::Config.clients["default"]["database"],
+      'GOOGLE_PROJECT_ID' => project,
+      'SENTRY_DSN' => ENV['SENTRY_DSN'],
+      'BARD_HOST_URL' => Rails.application.config.bard_host_url
     }
   end
 
@@ -220,14 +220,15 @@ class PapiClient < Struct.new(:project, :service_account_credentials, :service)
   #
   # * *params*
   #   - regions: (Array<String>) => An array of GCP regions allowed for VM allocation
+  #   - vm: (Google::Apis::GenomicsV2alpha1::VirtualMachine) => Existing VM config to use, other than default
   #
   # * *return*
   #   - (Google::Apis::GenomicsV2alpha1::Resources)
-  def create_resources_object(regions:)
+  def create_resources_object(regions:, vm: nil)
     Google::Apis::GenomicsV2alpha1::Resources.new(
-         project_id: project,
-         regions: regions,
-         virtual_machine: create_virtual_machine_object
+      project_id: project,
+      regions: regions,
+      virtual_machine: vm.nil? ? create_virtual_machine_object : vm
     )
   end
 
@@ -243,10 +244,10 @@ class PapiClient < Struct.new(:project, :service_account_credentials, :service)
   #   - (Google::Apis::GenomicsV2alpha1::VirtualMachine)
   def create_virtual_machine_object(machine_type: 'n1-highmem-4', boot_disk_size_gb: 300, preemptible: false)
     virtual_machine = Google::Apis::GenomicsV2alpha1::VirtualMachine.new(
-        machine_type: machine_type,
-        preemptible: preemptible,
-        boot_disk_size_gb: boot_disk_size_gb,
-        service_account: Google::Apis::GenomicsV2alpha1::ServiceAccount.new(email: issuer, scopes: GOOGLE_SCOPES)
+      machine_type: machine_type,
+      preemptible: preemptible,
+      boot_disk_size_gb: boot_disk_size_gb,
+      service_account: Google::Apis::GenomicsV2alpha1::ServiceAccount.new(email: issuer, scopes: GOOGLE_SCOPES)
     )
     # assign correct network/sub-network if specified
     if GCP_NETWORK_NAME.present? && GCP_SUB_NETWORK_NAME.present?
@@ -302,7 +303,7 @@ class PapiClient < Struct.new(:project, :service_account_credentials, :service)
 
     # add optional command line arguments based on file type and action
     if action.to_s == 'differential_expression'
-      optional_args = get_de_parameters(study_file, extra_options)
+      optional_args = get_de_parameters(extra_options)
     else
       optional_args = get_command_line_options(study_file, action)
     end
@@ -347,7 +348,6 @@ class PapiClient < Struct.new(:project, :service_account_credentials, :service)
   # get command line arguments for differential expression runs
   #
   # * *params*
-  #   - +study+file+ (StudyFile) => Clustering StudyFile to use as main DE input
   #   - +options+ (Hash) => Hash of DE-specific parameters, whose names must include all values from DE_PARAMETER_NAMES
   #
   # * *returns*
@@ -355,26 +355,38 @@ class PapiClient < Struct.new(:project, :service_account_credentials, :service)
   #
   # * *raises*
   #   - (ArgumentError) => if any required parameters from DE_PARAMETER_NAMES are missing or malformed
-  def get_de_parameters(study_file, options)
+  def get_de_parameters(options)
     # validate input parameters
-    safe_parameters = options.select { |name, _| DE_PARAMETER_NAMES.include?(name.to_s) }
-    puts safe_parameters
-    missing_parameters = DE_PARAMETER_NAMES - safe_parameters.keys.map(&:to_s)
-    raise ArgumentError, "cannot run differential expression due to missing parameters: " \
-                         "#{missing_parameters.join(', ')}" if missing_parameters.any?
+    safe_params = options.select { |name, _| DE_PARAMETER_NAMES.include?(name.to_s) }
+    missing_params = DE_PARAMETER_NAMES - safe_params.keys.map(&:to_s)
+    if missing_params.any?
+      raise ArgumentError, "cannot run differential expression due to missing parameters: #{missing_params.join(', ')}"
+    end
 
     # add all good parameters to params array so they can be deserialized as command line options for Docker
     # will throw an exception if value passed is invalid for the given parameter type
     de_params = []
-    safe_parameters.each do |param_name, value|
+    safe_params.each do |param_name, value|
       if %w[cluster_file annotation_file matrix_file_path].include?(param_name)
         raise ArgumentError, "#{param_name} contains a non-gs URL value: #{value}" unless value.start_with?('gs://')
       end
 
-      de_params += [transform_de_param(param_name), value]
+      de_params += [to_cli_opt(param_name), value]
     end
     de_params << '--differential-expression' # final argument that has no value
     de_params
+  end
+
+  # transform a parameter from Hash key or String into a representation that can be called in the Python CLI
+  # converts underscores (_) to dashes (-) and prepends double dashes (--)
+  #
+  # * *params*
+  #   - +param_name+ (Symbol, String) => Name of parameter
+  #
+  # * *returns*
+  #   - (String) => New parameter name, encoded as kwarg for Python command line
+  def to_cli_opt(param_name)
+    "--#{param_name.to_s.gsub(/_/, '-')}"
   end
 
   private
@@ -404,17 +416,5 @@ class PapiClient < Struct.new(:project, :service_account_credentials, :service)
   #   - (JSON) => Sanitized JSON object with escaped double quotes
   def sanitize_json(json)
     json.gsub("\"", "'")
-  end
-
-  # transform a parameter for differential expression runs
-  # converts underscores (_) to dashes (-) and prepens double dashes (--)
-  #
-  # * *params*
-  #   - +param_name+ (String) => Name of parameter
-  #
-  # * *returns*
-  #   - (String) => New parameter name, encoded for Python command line
-  def transform_de_param(param_name)
-    "--#{param_name.to_s.gsub(/_/, '-')}"
   end
 end
