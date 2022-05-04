@@ -523,7 +523,7 @@ export default function ExploreDisplayTabs({
                           }}>{
                             deGene.name
                           }</a></td>
-                      <td>{deGene.score}</td>
+                      <td>{deGene.log2FoldChange}</td>
                       <td>{deGene.pvalAdj}</td>
                     </tr>)
                 })}
