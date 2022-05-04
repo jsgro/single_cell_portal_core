@@ -182,10 +182,15 @@ class AzulSearchServiceTest < ActiveSupport::TestCase
     mock.expect :merge_query_objects, merged_query, [@mock_facet_query, @mock_term_query]
     mock.expect :projects, @fibrosis_response, [{ query: merged_query }]
     fibrosis_shortname = 'PulmonaryFibrosisGSE135893'
+    existing_match_data = { 'numResults:scp': 2, 'numResults:total': 2 }.with_indifferent_access # test merging of data
     ApplicationController.stub :hca_azul_client, mock do
-      studies, facet_map = AzulSearchService.append_results_to_studies(initial_results,
-                                                                       selected_facets: @facets,
-                                                                       terms: @terms, facet_map: facet_map)
+      azul_results = AzulSearchService.append_results_to_studies(initial_results,
+                                                                 selected_facets: @facets,
+                                                                 terms: @terms, facet_map: facet_map,
+                                                                 results_matched_by_data: existing_match_data)
+      studies = azul_results[:studies]
+      facet_map = azul_results[:facet_map]
+      match_data = azul_results[:results_matched_by_data]
       assert studies.size > 1
       hca_entry = studies.detect { |study| study.is_a?(Hash) ? study[:accession] == fibrosis_shortname : nil }
       assert hca_entry.present?
@@ -194,6 +199,8 @@ class AzulSearchServiceTest < ActiveSupport::TestCase
       assert_equal 3, hca_facet_entry[:facet_search_weight]
       assert_equal 5, hca_entry.dig(:term_matches, :total)
       assert_equal @terms, hca_entry.dig(:term_matches, :terms).keys
+      assert_equal 1, match_data['numResults:azul']
+      assert_equal 3, match_data['numResults:total']
     end
   end
 

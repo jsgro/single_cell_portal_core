@@ -11,16 +11,19 @@ class AzulSearchService
   # each Azul result entry under 'hits' will have these keys, whether project- or file-based
   RESULT_FACET_FIELDS = %w[protocols samples specimens cellLines donorOrganisms organoids cellSuspensions].freeze
 
-  def self.append_results_to_studies(existing_studies, selected_facets:, terms:, facet_map: nil)
+  def self.append_results_to_studies(existing_studies, selected_facets:, terms:, facet_map: nil, results_matched_by_data: nil)
     # set facet_map to {}, even if facet_map is explicitly passed in as nil
     facet_map ||= {}
+    results_matched_by_data ||= {}
     azul_results = ::AzulSearchService.get_results(selected_facets: selected_facets, terms: terms)
     Rails.logger.info "Found #{azul_results.keys.size} results in Azul"
     azul_results.each do |accession, azul_result|
       existing_studies << azul_result
       facet_map[accession] = azul_result[:facet_matches]
     end
-    [existing_studies, facet_map]
+    results_matched_by_data['numResults:azul'] = azul_results.size
+    results_matched_by_data['numResults:total'] = results_matched_by_data['numResults:scp'].to_i + azul_results.size
+    { studies: existing_studies, facet_map: facet_map, results_matched_by_data: results_matched_by_data }
   end
 
   # execute a search against Azul API
