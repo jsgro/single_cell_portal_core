@@ -3,7 +3,7 @@ require 'user_tokens_helper'
 require 'test_helper'
 require 'includes_helper'
 
-class StudyFilesControllerTest < ActionDispatch::IntegrationTest
+class UserAnnotationsControllerTest < ActionDispatch::IntegrationTest
 
   before(:all) do
     @user = FactoryBot.create(:api_user, test_array: @@users_to_clean)
