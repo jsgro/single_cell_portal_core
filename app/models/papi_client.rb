@@ -31,6 +31,9 @@ class PapiClient < Struct.new(:project, :service_account_credentials, :service)
     cluster_file cluster_name matrix_file_path matrix_file_type
   ].freeze
 
+  # extra required parameters for sparse expression matrix differential_expression calls
+  SPARSE_DE_PARAMS = %w[barcode_file gene_file].freeze
+
   # Default constructor for PapiClient
   #
   # * *params*
@@ -87,6 +90,8 @@ class PapiClient < Struct.new(:project, :service_account_credentials, :service)
   #   - +user+ (User) => User performing ingest action
   #   - +action+ (String) => Action that is being performed, maps to Ingest pipeline action
   #     (e.g. 'ingest_cell_metadata', 'subsample')
+  #   - +extra_options+ (Hash) => Hash of extra keyword parameters to pass to :get_command_line,
+  #     such as options for running a differential_expression job
   #
   # * *return*
   #   - (Google::Apis::GenomicsV2alpha1::Operation)
@@ -95,11 +100,12 @@ class PapiClient < Struct.new(:project, :service_account_credentials, :service)
   #   - (Google::Apis::ServerError) => An error occurred on the server and the request can be retried
   #   - (Google::Apis::ClientError) =>  The request is invalid and should not be retried without modification
   #   - (Google::Apis::AuthorizationError) => Authorization is required
-  def run_pipeline(study_file: , user:, action:)
+  def run_pipeline(study_file: , user:, action:, extra_options: {})
     study = study_file.study
     accession = study.accession
     resources = create_resources_object(regions: ['us-central1'])
-    command_line = get_command_line(study_file: study_file, action: action, user_metrics_uuid: user.metrics_uuid)
+    command_line = get_command_line(study_file: study_file, action: action, user_metrics_uuid: user.metrics_uuid,
+                                    extra_options: extra_options)
     labels = {
       study_accession: accession,
       user_id: user.id.to_s,
@@ -356,9 +362,13 @@ class PapiClient < Struct.new(:project, :service_account_credentials, :service)
   # * *raises*
   #   - (ArgumentError) => if any required parameters from DE_PARAMETER_NAMES are missing or malformed
   def get_de_parameters(options)
+    # determine list of params to validate with by detecting matrix type, with a default of 'dense'
+    matrix_type = options.detect { |name, _| name.to_s == 'matrix_file_type' }&.last || 'dense'
+    control_params = matrix_type == 'sparse' ? DE_PARAMETER_NAMES + SPARSE_DE_PARAMS : DE_PARAMETER_NAMES
+
     # validate input parameters
-    safe_params = options.select { |name, _| DE_PARAMETER_NAMES.include?(name.to_s) }
-    missing_params = DE_PARAMETER_NAMES - safe_params.keys.map(&:to_s)
+    safe_params = options.select { |name, _| control_params.include?(name.to_s) }
+    missing_params = control_params - safe_params.keys.map(&:to_s)
     if missing_params.any?
       raise ArgumentError, "cannot run differential expression due to missing parameters: #{missing_params.join(', ')}"
     end
