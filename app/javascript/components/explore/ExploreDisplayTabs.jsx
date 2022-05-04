@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import _clone from 'lodash/clone'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faLink, faArrowLeft, faCog, faTimes, faDna, faUndo } from '@fortawesome/free-solid-svg-icons'
+import { faLink, faArrowLeft, faCog, faTimes, faDna, faUndo, faDownload } from '@fortawesome/free-solid-svg-icons'
 
 import StudyGeneField from './StudyGeneField'
 import ClusterSelector from '~/components/visualization/controls/ClusterSelector'
@@ -386,20 +386,33 @@ export default function ExploreDisplayTabs({
         </div>
         <div className={showViewOptionsControls ? 'col-md-2 ' : 'hidden'}>
           <div className="view-options-toggle">
-            {!deGenes && <><FontAwesomeIcon className="fa-lg" icon={faCog}/> OPTIONS</>}
-            {deGenes &&
+            {!showDeGroupPicker && <><FontAwesomeIcon className="fa-lg" icon={faCog}/> OPTIONS</>}
+            {showDeGroupPicker && !deGenes &&
               <>
-                {/* <div> */}
-                <button className="action fa-lg"
-                  style={{ float: 'left', position: 'relative', left: '-5px' }}
-                  onClick={() => setDeGenes(null)}
-                  data-toggle="tooltip"
-                  data-analytics-name="exit-de-view">
-                  <FontAwesomeIcon icon={faArrowLeft}/>
-                </button>
-                <span style={{ float: 'left', position: 'relative', left: '20px' }}>Differential expression</span>
-                {/* </div> */}
+                <DeGroupPicker
+                  exploreInfo={exploreInfo}
+                  setShowDeGroupPicker={setShowDeGroupPicker}
+                  deGenes={deGenes}
+                  setDeGenes={setDeGenes}
+                  setDeGroup={setDeGroup}
+                  setDeFileUrl={setDeFileUrl}
+                />
               </>
+            }
+            {showDeGroupPicker && deGenes &&
+                <>
+                  <button className="action fa-lg"
+                    style={{ float: 'left', position: 'relative', left: '-5px' }}
+                    onClick={() => {
+                      setShowDeGroupPicker(false)
+                      setDeGenes(null)
+                    }}
+                    data-toggle="tooltip"
+                    data-analytics-name="exit-de-view">
+                    <FontAwesomeIcon icon={faArrowLeft}/>
+                  </button>
+                  <span style={{ float: 'left', position: 'relative', left: '20px' }}>Differential expression</span>
+                </>
             }
             <button className="action"
               onClick={toggleViewOptions}
@@ -409,7 +422,7 @@ export default function ExploreDisplayTabs({
             </button>
           </div>
 
-          {!deGenes &&
+          {!showDeGroupPicker &&
           <>
             <div>
               <div className={showClusterControls ? '' : 'hidden'}>
@@ -480,17 +493,6 @@ export default function ExploreDisplayTabs({
               <br/><br/>
             </>
             }
-            {showDeGroupPicker &&
-            <>
-              <DeGroupPicker
-                exploreInfo={exploreInfo}
-                setShowDeGroupPicker={setShowDeGroupPicker}
-                setDeGenes={setDeGenes}
-                setDeGroup={setDeGroup}
-                setDeFileUrl={setDeFileUrl}
-              />
-            </>
-            }
             <button className="action"
               onClick={clearExploreParams}
               title="Reset all view options"
@@ -505,9 +507,17 @@ export default function ExploreDisplayTabs({
             </button>
           </>
           }
-          {deGenes &&
+          {showDeGroupPicker && deGenes &&
           <>
-            <p style={{ marginTop: '10px', position: 'relative', left: '30px' }}>{deGroup} vs. other groups</p>
+            <DeGroupPicker
+              exploreInfo={exploreInfo}
+              setShowDeGroupPicker={setShowDeGroupPicker}
+              deGenes={deGenes}
+              setDeGenes={setDeGenes}
+              setDeGroup={setDeGroup}
+              setDeFileUrl={setDeFileUrl}
+            />
+            {/* <p style={{ marginTop: '10px', position: 'relative', left: '30px' }}>{deGroup} vs. other groups</p> */}
             <table className="table table-terra table-scp-de">
               <thead>
                 <tr>
@@ -536,7 +546,8 @@ export default function ExploreDisplayTabs({
                 })}
               </tbody>
             </table>
-            15 most-DE genes.  <a href={deFileUrl}>Download all</a>.
+            15 most differentially expressed genes<br/><br/>
+            <a href={deFileUrl}><FontAwesomeIcon className="icon-left" icon={faDownload}/> Download all</a>
           </>
           }
         </div>

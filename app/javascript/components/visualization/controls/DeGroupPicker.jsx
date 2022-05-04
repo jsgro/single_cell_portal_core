@@ -7,7 +7,8 @@ import { newlineRegex } from '~/lib/validation/io'
 import { fetchBucketFile } from '~/lib/scp-api'
 
 // Value to show in menu if user has not selected a group for DE
-const noneSelected = 'Select a group'
+const noneSelected = 'Select group'
+
 
 /** Takes array of strings, converts it to list options suitable for react-select */
 function getSimpleOptions(stringArray) {
@@ -66,7 +67,7 @@ async function fetchDeGenes(bucketId, deFilePath, numGenes=15) {
 
 /** Pick groups of cells for differential expression (DE) */
 export default function DeGroupPicker({
-  exploreInfo, setShowDeGroupPicker, setDeGroup, setDeGenes, setDeFileUrl
+  exploreInfo, setShowDeGroupPicker, deGenes, setDeGroup, setDeGenes, setDeFileUrl
 }) {
   const annotation = exploreInfo?.annotationList?.default_annotation
   const groups = annotation?.values ?? []
@@ -74,7 +75,11 @@ export default function DeGroupPicker({
   const [group, setGroup] = useState(noneSelected)
 
   /** Update group in DE picker */
-  async function updateDeGroup() {
+  async function updateDeGroup(newGroup) {
+    console.log('group')
+    console.log(group)
+    setGroup(newGroup)
+
     const bucketId = exploreInfo?.bucketId
 
     // TODO (SCP-4321): Incorporate any updates to this general file name structure
@@ -82,7 +87,7 @@ export default function DeGroupPicker({
     const deFileName = `${[
       exploreInfo?.annotationList?.default_cluster,
       annotation.name,
-      group,
+      newGroup,
       'wilcoxon'
     ]
       .map(s => s.replaceAll(nonAlphaNumericRE, '_'))
@@ -92,44 +97,67 @@ export default function DeGroupPicker({
 
     const deGenes = await fetchDeGenes(bucketId, deFilePath)
 
-    setDeGroup(group)
+    setDeGroup(newGroup)
     setDeGenes(deGenes)
 
     const baseUrl = 'https://storage.googleapis.com/download/storage/v1/'
     const deFileUrl = `${baseUrl}b/${bucketId}/o/${deFilePath}?alt=media`
     setDeFileUrl(deFileUrl)
 
-    setShowDeGroupPicker(false)
+    // setShowDeGroupPicker(false)
   }
 
   // TODO (SCP-4321): Replace modal with dropdown at top of DE panel at right
   // TODO (SCP-4321): Move ← icon to left
   return (
-    <Modal
-      id='de-group-picker-modal'
-      onHide={() => setShowDeGroupPicker(false)}
-      show={true}
-      animation={false}
-      bsSize='small'>
-      <Modal.Body>
+    // <Modal
+    //   id='de-group-picker-modal'
+    //   onHide={() => setShowDeGroupPicker(false)}
+    //   show={true}
+    //   animation={false}
+    //   bsSize='small'>
+    //   <Modal.Body>
+    <>
+      {!deGenes &&
         <div className="flexbox-align-center flexbox-column">
-          <span>Choose a group to compare to all other groups</span>
+          <span>Compare one group to all others</span>
           <Select
             options={getSimpleOptions(groups)}
             data-analytics-name="de-group-select"
             value={{
-              label: group === '' ? noneSelected : group,
+              label: group,
               value: group
             }}
-            onChange={newGroup => setGroup(newGroup.value)}
+            onChange={newGroup => updateDeGroup(newGroup.value)}
             styles={clusterSelectStyle}
           />
         </div>
-      </Modal.Body>
-      <Modal.Footer>
-        <button className="btn btn-primary" onClick={() => {updateDeGroup()}}>OK</button>
-        <button className="btn terra-btn-secondary" onClick={() => setShowDeGroupPicker(false)}>Cancel</button>
-      </Modal.Footer>
-    </Modal>
+      }
+      {deGenes &&
+      <>
+        <br/>
+        <br/>
+        <Select
+          options={getSimpleOptions(groups)}
+          data-analytics-name="de-group-select"
+          value={{
+            label: group,
+            value: group
+          }}
+          onChange={newGroup => updateDeGroup(newGroup.value)}
+          styles={clusterSelectStyle}
+        />
+        <span>vs. all other groups</span>
+        <br/>
+        <br/>
+      </>
+      }
+    </>
+    //   </Modal.Body>
+    //   <Modal.Footer>
+    //     <button className="btn btn-primary" onClick={() => {updateDeGroup()}}>OK</button>
+    //     <button className="btn terra-btn-secondary" onClick={() => setShowDeGroupPicker(false)}>Cancel</button>
+    //   </Modal.Footer>
+    // </Modal>
   )
 }
