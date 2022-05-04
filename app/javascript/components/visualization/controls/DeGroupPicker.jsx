@@ -21,7 +21,7 @@ const nonAlphaNumericRE = /\W/g
  * Fetch array of gene differential expression data
  *
  * @param {String} bucketId Identifier for study's Google bucket
- * @param {String} deFileName Name of differential expression file
+ * @param {String} deFilePath File path of differential expression file in Google bucket
  * @param {Integer} numGenes Number of genes to include in returned deGenes array
  *
  * @return {Array} deGenes Array of DE gene objects, each with properties:
@@ -33,9 +33,7 @@ const nonAlphaNumericRE = /\W/g
  *   pctNzGroup: Percent non-zero, group.  % of cells with non-zero expression in selected group.
  *   pctNzReference: Percent non-zero, reference.  % of cells with non-zero expression in non-selected groups.
  **/
-async function fetchDeGenes(bucketId, deFileName, numGenes=20) {
-  const deFilePath = `_scp-internal/de/${deFileName}`.replaceAll('/', '%2F')
-
+async function fetchDeGenes(bucketId, deFilePath, numGenes=15) {
   // TODO (SCP-4321): Perhaps refine logic for fetching file from bucket, e.g. perhaps add
   //  token parameter to fetchFileFromBucket
   const data = await fetchBucketFile(bucketId, deFilePath)
@@ -55,6 +53,9 @@ async function fetchDeGenes(bucketId, deFileName, numGenes=20) {
       // Cast numeric string values as floats
       // TODO (SCP-4321): Add `pValPretty` and `pValAdjPretty` with '< 0.001' instead of 0
       deGene[k] = parseFloat(v)
+      if (['pval', 'pvalAdj'].includes(k)) {
+        deGene[`${k }Pretty`] = v === '0' ? '< 0.001' : v
+      }
     })
     deGene.name = name
     deGenes.push(deGene)
@@ -65,7 +66,7 @@ async function fetchDeGenes(bucketId, deFileName, numGenes=20) {
 
 /** Pick groups of cells for differential expression (DE) */
 export default function DeGroupPicker({
-  exploreInfo, setShowDeGroupPicker, setDeGroup, setDeGenes
+  exploreInfo, setShowDeGroupPicker, setDeGroup, setDeGenes, setDeFileUrl
 }) {
   const annotation = exploreInfo?.annotationList?.default_annotation
   const groups = annotation?.values ?? []
@@ -87,10 +88,16 @@ export default function DeGroupPicker({
       .map(s => s.replaceAll(nonAlphaNumericRE, '_'))
       .join('--') }.tsv`
 
-    const deGenes = await fetchDeGenes(bucketId, deFileName)
+    const deFilePath = `_scp-internal/de/${deFileName}`.replaceAll('/', '%2F')
+
+    const deGenes = await fetchDeGenes(bucketId, deFilePath)
 
     setDeGroup(group)
     setDeGenes(deGenes)
+
+    const baseUrl = 'https://storage.googleapis.com/download/storage/v1/'
+    const deFileUrl = `${baseUrl}b/${bucketId}/o/${deFilePath}?alt=media`
+    setDeFileUrl(deFileUrl)
 
     setShowDeGroupPicker(false)
   }

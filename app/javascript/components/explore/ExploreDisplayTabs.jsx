@@ -76,6 +76,7 @@ export default function ExploreDisplayTabs({
   const [showDeGroupPicker, setShowDeGroupPicker] = useState(false)
   const [deGenes, setDeGenes] = useState(null)
   const [deGroup, setDeGroup] = useState(null)
+  const [deFileUrl, setDeFileUrl] = useState(null)
 
   let hasDE = false
   const flags = getFeatureFlagsWithDefaults()
@@ -386,21 +387,26 @@ export default function ExploreDisplayTabs({
         <div className={showViewOptionsControls ? 'col-md-2 ' : 'hidden'}>
           <div className="view-options-toggle">
             {!deGenes && <><FontAwesomeIcon className="fa-lg" icon={faCog}/> OPTIONS</>}
-            {deGenes && <>Differential expression</>}
+            {deGenes &&
+              <>
+                {/* <div> */}
+                <button className="action fa-lg"
+                  style={{ float: 'left', position: 'relative', left: '-5px' }}
+                  onClick={() => setDeGenes(null)}
+                  data-toggle="tooltip"
+                  data-analytics-name="exit-de-view">
+                  <FontAwesomeIcon icon={faArrowLeft}/>
+                </button>
+                <span style={{ float: 'left', position: 'relative', left: '20px' }}>Differential expression</span>
+                {/* </div> */}
+              </>
+            }
             <button className="action"
               onClick={toggleViewOptions}
               title="Hide options"
               data-analytics-name="view-options-hide">
               <FontAwesomeIcon className="fa-lg" icon={faTimes}/>
             </button>
-            {deGenes &&
-            <button className="action fa-lg"
-              onClick={() => setDeGenes(null)}
-              data-toggle="tooltip"
-              data-analytics-name="exit-de-view">
-              <FontAwesomeIcon icon={faArrowLeft}/>
-            </button>
-            }
           </div>
 
           {!deGenes &&
@@ -481,6 +487,7 @@ export default function ExploreDisplayTabs({
                 setShowDeGroupPicker={setShowDeGroupPicker}
                 setDeGenes={setDeGenes}
                 setDeGroup={setDeGroup}
+                setDeFileUrl={setDeFileUrl}
               />
             </>
             }
@@ -500,7 +507,7 @@ export default function ExploreDisplayTabs({
           }
           {deGenes &&
           <>
-            <p>{deGroup} vs. other groups</p>
+            <p style={{ marginTop: '10px', position: 'relative', left: '30px' }}>{deGroup} vs. other groups</p>
             <table className="table table-terra table-scp-de">
               <thead>
                 <tr>
@@ -510,9 +517,9 @@ export default function ExploreDisplayTabs({
                 </tr>
               </thead>
               <tbody>
-                {deGenes.map(deGene => {
+                {deGenes.map((deGene, i) => {
                   return (
-                    <tr>
+                    <tr key={i}>
                       <td>
                         <a
                           analytics-name="de-gene-link"
@@ -524,11 +531,12 @@ export default function ExploreDisplayTabs({
                             deGene.name
                           }</a></td>
                       <td>{deGene.log2FoldChange}</td>
-                      <td>{deGene.pvalAdj}</td>
+                      <td>{deGene.pvalAdjPretty}</td>
                     </tr>)
                 })}
               </tbody>
             </table>
+            15 most-DE genes.  <a href={deFileUrl}>Download all</a>.
           </>
           }
         </div>
