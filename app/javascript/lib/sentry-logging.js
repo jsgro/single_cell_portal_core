@@ -7,7 +7,7 @@ import getSCPContext from '~/providers/SCPContextProvider'
 
 /**
  * Log an exception to Sentry for bad response JS fetch executions
- * i.e. executions that results in a 404 response
+ * e.g. requests that result in a 404 response
  *
  * @param {Object} response - the response object from a failed JS fetch call
  * @param {String} titleInfo - extra info for the title of the Sentry event
