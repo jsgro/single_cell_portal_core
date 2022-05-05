@@ -18,17 +18,10 @@ describe('Library for client-side usage analytics', () => {
   })
 
   it('includes `authenticated: true` when signed in', done => {
-    // Spy on `fetch()` and its contingent methods like `json()`,
-    // because we want to intercept the outgoing request
-    const mockSuccessResponse = {}
-    const mockJsonPromise = Promise.resolve(mockSuccessResponse)
-    const mockFetchPromise = Promise.resolve({
-      json: () => {
-        mockJsonPromise
-      }
-    })
-    jest.spyOn(global, 'fetch').mockImplementation(() => {
-      mockFetchPromise
+    // Fake the `fetch()`because we want to intercept the outgoing request
+    global.fetch = jest.fn(() =>
+      Promise.resolve({
+        json: () => Promise.resolve({}),
     })
     render(<a href="#" onClick={(e) => logClick(e)}>Text that is linked</a>)
     fireEvent.click(screen.getByText('Text that is linked'))
@@ -47,18 +40,12 @@ describe('Library for client-side usage analytics', () => {
   })
 
   it('logs text of selected option on changing in menu', done => {
-    // Spy on `fetch()` and its contingent methods like `json()`,
-    // because we want to intercept the outgoing request
-    const mockSuccessResponse = {}
-    const mockJsonPromise = Promise.resolve(mockSuccessResponse)
-    const mockFetchPromise = Promise.resolve({
-      json: () => {
-        mockJsonPromise
-      }
-    })
-    jest.spyOn(global, 'fetch').mockImplementation(() => {
-      mockFetchPromise
-    })
+    // Fake the `fetch()`because we want to intercept the outgoing request
+
+    global.fetch = jest.fn(() =>
+      Promise.resolve({
+        json: () => Promise.resolve({ rates: { CAD: 1.42 } }),
+    }))
 
     const event = {
       target: {
@@ -86,18 +73,11 @@ describe('Library for client-side usage analytics', () => {
   })
 
   it('logs classList and id when link is clicked', done => {
-    // Spy on `fetch()` and its contingent methods like `json()`,
-    // because we want to intercept the outgoing request
-    const mockSuccessResponse = {}
-    const mockJsonPromise = Promise.resolve(mockSuccessResponse)
-    const mockFetchPromise = Promise.resolve({
-      json: () => {
-        mockJsonPromise
-      }
-    })
-    jest.spyOn(global, 'fetch').mockImplementation(() => {
-      mockFetchPromise
-    })
+    // Fake the `fetch()`because we want to intercept the outgoing request
+    global.fetch = jest.fn(() =>
+      Promise.resolve({
+        json: () => Promise.resolve({}),
+    }))
 
     const target = {
         classList: ['class-name-1', 'class-name-2'],
