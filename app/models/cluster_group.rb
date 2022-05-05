@@ -18,6 +18,7 @@ class ClusterGroup
   # :is_subsampling => whether subsampling has been initiated
   field :subsampled, type: Boolean, default: false
   field :is_subsampling, type: Boolean, default: false
+  field :has_differential_expression, type: Boolean, default: false
 
   validates_uniqueness_of :name, scope: :study_id
   validates_presence_of :name, :cluster_type
