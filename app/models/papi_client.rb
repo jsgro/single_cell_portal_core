@@ -25,15 +25,6 @@ class PapiClient < Struct.new(:project, :service_account_credentials, :service)
     differential_expression: ['Cluster']
   }.freeze
 
-  # list of parameter names allowed for differential_expression calls
-  DE_PARAMETER_NAMES = %w[
-    annotation_name annotation_type annotation_scope annotation_file
-    cluster_file cluster_name matrix_file_path matrix_file_type
-  ].freeze
-
-  # extra required parameters for sparse expression matrix differential_expression calls
-  SPARSE_DE_PARAMS = %w[barcode_file gene_file].freeze
-
   # Default constructor for PapiClient
   #
   # * *params*
@@ -90,8 +81,8 @@ class PapiClient < Struct.new(:project, :service_account_credentials, :service)
   #   - +user+ (User) => User performing ingest action
   #   - +action+ (String) => Action that is being performed, maps to Ingest pipeline action
   #     (e.g. 'ingest_cell_metadata', 'subsample')
-  #   - +extra_options+ (Hash) => Hash of extra keyword parameters to pass to :get_command_line,
-  #     such as options for running a differential_expression job
+  #   - +params_object+ (Class) => Class containing parameters for PAPI job (like DifferentialExpressionParameters)
+  #                                must implement :to_options_array method
   #
   # * *return*
   #   - (Google::Apis::GenomicsV2alpha1::Operation)
@@ -100,12 +91,12 @@ class PapiClient < Struct.new(:project, :service_account_credentials, :service)
   #   - (Google::Apis::ServerError) => An error occurred on the server and the request can be retried
   #   - (Google::Apis::ClientError) =>  The request is invalid and should not be retried without modification
   #   - (Google::Apis::AuthorizationError) => Authorization is required
-  def run_pipeline(study_file: , user:, action:, extra_options: {})
+  def run_pipeline(study_file: , user:, action:, params_object: nil)
     study = study_file.study
     accession = study.accession
     resources = create_resources_object(regions: ['us-central1'])
     command_line = get_command_line(study_file: study_file, action: action, user_metrics_uuid: user.metrics_uuid,
-                                    extra_options: extra_options)
+                                    params_object: params_object)
     labels = {
       study_accession: accession,
       user_id: user.id.to_s,
@@ -268,14 +259,15 @@ class PapiClient < Struct.new(:project, :service_account_credentials, :service)
   # * *params*
   #   - +study_file+ (StudyFile) => StudyFile to be ingested
   #   - +action+ (String/Symbol) => Action to perform on ingest
-  #   - +extra_options+ (Hash) => Hash of extra parameters to send to command line (like for differential_expression)
+  #   - +params_object+ (Class) => Class containing parameters for PAPI job (like DifferentialExpressionParameters)
+  #                                must implement :to_options_array method
   #
   # * *return*
   #   - (Array) Command Line, in Docker "exec" format
   #
   # * *raises*
   #   - (ArgumentError) => The requested StudyFile and action do not correspond with each other, or cannot be run yet
-  def get_command_line(study_file:, action:, user_metrics_uuid:, extra_options: {})
+  def get_command_line(study_file:, action:, user_metrics_uuid:, params_object: nil)
     validate_action_by_file(action, study_file)
     study = study_file.study
     command_line = "python ingest_pipeline.py --study-id #{study.id} --study-file-id #{study_file.id} " \
@@ -309,14 +301,17 @@ class PapiClient < Struct.new(:project, :service_account_credentials, :service)
 
     # add optional command line arguments based on file type and action
     if action.to_s == 'differential_expression'
-      optional_args = get_de_parameters(extra_options)
+      unless params_object.present? && params_object.respond_to?(:to_options_array)
+        raise ArgumentError, "invalid params_object for differential_expression: #{params_object.inspect}"
+      end
+
+      optional_args = params_object.to_options_array
     else
       optional_args = get_command_line_options(study_file, action)
     end
 
     # return an array of tokens (Docker expects exec form, which runs without a shell, so cannot be a single command)
-    exec_form = command_line.split + optional_args
-    exec_form
+    command_line.split + optional_args
   end
 
   # Assemble any optional command line options for ingest by file type
@@ -349,54 +344,6 @@ class PapiClient < Struct.new(:project, :service_account_credentials, :service)
       end
     end
     opts
-  end
-
-  # get command line arguments for differential expression runs
-  #
-  # * *params*
-  #   - +options+ (Hash) => Hash of DE-specific parameters, whose names must include all values from DE_PARAMETER_NAMES
-  #
-  # * *returns*
-  #   - (Array) => Array of DE-specific command line arguments to pass to Docker in "exec" form
-  #
-  # * *raises*
-  #   - (ArgumentError) => if any required parameters from DE_PARAMETER_NAMES are missing or malformed
-  def get_de_parameters(options)
-    # determine list of params to validate with by detecting matrix type, with a default of 'dense'
-    matrix_type = options.detect { |name, _| name.to_s == 'matrix_file_type' }&.last || 'dense'
-    control_params = matrix_type == 'sparse' ? DE_PARAMETER_NAMES + SPARSE_DE_PARAMS : DE_PARAMETER_NAMES
-
-    # validate input parameters
-    safe_params = options.select { |name, _| control_params.include?(name.to_s) }
-    missing_params = control_params - safe_params.keys.map(&:to_s)
-    if missing_params.any?
-      raise ArgumentError, "cannot run differential expression due to missing parameters: #{missing_params.join(', ')}"
-    end
-
-    # add all good parameters to params array so they can be deserialized as command line options for Docker
-    # will throw an exception if value passed is invalid for the given parameter type
-    de_params = []
-    safe_params.each do |param_name, value|
-      if %w[cluster_file annotation_file matrix_file_path].include?(param_name)
-        raise ArgumentError, "#{param_name} contains a non-gs URL value: #{value}" unless value.start_with?('gs://')
-      end
-
-      de_params += [to_cli_opt(param_name), value]
-    end
-    de_params << '--differential-expression' # final argument that has no value
-    de_params
-  end
-
-  # transform a parameter from Hash key or String into a representation that can be called in the Python CLI
-  # converts underscores (_) to dashes (-) and prepends double dashes (--)
-  #
-  # * *params*
-  #   - +param_name+ (Symbol, String) => Name of parameter
-  #
-  # * *returns*
-  #   - (String) => New parameter name, encoded as kwarg for Python command line
-  def to_cli_opt(param_name)
-    "--#{param_name.to_s.gsub(/_/, '-')}"
   end
 
   private

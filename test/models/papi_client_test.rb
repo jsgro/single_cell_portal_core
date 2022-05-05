@@ -98,8 +98,9 @@ class PapiClientTest < ActiveSupport::TestCase
         matrix_file_path: @expression_matrix.gs_url,
         matrix_file_type: 'dense'
       }
+      de_params = DifferentialExpressionParameters.new(de_opts)
       client.run_pipeline(study_file: @cluster_file, user: @user, action: :differential_expression,
-                          extra_options: de_opts)
+                          params_object: de_params)
       mock.verify
     end
   end
@@ -168,57 +169,6 @@ class PapiClientTest < ActiveSupport::TestCase
     assert cluster_cmd.include? '--ingest-cluster'
   end
 
-  test 'should get differential expression parameters by matrix type' do
-    # try differential expression validation
-    assert_raises ArgumentError do
-      @client.get_de_parameters({ foo: 'bar', bing: 'baz' })
-    end
-
-    # validate extra args population
-    de_opts = {
-      annotation_name: 'Category',
-      annotation_type: 'group',
-      annotation_scope: 'cluster',
-      annotation_file: @cluster_file.gs_url,
-      cluster_file: @cluster_file.gs_url,
-      cluster_name: 'cluster.txt',
-      matrix_file_path: @expression_matrix.gs_url,
-      matrix_file_type: 'dense'
-    }
-
-    de_cmd = @client.get_de_parameters(de_opts)
-    assert de_cmd.any?
-    de_opts.each do |opt_name, opt_val|
-      converted_name = @client.to_cli_opt(opt_name)
-      assert de_cmd.include? converted_name
-      assert de_cmd.include? opt_val
-    end
-    assert de_cmd.include? '--differential-expression'
-
-    # test sparse matrix args
-    de_sparse_opts = {
-      annotation_name: 'Category',
-      annotation_type: 'group',
-      annotation_scope: 'cluster',
-      annotation_file: @cluster_file.gs_url,
-      cluster_file: @cluster_file.gs_url,
-      cluster_name: 'cluster.txt',
-      matrix_file_path: 'gs://test_bucket/expression/sparse.mtx',
-      matrix_file_type: 'sparse',
-      gene_file: 'gs://test_bucket/expression/genes.tsv',
-      barcode_file: 'gs://test_bucket/expression/barcodes.tsv'
-    }
-
-    de_sparse_cmd = @client.get_de_parameters(de_sparse_opts)
-    assert de_sparse_cmd.any?
-    de_sparse_opts.each do |opt_name, opt_val|
-      converted_name = @client.to_cli_opt(opt_name)
-      assert de_sparse_cmd.include? converted_name
-      assert de_sparse_cmd.include? opt_val
-    end
-    assert de_sparse_cmd.include? '--differential-expression'
-  end
-
   test 'should get extra command line options' do
     cluster_cmd = @client.get_command_line(study_file: @cluster_file, action: :ingest_cluster,
                                            user_metrics_uuid: @user.metrics_uuid)
@@ -245,10 +195,5 @@ class PapiClientTest < ActiveSupport::TestCase
     assert_equal environment, pipeline_request.pipeline.environment
     assert_equal resources, pipeline_request.pipeline.resources
     assert_equal exp_cmd, pipeline_request.pipeline.actions.commands
-  end
-
-  test 'converts keys into cli options' do
-    assert_equal '--annotation-name', @client.to_cli_opt(:annotation_name)
-    assert_equal '--foo', @client.to_cli_opt('foo')
   end
 end
