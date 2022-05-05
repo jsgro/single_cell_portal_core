@@ -426,7 +426,7 @@ export function log(name, props = {}) {
     fetch(`${bardDomain}/api/event/`, init).then(response => {
       // log failed attempts to connect with Bard to Sentry
       if (!response.ok) {
-        logFetchExceptionToSentry(response, 'Error in fetch response when logging event to Bard')
+        logJSFetchExceptionToSentry(response, 'Error in fetch response when logging event to Bard')
       }
     // log errored attempts to connect with Bard to Sentry
     }).catch(error => {

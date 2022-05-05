@@ -2,8 +2,6 @@ import React from 'react'
 import ReactDOM from 'react-dom'
 import morpheus from 'morpheus-app'
 import { Spinner } from 'spin.js'
-import * as Sentry from '@sentry/react'
-import { BrowserTracing } from '@sentry/tracing'
 
 import '~/styles/application.scss'
 import HomePageContent from '~/components/HomePageContent'
@@ -17,7 +15,8 @@ import RawAssociationSelect from '~/components/upload/RawAssociationSelect'
 import { getFeatureFlagsWithDefaults } from '~/providers/UserProvider'
 import checkMissingAuthToken from '~/lib/user-auth-tokens'
 import ValidateFile from '~/lib/validation/validate-file'
-import getSCPContext from '~/providers/SCPContextProvider'
+import { setUpSentry } from '~/lib/sentry-logging'
+
 const { validateRemoteFile } = ValidateFile
 
 import {
@@ -27,30 +26,8 @@ import * as ScpApi from '~/lib/scp-api'
 
 window.SCP = window.SCP ? window.SCP : {}
 
-// Initialize Sentry to enable logging JS errors to Sentry
-Sentry.init({
-  dsn: 'https://a713dcf8bbce4a26aa1fe3bf19008d26@o54426.ingest.sentry.io/1424198',
-  integrations: [new BrowserTracing()],
-
-  // send 100% of the transactions to Sentry since they will only occur on errors
-  tracesSampleRate: 1.0
-})
-
-// set the logger tag to reflect that the errors are from the frontend
-Sentry.setTag('logger', 'app-frontend')
-
-// set the scope for Sentry to the current environment
-Sentry.configureScope(scope =>
-  scope.addEventProcessor(
-    event =>
-      new Promise(resolve =>
-        resolve({
-          ...event,
-          environment: getSCPContext().environment
-        })
-      )
-  )
-)
+// Set up the context for Sentry to log front-end errors
+setUpSentry()
 
 document.addEventListener('DOMContentLoaded', () => {
   // Logs only page views for faceted search UI
