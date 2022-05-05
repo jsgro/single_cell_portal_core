@@ -430,7 +430,7 @@ export function log(name, props = {}) {
       }
     // log errored attempts to connect with Bard to Sentry
     }).catch(error => {
-      logJSFetchErrorToSentry(error, 'failed to log event to Bard')
+      logJSFetchErrorToSentry(error, 'Error in JavaScript when logging event to Bard')
     })
   }
 }
