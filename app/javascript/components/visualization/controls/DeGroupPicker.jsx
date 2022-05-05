@@ -67,18 +67,16 @@ async function fetchDeGenes(bucketId, deFilePath, numGenes=15) {
 
 /** Pick groups of cells for differential expression (DE) */
 export default function DeGroupPicker({
-  exploreInfo, setShowDeGroupPicker, deGenes, setDeGroup, setDeGenes, setDeFileUrl
+  exploreInfo, setShowDeGroupPicker, deGenes, deGroup, setDeGroup, setDeGenes, setDeFileUrl
 }) {
   const annotation = exploreInfo?.annotationList?.default_annotation
   const groups = annotation?.values ?? []
 
-  const [group, setGroup] = useState(noneSelected)
-
   /** Update group in DE picker */
   async function updateDeGroup(newGroup) {
-    console.log('group')
-    console.log(group)
-    setGroup(newGroup)
+    console.log('deGroup')
+    console.log(deGroup)
+    setDeGroup(newGroup)
 
     const bucketId = exploreInfo?.bucketId
 
@@ -125,8 +123,8 @@ export default function DeGroupPicker({
             options={getSimpleOptions(groups)}
             data-analytics-name="de-group-select"
             value={{
-              label: group,
-              value: group
+              label: deGroup === null ? noneSelected : deGroup,
+              value: deGroup
             }}
             onChange={newGroup => updateDeGroup(newGroup.value)}
             styles={clusterSelectStyle}
@@ -141,8 +139,8 @@ export default function DeGroupPicker({
           options={getSimpleOptions(groups)}
           data-analytics-name="de-group-select"
           value={{
-            label: group,
-            value: group
+            label: deGroup === null ? noneSelected : deGroup,
+            value: deGroup
           }}
           onChange={newGroup => updateDeGroup(newGroup.value)}
           styles={clusterSelectStyle}

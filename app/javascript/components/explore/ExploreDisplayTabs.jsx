@@ -394,6 +394,7 @@ export default function ExploreDisplayTabs({
                   setShowDeGroupPicker={setShowDeGroupPicker}
                   deGenes={deGenes}
                   setDeGenes={setDeGenes}
+                  deGroup={deGroup}
                   setDeGroup={setDeGroup}
                   setDeFileUrl={setDeFileUrl}
                 />
@@ -414,12 +415,14 @@ export default function ExploreDisplayTabs({
                   <span style={{ float: 'left', position: 'relative', left: '20px' }}>Differential expression</span>
                 </>
             }
+            {!deGenes || deGroup &&
             <button className="action"
               onClick={toggleViewOptions}
               title="Hide options"
               data-analytics-name="view-options-hide">
               <FontAwesomeIcon className="fa-lg" icon={faTimes}/>
             </button>
+            }
           </div>
 
           {!showDeGroupPicker &&
@@ -514,6 +517,7 @@ export default function ExploreDisplayTabs({
               setShowDeGroupPicker={setShowDeGroupPicker}
               deGenes={deGenes}
               setDeGenes={setDeGenes}
+              deGroup={deGroup}
               setDeGroup={setDeGroup}
               setDeFileUrl={setDeFileUrl}
             />
