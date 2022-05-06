@@ -40,15 +40,16 @@ elif [[ $PASSENGER_APP_ENV = "development" ]]; then
        sudo -E -u app -H yarn install --force
     fi
 fi
+
 echo "*** CREATING CRON ENV FILES ***"
-echo "export PROD_DATABASE_PASSWORD='$PROD_DATABASE_PASSWORD'" >| /home/app/.cron_env
-echo "export SENDGRID_USERNAME='$SENDGRID_USERNAME'" >> /home/app/.cron_env
-echo "export SENDGRID_PASSWORD='$SENDGRID_PASSWORD'" >> /home/app/.cron_env
-echo "export MONGO_LOCALHOST='$MONGO_LOCALHOST'" >> /home/app/.cron_env
-echo "export MONGO_INTERNAL_IP='$MONGO_INTERNAL_IP'" >> /home/app/.cron_env
-echo "export SECRET_KEY_BASE='$SECRET_KEY_BASE'" >> /home/app/.cron_env
-echo "export GOOGLE_CLOUD_PROJECT='$GOOGLE_CLOUD_PROJECT'" >> /home/app/.cron_env
-echo "export MIXPANEL_SECRET='$MIXPANEL_SECRET'" >> /home/app/.cron_env
+echo "# cron environment setup" >| /home/app/.cron_env
+for ENV_VAR in GA_TRACKING_ID GCP_NETWORK_NAME GCP_SUB_NETWORK_NAME LOGSTASH_HOST MIXPANEL_SECRET MONGODB_ADMIN_PASSWORD \
+  MONGODB_ADMIN_USER MONGO_INTERNAL_IP MONGO_LOCALHOST NEWRELIC_AGENT_ID OAUTH_CLIENT_ID OAUTH_CLIENT_SECRET PORTAL_NAMESPACE \
+  PROD_DATABASE_PASSWORD PROD_HOSTNAME SECRET_KEY_BASE SENDGRID_PASSWORD SENDGRID_USERNAME TCELL_AGENT_API_KEY \
+  TCELL_AGENT_APP_ID T_CELL_SERVER_AGENT_API_KEY
+do
+  echo "export $ENV_VAR='${!ENV_VAR}'" >> /home/app/.cron_env
+done
 
 if [[ -z $SERVICE_ACCOUNT_KEY ]]; then
 	echo $GOOGLE_CLOUD_KEYFILE_JSON >| /home/app/.google_service_account.json
