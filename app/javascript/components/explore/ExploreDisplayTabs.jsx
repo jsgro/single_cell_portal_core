@@ -29,8 +29,8 @@ import InferCNVIdeogram from '~/components/visualization/InferCNVIdeogram'
 import useResizeEffect from '~/hooks/useResizeEffect'
 import { log } from '~/lib/metrics-api'
 import { getFeatureFlagsWithDefaults } from '~/providers/UserProvider'
-
 import DifferentialExpressionGroupPicker from '~/components/visualization/controls/DifferentialExpressionGroupPicker'
+import DifferentialExpressionPanel, { DifferentialExpressionPanelHeader } from './DifferentialExpressionPanel'
 
 const tabList = [
   { key: 'loading', label: 'loading...' },
@@ -79,6 +79,11 @@ export default function ExploreDisplayTabs({
   const [showDeGroupPicker, setShowDeGroupPicker] = useState(false)
   const [deGenes, setDeGenes] = useState(null)
   const [deGroup, setDeGroup] = useState(null)
+
+  // For readability, until approach outlined in TODO above can be fully
+  // attempted, which will likely be tightly couple with UX changes suggested
+  // at 2022-05-06 demo.
+  const showDifferentialExpressionPanel = deGenes !== null
 
   // TODO (SCP-4321): In addition to feature flag, check hasDifferentialExpression attribute
   // from forthcoming update to an API response
@@ -388,25 +393,26 @@ export default function ExploreDisplayTabs({
         </div>
         <div className={showViewOptionsControls ? 'col-md-2 ' : 'hidden'}>
           <div className="view-options-toggle">
-            {!deGenes && <><FontAwesomeIcon className="fa-lg" icon={faCog}/> OPTIONS</>}
-            {deGenes && <>Differential expression</>}
-            <button className="action"
-              onClick={toggleViewOptions}
-              title="Hide options"
-              data-analytics-name="view-options-hide">
-              <FontAwesomeIcon className="fa-lg" icon={faTimes}/>
-            </button>
-            {deGenes &&
-            <button className="action fa-lg"
-              onClick={() => setDeGenes(null)}
-              data-toggle="tooltip"
-              data-analytics-name="differential-expression-view-exit">
-              <FontAwesomeIcon icon={faArrowLeft}/>
-            </button>
+            {!showDifferentialExpressionPanel &&
+              <>
+                <FontAwesomeIcon className="fa-lg" icon={faCog}/> OPTIONS
+                <button className="action"
+                  onClick={toggleViewOptions}
+                  title="Hide options"
+                  data-analytics-name="view-options-hide">
+                  <FontAwesomeIcon className="fa-lg" icon={faTimes}/>
+                </button>
+              </>
+            }
+            {showDifferentialExpressionPanel &&
+              <DifferentialExpressionPanelHeader
+                toggleViewOptions={toggleViewOptions}
+                setDeGenes={setDeGenes}
+              />
             }
           </div>
 
-          {!deGenes &&
+          {!showDifferentialExpressionPanel &&
           <>
             <div>
               <div className={showClusterControls ? '' : 'hidden'}>
@@ -501,38 +507,12 @@ export default function ExploreDisplayTabs({
             </button>
           </>
           }
-          {deGenes &&
-          <>
-            <p>{deGroup} vs. other groups</p>
-            <table className="table table-terra table-scp-compact">
-              <thead>
-                <tr>
-                  <th>Name</th>
-                  <th>log<sub>2</sub>(FC)</th>
-                  <th>Adj. p-value</th>
-                </tr>
-              </thead>
-              <tbody>
-                {deGenes.map(deGene => {
-                  return (
-                    <tr>
-                      <td>
-                        <a
-                          analytics-name="de-gene-link"
-                          href="#"
-                          onClick={event => {
-                            searchGenes([deGene.name])
-                            event.preventDefault()
-                          }}>{
-                            deGene.name
-                          }</a></td>
-                      <td>{deGene.log2FoldChange}</td>
-                      <td>{deGene.pvalAdj}</td>
-                    </tr>)
-                })}
-              </tbody>
-            </table>
-          </>
+          {showDifferentialExpressionPanel &&
+            <DifferentialExpressionPanel
+              deGroup={deGroup}
+              deGenes={deGenes}
+              searchGenes={searchGenes}
+            />
           }
         </div>
       </div>
