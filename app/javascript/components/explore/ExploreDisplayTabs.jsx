@@ -30,7 +30,7 @@ import useResizeEffect from '~/hooks/useResizeEffect'
 import { log } from '~/lib/metrics-api'
 import { getFeatureFlagsWithDefaults } from '~/providers/UserProvider'
 
-import DeGroupPicker from '~/components/visualization/controls/DeGroupPicker'
+import DifferentialExpressionGroupPicker from '~/components/visualization/controls/DifferentialExpressionGroupPicker'
 
 const tabList = [
   { key: 'loading', label: 'loading...' },
@@ -73,16 +73,19 @@ export default function ExploreDisplayTabs({
   // a plotly points_selected event
   const [currentPointsSelected, setCurrentPointsSelected] = useState(null)
 
+  // Differential expression settings
+  // TODO (SCP-4321): Try encapsulating these in a DE-specific component,
+  // to simplify this high-level ExploreDisplayTabs component
   const [showDeGroupPicker, setShowDeGroupPicker] = useState(false)
   const [deGenes, setDeGenes] = useState(null)
   const [deGroup, setDeGroup] = useState(null)
 
-  let hasDE = false
+  // TODO (SCP-4321): In addition to feature flag, check hasDifferentialExpression attribute
+  // from forthcoming update to an API response
+  let hasDifferentialExpression = false
   const flags = getFeatureFlagsWithDefaults()
   if (flags.differential_expression_frontend) {
-    // TODO (SCP-4321): In addition to feature flag, check hasDE attribute
-    // from forthcoming update to an API response
-    hasDE = true
+    hasDifferentialExpression = true
   }
 
   const plotContainerClass = 'explore-plot-tab-content'
@@ -397,7 +400,7 @@ export default function ExploreDisplayTabs({
             <button className="action fa-lg"
               onClick={() => setDeGenes(null)}
               data-toggle="tooltip"
-              data-analytics-name="exit-de-view">
+              data-analytics-name="differential-expression-view-exit">
               <FontAwesomeIcon icon={faArrowLeft}/>
             </button>
             }
@@ -465,7 +468,7 @@ export default function ExploreDisplayTabs({
               exploreParams={exploreParamsWithDefaults}
               updateExploreParams={updateExploreParams}
               allGenes={exploreInfo ? exploreInfo.uniqueGenes : []}/>
-            {hasDE &&
+            {hasDifferentialExpression &&
             <>
               <button
                 className="btn btn-primary"
@@ -476,7 +479,7 @@ export default function ExploreDisplayTabs({
             }
             {showDeGroupPicker &&
             <>
-              <DeGroupPicker
+              <DifferentialExpressionGroupPicker
                 exploreInfo={exploreInfo}
                 setShowDeGroupPicker={setShowDeGroupPicker}
                 setDeGenes={setDeGenes}
@@ -501,7 +504,7 @@ export default function ExploreDisplayTabs({
           {deGenes &&
           <>
             <p>{deGroup} vs. other groups</p>
-            <table className="table table-terra table-scp-de">
+            <table className="table table-terra table-scp-compact">
               <thead>
                 <tr>
                   <th>Name</th>
