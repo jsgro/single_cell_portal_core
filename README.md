@@ -63,6 +63,9 @@ deploying their own instance will need to register for an account with Sentry, a
 environment variable when deploying your instance (see [Running the Container](#running-the-container) and
 [DOCKER RUN COMMAND ENVIRONMENT VARIABLES](#docker-run-command-environment-variables) for more detail).
 
+Note - while the Sentry DSN is stored with secrets and may appear as one, it is not a secret and Sentry's 
+official stance is that [the Sentry DSN does not need to be kept private](https://github.com/getsentry/sentry-docs/pull/3123/files). 
+
 #### [TCell Web Application Firewall](https://tcell.io)
 
 The Single Cell Portal employs the TCell web application firewall as part of its security configuration.  This is not
