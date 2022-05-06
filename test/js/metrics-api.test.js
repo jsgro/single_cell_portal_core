@@ -22,7 +22,9 @@ describe('Library for client-side usage analytics', () => {
     global.fetch = jest.fn(() =>
       Promise.resolve({
         json: () => Promise.resolve({})
-    })
+      })
+    )
+
     render(<a href="#" onClick={(e) => logClick(e)}>Text that is linked</a>)
     fireEvent.click(screen.getByText('Text that is linked'))
 
