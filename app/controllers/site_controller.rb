@@ -726,7 +726,7 @@ class SiteController < ApplicationController
   def study_params
     params.require(:study).permit(:name, :description, :public, :embargo, :cell_count,
                                   :default_options => [:cluster, :annotation, :color_profile, :expression_label, :deliver_emails,
-                                                       :cluster_point_size, :cluster_point_alpha, :cluster_point_border],
+                                                       :cluster_point_size, :cluster_point_alpha, :cluster_point_border, :precomputed_heatmap_label],
                                   study_shares_attributes: [:id, :_destroy, :email, :permission],
                                   study_detail_attributes: [:id, :full_description],
                                   reviewer_access_attributes: [:id, :expires_at],
