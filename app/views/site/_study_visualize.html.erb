@@ -1,13 +1,12 @@
 <script type="text/javascript" nonce="<%= content_security_policy_script_nonce %>">
   window.SCP.studyAccession = '<%= @study.accession %>';
   window.SCP.renderComponent('study-visualize', 'ExploreView', {studyAccession: window.SCP.studyAccession})
-  <% if @study.has_streamable_files? %>
+  <% if @study.has_streamable_files(current_user) %>
     if (typeof window.SCP.readOnlyToken === 'undefined') {
       window.SCP.readOnlyToken = '<%= get_read_access_token(@study, current_user) %>'
     }
   <% end %>
 </script>
-
 
 <% if @study.has_analysis_outputs?('infercnv', 'ideogram.js') or @study.has_bam_files? %>
   <!--

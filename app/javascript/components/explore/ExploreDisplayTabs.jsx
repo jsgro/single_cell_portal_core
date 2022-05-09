@@ -3,7 +3,6 @@ import _clone from 'lodash/clone'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faLink, faArrowLeft, faCog, faTimes, faDna, faUndo } from '@fortawesome/free-solid-svg-icons'
 
-
 import StudyGeneField from './StudyGeneField'
 import ClusterSelector from '~/components/visualization/controls/ClusterSelector'
 import AnnotationSelector from '~/components/visualization/controls/AnnotationSelector'
@@ -31,7 +30,9 @@ import InferCNVIdeogram from '~/components/visualization/InferCNVIdeogram'
 import useResizeEffect from '~/hooks/useResizeEffect'
 import LoadingSpinner from '~/lib/LoadingSpinner'
 import { log } from '~/lib/metrics-api'
-
+import { getFeatureFlagsWithDefaults } from '~/providers/UserProvider'
+import DifferentialExpressionGroupPicker from '~/components/visualization/controls/DifferentialExpressionGroupPicker'
+import DifferentialExpressionPanel, { DifferentialExpressionPanelHeader } from './DifferentialExpressionPanel'
 
 const tabList = [
   { key: 'loading', label: 'loading...' },
@@ -74,6 +75,28 @@ export default function ExploreDisplayTabs({
   const [isCellSelecting, setIsCellSelecting] = useState(false)
   // a plotly points_selected event
   const [currentPointsSelected, setCurrentPointsSelected] = useState(null)
+
+  // Differential expression settings
+  // TODO (SCP-4321): Try encapsulating these in a DE-specific component,
+  // to simplify this high-level ExploreDisplayTabs component
+  const [showDeGroupPicker, setShowDeGroupPicker] = useState(false)
+  const [deGenes, setDeGenes] = useState(null)
+  const [deGroup, setDeGroup] = useState(null)
+
+  // For readability, until approach outlined in TODO above can be fully
+  // attempted, which will likely be tightly couple with UX changes suggested
+  // at 2022-05-06 demo.
+  const showDifferentialExpressionPanel = deGenes !== null
+
+  // TODO (SCP-4321): In addition to feature flag, check
+  // is_differential_expression_enabled attribute from forthcoming update to
+  // an API response
+  let isDifferentialExpressionEnabled = false
+  const flags = getFeatureFlagsWithDefaults()
+  if (flags?.differential_expression_frontend) {
+    isDifferentialExpressionEnabled = true
+  }
+
   const plotContainerClass = 'explore-plot-tab-content'
 
   const {
@@ -403,88 +426,128 @@ export default function ExploreDisplayTabs({
         </div>
         <div className={showViewOptionsControls ? 'col-md-2 ' : 'hidden'}>
           <div className="view-options-toggle">
-            <FontAwesomeIcon className="fa-lg" icon={faCog}/> OPTIONS
-            <button className="action"
-              onClick={toggleViewOptions}
-              title="Hide options"
-              data-analytics-name="view-options-hide">
-              <FontAwesomeIcon className="fa-lg" icon={faTimes}/>
-            </button>
+            {!showDifferentialExpressionPanel &&
+              <>
+                <FontAwesomeIcon className="fa-lg" icon={faCog}/> OPTIONS
+                <button className="action"
+                  onClick={toggleViewOptions}
+                  title="Hide options"
+                  data-analytics-name="view-options-hide">
+                  <FontAwesomeIcon className="fa-lg" icon={faTimes}/>
+                </button>
+              </>
+            }
+            {showDifferentialExpressionPanel &&
+              <DifferentialExpressionPanelHeader
+                toggleViewOptions={toggleViewOptions}
+                setDeGenes={setDeGenes}
+              />
+            }
           </div>
-          <div>
-            <div className={showClusterControls ? '' : 'hidden'}>
-              <ClusterSelector
-                annotationList={annotationList}
-                cluster={exploreParamsWithDefaults.cluster}
-                annotation={exploreParamsWithDefaults.annotation}
-                updateClusterParams={updateClusterParams}
-                spatialGroups={exploreInfo ? exploreInfo.spatialGroups : []}/>
-              {hasSpatialGroups &&
+
+          {!showDifferentialExpressionPanel &&
+          <>
+            <div>
+              <div className={showClusterControls ? '' : 'hidden'}>
+                <ClusterSelector
+                  annotationList={annotationList}
+                  cluster={exploreParamsWithDefaults.cluster}
+                  annotation={exploreParamsWithDefaults.annotation}
+                  updateClusterParams={updateClusterParams}
+                  spatialGroups={exploreInfo ? exploreInfo.spatialGroups : []}/>
+                {hasSpatialGroups &&
                 <SpatialSelector allSpatialGroups={exploreInfo.spatialGroups}
                   spatialGroups={exploreParamsWithDefaults.spatialGroups}
                   updateSpatialGroups={spatialGroups => updateClusterParams({ spatialGroups })}/>
-              }
-              <AnnotationSelector
-                annotationList={annotationList}
-                cluster={exploreParamsWithDefaults.cluster}
-                annotation={exploreParamsWithDefaults.annotation}
-                updateClusterParams={updateClusterParams}/>
-              { shownTab === 'scatter' && <CreateAnnotation
-                isSelecting={isCellSelecting}
-                setIsSelecting={setIsCellSelecting}
-                annotationList={exploreInfo ? exploreInfo.annotationList : null}
-                currentPointsSelected={currentPointsSelected}
-                cluster={exploreParamsWithDefaults.cluster}
-                annotation={exploreParamsWithDefaults.annotation}
-                subsample={exploreParamsWithDefaults.subsample}
-                updateClusterParams={updateClusterParams}
-                setAnnotationList={setAnnotationList}
-                studyAccession={studyAccession}/>
-              }
-              <SubsampleSelector
-                annotationList={annotationList}
-                cluster={exploreParamsWithDefaults.cluster}
-                subsample={exploreParamsWithDefaults.subsample}
-                updateClusterParams={updateClusterParams}/>
-            </div>
-            { exploreInfo?.geneLists?.length > 0 &&
+                }
+                <AnnotationSelector
+                  annotationList={annotationList}
+                  cluster={exploreParamsWithDefaults.cluster}
+                  annotation={exploreParamsWithDefaults.annotation}
+                  updateClusterParams={updateClusterParams}/>
+                { shownTab === 'scatter' && <CreateAnnotation
+                  isSelecting={isCellSelecting}
+                  setIsSelecting={setIsCellSelecting}
+                  annotationList={exploreInfo ? exploreInfo.annotationList : null}
+                  currentPointsSelected={currentPointsSelected}
+                  cluster={exploreParamsWithDefaults.cluster}
+                  annotation={exploreParamsWithDefaults.annotation}
+                  subsample={exploreParamsWithDefaults.subsample}
+                  updateClusterParams={updateClusterParams}
+                  setAnnotationList={setAnnotationList}
+                  studyAccession={studyAccession}/>
+                }
+                <SubsampleSelector
+                  annotationList={annotationList}
+                  cluster={exploreParamsWithDefaults.cluster}
+                  subsample={exploreParamsWithDefaults.subsample}
+                  updateClusterParams={updateClusterParams}/>
+              </div>
+              { exploreInfo?.geneLists?.length > 0 &&
               <GeneListSelector
                 geneList={exploreParamsWithDefaults.geneList}
                 studyGeneLists={exploreInfo.geneLists}
                 selectLabel={exploreInfo.precomputedHeatmapLabel ?? undefined}
                 updateGeneList={updateGeneList}/>
-            }
-            { exploreParams.genes.length > 1 && !['genome', 'infercnv-genome'].includes(shownTab) &&
+              }
+              { exploreParams.genes.length > 1 && !['genome', 'infercnv-genome'].includes(shownTab) &&
               <ExploreConsensusSelector
                 consensus={exploreParamsWithDefaults.consensus}
                 updateConsensus={consensus => updateExploreParams({ consensus })}/>
-            }
-            { !!exploreInfo?.inferCNVIdeogramFiles &&
+              }
+              { !!exploreInfo?.inferCNVIdeogramFiles &&
                 <InferCNVIdeogramSelector
                   inferCNVIdeogramFile={exploreParamsWithDefaults.ideogramFileId}
                   studyInferCNVIdeogramFiles={exploreInfo.inferCNVIdeogramFiles}
                   updateInferCNVIdeogramFile={updateInferCNVIdeogramFile}
                 />
+              }
+            </div>
+            <PlotDisplayControls
+              shownTab={shownTab}
+              exploreParams={exploreParamsWithDefaults}
+              updateExploreParams={updateExploreParams}
+              allGenes={exploreInfo ? exploreInfo.uniqueGenes : []}/>
+            {isDifferentialExpressionEnabled &&
+            <>
+              <button
+                className="btn btn-primary"
+                onClick={() => {setShowDeGroupPicker(true)}}
+              >Differential expression</button>
+              <br/><br/>
+            </>
             }
-          </div>
-          <PlotDisplayControls
-            shownTab={shownTab}
-            exploreParams={exploreParamsWithDefaults}
-            updateExploreParams={updateExploreParams}
-            allGenes={exploreInfo ? exploreInfo.uniqueGenes : []}/>
-          <button className="action"
-            onClick={clearExploreParams}
-            title="reset all view options"
-            data-analytics-name="explore-view-options-reset">
-            <FontAwesomeIcon icon={faUndo}/> Reset view
-          </button>
-          <br/><br/>
-          <button onClick={() => copyLink(routerLocation)}
-            className="action"
-            data-toggle="tooltip"
-            title="copy a link to this visualization to the clipboard">
-            <FontAwesomeIcon icon={faLink}/> Get link
-          </button>
+            {showDeGroupPicker &&
+            <>
+              <DifferentialExpressionGroupPicker
+                exploreInfo={exploreInfo}
+                setShowDeGroupPicker={setShowDeGroupPicker}
+                setDeGenes={setDeGenes}
+                setDeGroup={setDeGroup}
+              />
+            </>
+            }
+            <button className="action"
+              onClick={clearExploreParams}
+              title="Reset all view options"
+              data-analytics-name="explore-view-options-reset">
+              <FontAwesomeIcon icon={faUndo}/> Reset view
+            </button>
+            <button onClick={() => copyLink(routerLocation)}
+              className="action"
+              data-toggle="tooltip"
+              title="Copy a link to this visualization to the clipboard">
+              <FontAwesomeIcon icon={faLink}/> Get link
+            </button>
+          </>
+          }
+          {showDifferentialExpressionPanel &&
+            <DifferentialExpressionPanel
+              deGroup={deGroup}
+              deGenes={deGenes}
+              searchGenes={searchGenes}
+            />
+          }
         </div>
       </div>
     </>

@@ -1027,9 +1027,14 @@ class Study
   end
 
   # check if study has any files that can be streamed from the bucket for visualization
-  # this includes BAM, inferCNV Ideogram annotations, and Image files
-  def has_streamable_files?
-    has_bam_files? || has_analysis_outputs?('infercnv', 'ideogram.js') || has_image_files?
+  # this includes BAM, inferCNV Ideogram annotations, Image files, and DE files
+  #
+  # TODO (SCP-4336):
+  # This is currently only used for getting auth tokens.  Consider incorporating this
+  # into existing endpoints, or perhaps a new endpoint, where the token is returned as part
+  # of the API response.
+  def has_streamable_files(user)
+    has_bam_files? || has_analysis_outputs?('infercnv', 'ideogram.js') || has_image_files? || user && user.feature_flag_for('differential_expression_frontend')
   end
 
   # quick getter to return any cell metadata that can_visualize?

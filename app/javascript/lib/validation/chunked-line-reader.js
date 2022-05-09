@@ -1,9 +1,9 @@
-import { DEFAULT_CHUNK_SIZE, oneGiB, readFileBytes, readGzipFile } from './io'
+import {
+  DEFAULT_CHUNK_SIZE, oneGiB, readFileBytes, readGzipFile, newlineRegex
+} from './io'
 
 /** Mitigates UI freezes caused by faux-streaming gunzip; see note in io.js */
 export const GZIP_MAX_LINES = 500
-
-const newlineRegex = /\r?\n/
 
 /**
  * reads lines from a file in a chunked way, so that the file does not have to be in memory all at once
