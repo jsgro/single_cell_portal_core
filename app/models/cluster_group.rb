@@ -10,6 +10,13 @@ class ClusterGroup
 
   field :name, type: String
   field :cluster_type, type: String
+  # cell_annotations array of Hash objects with the following format
+  # {
+  #   name: name of annotation,
+  #   type: 'group' or 'numeric',
+  #   values: unique values, if group.
+  #   is_differential_expression_enabled: T/F if annotation has DE outputs, default is false
+  # }
   field :cell_annotations, type: Array
   field :domain_ranges, type: Hash
   field :points, type: Integer, default: 0
@@ -18,7 +25,6 @@ class ClusterGroup
   # :is_subsampling => whether subsampling has been initiated
   field :subsampled, type: Boolean, default: false
   field :is_subsampling, type: Boolean, default: false
-  field :has_differential_expression, type: Boolean, default: false
 
   validates_uniqueness_of :name, scope: :study_id
   validates_presence_of :name, :cluster_type

@@ -115,6 +115,73 @@ class FileParseServiceTest < ActiveSupport::TestCase
     assert_nil @coordinate_file.study_file_bundle
   end
 
+  test 'should launch differential expression job' do
+    # use expression_file factory to make raw counts matrix easier
+    cells = %w[A B C]
+    raw_matrix = FactoryBot.create(:expression_file,
+                                   name: 'raw.txt',
+                                   study: @basic_study,
+                                   expression_file_info: {
+                                     is_raw_counts: true,
+                                     units: 'raw counts',
+                                     library_preparation_protocol: 'Drop-seq',
+                                     biosample_input_type: 'Whole cell',
+                                     modality: 'Proteomic'
+                                   })
+    cluster_file = FactoryBot.create(:cluster_file,
+                                     name: 'cluster_diffexp.txt',
+                                     study: @basic_study,
+                                     cell_input: {
+                                       x: [1, 4, 6],
+                                       y: [7, 5, 3],
+                                       cells: cells
+                                     })
+    FactoryBot.create(:metadata_file,
+                      name: 'metadata.txt',
+                      study: @basic_study,
+                      cell_input: cells,
+                      annotation_input: [
+                        { name: 'species', type: 'group', values: %w[dog cat dog] },
+                        { name: 'disease', type: 'group', values: %w[none none measles] }
+                      ])
+    # test validations
+    job_params = {
+      annotation_name: 'species',
+      annotation_type: 'group',
+      annotation_scope: 'study'
+    }
+    assert_raise ArgumentError do
+      error = FileParseService.run_differential_expression_job(cluster_file, @basic_study, @user,
+                                                               annotation_name: 'foo',
+                                                               annotation_type: 'group',
+                                                               annotation_scope: 'cluster')
+      assert error.message.include?('cannot find requested annotation')
+    end
+
+    assert_raise ArgumentError do
+      # should fail on cell validation
+      error = FileParseService.run_differential_expression_job(cluster_file, @basic_study, @user, **job_params)
+      assert error.message.include?('does not have all cells in a single raw counts matrix')
+    end
+
+    # test launch by manually creating expression matrix cells array for validation
+    DataArray.create!(name: 'raw.txt Cells', array_type: 'cells', linear_data_type: 'Study', study_id: @basic_study.id,
+                      cluster_name: 'raw.txt', array_index: 0, linear_data_id: @basic_study.id,
+                      study_file_id: raw_matrix.id, cluster_group_id: nil, subsample_annotation: nil,
+                      subsample_threshold: nil, values: cells)
+    # we need to mock 2 levels deep as :delay should yield the :push_remote_and_launch_ingest mock
+    job_mock = Minitest::Mock.new
+    job_mock.expect(:push_remote_and_launch_ingest, Delayed::Job.new, [Hash])
+    mock = Minitest::Mock.new
+    mock.expect(:delay, job_mock)
+    IngestJob.stub :new, mock do
+      job_launched = FileParseService.run_differential_expression_job(cluster_file, @basic_study, @user, **job_params)
+      assert job_launched
+      mock.verify
+      job_mock.verify
+    end
+  end
+
   # TODO: once SCP-2765 is completed, test that all genes/values are parsed from mtx bundle
   # this will replace the deprecated 'should parse valid mtx bundle' from study_validation_test.rb
   test 'should store all genes and expression values from mtx parse' do

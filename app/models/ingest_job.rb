@@ -282,9 +282,9 @@ class IngestJob
   # * *returns*
   #   - (Array<DateTime>) => Array of initial and terminal timestamps from PAPI events
   def get_runtime_timestamps
-    events = events
-    start_time = DateTime.parse(events.first['timestamp'])
-    completion_time = DateTime.parse(events.last['timestamp'])
+    all_events = events.to_a
+    start_time = DateTime.parse(all_events.first['timestamp'])
+    completion_time = DateTime.parse(all_events.last['timestamp'])
     [start_time, completion_time]
   end
 
@@ -329,6 +329,7 @@ class IngestJob
       # log errors to application log for inspection
       log_error_messages
       log_to_mixpanel # log before queuing file for deletion to preserve properties
+      # don't delete files or notify users if differential_expression job fails
       unless action.to_sym == :differential_expression
         create_study_file_copy
         study_file.update(parse_status: 'failed')
@@ -373,7 +374,7 @@ class IngestJob
     when :ingest_subsample
       set_subsampling_flags
     when :differential_expression
-
+      set_differential_expression_flags
     end
     set_study_initialized
   end
@@ -485,6 +486,25 @@ class IngestJob
       cluster_group.update(subsampled: true, is_subsampling: false)
     end
   end
+
+  # set corresponding differential expression flags on associated annotation
+  def set_differential_expression_flags
+    annotation_identifier = "#{params_object.annotation_name}--group--#{params_object.annotation_scope}"
+    Rails.logger.info "Setting differential expression flags for annotation: #{annotation_identifier}"
+    if params_object.annotation_scope == 'cluster'
+      cluster = ClusterGroup.find_by(study_id: study.id, study_file_id: study_file.id)
+      # update cell annotation in place
+      cluster.cell_annotations.each do |annotation|
+        annotation[:is_differential_expression_enabled] = true if annotation[:name] == params_object.annotation_name
+      end
+      cluster.save
+    else
+      meta = study.cell_metadata.by_name_and_type(params_object.annotation_name, params_object.annotation_type)
+      meta.update(is_differential_expression_enabled: true)
+    end
+  end
+
+  # set corresponding is_differential_expression_enabled flags on annotations
 
   # store a copy of a study file when an ingest job fails in the parse_logs/:id directory for QA purposes
   #
@@ -700,17 +720,8 @@ class IngestJob
       message << "Subsampling has completed for #{cluster.name}"
       message << "Subsamples generated: #{cluster.subsample_thresholds_required.join(', ')}"
     when :differential_expression
-      cluster = ClusterGroup.find_by(study_id: study.id, study_file_id: study_file.id)
-      annotation_params = {
-        cluster: cluster,
-        annot_name: params_object.annotation_name,
-        annot_type: params_object.annotation_type,
-        annot_scope: params_object.annotation_scope
-      }
-      annotation = AnnotationVizService.get_selected_annotation(study, **annotation_params)
-      message << "Differential expression calculations for #{cluster.name} have completed"
-      message << "Selected annotation: #{params_object.annotation_name}"
-      message << "Observed groups: #{annotation[:values].join(', ')}"
+      message << "Differential expression calculations for #{params_object.cluster_name} have completed"
+      message << "Selected annotation: #{params_object.annotation_name} (#{params_object.annotation_scope})"
     end
     message
   end
