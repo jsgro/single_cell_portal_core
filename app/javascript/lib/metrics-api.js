@@ -8,6 +8,7 @@ import _find from 'lodash/find'
 import _remove from 'lodash/remove'
 import $ from 'jquery'
 import { getDefaultProperties } from '@databiosphere/bard-client'
+import { logJSFetchExceptionToSentry, logJSFetchErrorToSentry } from '~/lib/sentry-logging'
 
 import { getAccessToken } from '~/providers/UserProvider'
 import { getBrandingGroup } from '~/lib/scp-api'
@@ -422,7 +423,15 @@ export function log(name, props = {}) {
   init = Object.assign(init, body)
 
   if ('SCP' in window || metricsApiMock) {
-    fetch(`${bardDomain}/api/event`, init)
+    fetch(`${bardDomain}/api/event/`, init).then(response => {
+      // log failed attempts to connect with Bard to Sentry
+      if (!response.ok) {
+        logJSFetchExceptionToSentry(response, 'Error in fetch response when logging event to Bard')
+      }
+    // log errored attempts to connect with Bard to Sentry
+    }).catch(error => {
+      logJSFetchErrorToSentry(error, 'Error in JavaScript when logging event to Bard')
+    })
   }
 }
 

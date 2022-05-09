@@ -9,6 +9,7 @@ import React from 'react'
 import camelcaseKeys from 'camelcase-keys'
 import _compact from 'lodash/compact'
 import * as queryString from 'query-string'
+import { logJSFetchExceptionToSentry, logJSFetchErrorToSentry } from '~/lib/sentry-logging'
 
 import { getAccessToken } from '~/providers/UserProvider'
 import {
@@ -340,7 +341,15 @@ export async function fetchBucketFile(bucketName, fileName, maxBytes=null, mock=
   init.headers = new Headers(init.headers)
   const url = `https://storage.googleapis.com/download/storage/v1/b/${bucketName}/o/${fileName}?alt=media`
 
-  const response = await fetch(url, init).catch(error => error)
+  const response = fetch(url, init).then(response => {
+    // log failed attempts to access google storage to Sentry
+    if (!response.ok) {
+      logJSFetchExceptionToSentry(response, 'Error in fetch response when connecting to Google storage')
+    }
+  // log errored attempts to access google storage to Sentry
+  }).catch(error => {
+    logJSFetchErrorToSentry(error, 'Error in JavaScript when connecting to Google storage')
+  })
 
   return response
 }
