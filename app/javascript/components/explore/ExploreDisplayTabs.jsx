@@ -93,7 +93,7 @@ export default function ExploreDisplayTabs({
   // an API response
   let isDifferentialExpressionEnabled = false
   const flags = getFeatureFlagsWithDefaults()
-  if (flags.differential_expression_frontend) {
+  if (flags?.differential_expression_frontend) {
     isDifferentialExpressionEnabled = true
   }
 
