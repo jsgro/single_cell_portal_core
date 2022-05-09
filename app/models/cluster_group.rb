@@ -144,6 +144,8 @@ class ClusterGroup
 
   # determine if this annotation is "useful" to visualize
   def can_visualize_cell_annotation?(annotation)
+    return false if annotation.nil?
+
     annot = annotation.with_indifferent_access
     if annot[:type] == 'group'
       CellMetadatum::GROUP_VIZ_THRESHOLD === annot[:values].count

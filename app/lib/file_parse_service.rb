@@ -128,16 +128,7 @@ class FileParseService
   # * *raises*
   #   - (ArgumentError) => if requested parameters do not validate
   def self.run_differential_expression_job(cluster_file, study, user, annotation_name:, annotation_type:, annotation_scope:)
-    # validate annotation exists
-    cluster = study.cluster_groups.by_name(cluster_file.name)
-    if annotation_scope == 'cluster'
-      annotation = cluster&.cell_annotations&.detect { |annot| annot[:name] == annotation_name && annot[:type] == annotation_type }
-    else
-      annotation = study.cell_metadata.by_name_and_type(annotation_name, annotation_type)
-    end
-    if annotation.nil?
-      raise ArgumentError, "cannot find requested annotation: #{annotation_name}--#{annotation_type}--#{annotation_scope}"
-    end
+    annotation_valid_for_de?(cluster_file, study, annotation_name, annotation_type, annotation_scope)
 
     # begin assembling parameters
     de_params = {
@@ -149,25 +140,11 @@ class FileParseService
       cluster_name: cluster_file.name
     }
 
-    # validate study has raw counts, and that all cells from the cluster file exist in a give raw counts matrix
-    raw_counts_matrices = StudyFile.where(study_id: study.id,
-                                          parse_status: 'parsed',
-                                          queued_for_deletion: false,
-                                          'expression_file_info.is_raw_counts' => true)
-    raise ArgumentError, "#{study.accession} has no parsed raw counts data" if raw_counts_matrices.empty?
-
-    cluster_cells = cluster.concatenate_data_arrays('text', 'cells')
-    raw_matrix = raw_counts_matrices.detect do |matrix|
-      matrix_cells = study.expression_matrix_cells(matrix)
-      # if the intersection of cluster_cells and matrix_cells is complete, then this job can be launched
-      (cluster_cells & matrix_cells) == cluster_cells
-    end
-    raise ArgumentError, "#{cluster_file.name} does not have all cells in a single raw counts matrix" if raw_matrix.nil?
+    cluster = study.cluster_groups.by_name(cluster_file.name)
+    raw_matrix = raw_matrix_for_cluster_cells(study, cluster)
 
     de_params[:matrix_file_path] = raw_matrix.gs_url
     if raw_matrix.file_type == 'MM Coordinate Matrix'
-      raise ArgumentError, "#{raw_matrix.upload_file_name} is missing required data" unless raw_matrix.has_completed_bundle?
-
       de_params[:matrix_file_type] = 'sparse'
       gene_file = raw_matrix.bundled_files.detect { |file| file.file_type == '10X Genes File' }
       barcode_file = raw_matrix.bundled_files.detect { |file| file.file_type == '10X Barcodes File' }
@@ -187,6 +164,73 @@ class FileParseService
     else
       raise ArgumentError, "job parameters failed to validate: #{params_object.errors.full_messages}"
     end
+  end
+
+  # validate annotation exists and can be visualized for a DE job
+  #
+  # * *params*
+  #   - +cluster_file+      (StudyFile) => Clustering file being used as control cell list
+  #   - +study+            (Study) => Study to which StudyFile belongs
+  #   - +annotation_name+  (String) => Name of requested annotation
+  #   - +annotation_type+  (String) => Type of requested annotation (should be 'group')
+  #   - +annotation_scope+ (String) => Scope of requested annotation ('study' or 'cluster')
+  #
+  # * *raises*
+  #   - (ArgumentError) => if requested parameters do not validate
+  def self.annotation_valid_for_de?(cluster_file, study, annotation_name, annotation_type, annotation_scope)
+    cluster = study.cluster_groups.by_name(cluster_file.name)
+    raise ArgumentError, "cannot find cluster for #{cluster_flle.name}" if cluster.nil?
+
+    if annotation_scope == 'cluster'
+      annotation = cluster.cell_annotations&.detect do |annot|
+        annot[:name] == annotation_name && annot[:type] == annotation_type
+      end
+    else
+      annotation = study.cell_metadata.by_name_and_type(annotation_name, annotation_type)
+    end
+    raise ArgumentError, "#{annotation_name}--#{annotation_type}--#{annotation_scope} is not present" if annotation.nil?
+
+    if annotation_scope == 'cluster'
+      can_visualize = cluster.can_visualize_cell_annotation?(annotation)
+    else
+      can_visualize = annotation.can_visualize?
+    end
+    unless can_visualize
+      raise ArgumentError, "#{annotation_name}--#{annotation_type}--#{annotation_scope} cannot be visualized"
+    end
+  end
+
+  # validate study has raw counts, and that all cells from the cluster file exist in a single raw counts matrix
+  #
+  # * *params*
+  #   - +study+   (Study) => Study to which StudyFile belongs
+  #   - +cluster+ (ClusterGroup) => Clustering object to source cell names from
+  #
+  # * *returns*
+  #   - (StudyFile) => Corresponding raw counts file
+  #
+  # * *raises*
+  #   - (ArgumentError) => if requested parameters do not validate
+  def self.raw_matrix_for_cluster_cells(study, cluster)
+    raw_counts_matrices = StudyFile.where(study_id: study.id,
+                                          parse_status: 'parsed',
+                                          queued_for_deletion: false,
+                                          'expression_file_info.is_raw_counts' => true)
+    raise ArgumentError, "#{study.accession} has no parsed raw counts data" if raw_counts_matrices.empty?
+
+    cluster_cells = cluster.concatenate_data_arrays('text', 'cells')
+    # if the intersection of cluster_cells and matrix_cells is complete, then this will return a matrix file
+    raw_matrix = raw_counts_matrices.detect do |matrix|
+      matrix_cells = study.expression_matrix_cells(matrix)
+      (cluster_cells & matrix_cells) == cluster_cells
+    end
+    raise ArgumentError, "#{cluster.name} does not have all cells in a single raw counts matrix" if raw_matrix.nil?
+
+    if raw_matrix.file_type == 'MM Coordinate Matrix'
+      raise ArgumentError, "#{raw_matrix.upload_file_name} is missing required data" unless raw_matrix.has_completed_bundle?
+    end
+
+    raw_matrix
   end
 
   # helper for handling study file bundles when initiating parses
