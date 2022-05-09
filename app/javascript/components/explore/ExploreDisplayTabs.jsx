@@ -85,12 +85,13 @@ export default function ExploreDisplayTabs({
   // at 2022-05-06 demo.
   const showDifferentialExpressionPanel = deGenes !== null
 
-  // TODO (SCP-4321): In addition to feature flag, check hasDifferentialExpression attribute
-  // from forthcoming update to an API response
-  let hasDifferentialExpression = false
+  // TODO (SCP-4321): In addition to feature flag, check
+  // is_differential_expression_enabled attribute from forthcoming update to
+  // an API response
+  let isDifferentialExpressionEnabled = false
   const flags = getFeatureFlagsWithDefaults()
   if (flags.differential_expression_frontend) {
-    hasDifferentialExpression = true
+    isDifferentialExpressionEnabled = true
   }
 
   const plotContainerClass = 'explore-plot-tab-content'
@@ -474,7 +475,7 @@ export default function ExploreDisplayTabs({
               exploreParams={exploreParamsWithDefaults}
               updateExploreParams={updateExploreParams}
               allGenes={exploreInfo ? exploreInfo.uniqueGenes : []}/>
-            {hasDifferentialExpression &&
+            {isDifferentialExpressionEnabled &&
             <>
               <button
                 className="btn btn-primary"

@@ -3,27 +3,6 @@ import React from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faArrowLeft, faTimes } from '@fortawesome/free-solid-svg-icons'
 
-/** Top matter for differential expression panel shown at right in Explore tab */
-export function DifferentialExpressionPanelHeader({ toggleViewOptions, setDeGenes }) {
-  return (
-    <>
-      <>Differential expression</>
-      <button className="action"
-        onClick={toggleViewOptions}
-        title="Hide options"
-        data-analytics-name="view-options-hide">
-        <FontAwesomeIcon className="fa-lg" icon={faTimes}/>
-      </button>
-      <button className="action fa-lg"
-        onClick={() => setDeGenes(null)}
-        data-toggle="tooltip"
-        data-analytics-name="differential-expression-view-exit">
-        <FontAwesomeIcon icon={faArrowLeft}/>
-      </button>
-    </>
-  )
-}
-
 /** Differential expression panel shown at right in Explore tab */
 export default function DifferentialExpressionPanel({ deGroup, deGenes, searchGenes }) {
   return (
@@ -57,6 +36,28 @@ export default function DifferentialExpressionPanel({ deGroup, deGenes, searchGe
           })}
         </tbody>
       </table>
+    </>
+  )
+}
+
+/** Top matter for differential expression panel shown at right in Explore tab */
+export function DifferentialExpressionPanelHeader({ toggleViewOptions, setDeGenes }) {
+  return (
+    <>
+      <>Differential expression</>
+      <button className="action"
+        onClick={toggleViewOptions}
+        title="Hide options"
+        data-analytics-name="view-options-hide">
+        <FontAwesomeIcon className="fa-lg" icon={faTimes}/>
+      </button>
+      <button className="action fa-lg"
+        onClick={() => setDeGenes(null)}
+        data-toggle="tooltip"
+        title="Exit differential expression panel"
+        data-analytics-name="differential-expression-panel-exit">
+        <FontAwesomeIcon icon={faArrowLeft}/>
+      </button>
     </>
   )
 }
