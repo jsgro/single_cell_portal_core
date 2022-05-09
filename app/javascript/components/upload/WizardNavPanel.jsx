@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faChevronDown, faChevronUp, faTimes, faCheck, faQuestionCircle } from '@fortawesome/free-solid-svg-icons'
+import { faChevronDown, faChevronUp, faCheck, faQuestionCircle } from '@fortawesome/free-solid-svg-icons'
 
 import StepTabHeader from './StepTabHeader'
 import { withErrorBoundary } from '~/lib/ErrorBoundary'
@@ -33,7 +33,7 @@ function RawWizardNavPanel({
     <VisualizationStatuses serverState={serverState}/>
     <ul className="upload-wizard-steps" role="tablist" data-analytics-name="upload-wizard-secondary-steps">
       <li className="other-header" role="tab" >
-        <button className="unset-background-border" onClick={() => setOthersExpanded(!othersExpanded)} >
+        <button className="list-link" onClick={() => setOthersExpanded(!othersExpanded)} >
           <span className="step-number">
             <span className="badge highlight">+</span>
           </span>

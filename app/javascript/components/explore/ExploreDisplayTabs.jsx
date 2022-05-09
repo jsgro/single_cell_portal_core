@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import _clone from 'lodash/clone'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faLink, faArrowLeft, faCog, faTimes, faDna, faUndo } from '@fortawesome/free-solid-svg-icons'
@@ -21,12 +21,14 @@ import ScatterPlot from '~/components/visualization/ScatterPlot'
 import StudyViolinPlot from '~/components/visualization/StudyViolinPlot'
 import DotPlot from '~/components/visualization/DotPlot'
 import Heatmap from '~/components/visualization/Heatmap'
+import GeneListHeatmap from '~/components/visualization/GeneListHeatmap'
 import GenomeView from './GenomeView'
 import ImageTab from './ImageTab'
 import { getAnnotationValues, getDefaultSpatialGroupsForCluster } from '~/lib/cluster-utils'
 import RelatedGenesIdeogram from '~/components/visualization/RelatedGenesIdeogram'
 import InferCNVIdeogram from '~/components/visualization/InferCNVIdeogram'
 import useResizeEffect from '~/hooks/useResizeEffect'
+import LoadingSpinner from '~/lib/LoadingSpinner'
 import { log } from '~/lib/metrics-api'
 import { getFeatureFlagsWithDefaults } from '~/providers/UserProvider'
 import DifferentialExpressionGroupPicker from '~/components/visualization/controls/DifferentialExpressionGroupPicker'
@@ -35,11 +37,12 @@ import DifferentialExpressionPanel, { DifferentialExpressionPanelHeader } from '
 const tabList = [
   { key: 'loading', label: 'loading...' },
   { key: 'scatter', label: 'Scatter' },
-  { key: 'annotatedScatter', label: 'Annotated Scatter' },
+  { key: 'annotatedScatter', label: 'Annotated scatter' },
   { key: 'correlatedScatter', label: 'Correlation' },
   { key: 'distribution', label: 'Distribution' },
-  { key: 'dotplot', label: 'Dot Plot' },
+  { key: 'dotplot', label: 'Dot plot' },
   { key: 'heatmap', label: 'Heatmap' },
+  { key: 'geneListHeatmap', label: 'Precomputed heatmap' },
   { key: 'spatial', label: 'Spatial' },
   { key: 'genome', label: 'Genome' },
   { key: 'infercnv-genome', label: 'Genome (inferCNV)' },
@@ -137,7 +140,7 @@ export default function ExploreDisplayTabs({
 
   const annotationList = exploreInfo ? exploreInfo.annotationList : null
   // hide the cluster controls if we're on a genome/image tab, or if there aren't clusters to choose
-  const showClusterControls = !['genome', 'infercnv-genome', 'images'].includes(shownTab) &&
+  const showClusterControls = !['genome', 'infercnv-genome', 'images', 'geneListHeatmap'].includes(shownTab) &&
                                 annotationList?.clusters?.length
 
   let hasSpatialGroups = false
@@ -195,14 +198,33 @@ export default function ExploreDisplayTabs({
   }
 
   /** handles gene list selection */
-  function updateGeneList(geneList) {
-    updateExploreParams({ geneList })
+  function updateGeneList(geneListName) {
+    const geneListInfo = exploreInfo.geneLists.find(gl => gl.name === geneListName)
+    if (!geneListInfo) {
+      updateExploreParams({ geneList: '', heatmapRowCentering: '', heatmapFit: '' })
+    } else {
+      updateExploreParams({
+        geneList: geneListName,
+        heatmapRowCentering: '',
+        heatmapFit: 'both',
+        genes: []
+      })
+    }
   }
 
   /** handles updating inferCNV/ideogram selection */
   function updateInferCNVIdeogramFile(annotationFile) {
     updateExploreParams({ ideogramFileId: annotationFile, tab: 'infercnv-genome' })
   }
+
+  /** if the user hasn't selected anything, and there are genelists to view, but no clusters
+    * default to the first gene list */
+  useEffect(() => {
+    if ((exploreInfo && exploreInfo.annotationList.clusters.length === 0 &&
+      exploreInfo.geneLists.length && !exploreParams.tab && !exploreParams.geneList)) {
+      updateGeneList(exploreInfo.geneLists[0].name)
+    }
+  }, [exploreInfo?.geneLists])
 
   /** on window resize call setRenderForcer, which is just trivial state to ensure a re-render
    * ensuring that the plots get passed fresh dimensions */
@@ -350,6 +372,16 @@ export default function ExploreDisplayTabs({
                 />
               </div>
             }
+            { enabledTabs.includes('geneListHeatmap') &&
+              <div className={shownTab === 'geneListHeatmap' ? '' : 'hidden'}>
+                <GeneListHeatmap
+                  studyAccession={studyAccession}
+                  {... exploreParamsWithDefaults}
+                  geneLists={exploreInfo.geneLists}
+                  dimensions={getPlotDimensions({ showViewOptionsControls })}
+                />
+              </div>
+            }
             { enabledTabs.includes('genome') &&
               <div className={shownTab === 'genome' ? '' : 'hidden'}>
                 <GenomeView
@@ -387,7 +419,7 @@ export default function ExploreDisplayTabs({
             }
             { enabledTabs.includes('loading') &&
               <div className={shownTab === 'loading' ? '' : 'hidden'}>
-                <FontAwesomeIcon icon={faDna} className="gene-load-spinner"/>
+                <LoadingSpinner testId="explore-spinner"/>
               </div>
             }
           </div>
@@ -455,6 +487,7 @@ export default function ExploreDisplayTabs({
               <GeneListSelector
                 geneList={exploreParamsWithDefaults.geneList}
                 studyGeneLists={exploreInfo.geneLists}
+                selectLabel={exploreInfo.precomputedHeatmapLabel ?? undefined}
                 updateGeneList={updateGeneList}/>
               }
               { exploreParams.genes.length > 1 && !['genome', 'infercnv-genome'].includes(shownTab) &&
@@ -539,7 +572,7 @@ export function getEnabledTabs(exploreInfo, exploreParams) {
 
   let enabledTabs = []
   if (isGeneList) {
-    enabledTabs = ['heatmap']
+    enabledTabs = ['geneListHeatmap']
   } else if (isGene) {
     if (isMultiGene) {
       if (isConsensus) {
@@ -577,5 +610,6 @@ export function getEnabledTabs(exploreInfo, exploreParams) {
   if (!exploreInfo) {
     enabledTabs = ['loading']
   }
+
   return { enabledTabs, isGeneList, isGene, isMultiGene, hasIdeogramOutputs }
 }

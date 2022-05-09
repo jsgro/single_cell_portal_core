@@ -50,10 +50,12 @@ class SummaryStatsUtils
   # returns a list of all missing files for entire portal for use in nightly_server_report
   def self.storage_sanity_check
     missing_files = []
-    Study.where(queued_for_deletion: false, detached: false).each do |study|
+    valid_accessions = Study.where(queued_for_deletion: false, detached: false).pluck(:accession)
+    valid_accessions.each do |accession|
+      study = Study.find_by(accession: accession)
       begin
         study_missing = study.verify_all_remotes
-        study_missing.any? ? missing_files += study_missing : nil
+        missing_files += study_missing if study_missing.any?
       rescue => e
         # check if the bucket or the workspace is missing and mark study accordingly
         study.set_study_detached_state(e)

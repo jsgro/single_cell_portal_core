@@ -48,6 +48,7 @@ echo "export MONGO_LOCALHOST='$MONGO_LOCALHOST'" >> /home/app/.cron_env
 echo "export MONGO_INTERNAL_IP='$MONGO_INTERNAL_IP'" >> /home/app/.cron_env
 echo "export SECRET_KEY_BASE='$SECRET_KEY_BASE'" >> /home/app/.cron_env
 echo "export GOOGLE_CLOUD_PROJECT='$GOOGLE_CLOUD_PROJECT'" >> /home/app/.cron_env
+echo "export MIXPANEL_SECRET='$MIXPANEL_SECRET'" >> /home/app/.cron_env
 
 if [[ -z $SERVICE_ACCOUNT_KEY ]]; then
 	echo $GOOGLE_CLOUD_KEYFILE_JSON >| /home/app/.google_service_account.json

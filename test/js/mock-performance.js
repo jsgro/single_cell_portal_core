@@ -45,7 +45,8 @@ export function mockPerformance(url) {
   // Mock parts of the Performance API used in calculatePerfTimes
   performance = {
     getEntriesByType: jest.fn().mockReturnValue(mockEntries),
-    now: nodePerformance.now
+    now: nodePerformance.now,
+    mark: () => {}
   }
 
   Object.defineProperty(window, 'performance', {
