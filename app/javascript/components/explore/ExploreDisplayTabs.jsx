@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import _clone from 'lodash/clone'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faLink, faArrowLeft, faCog, faTimes, faDna, faUndo, faDownload } from '@fortawesome/free-solid-svg-icons'
@@ -21,25 +21,28 @@ import ScatterPlot from '~/components/visualization/ScatterPlot'
 import StudyViolinPlot from '~/components/visualization/StudyViolinPlot'
 import DotPlot from '~/components/visualization/DotPlot'
 import Heatmap from '~/components/visualization/Heatmap'
+import GeneListHeatmap from '~/components/visualization/GeneListHeatmap'
 import GenomeView from './GenomeView'
 import ImageTab from './ImageTab'
 import { getAnnotationValues, getDefaultSpatialGroupsForCluster } from '~/lib/cluster-utils'
 import RelatedGenesIdeogram from '~/components/visualization/RelatedGenesIdeogram'
 import InferCNVIdeogram from '~/components/visualization/InferCNVIdeogram'
 import useResizeEffect from '~/hooks/useResizeEffect'
+import LoadingSpinner from '~/lib/LoadingSpinner'
 import { log } from '~/lib/metrics-api'
 import { getFeatureFlagsWithDefaults } from '~/providers/UserProvider'
-
-import DeGroupPicker from '~/components/visualization/controls/DeGroupPicker'
+import DifferentialExpressionGroupPicker from '~/components/visualization/controls/DifferentialExpressionGroupPicker'
+import DifferentialExpressionPanel, { DifferentialExpressionPanelHeader } from './DifferentialExpressionPanel'
 
 const tabList = [
   { key: 'loading', label: 'loading...' },
   { key: 'scatter', label: 'Scatter' },
-  { key: 'annotatedScatter', label: 'Annotated Scatter' },
+  { key: 'annotatedScatter', label: 'Annotated scatter' },
   { key: 'correlatedScatter', label: 'Correlation' },
   { key: 'distribution', label: 'Distribution' },
-  { key: 'dotplot', label: 'Dot Plot' },
+  { key: 'dotplot', label: 'Dot plot' },
   { key: 'heatmap', label: 'Heatmap' },
+  { key: 'geneListHeatmap', label: 'Precomputed heatmap' },
   { key: 'spatial', label: 'Spatial' },
   { key: 'genome', label: 'Genome' },
   { key: 'infercnv-genome', label: 'Genome (inferCNV)' },
@@ -73,17 +76,26 @@ export default function ExploreDisplayTabs({
   // a plotly points_selected event
   const [currentPointsSelected, setCurrentPointsSelected] = useState(null)
 
+  // Differential expression settings
+  // TODO (SCP-4321): Try encapsulating these in a DE-specific component,
+  // to simplify this high-level ExploreDisplayTabs component
   const [showDeGroupPicker, setShowDeGroupPicker] = useState(false)
   const [deGenes, setDeGenes] = useState(null)
   const [deGroup, setDeGroup] = useState(null)
   const [deFileUrl, setDeFileUrl] = useState(null)
 
-  let hasDE = false
+  // For readability, until approach outlined in TODO above can be fully
+  // attempted, which will likely be tightly couple with UX changes suggested
+  // at 2022-05-06 demo.
+  const showDifferentialExpressionPanel = deGenes !== null
+
+  // TODO (SCP-4321): In addition to feature flag, check
+  // is_differential_expression_enabled attribute from forthcoming update to
+  // an API response
+  let isDifferentialExpressionEnabled = false
   const flags = getFeatureFlagsWithDefaults()
-  if (flags.differential_expression_frontend) {
-    // TODO (SCP-4321): In addition to feature flag, check hasDE attribute
-    // from forthcoming update to an API response
-    hasDE = true
+  if (flags?.differential_expression_frontend) {
+    isDifferentialExpressionEnabled = true
   }
 
   const plotContainerClass = 'explore-plot-tab-content'
@@ -129,7 +141,7 @@ export default function ExploreDisplayTabs({
 
   const annotationList = exploreInfo ? exploreInfo.annotationList : null
   // hide the cluster controls if we're on a genome/image tab, or if there aren't clusters to choose
-  const showClusterControls = !['genome', 'infercnv-genome', 'images'].includes(shownTab) &&
+  const showClusterControls = !['genome', 'infercnv-genome', 'images', 'geneListHeatmap'].includes(shownTab) &&
                                 annotationList?.clusters?.length
 
   let hasSpatialGroups = false
@@ -187,14 +199,33 @@ export default function ExploreDisplayTabs({
   }
 
   /** handles gene list selection */
-  function updateGeneList(geneList) {
-    updateExploreParams({ geneList })
+  function updateGeneList(geneListName) {
+    const geneListInfo = exploreInfo.geneLists.find(gl => gl.name === geneListName)
+    if (!geneListInfo) {
+      updateExploreParams({ geneList: '', heatmapRowCentering: '', heatmapFit: '' })
+    } else {
+      updateExploreParams({
+        geneList: geneListName,
+        heatmapRowCentering: '',
+        heatmapFit: 'both',
+        genes: []
+      })
+    }
   }
 
   /** handles updating inferCNV/ideogram selection */
   function updateInferCNVIdeogramFile(annotationFile) {
     updateExploreParams({ ideogramFileId: annotationFile, tab: 'infercnv-genome' })
   }
+
+  /** if the user hasn't selected anything, and there are genelists to view, but no clusters
+    * default to the first gene list */
+  useEffect(() => {
+    if ((exploreInfo && exploreInfo.annotationList.clusters.length === 0 &&
+      exploreInfo.geneLists.length && !exploreParams.tab && !exploreParams.geneList)) {
+      updateGeneList(exploreInfo.geneLists[0].name)
+    }
+  }, [exploreInfo?.geneLists])
 
   /** on window resize call setRenderForcer, which is just trivial state to ensure a re-render
    * ensuring that the plots get passed fresh dimensions */
@@ -342,6 +373,16 @@ export default function ExploreDisplayTabs({
                 />
               </div>
             }
+            { enabledTabs.includes('geneListHeatmap') &&
+              <div className={shownTab === 'geneListHeatmap' ? '' : 'hidden'}>
+                <GeneListHeatmap
+                  studyAccession={studyAccession}
+                  {... exploreParamsWithDefaults}
+                  geneLists={exploreInfo.geneLists}
+                  dimensions={getPlotDimensions({ showViewOptionsControls })}
+                />
+              </div>
+            }
             { enabledTabs.includes('genome') &&
               <div className={shownTab === 'genome' ? '' : 'hidden'}>
                 <GenomeView
@@ -379,53 +420,33 @@ export default function ExploreDisplayTabs({
             }
             { enabledTabs.includes('loading') &&
               <div className={shownTab === 'loading' ? '' : 'hidden'}>
-                <FontAwesomeIcon icon={faDna} className="gene-load-spinner"/>
+                <LoadingSpinner testId="explore-spinner"/>
               </div>
             }
           </div>
         </div>
         <div className={showViewOptionsControls ? 'col-md-2 ' : 'hidden'}>
           <div className="view-options-toggle">
-            {!showDeGroupPicker && <><FontAwesomeIcon className="fa-lg" icon={faCog}/> OPTIONS</>}
-            {showDeGroupPicker && !deGenes &&
+            {!showDifferentialExpressionPanel &&
               <>
-                <DeGroupPicker
-                  exploreInfo={exploreInfo}
-                  setShowDeGroupPicker={setShowDeGroupPicker}
-                  deGenes={deGenes}
-                  setDeGenes={setDeGenes}
-                  deGroup={deGroup}
-                  setDeGroup={setDeGroup}
-                  setDeFileUrl={setDeFileUrl}
-                />
+                <FontAwesomeIcon className="fa-lg" icon={faCog}/> OPTIONS
+                <button className="action"
+                  onClick={toggleViewOptions}
+                  title="Hide options"
+                  data-analytics-name="view-options-hide">
+                  <FontAwesomeIcon className="fa-lg" icon={faTimes}/>
+                </button>
               </>
             }
-            {showDeGroupPicker && deGenes &&
-                <>
-                  <button className="action fa-lg"
-                    style={{ float: 'left', position: 'relative', left: '-5px' }}
-                    onClick={() => {
-                      setShowDeGroupPicker(false)
-                      setDeGenes(null)
-                    }}
-                    data-toggle="tooltip"
-                    data-analytics-name="exit-de-view">
-                    <FontAwesomeIcon icon={faArrowLeft}/>
-                  </button>
-                  <span style={{ float: 'left', position: 'relative', left: '20px' }}>Differential expression</span>
-                </>
-            }
-            {!deGenes || deGroup &&
-            <button className="action"
-              onClick={toggleViewOptions}
-              title="Hide options"
-              data-analytics-name="view-options-hide">
-              <FontAwesomeIcon className="fa-lg" icon={faTimes}/>
-            </button>
+            {showDifferentialExpressionPanel &&
+              <DifferentialExpressionPanelHeader
+                toggleViewOptions={toggleViewOptions}
+                setDeGenes={setDeGenes}
+              />
             }
           </div>
 
-          {!showDeGroupPicker &&
+          {!showDifferentialExpressionPanel &&
           <>
             <div>
               <div className={showClusterControls ? '' : 'hidden'}>
@@ -467,6 +488,7 @@ export default function ExploreDisplayTabs({
               <GeneListSelector
                 geneList={exploreParamsWithDefaults.geneList}
                 studyGeneLists={exploreInfo.geneLists}
+                selectLabel={exploreInfo.precomputedHeatmapLabel ?? undefined}
                 updateGeneList={updateGeneList}/>
               }
               { exploreParams.genes.length > 1 && !['genome', 'infercnv-genome'].includes(shownTab) &&
@@ -487,7 +509,7 @@ export default function ExploreDisplayTabs({
               exploreParams={exploreParamsWithDefaults}
               updateExploreParams={updateExploreParams}
               allGenes={exploreInfo ? exploreInfo.uniqueGenes : []}/>
-            {hasDE &&
+            {isDifferentialExpressionEnabled &&
             <>
               <button
                 className="btn btn-primary"
@@ -512,7 +534,7 @@ export default function ExploreDisplayTabs({
           }
           {showDeGroupPicker && deGenes &&
           <>
-            <DeGroupPicker
+            <DifferentialExpressionGroupPicker
               exploreInfo={exploreInfo}
               setShowDeGroupPicker={setShowDeGroupPicker}
               deGenes={deGenes}
@@ -522,36 +544,12 @@ export default function ExploreDisplayTabs({
               setDeFileUrl={setDeFileUrl}
             />
             {/* <p style={{ marginTop: '10px', position: 'relative', left: '30px' }}>{deGroup} vs. other groups</p> */}
-            <table className="table table-terra table-scp-de">
-              <thead>
-                <tr>
-                  <th>Name</th>
-                  <th>log<sub>2</sub>(FC)</th>
-                  <th>Adj. p-value</th>
-                </tr>
-              </thead>
-              <tbody>
-                {deGenes.map((deGene, i) => {
-                  return (
-                    <tr key={i}>
-                      <td>
-                        <a
-                          analytics-name="de-gene-link"
-                          href="#"
-                          onClick={event => {
-                            searchGenes([deGene.name])
-                            event.preventDefault()
-                          }}>{
-                            deGene.name
-                          }</a></td>
-                      <td>{deGene.log2FoldChange}</td>
-                      <td>{deGene.pvalAdjPretty}</td>
-                    </tr>)
-                })}
-              </tbody>
-            </table>
-            15 most differentially expressed genes<br/><br/>
-            <a href={deFileUrl}><FontAwesomeIcon className="icon-left" icon={faDownload}/> Download all</a>
+            <DifferentialExpressionPanel
+              deGroup={deGroup}
+              deGenes={deGenes}
+              deFileUrl={deFileUrl}
+              searchGenes={searchGenes}
+            />
           </>
           }
         </div>
@@ -578,7 +576,7 @@ export function getEnabledTabs(exploreInfo, exploreParams) {
 
   let enabledTabs = []
   if (isGeneList) {
-    enabledTabs = ['heatmap']
+    enabledTabs = ['geneListHeatmap']
   } else if (isGene) {
     if (isMultiGene) {
       if (isConsensus) {
@@ -616,5 +614,6 @@ export function getEnabledTabs(exploreInfo, exploreParams) {
   if (!exploreInfo) {
     enabledTabs = ['loading']
   }
+
   return { enabledTabs, isGeneList, isGene, isMultiGene, hasIdeogramOutputs }
 }

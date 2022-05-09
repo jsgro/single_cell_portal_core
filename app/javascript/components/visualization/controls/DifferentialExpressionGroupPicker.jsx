@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import Modal from 'react-bootstrap/lib/Modal'
+// import Modal from 'react-bootstrap/lib/Modal'
 
 import Select from '~/lib/InstrumentedSelect'
 import { clusterSelectStyle } from '~/lib/cluster-utils'
@@ -12,14 +12,40 @@ const noneSelected = 'Select group'
 
 /** Takes array of strings, converts it to list options suitable for react-select */
 function getSimpleOptions(stringArray) {
-  const assignLabelsAndValues = x => ({ label: x, value: x })
+  const assignLabelsAndValues = name => ({ label: name, value: name })
   return [{ label: noneSelected, value: '' }].concat(stringArray.map(assignLabelsAndValues))
 }
 
-const nonAlphaNumericRE = /\W/g
+const nonAlphaNumericRegex = /\W/g
 
 /**
- * Fetch array of gene differential expression data
+ * Transform raw TSV text into array of differential expression gene objects
+ */
+function parseDeFile(tsvText) {
+  const deGenes = []
+  const tsvLines = tsvText.split(newlineRegex)
+  for (let i = 1; i < tsvLines.length; i++) {
+    // Each element in this array is DE data for the gene in this row
+    const [
+      index, // eslint-disable-line
+      name, score, log2FoldChange, pval, pvalAdj, pctNzGroup, pctNzReference
+    ] = tsvLines[i].split('\t')
+    const deGene = {
+      score, log2FoldChange, pval, pvalAdj, pctNzGroup, pctNzReference
+    }
+    Object.entries(deGene).forEach(([k, v]) => {
+      // Cast numeric string values as floats
+      deGene[k] = parseFloat(v)
+    })
+    deGene.name = name
+    deGenes.push(deGene)
+  }
+
+  return deGenes
+}
+
+/**
+ * Fetch array of differential expression gene objects
  *
  * @param {String} bucketId Identifier for study's Google bucket
  * @param {String} deFilePath File path of differential expression file in Google bucket
@@ -38,36 +64,14 @@ async function fetchDeGenes(bucketId, deFilePath, numGenes=15) {
   // TODO (SCP-4321): Perhaps refine logic for fetching file from bucket, e.g. perhaps add
   //  token parameter to fetchFileFromBucket
   const data = await fetchBucketFile(bucketId, deFilePath)
-  const tsv = await data.text()
-  const tsvLines = tsv.split(newlineRegex)
-  const deGenes = []
-  for (let i = 1; i < tsvLines.length; i++) {
-    // Each element in this array is DE data for the gene in this row
-    const [
-      index, // eslint-disable-line
-      name, score, log2FoldChange, pval, pvalAdj, pctNzGroup, pctNzReference
-    ] = tsvLines[i].split('\t')
-    const deGene = {
-      score, log2FoldChange, pval, pvalAdj, pctNzGroup, pctNzReference
-    }
-    Object.entries(deGene).forEach(([k, v]) => {
-      // Cast numeric string values as floats
-      // TODO (SCP-4321): Add `pValPretty` and `pValAdjPretty` with '< 0.001' instead of 0
-      deGene[k] = parseFloat(v)
-      if (['pval', 'pvalAdj'].includes(k)) {
-        deGene[`${k }Pretty`] = v === '0' ? '< 0.001' : v
-      }
-    })
-    deGene.name = name
-    deGenes.push(deGene)
-  }
-
+  const tsvText = await data.text()
+  const deGenes = parseDeFile(tsvText)
   return deGenes.slice(0, numGenes)
 }
 
 /** Pick groups of cells for differential expression (DE) */
 export default function DeGroupPicker({
-  exploreInfo, setShowDeGroupPicker, deGenes, deGroup, setDeGroup, setDeGenes, setDeFileUrl
+  exploreInfo, deGenes, deGroup, setDeGroup, setDeGenes, setDeFileUrl
 }) {
   const annotation = exploreInfo?.annotationList?.default_annotation
   const groups = annotation?.values ?? []
@@ -88,10 +92,11 @@ export default function DeGroupPicker({
       newGroup,
       'wilcoxon'
     ]
-      .map(s => s.replaceAll(nonAlphaNumericRE, '_'))
+      .map(s => s.replaceAll(nonAlphaNumericRegex, '_'))
       .join('--') }.tsv`
 
-    const deFilePath = `_scp-internal/de/${deFileName}`.replaceAll('/', '%2F')
+    const basePath = '_scp_internal/differential_expression/'
+    const deFilePath = `${basePath}${deFileName}`.replaceAll('/', '%2F')
 
     const deGenes = await fetchDeGenes(bucketId, deFilePath)
 
@@ -99,7 +104,7 @@ export default function DeGroupPicker({
     setDeGenes(deGenes)
 
     const baseUrl = 'https://storage.googleapis.com/download/storage/v1/'
-    const deFileUrl = `${baseUrl}b/${bucketId}/o/${deFilePath}?alt=media`
+    const deFileUrl = `${baseUrl}/${bucketId}/o/${deFilePath}?alt=media`
     setDeFileUrl(deFileUrl)
 
     // setShowDeGroupPicker(false)
