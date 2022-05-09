@@ -29,10 +29,10 @@ class IngestJob
 
   # Mappings between actions & models (for cleaning up data on re-parses)
   MODELS_BY_ACTION = {
-      ingest_expression: Gene,
-      ingest_cluster: ClusterGroup,
-      ingest_cell_metadata: CellMetadatum,
-      subsample: ClusterGroup
+    ingest_expression: Gene,
+    ingest_cluster: ClusterGroup,
+    ingest_cell_metadata: CellMetadatum,
+    subsample: ClusterGroup
   }
 
   # Push a file to a workspace bucket in the background and then launch an ingest run and queue polling
@@ -281,7 +281,7 @@ class IngestJob
     TimeDifference.between(*self.get_runtime_timestamps).humanize
   end
 
-   # Get the total runtime of parsing from event timestamps, in milliseconds
+  # Get the total runtime of parsing from event timestamps, in milliseconds
   #
   # * *returns*
   #   - (Integer) => Total elapsed time in milliseconds
