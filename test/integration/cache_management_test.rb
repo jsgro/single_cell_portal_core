@@ -1,4 +1,5 @@
 require 'test_helper'
+require 'api_test_helper'
 require 'includes_helper'
 
 class CacheManagementTest < ActionDispatch::IntegrationTest
