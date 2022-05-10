@@ -48,13 +48,13 @@ class DifferentialExpressionServiceTest < ActiveSupport::TestCase
     # should fail on annotation missing
     assert_raise ArgumentError do
       DifferentialExpressionService.run_differential_expression_job(
-        cluster_file, @basic_study, @user, annotation_name: 'foo', annotation_type: 'group', annotation_scope: 'cluster'
+        @cluster_file, @basic_study, @user, annotation_name: 'foo', annotation_type: 'group', annotation_scope: 'cluster'
       )
     end
 
     # should fail on cell validation
     assert_raise ArgumentError do
-      FileParseService.run_differential_expression_job(@cluster_file, @basic_study, @user, **@job_params)
+      DifferentialExpressionService.run_differential_expression_job(@cluster_file, @basic_study, @user, **@job_params)
     end
     # test launch by manually creating expression matrix cells array for validation
     DataArray.create!(name: 'raw.txt Cells', array_type: 'cells', linear_data_type: 'Study', study_id: @basic_study.id,
@@ -67,7 +67,9 @@ class DifferentialExpressionServiceTest < ActiveSupport::TestCase
     mock = Minitest::Mock.new
     mock.expect(:delay, job_mock)
     IngestJob.stub :new, mock do
-      job_launched = FileParseService.run_differential_expression_job(cluster_file, @basic_study, @user, **@job_params)
+      job_launched = DifferentialExpressionService.run_differential_expression_job(
+        @cluster_file, @basic_study, @user, **@job_params
+      )
       assert job_launched
       mock.verify
       job_mock.verify
