@@ -1,6 +1,7 @@
 require 'integration_test_helper'
 require 'big_query_helper'
 require 'test_helper'
+require 'api_test_helper'
 require 'includes_helper'
 
 class StudyCreationTest < ActionDispatch::IntegrationTest
