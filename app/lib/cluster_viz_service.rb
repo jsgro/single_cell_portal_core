@@ -40,7 +40,7 @@ class ClusterVizService
         # mark non-plottable annotations as 'invalid' so they show up in the dropdown but are not selectable
         scope: cluster.can_visualize_cell_annotation?(annot) ? 'cluster' : 'invalid',
         cluster_name: cluster.name,
-        is_differential_expression_enabled: !!annot[:is_differential_expression_enabled]
+        is_differential_expression_enabled: annot[:is_differential_expression_enabled]
       }
     end
   end
@@ -241,5 +241,38 @@ class ClusterVizService
       annotation_array = cells&.map { |cell| annotation_hash[cell] } || []
     end
     AnnotationVizService.sanitize_values_array(annotation_array, annotation[:type])
+  end
+
+  # validate study has raw counts, and that all cells from the cluster file exist in a single raw counts matrix
+  #
+  # * *params*
+  #   - +study+   (Study) => Study to which StudyFile belongs
+  #   - +cluster+ (ClusterGroup) => Clustering object to source cell names from
+  #
+  # * *returns*
+  #   - (StudyFile) => Corresponding raw counts file
+  #
+  # * *raises*
+  #   - (ArgumentError) => if requested parameters do not validate
+  def self.raw_matrix_for_cluster_cells(study, cluster)
+    raw_counts_matrices = StudyFile.where(study_id: study.id,
+                                          parse_status: 'parsed',
+                                          queued_for_deletion: false,
+                                          'expression_file_info.is_raw_counts' => true)
+    raise ArgumentError, "#{study.accession} has no parsed raw counts data" if raw_counts_matrices.empty?
+
+    cluster_cells = cluster.concatenate_data_arrays('text', 'cells')
+    # if the intersection of cluster_cells and matrix_cells is complete, then this will return a matrix file
+    raw_matrix = raw_counts_matrices.detect do |matrix|
+      matrix_cells = study.expression_matrix_cells(matrix)
+      (cluster_cells & matrix_cells) == cluster_cells
+    end
+    raise ArgumentError, "#{cluster.name} does not have all cells in a single raw counts matrix" if raw_matrix.nil?
+
+    if raw_matrix.file_type == 'MM Coordinate Matrix'
+      raise ArgumentError, "#{raw_matrix.upload_file_name} is missing required data" unless raw_matrix.has_completed_bundle?
+    end
+
+    raw_matrix
   end
 end
