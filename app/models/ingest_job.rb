@@ -655,7 +655,8 @@ class IngestJob
   def log_to_mixpanel
     mixpanel_log_props = get_job_analytics
     # log job properties to Mixpanel
-    MetricsService.log('ingest', mixpanel_log_props, user)
+    event_name = action.to_sym == :differential_expression ? 'differential-expression-ingest' : 'ingest'
+    MetricsService.log(event_name, mixpanel_log_props, user)
   end
 
   # generates parse completion email body
