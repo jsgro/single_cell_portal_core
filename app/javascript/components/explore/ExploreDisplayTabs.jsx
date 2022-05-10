@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import _clone from 'lodash/clone'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faLink, faArrowLeft, faCog, faTimes, faDna, faUndo, faDownload } from '@fortawesome/free-solid-svg-icons'
+import { faLink, faArrowLeft, faCog, faTimes, faDna, faUndo } from '@fortawesome/free-solid-svg-icons'
 
 import StudyGeneField from './StudyGeneField'
 import ClusterSelector from '~/components/visualization/controls/ClusterSelector'
@@ -83,11 +83,12 @@ export default function ExploreDisplayTabs({
   const [deGenes, setDeGenes] = useState(null)
   const [deGroup, setDeGroup] = useState(null)
   const [deFileUrl, setDeFileUrl] = useState(null)
+  const [showDifferentialExpressionPanel, setShowDifferentialExpressionPanel] = useState(deGenes !== null)
 
-  // For readability, until approach outlined in TODO above can be fully
-  // attempted, which will likely be tightly couple with UX changes suggested
-  // at 2022-05-06 demo.
-  const showDifferentialExpressionPanel = deGenes !== null
+  // // For readability, until approach outlined in TODO above can be fully
+  // // attempted, which will likely be tightly couple with UX changes suggested
+  // // at 2022-05-06 demo.
+  // const showDifferentialExpressionPanel = deGenes !== null
 
   // TODO (SCP-4321): In addition to feature flag, check
   // is_differential_expression_enabled attribute from forthcoming update to
@@ -442,6 +443,8 @@ export default function ExploreDisplayTabs({
               <DifferentialExpressionPanelHeader
                 toggleViewOptions={toggleViewOptions}
                 setDeGenes={setDeGenes}
+                setDeGroup={setDeGroup}
+                setShowDifferentialExpressionPanel={setShowDifferentialExpressionPanel}
               />
             }
           </div>
@@ -513,7 +516,10 @@ export default function ExploreDisplayTabs({
             <>
               <button
                 className="btn btn-primary"
-                onClick={() => {setShowDeGroupPicker(true)}}
+                onClick={() => {
+                  setShowDifferentialExpressionPanel(true)
+                  setShowDeGroupPicker(true)
+                }}
               >Differential expression</button>
               <br/><br/>
             </>
@@ -532,23 +538,18 @@ export default function ExploreDisplayTabs({
             </button>
           </>
           }
-          {showDeGroupPicker && deGenes &&
+          {showDifferentialExpressionPanel &&
           <>
-            <DifferentialExpressionGroupPicker
-              exploreInfo={exploreInfo}
-              setShowDeGroupPicker={setShowDeGroupPicker}
-              deGenes={deGenes}
-              setDeGenes={setDeGenes}
-              deGroup={deGroup}
-              setDeGroup={setDeGroup}
-              setDeFileUrl={setDeFileUrl}
-            />
-            {/* <p style={{ marginTop: '10px', position: 'relative', left: '30px' }}>{deGroup} vs. other groups</p> */}
             <DifferentialExpressionPanel
               deGroup={deGroup}
               deGenes={deGenes}
               deFileUrl={deFileUrl}
               searchGenes={searchGenes}
+              exploreInfo={exploreInfo}
+              setShowDeGroupPicker={setShowDeGroupPicker}
+              setDeGenes={setDeGenes}
+              setDeGroup={setDeGroup}
+              setDeFileUrl={setDeFileUrl}
             />
           </>
           }

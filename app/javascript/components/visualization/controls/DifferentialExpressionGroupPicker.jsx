@@ -113,13 +113,6 @@ export default function DeGroupPicker({
   // TODO (SCP-4321): Replace modal with dropdown at top of DE panel at right
   // TODO (SCP-4321): Move ← icon to left
   return (
-    // <Modal
-    //   id='de-group-picker-modal'
-    //   onHide={() => setShowDeGroupPicker(false)}
-    //   show={true}
-    //   animation={false}
-    //   bsSize='small'>
-    //   <Modal.Body>
     <>
       {!deGenes &&
         <div className="flexbox-align-center flexbox-column">
@@ -138,8 +131,6 @@ export default function DeGroupPicker({
       }
       {deGenes &&
       <>
-        <br/>
-        <br/>
         <Select
           options={getSimpleOptions(groups)}
           data-analytics-name="de-group-select"
@@ -156,11 +147,5 @@ export default function DeGroupPicker({
       </>
       }
     </>
-    //   </Modal.Body>
-    //   <Modal.Footer>
-    //     <button className="btn btn-primary" onClick={() => {updateDeGroup()}}>OK</button>
-    //     <button className="btn terra-btn-secondary" onClick={() => setShowDeGroupPicker(false)}>Cancel</button>
-    //   </Modal.Footer>
-    // </Modal>
   )
 }
