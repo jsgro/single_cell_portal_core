@@ -13,7 +13,7 @@ const noneSelected = 'Select group'
 /** Takes array of strings, converts it to list options suitable for react-select */
 function getSimpleOptions(stringArray) {
   const assignLabelsAndValues = name => ({ label: name, value: name })
-  return [{ label: noneSelected, value: '' }].concat(stringArray.map(assignLabelsAndValues))
+  return stringArray.map(assignLabelsAndValues)
 }
 
 const nonAlphaNumericRegex = /\W/g
@@ -118,6 +118,7 @@ export default function DeGroupPicker({
         <div className="flexbox-align-center flexbox-column">
           <span>Compare one group to all others</span>
           <Select
+            defaultMenuIsOpen
             options={getSimpleOptions(groups)}
             data-analytics-name="de-group-select"
             value={{

@@ -52,8 +52,8 @@ export default function DifferentialExpressionPanel({
             })}
           </tbody>
         </table>
-        15 most DE genes | <a href={deFileUrl}><FontAwesomeIcon className="icon-left" icon={faDownload}/>Download all</a><br/><br/>
-
+        15 most DE genes <span style={{ 'color': '#CCC' }}>|</span>&nbsp;
+        <a href={deFileUrl}><FontAwesomeIcon className="icon-left" icon={faDownload}/>Download all</a><br/><br/>
       </>
       }
     </>
