@@ -35,17 +35,21 @@ export default function DifferentialExpressionPanel({
           <tbody>
             {deGenes.map((deGene, i) => {
               return (
-                <tr key={i}>
+                <tr key={i} style={{ 'font-size': '13px' }}>
                   <td>
-                    <a
-                      analytics-name="de-gene-link"
-                      href="#"
-                      onClick={event => {
-                        searchGenes([deGene.name])
-                        event.preventDefault()
-                      }}>{
+                    <label
+                      title="Click to view gene expression.  Arrow down (↓) and up (↑) to quickly scan."
+                    ><input
+                        type="radio"
+                        analytics-name="de-gene-link"
+                        style={{ 'margin-right': '10px' }}
+                        name="selected-gene-differential-expression"
+                        onClick={event => {
+                          searchGenes([deGene.name])
+                        // event.preventDefault()
+                        }}/>{
                         deGene.name
-                      }</a></td>
+                      }</label></td>
                   <td>{deGene.log2FoldChange}</td>
                   <td>{deGene.pvalAdj}</td>
                 </tr>)
