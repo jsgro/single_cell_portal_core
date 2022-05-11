@@ -480,6 +480,18 @@ export default function ExploreDisplayTabs({
                   setAnnotationList={setAnnotationList}
                   studyAccession={studyAccession}/>
                 }
+                {isDifferentialExpressionEnabled &&
+                <>
+                  <button
+                    className="btn btn-primary"
+                    onClick={() => {
+                      setShowDifferentialExpressionPanel(true)
+                      setShowDeGroupPicker(true)
+                    }}
+                  >Differential expression</button>
+                  <br/><br/>
+                </>
+                }
                 <SubsampleSelector
                   annotationList={annotationList}
                   cluster={exploreParamsWithDefaults.cluster}
@@ -511,18 +523,6 @@ export default function ExploreDisplayTabs({
               exploreParams={exploreParamsWithDefaults}
               updateExploreParams={updateExploreParams}
               allGenes={exploreInfo ? exploreInfo.uniqueGenes : []}/>
-            {isDifferentialExpressionEnabled &&
-            <>
-              <button
-                className="btn btn-primary"
-                onClick={() => {
-                  setShowDifferentialExpressionPanel(true)
-                  setShowDeGroupPicker(true)
-                }}
-              >Differential expression</button>
-              <br/><br/>
-            </>
-            }
             <button className="action"
               onClick={clearExploreParams}
               title="Reset all view options"

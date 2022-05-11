@@ -59,6 +59,11 @@
 
 
 .create-annotation-control {
+  display: inline;
+  float: right;
+  position: relative;
+  top: -80px;
+
 	.panel-collapse.in {
 		border: 1px solid #bbb;
 		border-radius: 5px;
