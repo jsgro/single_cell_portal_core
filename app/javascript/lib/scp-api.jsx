@@ -767,6 +767,18 @@ export function getFullUrl(path, mock=false) {
   return fullPath
 }
 
+/** Fetch, leveraging web cache if available */
+async function fetchWithWebCache(url, init) {
+  const webCache = await caches.open('scp-1.6.0')
+  const response = await webCache.match(url)
+  if (typeof response === 'undefined') {
+    const rawResponse = await fetch(url, init).catch(error => error)
+    await webCache.put(url, rawResponse)
+    return await webCache.match(url)
+  }
+  return await webCache.match(url)
+}
+
 /**
  * Client for SCP REST API.  Less fetch boilerplate, easier mocks.
  *
@@ -781,7 +793,7 @@ export default async function scpApi(
 
   const perfTimeStart = performance.now()
 
-  const response = await fetch(url, init).catch(error => error)
+  const response = await fetchWithWebCache(url, init)
 
   // Milliseconds taken to fetch data from API
   // Suboptimal, but retained until at least Q4 2021 for continuity.
