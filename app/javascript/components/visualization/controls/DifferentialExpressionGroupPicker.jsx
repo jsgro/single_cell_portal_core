@@ -78,8 +78,6 @@ export default function DeGroupPicker({
 
   /** Update group in DE picker */
   async function updateDeGroup(newGroup) {
-    console.log('deGroup')
-    console.log(deGroup)
     setDeGroup(newGroup)
 
     const bucketId = exploreInfo?.bucketId

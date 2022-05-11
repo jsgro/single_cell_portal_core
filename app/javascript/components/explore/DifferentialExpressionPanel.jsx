@@ -14,6 +14,7 @@ export default function DifferentialExpressionPanel({
     <>
       <DifferentialExpressionGroupPicker
         exploreInfo={exploreInfo}
+
         setShowDeGroupPicker={setShowDeGroupPicker}
         deGenes={deGenes}
         setDeGenes={setDeGenes}
@@ -24,7 +25,7 @@ export default function DifferentialExpressionPanel({
 
       {deGenes &&
       <>
-        <table className="table table-terra table-scp-compact">
+        <table className="table table-terra table-scp-compact" style={{ 'width': '105%', 'maxWidth': 'inherit' }}>
           <thead>
             <tr>
               <th>Name</th>
@@ -35,7 +36,7 @@ export default function DifferentialExpressionPanel({
           <tbody>
             {deGenes.map((deGene, i) => {
               return (
-                <tr key={i} style={{ 'font-size': '13px' }}>
+                <tr key={i} style={{ 'fontSize': '13px' }}>
                   <td>
                     <label
                       title="Click to view gene expression.  Arrow down (↓) and up (↑) to quickly scan."
@@ -81,7 +82,7 @@ export function DifferentialExpressionPanelHeader({
         style={{ 'float': 'left' }}>
         <FontAwesomeIcon icon={faArrowLeft}/>
       </button>
-      <span style={{ 'margin-left': '25px' }}>Differential expression</span>
+      <span style={{ 'marginLeft': '25px' }}>Differential expression</span>
       <button className="action"
         onClick={toggleViewOptions}
         title="Hide options"
