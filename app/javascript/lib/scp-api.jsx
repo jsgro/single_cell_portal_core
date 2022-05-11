@@ -9,14 +9,18 @@ import React from 'react'
 import camelcaseKeys from 'camelcase-keys'
 import _compact from 'lodash/compact'
 import * as queryString from 'query-string'
-import { logJSFetchExceptionToSentry, logJSFetchErrorToSentry } from '~/lib/sentry-logging'
 
+import { logJSFetchExceptionToSentry, logJSFetchErrorToSentry } from '~/lib/sentry-logging'
+import getSCPContext from '~/providers/SCPContextProvider'
 import { getAccessToken } from '~/providers/UserProvider'
 import {
   logDownloadAuthorization, logCreateUserAnnotation
 } from './scp-api-metrics'
 import { logSearch, mapFiltersForLogging } from './search-metrics'
 import { showMessage } from '~/lib/MessageModal'
+
+
+const env = getSCPContext().environment
 
 // If true, returns mock data for all API responses.  Only for dev.
 let globalMock = false
@@ -769,13 +773,17 @@ export function getFullUrl(path, mock=false) {
 
 /** Fetch, leveraging web cache if available */
 async function fetchWithWebCache(url, init) {
-  const webCache = await caches.open('scp-1.6.0')
-  const response = await webCache.match(url)
+  const webCache = await caches.open(`singlecellportal-${env}-1.6.0`)
+  let response = await webCache.match(url)
+  let hitOrMiss = 'hit'
   if (typeof response === 'undefined') {
-    const rawResponse = await fetch(url, init).catch(error => error)
-    await webCache.put(url, rawResponse)
+    console.log(`Cache miss for SCP API fetch of URL: ${url}`)
+    response = await fetch(url, init).catch(error => error)
+    await webCache.put(url, response)
+    hitOrMiss = 'miss'
     return await webCache.match(url)
   }
+  console.log(`Cache ${hitOrMiss} for SCP API fetch of URL: ${url}`)
   return await webCache.match(url)
 }
 
