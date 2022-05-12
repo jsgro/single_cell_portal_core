@@ -1,20 +1,34 @@
 
-import React from 'react'
+import React, { useState } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faArrowLeft, faTimes, faDownload } from '@fortawesome/free-solid-svg-icons'
+import { faArrowLeft, faTimes, faDownload, faInfoCircle } from '@fortawesome/free-solid-svg-icons'
+import Modal from 'react-bootstrap/lib/Modal'
 
+import { closeModal } from '~/components/search/controls/SearchPanel'
 import DifferentialExpressionGroupPicker from '~/components/visualization/controls/DifferentialExpressionGroupPicker'
+
+const helpModalContent = (<div>
+  <h4 className="text-center">Differential expression</h4><br/>
+  This is an experimental differential expression (DE) feature.  The DE data{' '}
+  shown in the table has been computed by Single Cell Portal pipelines, using{' '}
+  the Scanpy package.  It shows metrics that use the Wilcoxon rank-sum test{' '}
+  of expression for each gene in the group you selected, compared to that in{' '}
+  all other groups in this annotation.
+  {/* TODO (SCP-4352): Add another link to DE survey */}
+  {/* TODO (SCP-4354): Update this reviewed wording, and any fuller docs e.g. on Zendesk */}
+</div>)
 
 /** Differential expression panel shown at right in Explore tab */
 export default function DifferentialExpressionPanel({
   deGroup, deGenes, deFileUrl, searchGenes,
   exploreInfo, setShowDeGroupPicker, setDeGenes, setDeGroup, setDeFileUrl
 }) {
+  const [showDeHelpModal, setShowDeHelpModal] = useState(false)
+
   return (
     <>
       <DifferentialExpressionGroupPicker
         exploreInfo={exploreInfo}
-
         setShowDeGroupPicker={setShowDeGroupPicker}
         deGenes={deGenes}
         setDeGenes={setDeGenes}
@@ -43,22 +57,30 @@ export default function DifferentialExpressionPanel({
                     ><input
                         type="radio"
                         analytics-name="de-gene-link"
-                        style={{ 'margin-right': '10px' }}
+                        style={{ 'marginRight': '10px' }}
                         name="selected-gene-differential-expression"
-                        onClick={event => {
-                          searchGenes([deGene.name])
-                        // event.preventDefault()
-                        }}/>{
-                        deGene.name
-                      }</label></td>
+                        onClick={() => {searchGenes([deGene.name])}}/>
+                      {deGene.name}</label></td>
                   <td>{deGene.log2FoldChange}</td>
                   <td>{deGene.pvalAdj}</td>
                 </tr>)
             })}
           </tbody>
         </table>
-        15 most DE genes <span style={{ 'color': '#CCC' }}>|</span>&nbsp;
-        <a href={deFileUrl}><FontAwesomeIcon className="icon-left" icon={faDownload}/>Download all</a><br/><br/>
+        15 most DE genes
+        <a href={deFileUrl} data-analytics-name="differential-expression-download">
+          <FontAwesomeIcon className="icon-left" icon={faDownload}/></a><br/><br/>
+        <FontAwesomeIcon data-toggle="tooltip" data-data-analytics-name="differential-expression-help"
+          className="action log-click help-icon" icon={faInfoCircle}/>
+        <Modal
+          show={showDeHelpModal}
+          onHide={() => closeModal(setShowDeHelpModal)}
+          animation={false}
+          bsSize='large'>
+          <Modal.Body className="">
+            { helpModalContent }
+          </Modal.Body>
+        </Modal>
       </>
       }
     </>
@@ -79,15 +101,15 @@ export function DifferentialExpressionPanelHeader({
         }}
         title="Exit differential expression panel"
         data-analytics-name="differential-expression-panel-exit"
-        style={{ 'float': 'left' }}>
+        style={{ 'float': 'left', 'marginLeft': '-10px' }}>
         <FontAwesomeIcon icon={faArrowLeft}/>
       </button>
-      <span style={{ 'marginLeft': '25px' }}>Differential expression</span>
+      <span style={{ 'marginLeft': '5px' }}>Differentially expressed genes</span>
       <button className="action"
         onClick={toggleViewOptions}
         title="Hide options"
         data-analytics-name="view-options-hide"
-        style={{ 'float': 'right' }}>
+        style={{ 'float': 'right', 'position': 'relative', 'left': '5px' }}>
         <FontAwesomeIcon className="fa-lg" icon={faTimes}/>
       </button>
     </>

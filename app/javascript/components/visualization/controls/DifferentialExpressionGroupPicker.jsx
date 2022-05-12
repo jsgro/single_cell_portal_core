@@ -108,8 +108,6 @@ export default function DeGroupPicker({
     // setShowDeGroupPicker(false)
   }
 
-  // TODO (SCP-4321): Replace modal with dropdown at top of DE panel at right
-  // TODO (SCP-4321): Move ← icon to left
   return (
     <>
       {!deGenes &&
