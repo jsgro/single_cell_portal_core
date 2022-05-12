@@ -1,30 +1,15 @@
 
-import React, { useState } from 'react'
+import React from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faArrowLeft, faTimes, faDownload, faInfoCircle } from '@fortawesome/free-solid-svg-icons'
-import Modal from 'react-bootstrap/lib/Modal'
 
-import { closeModal } from '~/components/search/controls/SearchPanel'
 import DifferentialExpressionGroupPicker from '~/components/visualization/controls/DifferentialExpressionGroupPicker'
-
-const helpModalContent = (<div>
-  <h4 className="text-center">Differential expression</h4><br/>
-  This is an experimental differential expression (DE) feature.  The DE data{' '}
-  shown in the table has been computed by Single Cell Portal pipelines, using{' '}
-  the Scanpy package.  It shows metrics that use the Wilcoxon rank-sum test{' '}
-  of expression for each gene in the group you selected, compared to that in{' '}
-  all other groups in this annotation.
-  {/* TODO (SCP-4352): Add another link to DE survey */}
-  {/* TODO (SCP-4354): Update this reviewed wording, and any fuller docs e.g. on Zendesk */}
-</div>)
 
 /** Differential expression panel shown at right in Explore tab */
 export default function DifferentialExpressionPanel({
   deGroup, deGenes, deFileUrl, searchGenes,
   exploreInfo, setShowDeGroupPicker, setDeGenes, setDeGroup, setDeFileUrl
 }) {
-  const [showDeHelpModal, setShowDeHelpModal] = useState(false)
-
   return (
     <>
       <DifferentialExpressionGroupPicker
@@ -39,6 +24,27 @@ export default function DifferentialExpressionPanel({
 
       {deGenes &&
       <>
+        15 most DE genes
+        <span style={{ 'float': 'right' }}>
+          <a href={deFileUrl}
+            target="_blank"
+            data-analytics-name="differential-expression-download"
+            data-toggle="tooltip"
+            data-original-title="Download all DE genes data for this group"
+          >
+            <FontAwesomeIcon icon={faDownload}/></a>
+          <a href="TODO"
+            target="_blank"
+            data-analytics-name="differential-expression-docs"
+            style={{ 'marginLeft': '10px' }}
+            data-toggle="tooltip"
+            data-original-title="Learn about SCP DE analysis"
+          >
+            <FontAwesomeIcon
+              className="action help-icon" icon={faInfoCircle}
+            />
+          </a>
+        </span>
         <table className="table table-terra table-scp-compact" style={{ 'width': '105%', 'maxWidth': 'inherit' }}>
           <thead>
             <tr>
@@ -67,20 +73,6 @@ export default function DifferentialExpressionPanel({
             })}
           </tbody>
         </table>
-        15 most DE genes
-        <a href={deFileUrl} data-analytics-name="differential-expression-download">
-          <FontAwesomeIcon className="icon-left" icon={faDownload}/></a><br/><br/>
-        <FontAwesomeIcon data-toggle="tooltip" data-data-analytics-name="differential-expression-help"
-          className="action log-click help-icon" icon={faInfoCircle}/>
-        <Modal
-          show={showDeHelpModal}
-          onHide={() => closeModal(setShowDeHelpModal)}
-          animation={false}
-          bsSize='large'>
-          <Modal.Body className="">
-            { helpModalContent }
-          </Modal.Body>
-        </Modal>
       </>
       }
     </>
