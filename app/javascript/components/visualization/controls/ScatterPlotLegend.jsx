@@ -119,7 +119,7 @@ function getShowHideEnabled(hiddenTraces, countsByLabel) {
   const numHiddenTraces = hiddenTraces.length
   const numLabels = Object.keys(countsByLabel).length
 
-  let enabled // [isShowAllEnabled, isHideAllEnabled]
+  let enabled = [true, true] // [isShowAllEnabled, isHideAllEnabled]
 
   if (countsByLabel === null) {
     // When nothing has loaded yet
@@ -246,14 +246,14 @@ export default function ScatterPlotLegend({
               <a
                 role="button"
                 data-analytics-name='split-traces-unsplit'
-                onClick={() => {setSplitLabelArrays(false)}}
+                onClick={() => {updateHiddenTraces([], false, true); setSplitLabelArrays(false)}}
               >Merge array labels</a>
             }
             { !splitLabelArrays &&
               <a
                 role="button"
                 data-analytics-name='split-traces-split'
-                onClick={() => {setSplitLabelArrays(true)}}
+                onClick={() => {updateHiddenTraces([], false, true); setSplitLabelArrays(true)}}
               >Split array labels</a>
             }
           </div>

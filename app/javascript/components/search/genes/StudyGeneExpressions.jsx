@@ -11,33 +11,17 @@ import SubsampleSelector from '~/components/visualization/controls/SubsampleSele
 import ConsensusSelector from '~/components/visualization/controls/ConsensusSelector'
 import { fetchClusterOptions } from '~/lib/scp-api'
 import {
-  getDefaultClusterParams, getAnnotationValues, emptyDataParams, getAnnotationForIdentifier
+  getDefaultClusterParams, getAnnotationValues, emptyDataParams
 } from '~/lib/cluster-utils'
 
-/**
- * Get annotations that aren't custom
- *
- * TODO (SCP-4242): Handle custom annotations in global gene search,
- * then remove this function.
- */
-function getBasicAnnotations(study) {
-  let basicAnnotationList = null
-  if (study.annotation_list?.can_visualize_clusters) {
-    basicAnnotationList = study.annotation_list
-    basicAnnotationList.annotations = basicAnnotationList.annotations.filter(a => a.scope !== 'user')
-  }
-  return basicAnnotationList
-}
 
 /** Renders expression data for a study.  This assumes that the study has a 'gene_matches' property
     to inform which genes to show data for
   */
 export default function StudyGeneExpressions({ study }) {
   const [clusterParams, setClusterParams] = useState(_clone(emptyDataParams))
-  const [annotationList, setAnnotationList] = useState(getBasicAnnotations(study))
+  const [annotationList, setAnnotationList] = useState(getNonUserAnnotations(study))
   let controlClusterParams = _clone(clusterParams)
-  const defaultAnnotation = getAnnotationForIdentifier(study.default_annotation_id)
-  const defaultAnnotationIsNumeric = defaultAnnotation?.type === 'numeric'
   if (annotationList && !clusterParams.cluster) {
     // if the user hasn't specified anything yet, but we have the study defaults, use those
     controlClusterParams = Object.assign(controlClusterParams, getDefaultClusterParams(annotationList))
@@ -49,6 +33,7 @@ export default function StudyGeneExpressions({ study }) {
   }
   const isMultiGene = study.gene_matches.length > 1
   const showDotPlot = isMultiGene && !clusterParams.consensus
+  const isNumericAnnotation = controlClusterParams.annotation.type === 'numeric'
 
   if (!study.can_visualize_clusters) {
     studyRenderComponent = (
@@ -64,12 +49,12 @@ export default function StudyGeneExpressions({ study }) {
       genes={study.gene_matches}
       {...controlClusterParams}
       annotationValues={annotationValues}/>
-  } else if (defaultAnnotationIsNumeric) {
-    // render annotated scatter plot if study has default annotation of type "numeric"
+  } else if (isNumericAnnotation) {
+    // render annotated scatter plot if the viewed annotation is of type "numeric"
     studyRenderComponent = <ScatterPlot
       studyAccession={study.accession}
       genes={study.gene_matches}
-      {...clusterParams}
+      {...controlClusterParams}
       isAnnotatedScatter={true}
       dimensionProps={{ verticalPad: 400 }}
     />
@@ -78,7 +63,7 @@ export default function StudyGeneExpressions({ study }) {
     studyRenderComponent = <StudyViolinPlot
       studyAccession={study.accession}
       genes={study.gene_matches}
-      {...clusterParams}
+      {...controlClusterParams}
       setAnnotationList={setAnnotationList}/>
   }
 
@@ -145,4 +130,19 @@ export default function StudyGeneExpressions({ study }) {
 
     </div>
   )
+}
+
+/**
+ * Get annotations that aren't custom
+ *
+ * TODO (SCP-4242): Handle custom annotations in global gene search,
+ * then remove this function.
+ */
+function getNonUserAnnotations(study) {
+  let basicAnnotationList = null
+  if (study.can_visualize_clusters) {
+    basicAnnotationList = study.annotation_list
+    basicAnnotationList.annotations = basicAnnotationList.annotations.filter(a => a.scope !== 'user')
+  }
+  return basicAnnotationList
 }

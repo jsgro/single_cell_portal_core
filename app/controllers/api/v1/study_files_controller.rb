@@ -692,7 +692,8 @@ module Api
                                                      :submission_id, :bam_id, :analysis_name, :visualization_name, :cluster_name,
                                                      :annotation_name, :cluster_file_id],
                                            expression_file_info_attributes: [:id, :_destroy, :library_preparation_protocol, :units,
-                                                                             :biosample_input_type, :modality, :is_raw_counts, raw_counts_associations: []])
+                                                                             :biosample_input_type, :modality, :is_raw_counts, raw_counts_associations: []],
+                                           heatmap_file_info_attributes: [:id, :_destroy, :custom_scaling, :color_min, :color_max, :legend_label])
       end
     end
   end
