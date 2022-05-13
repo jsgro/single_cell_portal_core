@@ -17,6 +17,8 @@ export default function StudyUsageInfo({ study }) {
   const [viewsGraphElementId] = useState(_uniqueId('study-usage-graph-'))
   const [downloadsGraphElementId] = useState(_uniqueId('study-usage-graph-'))
   const studyAccession = study.accession
+
+  /** get the usage information via API call */
   useEffect(() => {
     fetchStudyUsage(study._id.$oid).then(response => {
       setUsageInfo(response)
@@ -27,6 +29,7 @@ export default function StudyUsageInfo({ study }) {
   const tableData = []
 
   if (usageInfo) {
+    // generate the trace information and table information
     const viewData = usageInfo.pageViews.data
     const viewsTrace = {
       type: 'bar',
@@ -43,12 +46,20 @@ export default function StudyUsageInfo({ study }) {
     tableData.push(viewsTrace.x)
     tableData.push(viewsTrace.y)
 
+    // sum together the single file clicks and the bulk downloads for the graph
     const downloadData = usageInfo.fileDownloads.data
+    const downloadTableData = []
+    const bulkDownloadData = usageInfo.bulkDownloads.data
+    const bulkDownloadTableData = []
     const downloadsTrace = {
       type: 'bar',
       x: downloadData.series,
       y: downloadData.series.map(x => {
-        return downloadData.values[x] ? downloadData.values[x] : 0
+        const singleFileDownloads = downloadData.values[x] ? downloadData.values[x] : 0
+        downloadTableData.push(singleFileDownloads)
+        const bulkFileDownloads = bulkDownloadData.values[x] ? bulkDownloadData.values[x] : 0
+        bulkDownloadTableData.push(bulkFileDownloads)
+        return singleFileDownloads + bulkFileDownloads
       })
     }
     const downloadsLayout = {
@@ -56,15 +67,16 @@ export default function StudyUsageInfo({ study }) {
       yaxis: { title: 'Download events' }
     }
     Plotly.react(downloadsGraphElementId, [downloadsTrace], downloadsLayout)
-    tableData.push(downloadsTrace.y)
+    tableData.push(downloadTableData)
+    tableData.push(bulkDownloadTableData)
   }
 
   return <div>
     <h3>Study statistics</h3>
     {studyAccession}: <a href={`/single_cell/study/${studyAccession}`}>{ study.name }</a><br/>
     <div className="text-center">
-      Users per month viewing this study. <InfoPopup content="Unique users per month visiting the study overview page"/><br/>
-      <LoadingSpinner isLoading={isLoading}/>
+      Users per month who viewed this study. <InfoPopup content="Unique users per month visiting the study overview page (i.e. each user only counts at most once per month)"/><br/>
+      <LoadingSpinner isLoading={isLoading} testId="study-usage-spinner"/>
     </div>
     <div
       className="scatter-graph"
@@ -73,7 +85,7 @@ export default function StudyUsageInfo({ study }) {
     ></div>
     <br/><br/>
     <div className="text-center">
-      File download events <InfoPopup content="Clicks on the single-file download button.  Bulk download stats are tracked, but not available in this view"/><br/>
+      File download events <InfoPopup content="Clicks on a single file-download button, or a bulk download that included this study"/><br/>
       <LoadingSpinner isLoading={isLoading}/>
     </div>
     <div
@@ -93,7 +105,8 @@ export default function StudyUsageInfo({ study }) {
           <tr>
             <td>Month</td>
             <td>Views</td>
-            <td>Downloads</td>
+            <td>Single file downloads</td>
+            <td>Bulk downloads</td>
           </tr>
         </thead>
         <tbody>

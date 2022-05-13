@@ -316,6 +316,11 @@
           "totalCells": 16000
         }
       ],
+      "dates": [
+        {
+          "submissionDate": "2020-09-14T16:53:23.627000Z"
+        }
+      ],
       "fileTypeSummaries": [
         {
           "format": "fastq.gz",

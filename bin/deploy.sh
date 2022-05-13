@@ -114,7 +114,8 @@ function main {
 
     # update source on remote host to pull in changes before deployment
     echo "### pulling updated source from git on branch $GIT_BRANCH ###"
-    run_remote_command "git fetch --all --tags" || exit_with_error_message "could not checkout $GIT_BRANCH"
+    run_remote_command "git remote update" || exit_with_error_message "git remote update failed"
+    run_remote_command "git fetch --all --tags" || exit_with_error_message "git fetch --all failed"
     run_remote_command "git checkout yarn.lock" || exit_with_error_message "could not reset yarn.lock file"
     run_remote_command "git checkout $GIT_BRANCH && git pull" || exit_with_error_message "could not checkout $GIT_BRANCH"
     echo "### COMPLETED ###"

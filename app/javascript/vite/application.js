@@ -16,6 +16,8 @@ import RawAssociationSelect from '~/components/upload/RawAssociationSelect'
 import { getFeatureFlagsWithDefaults } from '~/providers/UserProvider'
 import checkMissingAuthToken from '~/lib/user-auth-tokens'
 import ValidateFile from '~/lib/validation/validate-file'
+import { setupSentry } from '~/lib/sentry-logging'
+
 const { validateRemoteFile } = ValidateFile
 
 import {
@@ -24,6 +26,9 @@ import {
 import * as ScpApi from '~/lib/scp-api'
 
 window.SCP = window.SCP ? window.SCP : {}
+
+// Set up the context for Sentry to log front-end errors
+setupSentry()
 
 document.addEventListener('DOMContentLoaded', () => {
   // Logs only page views for faceted search UI

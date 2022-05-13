@@ -20,7 +20,7 @@ jest.mock('components/visualization/InferCNVIdeogram', () => {
 import { getEnabledTabs } from 'components/explore/ExploreDisplayTabs'
 
 // mock explore info from a study
-const defaultExploreInfo =  {
+const defaultExploreInfo = {
   cluster: 'foo',
   taxonNames: ['Homo sapiens'],
   inferCNVIdeogramFiles: null,
@@ -34,7 +34,7 @@ const defaultExploreInfo =  {
   clusterPointAlpha: 1.0
 }
 
-describe("explore tabs are activated based on study info and parameters", () => {
+describe('explore tabs are activated based on study info and parameters', () => {
   it('should show the loading tab while waiting for the explore info', async () => {
     const exploreInfo = null
     const exploreParams = {
@@ -82,8 +82,8 @@ describe("explore tabs are activated based on study info and parameters", () => 
     const exploreInfo = {
       ...defaultExploreInfo,
       bamBundleList: [
-        {"name": "sample1.bam", "file_type": "BAM"},
-        {"name": "sample1.bam.bai", "file_type": "BAM Index"}
+        { 'name': 'sample1.bam', 'file_type': 'BAM' },
+        { 'name': 'sample1.bam.bai', 'file_type': 'BAM Index' }
       ]
     }
 
@@ -112,7 +112,7 @@ describe("explore tabs are activated based on study info and parameters", () => 
     // mock exploreInfo from study
     const exploreInfo = {
       ...defaultExploreInfo,
-      geneLists: ['Gene List 1', 'Gene List 2'],
+      geneLists: ['Gene List 1', 'Gene List 2']
     }
 
     const exploreParams = {
@@ -122,7 +122,7 @@ describe("explore tabs are activated based on study info and parameters", () => 
       }
     }
     const expectedResults = {
-      enabledTabs: ['heatmap'],
+      enabledTabs: ['geneListHeatmap'],
       isGeneList: true,
       isGene: false,
       isMultiGene: false,
@@ -132,13 +132,13 @@ describe("explore tabs are activated based on study info and parameters", () => 
     expect(expectedResults).toEqual(getEnabledTabs(exploreInfo, exploreParams))
   })
 
-  it ('should enable scatter/distribution tabs when searching one gene', async () => {
+  it('should enable scatter/distribution tabs when searching one gene', async () => {
     const exploreInfo = defaultExploreInfo
 
     const exploreParams = {
       cluster: 'foo',
       genes: ['Agpat2'],
-      annotation: {name: 'bar', type: 'group', scope: 'study'},
+      annotation: { name: 'bar', type: 'group', scope: 'study' },
       userSpecified: {
         annotation: true,
         cluster: true,
@@ -157,7 +157,7 @@ describe("explore tabs are activated based on study info and parameters", () => 
     expect(expectedResults).toEqual(getEnabledTabs(exploreInfo, exploreParams))
   })
 
-  it ('should enable dotplot/heatmap tabs when searching multiple genes', async () => {
+  it('should enable dotplot/heatmap tabs when searching multiple genes', async () => {
     const exploreInfo = {
       ...defaultExploreInfo
     }
@@ -165,7 +165,7 @@ describe("explore tabs are activated based on study info and parameters", () => 
     const exploreParams = {
       cluster: 'foo',
       genes: ['Agpat2', 'Apoe'],
-      annotation: {name: 'bar', type: 'group', scope: 'study'},
+      annotation: { name: 'bar', type: 'group', scope: 'study' },
       userSpecified: {
         annotation: true,
         cluster: true,
@@ -184,13 +184,13 @@ describe("explore tabs are activated based on study info and parameters", () => 
     expect(expectedResults).toEqual(getEnabledTabs(exploreInfo, exploreParams))
   })
 
-  it ('should enable scatter/dotplot/heatmap tabs when searching multiple genes', async () => {
+  it('should enable scatter/dotplot/heatmap tabs when searching multiple genes', async () => {
     const exploreInfo = {
       ...defaultExploreInfo,
       spatialGroupNames: ['bing', 'baz'],
       spatialGroups: [
-        {'name': 'bing', 'associated_clusters': ['foo']},
-        {'name': 'baz', 'associated_clusters': ['bar']}
+        { 'name': 'bing', 'associated_clusters': ['foo'] },
+        { 'name': 'baz', 'associated_clusters': ['bar'] }
       ]
     }
 
@@ -218,7 +218,7 @@ describe("explore tabs are activated based on study info and parameters", () => 
     expect(expectedResults).toEqual(getEnabledTabs(exploreInfo, exploreParams))
   })
 
-  it ('should enable scatter/distribution/dotplot tabs when searching multiple genes w/ consensus', async () => {
+  it('should enable scatter/distribution/dotplot tabs when searching multiple genes w/ consensus', async () => {
     const exploreInfo = defaultExploreInfo
 
     const exploreParams = {
@@ -245,16 +245,16 @@ describe("explore tabs are activated based on study info and parameters", () => 
     expect(expectedResults).toEqual(getEnabledTabs(exploreInfo, exploreParams))
   })
 
-  it ('should enable infercnv-genome tab when selecting Ideogram annotations', async () => {
+  it('should enable infercnv-genome tab when selecting Ideogram annotations', async () => {
     const ideogramOpts = {
-      "604fc5c4e241391a8ff93271": {
-        "cluster": "foo",
-        "annotation": "bar--group--study",
-        "display": "Observations: foo",
-        "ideogram_settings": {
-          "organism": "human",
-          "assembly": "GRCh38",
-          "annotationsPath": "https://www.googleapis.com/storage/v1/b/my-bucket/o/ideogram_exp_means__Observations--foo--group--study.json?alt=media"
+      '604fc5c4e241391a8ff93271': {
+        'cluster': 'foo',
+        'annotation': 'bar--group--study',
+        'display': 'Observations: foo',
+        'ideogram_settings': {
+          'organism': 'human',
+          'assembly': 'GRCh38',
+          'annotationsPath': 'https://www.googleapis.com/storage/v1/b/my-bucket/o/ideogram_exp_means__Observations--foo--group--study.json?alt=media'
         }
       }
     }

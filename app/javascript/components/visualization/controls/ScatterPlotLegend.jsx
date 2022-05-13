@@ -119,7 +119,7 @@ function getShowHideEnabled(hiddenTraces, countsByLabel) {
   const numHiddenTraces = hiddenTraces.length
   const numLabels = Object.keys(countsByLabel).length
 
-  let enabled // [isShowAllEnabled, isHideAllEnabled]
+  let enabled = [true, true] // [isShowAllEnabled, isHideAllEnabled]
 
   if (countsByLabel === null) {
     // When nothing has loaded yet
@@ -143,7 +143,8 @@ function getShowHideEnabled(hiddenTraces, countsByLabel) {
 export default function ScatterPlotLegend({
   name, height, countsByLabel, correlations, hiddenTraces,
   updateHiddenTraces, customColors, editedCustomColors, setEditedCustomColors,
-  enableColorPicking=false, saveCustomColors, activeTraceLabel, setActiveTraceLabel
+  enableColorPicking=false, saveCustomColors, activeTraceLabel, setActiveTraceLabel,
+  splitLabelArrays, setSplitLabelArrays, hasArrayLabels
 }) {
   // is the user currently in color-editing mode
   const [showColorControls, setShowColorControls] = useState(false)
@@ -239,6 +240,24 @@ export default function ScatterPlotLegend({
           </>
           }
         </div>
+        { hasArrayLabels &&
+          <div>
+            { splitLabelArrays &&
+              <a
+                role="button"
+                data-analytics-name='split-traces-unsplit'
+                onClick={() => {updateHiddenTraces([], false, true); setSplitLabelArrays(false)}}
+              >Merge array labels</a>
+            }
+            { !splitLabelArrays &&
+              <a
+                role="button"
+                data-analytics-name='split-traces-split'
+                onClick={() => {updateHiddenTraces([], false, true); setSplitLabelArrays(true)}}
+              >Split array labels</a>
+            }
+          </div>
+        }
         { enableColorPicking &&
           <div>
             { showColorControls &&

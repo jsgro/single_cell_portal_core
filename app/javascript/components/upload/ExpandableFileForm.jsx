@@ -159,7 +159,7 @@ function SaveButton({ file, saveFile, validationMessages = {} }) {
     const savingText = file.saveProgress ? <span>Uploading {file.saveProgress}% </span> : 'Saving'
     saveButton = <button type="button"
       className="btn btn-primary margin-right">
-      {savingText} <LoadingSpinner data-testid="file-save-spinner" />
+      {savingText} <LoadingSpinner testId="file-save-spinner" />
     </button>
   }
   return saveButton
@@ -180,7 +180,7 @@ function DeleteButton({ file, deleteFile, setShowConfirmDeleteModal }) {
 
   let deleteButtonContent = 'Delete'
   if (file.isDeleting) {
-    deleteButtonContent = <span>Deleting <LoadingSpinner data-testid="file-save-spinner" /></span>
+    deleteButtonContent = <span>Deleting <LoadingSpinner testId="file-save-spinner" /></span>
   }
   let deleteButton = <button type="button" className="btn terra-secondary-btn" onClick={handleDeletePress} data-testid="file-delete">
     {deleteButtonContent}

@@ -67,13 +67,16 @@ function emptyTrace(expectedLength, hasZvalues, hasExpression) {
  */
 PlotUtils.filterTrace = function({
   trace, hiddenTraces=[], groupByAnnotation=false,
-  activeTraceLabel, expressionFilter, expressionData
+  activeTraceLabel, expressionFilter, expressionData, splitLabelArrays
 }) {
   const isHidingByLabel = hiddenTraces && hiddenTraces.length
   const isFilteringByExpression = expressionFilter && expressionData &&
     (expressionFilter[0] !== 0 || expressionFilter[1] !== 1)
   const hasZvalues = !!trace.z
   const hasExpression = !!trace.expression
+  if (splitLabelArrays) {
+    trace = PlotUtils.splitTraceByAnnotationArray(trace, hasZvalues)
+  }
   const oldLength = trace.x.length
   // if grouping by annotation, traceMap is a hash of annotation names to traces
   // otherwise, traceMap will just have a single 'all' trace
@@ -98,28 +101,12 @@ PlotUtils.filterTrace = function({
   let expMin = 99999999
   let expMax = -99999999
   if (isFilteringByExpression) {
-    // find the max and min so we can rescale
-    for (let i = 0; i < expressionData.length; i++) {
-      const expValue = expressionData[i]
-      if (expValue < expMin) {
-        expMin = expValue
-      }
-      if (expValue > expMax) {
-        expMax = expValue
-      }
-    }
+    expMin = PlotUtils.arrayMin(expressionData)
+    expMax = PlotUtils.arrayMax(expressionData)
     // convert the expressionFilter, which is on a 0-1 scale, to the expression scale
     const totalRange = expMax - expMin
     expFilterMin = expMin + totalRange * expressionFilter[0]
     expFilterMax = expMin + totalRange * expressionFilter[1]
-  }
-
-  const labelNameHash = {}
-  if (isHidingByLabel) {
-    // build a hash of label => present so we can quickly filter
-    for (let i = 0; i < hiddenTraces.length; i++) {
-      labelNameHash[hiddenTraces[i]] = true
-    }
   }
 
   // this is the main filter/group loop.  Loop over every cell and determine whether it needs to be filtered,
@@ -127,41 +114,116 @@ PlotUtils.filterTrace = function({
   for (let i = 0; i < oldLength; i++) {
     // if we're not filtering by expression, or the cell is in the range, show it
     if (!isFilteringByExpression || (expressionData[i] >= expFilterMin && expressionData[i] <= expFilterMax)) {
-      // if we're not hiding by label, or the label is present in the list, include it
-      if (!isHidingByLabel || !labelNameHash[trace.annotations[i]]) {
-        const fTrace = groupByAnnotation ? traceMap[trace.annotations[i]] : traceMap.main
-        const newIndex = fTrace.newLength
-        fTrace.x[newIndex] = trace.x[i]
-        fTrace.y[newIndex] = trace.y[i]
-        if (hasZvalues) {
-          fTrace.z[newIndex] = trace.z[i]
-        }
-        fTrace.cells[newIndex] = trace.cells[i]
-        fTrace.annotations[newIndex] = trace.annotations[i]
-        if (hasExpression) {
-          fTrace.expression[newIndex] = trace.expression[i]
-        }
-        fTrace.newLength++
+      const fTrace = groupByAnnotation ? traceMap[trace.annotations[i]] : traceMap.main
+      const newIndex = fTrace.newLength
+      fTrace.x[newIndex] = trace.x[i]
+      fTrace.y[newIndex] = trace.y[i]
+      if (hasZvalues) {
+        fTrace.z[newIndex] = trace.z[i]
       }
+      fTrace.cells[newIndex] = trace.cells[i]
+      fTrace.annotations[newIndex] = trace.annotations[i]
+      if (hasExpression) {
+        fTrace.expression[newIndex] = trace.expression[i]
+      }
+      fTrace.newLength++
     }
   }
   // now fix the length of the new arrays in each trace to the number of values that were written,
   // and push the traces into an array
-  const sortedLabels = PlotUtils.getPlotSortedLabels(unfilteredCountsByLabel, activeTraceLabel, false)
-  const traces = sortedLabels.map(key => {
-    const fTrace = traceMap[key]
+  const traces = Object.values(traceMap)
+  traces.forEach(fTrace => {
     const subArrays = [fTrace.x, fTrace.y, fTrace.z, fTrace.annotations, fTrace.expression, fTrace.cells]
     subArrays.forEach(arr => {
       if (arr) {
         arr.length = fTrace.newLength
       }
     })
-    countsByLabel[key] = fTrace.x.length
+    countsByLabel[fTrace.name] = fTrace.x.length
     delete fTrace.newLength
-    return fTrace
   })
+  PlotUtils.sortTraces(traces, activeTraceLabel)
+  PlotUtils.updateTraceVisibility(traces, hiddenTraces)
   const expRange = isFilteringByExpression ? [expMin, expMax] : null
   return [traces, countsByLabel, expRange]
+}
+
+/** split array-based (|-delimited) annotations into separate points.  this function is essentially a no-op
+ * for labels that do not have | delimtiters
+ */
+PlotUtils.splitTraceByAnnotationArray = function(trace, hasZvalues) {
+  const hasExpression = !!trace.expression
+  const newTrace = {
+    x: [],
+    y: [],
+    annotations: [],
+    cells: []
+  }
+  if (hasZvalues) {
+    newTrace.z = []
+  }
+  if (hasExpression) {
+    newTrace.expression = []
+  }
+
+  // the jitterFraction controls the amount of displacement of points as a fraction of the graph width
+  // The value of 400 was picked because assuming that point size
+  // is ~3px, and the graph is rendered ~800px tall/wide, a displacement of 800/400 = ~2px is enough to push
+  // the points far enough apart to be seen individually, but still be associated with each other.
+  // this may be made more sophisticated later.
+  const jitterFraction = 400
+  // jitter will place cells in a 3x3 grid whose center is the actual coordinate
+  const xJitterMods = [0, -1, 1, 1, -1, -1, 0, 1, 0]
+  const yJitterMods = [0, -1, -1, 1, 1, 0, -1, 0, 1]
+  let xJitter = 0
+  let yJitter = 0
+
+  const xRange = [PlotUtils.arrayMin(trace.x), PlotUtils.arrayMax(trace.x)]
+  const yRange = [PlotUtils.arrayMin(trace.y), PlotUtils.arrayMax(trace.y)]
+  xJitter = (xRange[1] - xRange[0]) / jitterFraction
+  yJitter = (yRange[1] - yRange[0]) / jitterFraction
+
+
+  // iterate over each point, and if the annotation is pipe-delimited, split it out
+  for (let i = 0; i < trace.x.length; i++) {
+    const subAnnotations = trace.annotations[i].split('|')
+    subAnnotations.forEach((annot, annotIndex) => {
+      newTrace.x.push(trace.x[i] + xJitter * xJitterMods[annotIndex % 9])
+      newTrace.y.push(trace.y[i] + yJitter * yJitterMods[annotIndex % 9])
+
+      if (hasZvalues) {
+        newTrace.z.push(trace.z[i])
+      }
+      if (hasExpression) {
+        newTrace.expression.push(trace.expression[i])
+      }
+      newTrace.cells.push(trace.cells[i])
+      newTrace.annotations.push(annot)
+    })
+  }
+  return newTrace
+}
+
+PlotUtils.updateTraceVisibility = function(traces, hiddenTraces) {
+  traces.forEach(trace => {
+    trace.visible = hiddenTraces.includes(trace.name) ? 'legendonly' : true
+  })
+}
+
+/** Sort traces by number of cells (largest first), but always put the activeTraceLabel last
+   * and the unspecified annotations first
+   * If the activeLabel *is* the unspecified cells, then put them last
+  */
+PlotUtils.sortTraces = function(traces, activeTraceLabel) {
+  const unspecifiedIsActive = activeTraceLabel === UNSPECIFIED_ANNOTATION_NAME
+  /** sort function for implementing the logic described above */
+  function traceCountsSort(a, b) {
+    if (activeTraceLabel === a.name || (UNSPECIFIED_ANNOTATION_NAME === b.name && !unspecifiedIsActive)) {return 1}
+    if (activeTraceLabel === b.name || (UNSPECIFIED_ANNOTATION_NAME === a.name && !unspecifiedIsActive)) {return -1}
+    return b.x.length - a.x.length
+  }
+
+  return traces.sort(traceCountsSort)
 }
 
 /** sort the passsed in trace by expression value */
@@ -214,24 +276,6 @@ PlotUtils.getColorForLabel = function(label, customColors={}, editedCustomColors
   }
   return editedCustomColors[label] ?? customColors[label] ?? PlotUtils.getColorBrewerColor(i)
 }
-
-
-/** Returns an array of labels, sorted in the order in which they should be plotted (last is 'on top') */
-PlotUtils.getPlotSortedLabels = function(countsByLabel, activeTraceLabel) {
-  const unspecifiedIsActive = activeTraceLabel === UNSPECIFIED_ANNOTATION_NAME
-  /** Sort annotation labels by number of cells (largest first), but always put the activeTraceLabel last
-   * and the unspecified annotations first
-   * If the activeLabel *is* the unspecified cells, then put them last
-  */
-  function labelCountsSort(a, b) {
-    if (activeTraceLabel === a[0] || (UNSPECIFIED_ANNOTATION_NAME === b[0] && !unspecifiedIsActive)) {return 1}
-    if (activeTraceLabel === b[0] || (UNSPECIFIED_ANNOTATION_NAME === a[0] && !unspecifiedIsActive)) {return -1}
-    return b[1] - a[1]
-  }
-  const sortedEntries = Object.entries(countsByLabel).sort(labelCountsSort)
-  return sortedEntries.map(entry => entry[0])
-}
-
 
 /** Returns an array of labels, sorted in the order in which they should be displayed in the legend */
 PlotUtils.getLegendSortedLabels = function(countsByLabel) {

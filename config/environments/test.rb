@@ -72,8 +72,9 @@ Rails.application.configure do
 
   config.disable_admin_notifications = true
 
-  # set MongoDB logging level
+  # set MongoDB & Google API logging level
   Mongoid.logger.level = Logger::INFO
+  Google::Apis.logger.level = Logger::INFO
 
   if ENV["RAILS_LOG_TO_STDOUT"].present? && ENV['CI']
     logger           = ActiveSupport::Logger.new(STDOUT)

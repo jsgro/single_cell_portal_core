@@ -161,7 +161,7 @@ export default function RenderControls({ shownTab, exploreParams, updateExploreP
           </label>
         </Panel.Body>
       </Panel>
-      <Panel className={shownTab === 'heatmap' ? '' : 'hidden'}>
+      <Panel className={['heatmap', 'geneListHeatmap'].includes(shownTab) ? '' : 'hidden'}>
         <Panel.Heading>
           <Panel.Title>
             Heatmap

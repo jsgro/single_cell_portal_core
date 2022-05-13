@@ -1,7 +1,7 @@
 # SINGLE CELL PORTAL README
 
 [![codecov](https://codecov.io/gh/broadinstitute/single_cell_portal_core/branch/development/graph/badge.svg?token=HMWE5BO2a4)](https://codecov.io/gh/broadinstitute/single_cell_portal_core)
-[![Build Status](https://app.travis-ci.com/broadinstitute/single_cell_portal_core.svg?branch=development)](https://app.travis-ci.com/broadinstitute/single_cell_portal_core)
+![Build Status](https://github.com/broadinstitute/single_cell_portal_core/actions/workflows/run-all-tests.yml/badge.svg)
 ## SETUP
 
 This application is built and deployed using [Docker](https://www.docker.com), specifically native
@@ -62,6 +62,9 @@ the portal to function (this feature is opt-in and only functions when certain p
 deploying their own instance will need to register for an account with Sentry, and then set the <code>SENTRY_DSN</code>
 environment variable when deploying your instance (see [Running the Container](#running-the-container) and
 [DOCKER RUN COMMAND ENVIRONMENT VARIABLES](#docker-run-command-environment-variables) for more detail).
+
+Note - while the Sentry DSN is stored with secrets and may appear as one, it is not a secret and Sentry's 
+official stance is that [the Sentry DSN does not need to be kept private](https://github.com/getsentry/sentry-docs/pull/3123/files). 
 
 #### [TCell Web Application Firewall](https://tcell.io)
 

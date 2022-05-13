@@ -60,6 +60,8 @@ class BulkDownloadControllerTest < ActionDispatch::IntegrationTest
                                                   study: @basic_study,
                                                   upload_file_size: 100)
     sign_in_and_update @user
+    # empty strong params for getting auth codes
+    @auth_code_params = { bulk_download: { file_ids: [], azul_files: {} } }
   end
 
 
@@ -76,7 +78,10 @@ class BulkDownloadControllerTest < ActionDispatch::IntegrationTest
   test 'should generate curl config for bulk download' do
     study = @basic_study
 
-    execute_http_request(:post, api_v1_bulk_download_auth_code_path, user: @user)
+    execute_http_request(:post,
+                         api_v1_bulk_download_auth_code_path,
+                         request_payload: @auth_code_params,
+                         user: @user)
     assert_response :success
     auth_code = json['auth_code']
 
@@ -123,7 +128,10 @@ class BulkDownloadControllerTest < ActionDispatch::IntegrationTest
 
   test 'single-study bulk download should include all study files' do
     study = @basic_study
-    execute_http_request(:post, api_v1_bulk_download_auth_code_path, user: @user)
+    execute_http_request(:post,
+                         api_v1_bulk_download_auth_code_path,
+                         request_payload: @auth_code_params,
+                         user: @user)
     assert_response :success
     auth_code = json['auth_code']
 
@@ -150,7 +158,10 @@ class BulkDownloadControllerTest < ActionDispatch::IntegrationTest
       directory = DirectoryListing.create!(study: @basic_study, file_type: file_type, name: file_type,
                                            files: file_list, sync_status: true)
       assert directory.persisted?
-      execute_http_request(:post, api_v1_bulk_download_auth_code_path, user: @user)
+      execute_http_request(:post,
+                           api_v1_bulk_download_auth_code_path,
+                           request_payload: @auth_code_params,
+                           user: @user)
       assert_response :success
       auth_code = json['auth_code']
       mock = Minitest::Mock.new
@@ -174,7 +185,10 @@ class BulkDownloadControllerTest < ActionDispatch::IntegrationTest
       end
     end
     # all directories test
-    execute_http_request(:post, api_v1_bulk_download_auth_code_path, user: @user)
+    execute_http_request(:post,
+                         api_v1_bulk_download_auth_code_path,
+                         request_payload: @auth_code_params,
+                         user: @user)
     assert_response :success
     auth_code = json['auth_code']
     all_dirs_mock = Minitest::Mock.new
@@ -211,7 +225,10 @@ class BulkDownloadControllerTest < ActionDispatch::IntegrationTest
                       name: 'cluster.txt',
                       study: new_study,
                       upload_file_size: 100)
-    execute_http_request(:post, api_v1_bulk_download_auth_code_path, user: @user)
+    execute_http_request(:post,
+                         api_v1_bulk_download_auth_code_path,
+                         request_payload: @auth_code_params,
+                         user: @user)
     assert_response :success
     auth_code = json['auth_code']
 
@@ -227,27 +244,32 @@ class BulkDownloadControllerTest < ActionDispatch::IntegrationTest
   test 'bulk download should support a download_id and HCA files' do
     hca_project_id = SecureRandom.uuid
     payload = {
-      file_ids: [@basic_study_metadata_file.id.to_s],
-      azul_files: {
-        FakeHCAStudy1: [
-          {
-            project_id: hca_project_id,
-            name: 'hca_file1.tsv',
-            count: 1,
-            file_type: 'Project Manifest'
-          }, {
-            source: 'hca',
-            count: 1,
-            upload_file_size: 10.megabytes,
-            file_format: 'loom',
-            file_type: 'analysis_file',
-            accession: 'FakeHCAStudy1',
-            project_id: hca_project_id
-          }
-        ]
+      bulk_download: {
+        file_ids: [@basic_study_metadata_file.id.to_s],
+        azul_files: {
+          FakeHCAStudy1: [
+            {
+              project_id: hca_project_id,
+              name: 'hca_file1.tsv',
+              count: 1,
+              file_type: 'Project Manifest'
+            }, {
+              source: 'hca',
+              count: 1,
+              upload_file_size: 10.megabytes,
+              file_format: 'loom',
+              file_type: 'analysis_file',
+              accession: 'FakeHCAStudy1',
+              project_id: hca_project_id
+            }
+          ]
+        }
       }
     }
-    execute_http_request(:post, api_v1_bulk_download_auth_code_path, request_payload: payload, user: @user)
+    execute_http_request(:post,
+                         api_v1_bulk_download_auth_code_path,
+                         request_payload: payload,
+                         user: @user)
     assert_response :success
     auth_code = json['auth_code']
     download_id = json['download_id']
@@ -302,29 +324,34 @@ class BulkDownloadControllerTest < ActionDispatch::IntegrationTest
   test 'should ignore empty/missing Azul entries' do
     hca_project_id = SecureRandom.uuid
     payload = {
-      file_ids: [@basic_study_metadata_file.id.to_s],
-      azul_files: {
-        FakeHCAStudy1: [
-          {
-            source: 'hca',
-            count: 1,
-            upload_file_size: 10.megabytes,
-            file_format: 'loom',
-            file_type: 'analysis_file',
-            accession: 'FakeHCAStudy1',
-            project_id: hca_project_id
-          }
-        ],
-        FakeHcaStudy2: []
+      bulk_download: {
+        file_ids: [@basic_study_metadata_file.id.to_s],
+        azul_files: {
+          FakeHCAStudy1: [
+            {
+              source: 'hca',
+              count: 1,
+              upload_file_size: 10.megabytes,
+              file_format: 'loom',
+              file_type: 'analysis_file',
+              accession: 'FakeHCAStudy1',
+              project_id: hca_project_id
+            }
+          ],
+          FakeHcaStudy2: []
+        }
       }
     }
-    execute_http_request(:post, api_v1_bulk_download_auth_code_path, request_payload: payload, user: @user)
+    execute_http_request(:post,
+                         api_v1_bulk_download_auth_code_path,
+                         request_payload: payload,
+                         user: @user)
     assert_response :success
 
     download_id = json['download_id']
     download_request = DownloadRequest.find(download_id)
     assert download_request.present?
-    azul_files = download_request.azul_files
+    azul_files = download_request.azul_files_as_hash
     assert azul_files.keys.include?('FakeHCAStudy1')
     assert_not azul_files.keys.include?('FakeHCAStudy2')
   end
@@ -332,20 +359,70 @@ class BulkDownloadControllerTest < ActionDispatch::IntegrationTest
   test 'should complete download request for HCA projects w/o analysis/sequence files' do
     hca_project_id = SecureRandom.uuid
     payload = {
-      file_ids: [],
-      azul_files: {
-        FakeHCAStudy1: [
-          {
-            count: 1,
-            upload_file_size: 1.megabyte,
-            file_type: 'Project Manifest',
-            project_id: hca_project_id,
-            name: 'FakeHCAStudy1.tsv'
-          }
-        ]
+      bulk_download: {
+        file_ids: [],
+        azul_files: {
+          FakeHCAStudy1: [
+            {
+              count: 1,
+              upload_file_size: 1.megabyte,
+              file_type: 'Project Manifest',
+              project_id: hca_project_id,
+              name: 'FakeHCAStudy1.tsv'
+            }
+          ]
+        }
       }
     }
-    execute_http_request(:post, api_v1_bulk_download_auth_code_path, request_payload: payload, user: @user)
+    execute_http_request(:post,
+                         api_v1_bulk_download_auth_code_path,
+                         request_payload: payload,
+                         user: @user)
+    assert_response :success
+    download_id = json['download_id']
+    auth_code = json['auth_code']
+    mock = Minitest::Mock.new
+    manifest_info = {
+      Status: 302,
+      Location: 'https://service.azul.data.humancellatlas.org/manifest/files?catalog=dcp12&format=compact&' \
+                "filters=%7B%22projectId%22%3A+%7B%22is%22%3A+%5B%22#{hca_project_id}%22%5D%7D%7D&objectKey=" \
+                'manifests%2FFakeHCAStudy1.tsv'
+    }.with_indifferent_access
+    mock.expect :project_manifest_link, manifest_info, [hca_project_id]
+    ApplicationController.stub :hca_azul_client, mock do
+      execute_http_request(:get,
+                           api_v1_bulk_download_generate_curl_config_path(
+                             auth_code: auth_code, download_id: download_id
+                           ),
+                           user: @user)
+      assert_response :success
+      mock.verify
+      assert json.include? manifest_info[:Location]
+    end
+  end
+
+  test 'should complete download request for HCA project' do
+    hca_project_id = SecureRandom.uuid
+    payload = {
+      bulk_download: {
+        file_ids: [],
+        azul_files: {
+          FakeHCAStudy1: [
+            {
+              count: 1,
+              upload_file_size: 1.megabyte,
+              file_type: 'Project Manifest',
+              project_id: hca_project_id,
+              name: 'Fa..keHCAStudy1.tsv'
+            }
+          ]
+        }
+      }
+    }
+    execute_http_request(:post,
+                         api_v1_bulk_download_auth_code_path,
+                         request_payload: payload,
+                         user: @user)
     assert_response :success
     download_id = json['download_id']
     auth_code = json['auth_code']

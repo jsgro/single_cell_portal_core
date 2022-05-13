@@ -167,11 +167,13 @@ export function RawUploadWizard({ studyAccession, name }) {
       if (!fileChanged) { // we're updating a stale/no-longer existent file -- discard it
         return prevFormState
       }
-      if (updates.expression_file_info) {
-        // merge expression file info properties
-        Object.assign(fileChanged.expression_file_info, updates.expression_file_info)
-        delete updates.expression_file_info
-      }
+      ['heatmap_file_info', 'expression_file_info'].forEach(nestedProp => {
+        if (updates[nestedProp]) {
+          // merge nested file info properties
+          Object.assign(fileChanged[nestedProp], updates[nestedProp])
+          delete updates[nestedProp]
+        }
+      })
       Object.assign(fileChanged, updates)
       return newFormState
     })
@@ -368,7 +370,7 @@ export function RawUploadWizard({ studyAccession, name }) {
               </div>
             </div>
             { !formState && <div className="padded text-center">
-              <LoadingSpinner data-testid="upload-wizard-spinner"/>
+              <LoadingSpinner testId="upload-wizard-spinner"/>
             </div> }
             { !!formState && <div>
               <currentStep.component

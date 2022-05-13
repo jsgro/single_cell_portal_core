@@ -301,19 +301,22 @@ class HcaAzulClient < Struct.new(:api_root)
   def format_facet_query_from_keyword(term_list = [])
     matching_facets = []
     term_list.each do |term|
-      facet = SearchFacet.find_facet_from_term(term)
-      next if facet.nil?
+      facets = SearchFacet.find_facets_from_term(term)
+      next if facets.empty?
 
-      # mock a faceted search match, appending in all possible filter matches
-      filters = facet.find_filter_matches(term, filter_list: :filters_with_external).map do |t|
-        [{ id: t, name: t }.with_indifferent_access]
-      end.flatten
-      matching_facets << {
-        id: facet.identifier,
-        filters: filters,
-        db_facet: facet,
-        keyword_conversion: true # mark this as a 'converted' facet to control whether showing facet match badges
-      }.with_indifferent_access
+      facets.each do |facet|
+        # mock a faceted search match, appending in all possible filter matches
+        filters = facet.find_filter_matches(term, filter_list: :filters_with_external).map do |t|
+          [{ id: t, name: t }.with_indifferent_access]
+        end.flatten
+        match = {
+          id: facet.identifier,
+          filters: filters,
+          db_facet: facet,
+          keyword_conversion: true # mark this as a 'converted' facet to control whether showing facet match badges
+        }.with_indifferent_access
+        matching_facets << match unless matching_facets.include? match
+      end
     end
     matching_facets
   end

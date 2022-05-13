@@ -3,7 +3,9 @@ module Api
     class BulkDownloadController < ApiBaseController
       before_action :authenticate_api_user!
 
-      DEFAULT_BULK_FILE_TYPES = ['Cluster', 'Metadata', 'Expression Matrix', 'MM Coordinate Matrix', '10X Genes File', '10X Barcodes File']
+      DEFAULT_BULK_FILE_TYPES = [
+        'Cluster', 'Metadata', 'Expression Matrix', 'MM Coordinate Matrix', '10X Genes File', '10X Barcodes File'
+      ].freeze
 
       swagger_path '/bulk_download/auth_code' do
         operation :post do
@@ -14,18 +16,26 @@ module Api
           key :description, 'Create and return a one-time authorization code (OTAC) to identify a user for bulk downloads'
           key :operationId, 'bulk_download_auth_code_path'
           parameter do
-            key :name, :file_ids
-            key :type, :string
+            key :name, :bulk_download
+            key :type, :object
             key :in, :body
-            key :description, 'Comma-delimited list of StudyFile IDs (such as returned from the summary endpoint)'
-            key :required, true
-          end
-          parameter do
-            key :name, :tdr_files
-            key :type, :json
-            key :in, :body
-            key :description, 'Hash of file arrays to download from TDR, keyed by accession. Each file should specify URL and name'
-            key :required, true
+            schema do
+              property :file_ids do
+                key :type, :string
+                key :description, 'Comma-delimited list of StudyFile IDs (such as returned from the summary endpoint)'
+                key :required, true
+                key :example, "6269614d94ec8f18bd30f94a,6269614e94ec8f18bd30f94b,6269614f94ec8f18bd30f94c"
+              end
+              property :tdr_files do
+                key :type, :object
+                key :description, 'Hash of file arrays to download from TDR, keyed by accession. Each file should specify name, file_type, and project_id'
+                key :required, true
+                key :example, "{ HCAProjectName: [{'project_id': 'a39728aa-70a0-4201-b0a2-81b7badf3e71', " \
+                              "'name': 'HCAProjectName.tsv', 'file_type': 'Project Manifest', 'count': 1}, " \
+                              "{'project_id': 'a39728aa-70a0-4201-b0a2-81b7badf3e71', 'file_format': 'loom', " \
+                              "'file_type': 'analysis_file', 'count': 2}]}"
+              end
+            end
           end
           response 200 do
             key :description, 'One-time auth code and time interval, in seconds'
@@ -57,18 +67,17 @@ module Api
         half_hour = 1800 # seconds
 
         totat = current_api_user.create_totat(half_hour, api_v1_bulk_download_generate_curl_config_path)
-        valid_params = params.permit({ file_ids: [], azul_files: {} }).to_h
 
         # discard any empty Azul entries - this can happen if row is selected, but no file types are checked
-        if valid_params[:azul_files].present?
-          valid_azul_files = valid_params[:azul_files].reject { |_, files| files.empty? }
+        if bulk_download_params[:azul_files].present?
+          valid_azul_files = bulk_download_params.to_unsafe_hash[:azul_files].reject { |_, files| files.empty? }
         end
 
         # for now, we don't do any permissions validation on the param values -- we'll do that during the actual download, since
         # quota/files/permissions may change between the creation of the download and the actual download.
         auth_download = DownloadRequest.create!(
           auth_code: totat[:totat],
-          file_ids: valid_params[:file_ids],
+          file_ids: bulk_download_params[:file_ids],
           azul_files: valid_azul_files,
           user_id: current_api_user.id
         )
@@ -307,8 +316,8 @@ module Api
           download_req = DownloadRequest.find(params[:download_id])
           render json: { error: 'Invalid download_id provided' }, status: 400 and return if download_req.blank?
 
+          azul_files = download_req.azul_files_as_hash
           file_ids = download_req.file_ids
-          azul_files = download_req.azul_files
         elsif params[:file_ids]
           begin
             file_ids = RequestUtils.validate_id_list(params[:file_ids])
@@ -460,6 +469,12 @@ module Api
           # fallback case, return empty array to prevent downstream errors
           []
         end
+      end
+
+      private
+
+      def bulk_download_params
+        params.require(:bulk_download).permit(file_ids: [], azul_files: {})
       end
     end
   end
