@@ -1,3 +1,5 @@
+require 'api_test_helper'
+
 class ActionDispatch::IntegrationTest
   include ::Minitest::Hooks
   include ::SelfCleaningSuite
