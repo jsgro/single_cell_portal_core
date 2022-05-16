@@ -740,8 +740,8 @@ export function buildFacetsFromQueryString(facetsParamString) {
 }
 
 /** retrieve usage info for the given study */
-export async function fetchStudyUsage(studyId, mock=false) {
-  const [usageInfo] = await scpApi(`/studies/${studyId}/usage_stats`, defaultInit(), mock)
+export async function fetchStudyUsage(studyAccession, mock=false) {
+  const [usageInfo] = await scpApi(`/studies/${studyAccession}/usage_stats`, defaultInit(), mock)
   return usageInfo
 }
 
