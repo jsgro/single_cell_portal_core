@@ -29,14 +29,29 @@ export default function StudyGeneField({ genes, searchGenes, allGenes, speciesLi
     * an array of already entered genes (geneArray),
     * and the current text the user is typing (inputText) */
   const [geneArray, setGeneArray] = useState(enteredGeneArray)
-
   const [showEmptySearchModal, setShowEmptySearchModal] = useState(false)
+
+  const [badGeneArray, setBadGeneArray] = useState([])
+  const [showBadGeneChoice, setShowBadGeneChoice] = useState(false)
 
   /** handles a user submitting a gene search */
   function handleSearch(event) {
+    setBadGeneArray([])
     event.preventDefault()
     const newGeneArray = syncGeneArrayToInputText()
-    if (newGeneArray && newGeneArray.length) {
+
+    let shouldSearch = true
+    if (newGeneArray) {
+      newGeneArray.forEach(gene => {
+        if (geneOptions.length > 0 && !geneOptions.includes(gene)) {
+          setBadGeneArray(badGeneArray.concat(gene.label))
+          shouldSearch = false
+        }
+      })
+    }
+    if (!shouldSearch) {
+      setShowBadGeneChoice(true)
+    } else if (newGeneArray && newGeneArray.length) {
       const genesToSearch = newGeneArray.map(g => g.value)
       if (event) { // this was not a 'clear'
         const trigger = event.type // 'click' or 'submit'
@@ -181,6 +196,15 @@ export default function StudyGeneField({ genes, searchGenes, allGenes, speciesLi
         bsSize='small'>
         <Modal.Body className="text-center">
           Enter at least one gene to search
+        </Modal.Body>
+      </Modal>
+      <Modal
+        show={showBadGeneChoice}
+        onHide={() => {setShowBadGeneChoice(false)}}
+        animation={false}
+        bsSize='small'>
+        <Modal.Body className="text-center">
+        Invalid Search - Please remove &quot;{badGeneArray.join('", "')}&quot; from gene search.
         </Modal.Body>
       </Modal>
 
