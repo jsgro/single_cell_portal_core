@@ -127,6 +127,7 @@ export default function StudyGeneField({ genes, searchGenes, allGenes, speciesLi
     // react-select doesn't expose the actual click events, so we deduce the kind
     // of operation based on whether it lengthened or shortened the list
     const newValue = value ? value : []
+    setBadGeneArray(newValue === [] ? []: badGeneArray)
     logGeneArrayChange(newValue)
     setGeneArray(newValue)
   }
