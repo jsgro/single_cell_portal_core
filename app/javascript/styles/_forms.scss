@@ -57,6 +57,16 @@
   }
 }
 
+.btn-icon-circled {
+  background: none;
+  border: 1px solid $action-color;
+  border-radius: 1em;
+  padding: 0.25em 0.75em;
+  svg {
+    color: $action-color;
+  }
+}
+
 .full-height-modal {
   .modal-dialog {
     height: 100vh !important;

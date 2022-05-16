@@ -1,6 +1,7 @@
 
 import React, { useEffect, useState } from 'react'
 import { useTable, usePagination, useSortBy, useFilters } from 'react-table'
+import Modal from 'react-bootstrap/lib/Modal'
 
 import UserProvider from '~/providers/UserProvider'
 import LoadingSpinner from '~/lib/LoadingSpinner'
@@ -8,10 +9,11 @@ import { fetchEditableStudies } from '~/lib/scp-api'
 import PagingControl from '~/components/search/results/PagingControl'
 import ErrorBoundary from '~/lib/ErrorBoundary'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faSort, faSortDown, faSortUp, faEllipsisV, faChartLine } from '@fortawesome/free-solid-svg-icons'
+import {
+  faSort, faSortDown, faSortUp, faEllipsisV, faTrash, faExclamationTriangle
+} from '@fortawesome/free-solid-svg-icons'
 import InfoPopup from '~/lib/InfoPopup'
-import StudyUsageInfo from './StudyUsageInfo'
-import { nodeName } from 'jquery'
+
 
 // define these outside the render loop so they don't cause rerender loops
 // if they ever need to be dynamic, make sure to use useMemo
@@ -36,20 +38,28 @@ const columns = [{
     const lowerCaseFilter = filterValue.toLowerCase()
     return rows.filter(row => (
       row.original.name.toLowerCase().includes(lowerCaseFilter) ||
-      row.original.description.toLowerCase().includes(lowerCaseFilter)
+      row.original.description.toLowerCase().includes(lowerCaseFilter) ||
+      row.original.ownerEmail.toLowerCase().includes(lowerCaseFilter)
     ))
   },
   Filter: ({ column: { filterValue, setFilter } }) => {
     return <>
       &nbsp; &nbsp;
-      <input value={filterValue || ''} style={{ minWidth: '300px', border: 'none', margin: '4px' }}
+      <input value={filterValue || ''} style={{ minWidth: '350px', border: 'none', margin: '4px' }}
         onChange={e => setFilter(e.target.value || undefined)}
-        placeholder="Filter by name or description"
+        placeholder="Filter by name, description, or owner email"
       />
     </>
   }
 }, {
-  Header: 'Created',
+  Header: 'Owner ',
+  accessor: 'ownerEmail',
+  sortType: (rowA, rowB) => {
+    return rowA.original.name.localeCompare(rowB.original.name, 'en', { numeric: true, ignorePunctuation: true })
+  },
+  disableFilters: true
+}, {
+  Header: 'Created ',
   accessor: 'createdAt',
   Cell: ({ value }) => {
     const date = new Date(value)
@@ -60,7 +70,7 @@ const columns = [{
   },
   disableFilters: true
 }, {
-  Header: 'Visibility',
+  Header: 'Visibility ',
   accessor: 'public',
   Cell: ({ value }) => <span className={value ? 'public' : 'detail'}>{value ? 'Public' : 'Private'}</span>,
   sortType: (rowA, rowB) => {
@@ -68,7 +78,7 @@ const columns = [{
   },
   disableFilters: true
 }, {
-  Header: 'Visuals',
+  Header: 'Visuals ',
   accessor: 'initialized',
   Cell: ({ value }) => <span className={value ? 'initialized' : 'detail'}>{value ? 'Yes' : 'No'}</span>,
   sortType: (rowA, rowB) => {
@@ -76,41 +86,9 @@ const columns = [{
   },
   disableFilters: true
 }, {
-  Header: 'Usage',
-  Cell: ({ row: { original: study } }) => (
-    <a href={`/single_cell/studies/${study.id.$oid}/usage_stats`}>
-      <FontAwesomeIcon icon={faChartLine}/>
-    </a>
-  ),
-  disableSortBy: true,
-  disableFilters: true
-}, {
   Header: '',
   accessor: 'accession',
-  Cell: ({ row: { original: study } }) => {
-    const target = <div data-analytics-name='study-actions-expand'
-      tabIndex="0"
-      role="button"
-      aria-label={`Menu for study: ${study.name}`}
-      aria-haspopup="menu"
-      className="action">
-      <FontAwesomeIcon icon={faEllipsisV}/>
-    </div>
-
-    const content = <div>
-      <a href={`/single_cell/studies/${study.id.$oid}`}>Details</a><br/>
-      <a href={`/single_cell/studies/${study.id.$oid}/upload`}>Upload/Edit</a><br/>
-      <a href={`/single_cell/studies/${study.id.$oid}/sync`}>Sync</a><br/>
-      <a href={`/single_cell/studies/${study.id.$oid}/edit`}>Edit</a><br/>
-      <a data-method="delete" href={`/single_cell/studies/${study.id.$oid}`}>Delete Study & Workspace</a><br/>
-      <a data-method="delete" href={`/single_cell/studies/${study.id.$oid}?workspace=persist`}>Delete</a><br/>
-    </div>
-    return <InfoPopup
-      target={target}
-      content={content}
-      placement="left"
-    />
-  },
+  Cell: ({ row: { original: study } }) => <StudyActionLinks study={study}/>,
   disableSortBy: true,
   disableFilters: true
 }]
@@ -159,7 +137,7 @@ export default function MyStudiesPage() {
   let pageControlDisplay = <></>
   if (studyList.length > 10) {
     pageControlDisplay = <PagingControl currentPage={pageIndex}
-      totalPages={Math.round(studyList.length / 10) + 1}
+      totalPages={Math.floor(studyList.length / 10) + 1}
       changePage={gotoPage}
       canPreviousPage={canPreviousPage}
       canNextPage={canNextPage}
@@ -169,18 +147,19 @@ export default function MyStudiesPage() {
 
   return (<UserProvider>
     <div className="form-terra">
-      <h4>Studies</h4>
       <br/>
       <LoadingSpinner isLoading={isLoading}>
         <table {...getTableProps({ className: 'table-terra min-width-100' })}>
           <thead>
             <tr>
               {headers.map(column => (
-                <th {...column.getHeaderProps(column.getSortByToggleProps())}>
-                  {column.render('Header')}
-                  {!column.disableSortBy && <span>
-                    {column.isSorted ? column.isSortedDesc ? <FontAwesomeIcon icon={faSortDown}/> : <FontAwesomeIcon icon={faSortUp}/> : <FontAwesomeIcon icon={faSort}/>}
-                  </span> }
+                <th {...column.getHeaderProps()}>
+                  <span {...column.getSortByToggleProps({ className: 'no-wrap' })}>
+                    {column.render('Header')}
+                    {!column.disableSortBy && <span>
+                      {column.isSorted ? column.isSortedDesc ? <FontAwesomeIcon icon={faSortDown}/> : <FontAwesomeIcon icon={faSortUp}/> : <FontAwesomeIcon icon={faSort}/>}
+                    </span> }
+                  </span>
                   {column.canFilter && column.render('Filter')}
                 </th>
               ))}
@@ -207,4 +186,92 @@ export default function MyStudiesPage() {
       </LoadingSpinner>
     </div>
   </UserProvider>)
+}
+
+/** render the list of action links for a given study */
+function StudyActionLinks({ study }) {
+  const studyId = study.id.$oid
+  const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [isDeleteWorkspace, setIsDeleteWorkspace] = useState(false)
+  const [deleteConfirmText, setDeleteConfirmText] = useState('')
+  const [isDeleting, setIsDeleting] = useState(false)
+  const enableDelete = (!isDeleteWorkspace || deleteConfirmText === 'Delete workspace') && !isDeleting
+  const deleteUrl = `/single_cell/studies/${studyId}${isDeleteWorkspace ? '' : '?workspace=persist'}`
+
+  const actionList = <ul className="list-style-none-menu">
+    <li><a href={`/single_cell/studies/${studyId}`}>Details</a></li>
+    <li><a href={`/single_cell/studies/${studyId}/usage_stats`}>Usage stats <sup className="alert-warning">NEW</sup></a></li>
+    <li><a href={`/single_cell/studies/${studyId}/edit`}>Study settings</a></li>
+    <li><a href={`/single_cell/studies/${studyId}/edit`}>Edit name &amp; description</a></li>
+    <li><a href={`/single_cell/studies/${studyId}/upload`}>Upload &amp; edit files</a></li>
+    <li><a href={`/single_cell/studies/${studyId}/sync`}>Sync workspace files</a></li>
+    <li><hr/></li>
+    <li><a role="button" className="action" onClick={() => setShowDeleteModal(true)}>
+      <FontAwesomeIcon icon={faTrash}/> Delete
+    </a></li>
+  </ul>
+
+  const target = <span data-analytics-name='study-actions-expand'
+    tabIndex="0"
+    role="button"
+    aria-label={`Menu for study: ${study.name}`}
+    aria-haspopup="menu"
+    className="btn-icon-circled">
+    <FontAwesomeIcon icon={faEllipsisV}/>
+  </span>
+
+  const deleteModal = <Modal
+    show={showDeleteModal}
+    onHide={() => setShowDeleteModal(false)}
+    animation={false}>
+    <Modal.Body>
+      <FontAwesomeIcon icon={faExclamationTriangle} className="alert-warning"/> Delete study:
+      "{study.name}"<br/><br/>
+      <label><input type="checkbox"
+        data-analytics-name="workspace-delete-checkbox"
+        onChange={e => setIsDeleteWorkspace(e.target.checked)}
+        checked={isDeleteWorkspace}>
+      </input> Delete Terra workspace too
+      </label>
+      <br/><br/>
+      { !isDeleteWorkspace &&
+        <span className="detail">The Terra workspace and files within it will be preserved</span>
+      }
+      { isDeleteWorkspace &&
+        <div>
+          The workspace and all files in the <a href={`study.bucketId`}>workspace bucket</a>
+          <span className="strong"> will be destroyed.</span><br/><br/>
+          Please type &quot;Delete workpace&quot; to continue:<br/>
+          <input type="text" value={deleteConfirmText} onChange={e => setDeleteConfirmText(e.target.value)}/>
+        </div>
+      }
+    </Modal.Body>
+    <Modal.Footer>
+      <a data-method="delete"
+        role="button"
+        className="btn terra-secondary-btn"
+        disabled={!enableDelete}
+        onClick={() => setIsDeleting(true)}
+        href={deleteUrl}>
+        <LoadingSpinner isLoading={isDeleting}>
+          <FontAwesomeIcon icon={faTrash} className="alert-danger"/> Delete
+        </LoadingSpinner>
+      </a>
+      { !isDeleting && <a
+        role="button"
+        className="btn terra-secondary-btn"
+        onClick={() => setShowDeleteModal(false)}>
+        Cancel
+      </a> }
+    </Modal.Footer>
+  </Modal>
+
+  return <div>
+    <InfoPopup
+      target={target}
+      content={actionList}
+      placement="left"
+    />
+    {deleteModal}
+  </div>
 }
