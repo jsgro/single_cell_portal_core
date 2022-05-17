@@ -398,7 +398,7 @@ function getPlotlyTraces({
   hiddenTraces,
   scatter: {
     axes, data, pointAlpha, pointSize, is3D,
-    scatterColor: dataScatterColor,
+    colorScale: dataScatterColor,
     annotParams: { name: annotName, type: annotType },
     customColors = {}
   },
