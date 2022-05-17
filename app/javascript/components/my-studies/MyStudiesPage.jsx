@@ -144,11 +144,10 @@ export default function MyStudiesPage() {
       zeroIndexed={true}/>
   }
 
-
-  return (<UserProvider>
+  return (
     <div className="form-terra">
       <br/>
-      <LoadingSpinner isLoading={isLoading}>
+      <LoadingSpinner isLoading={isLoading} testId="my-studies-spinner">
         <table {...getTableProps({ className: 'table-terra min-width-100' })}>
           <thead>
             <tr>
@@ -185,7 +184,7 @@ export default function MyStudiesPage() {
         { pageControlDisplay }
       </LoadingSpinner>
     </div>
-  </UserProvider>)
+  )
 }
 
 /** render the list of action links for a given study */
