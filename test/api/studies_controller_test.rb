@@ -56,9 +56,6 @@ class StudiesControllerTest < ActionDispatch::IntegrationTest
     sign_in_and_update(@user_2)
     execute_http_request(:get, api_v1_study_path(@study), user: @user_2)
     assert_response 403
-
-
-
   end
 
   # create, update & delete tested together to use new object rather than main testing study
