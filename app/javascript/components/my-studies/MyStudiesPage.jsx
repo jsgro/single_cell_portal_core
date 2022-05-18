@@ -240,28 +240,34 @@ function StudyActionLinks({ study }) {
         <div>
           The workspace and all files in the <a href={`study.bucketId`}>workspace bucket</a>
           <span className="strong"> will be destroyed.</span><br/><br/>
-          Please type &quot;Delete workpace&quot; to continue:<br/>
+          Please type &quot;Delete workspace&quot; to continue:<br/>
           <input type="text" value={deleteConfirmText} onChange={e => setDeleteConfirmText(e.target.value)}/>
         </div>
       }
     </Modal.Body>
     <Modal.Footer>
-      <a data-method="delete"
-        role="button"
-        className="btn terra-secondary-btn"
-        disabled={!enableDelete}
-        onClick={() => setIsDeleting(true)}
-        href={deleteUrl}>
-        <LoadingSpinner isLoading={isDeleting}>
+      <LoadingSpinner isLoading={isDeleting}>
+        {(!enableDelete && !isDeleting) &&
+          <button
+            className="btn terra-secondary-btn"
+            disabled={true}>
+            <FontAwesomeIcon icon={faTrash} className="alert-danger"/> Delete
+          </button>
+        }
+        {enableDelete && <a data-method="delete"
+          role="button"
+          className="btn terra-secondary-btn"
+          onClick={() => setIsDeleting(true)}
+          href={deleteUrl}>
           <FontAwesomeIcon icon={faTrash} className="alert-danger"/> Delete
-        </LoadingSpinner>
-      </a>
-      { !isDeleting && <a
-        role="button"
-        className="btn terra-secondary-btn"
-        onClick={() => setShowDeleteModal(false)}>
-        Cancel
-      </a> }
+        </a> }
+        { !isDeleting && <a
+          role="button"
+          className="btn terra-secondary-btn"
+          onClick={() => setShowDeleteModal(false)}>
+          Cancel
+        </a> }
+      </LoadingSpinner>
     </Modal.Footer>
   </Modal>
 

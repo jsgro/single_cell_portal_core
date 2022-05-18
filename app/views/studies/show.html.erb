@@ -5,7 +5,7 @@
 <p class="lead">Accession: <span id="study-accession"><%= @study.accession %></span></p>
 <p>
   <label>Created:</label> <%= @study.created_at.to_formatted_s(:long) %><br/>
-  <label>Creator:</label> <%= @study.user.email %>
+  <label>Owner:</label> <%= @study.user.email %>
 </p>
 <% if @study.embargo_active? %>
   <p class="lead text-danger">Data release date: <%= @study.embargo.to_s(:long) %></p>
