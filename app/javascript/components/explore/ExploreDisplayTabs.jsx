@@ -440,7 +440,6 @@ export default function ExploreDisplayTabs({
             }
             {showDifferentialExpressionPanel &&
               <DifferentialExpressionPanelHeader
-                toggleViewOptions={toggleViewOptions}
                 setDeGenes={setDeGenes}
                 setDeGroup={setDeGroup}
                 setShowDifferentialExpressionPanel={setShowDifferentialExpressionPanel}

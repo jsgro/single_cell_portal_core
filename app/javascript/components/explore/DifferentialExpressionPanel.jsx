@@ -81,10 +81,11 @@ export default function DifferentialExpressionPanel({
 
 /** Top matter for differential expression panel shown at right in Explore tab */
 export function DifferentialExpressionPanelHeader({
-  toggleViewOptions, setDeGenes, setDeGroup, setShowDifferentialExpressionPanel
+  setDeGenes, setDeGroup, setShowDifferentialExpressionPanel
 }) {
   return (
     <>
+      <span>Differentially expressed genes</span>
       <button className="action fa-lg"
         onClick={() => {
           setDeGenes(null)
@@ -92,17 +93,8 @@ export function DifferentialExpressionPanelHeader({
           setShowDifferentialExpressionPanel(false)
         }}
         title="Exit differential expression panel"
-        data-analytics-name="differential-expression-panel-exit"
-        style={{ 'float': 'left', 'marginLeft': '-10px' }}>
+        data-analytics-name="differential-expression-panel-exit">
         <FontAwesomeIcon icon={faArrowLeft}/>
-      </button>
-      <span style={{ 'marginLeft': '5px' }}>Differentially expressed genes</span>
-      <button className="action"
-        onClick={toggleViewOptions}
-        title="Hide options"
-        data-analytics-name="view-options-hide"
-        style={{ 'float': 'right', 'position': 'relative', 'left': '5px' }}>
-        <FontAwesomeIcon className="fa-lg" icon={faTimes}/>
       </button>
     </>
   )
