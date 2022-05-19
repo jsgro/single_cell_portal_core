@@ -5,15 +5,36 @@ import { faArrowLeft, faTimes, faDownload, faInfoCircle } from '@fortawesome/fre
 
 import DifferentialExpressionGroupPicker from '~/components/visualization/controls/DifferentialExpressionGroupPicker'
 
+/** Return selected annotation object, including its `values` a.k.a. groups */
+function getAnnotationObject(exploreParamsWithDefaults, exploreInfo) {
+  const selectedAnnotation = exploreParamsWithDefaults?.annotation
+  return exploreInfo.annotationList.annotations.find(thisAnnotation => {
+    return (
+      thisAnnotation.name === selectedAnnotation.name &&
+      thisAnnotation.type === selectedAnnotation.type &&
+      thisAnnotation.scope === selectedAnnotation.scope
+    )
+  })
+}
+
 /** Differential expression panel shown at right in Explore tab */
 export default function DifferentialExpressionPanel({
   deGroup, deGenes, deFileUrl, searchGenes,
-  exploreInfo, setShowDeGroupPicker, setDeGenes, setDeGroup, setDeFileUrl
+  exploreInfo, exploreParamsWithDefaults, setShowDeGroupPicker, setDeGenes, setDeGroup, setDeFileUrl
 }) {
+  console.log('exploreInfo')
+  console.log(exploreInfo)
+  console.log('exploreParamsWithDefaults')
+  console.log(exploreParamsWithDefaults)
+  const clusterName = exploreParamsWithDefaults?.cluster
+  const bucketId = exploreInfo?.bucketId
+  const annotation = getAnnotationObject(exploreParamsWithDefaults, exploreInfo)
   return (
     <>
       <DifferentialExpressionGroupPicker
-        exploreInfo={exploreInfo}
+        bucketId={bucketId}
+        clusterName={clusterName}
+        annotation={annotation}
         setShowDeGroupPicker={setShowDeGroupPicker}
         deGenes={deGenes}
         setDeGenes={setDeGenes}

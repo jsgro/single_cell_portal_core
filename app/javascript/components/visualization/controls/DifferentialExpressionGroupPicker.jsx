@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React from 'react'
 // import Modal from 'react-bootstrap/lib/Modal'
 
 import Select from '~/lib/InstrumentedSelect'
@@ -70,29 +70,32 @@ async function fetchDeGenes(bucketId, deFilePath, numGenes=15) {
 
 /** Pick groups of cells for differential expression (DE) */
 export default function DeGroupPicker({
-  exploreInfo, deGenes, deGroup, setDeGroup, setDeGenes, setDeFileUrl
+  bucketId, clusterName, annotation, deGenes, deGroup, setDeGroup, setDeGenes, setDeFileUrl
 }) {
-  const annotation = exploreInfo?.annotationList?.default_annotation
+  // const annotation = exploreInfo?.annotationList?.default_annotation
+  // console.log('exploreInfo')
+  // console.log(exploreInfo)
+  console.log('annotation')
+  console.log(annotation)
   const groups = annotation?.values ?? []
 
   /** Update group in differential expression picker */
   async function updateDeGroup(newGroup) {
     setDeGroup(newGroup)
 
-    const bucketId = exploreInfo?.bucketId
-
     // TODO (SCP-4321): Incorporate any updates to this general file name structure
     // <cluster_name>--<annotation_name>--<group_name>--<annotation_scope>--<method>.tsv
     const deFileName = `${[
-      exploreInfo?.annotationList?.default_cluster,
+      clusterName,
       annotation.name,
       newGroup,
+      annotation.scope,
       'wilcoxon'
     ]
       .map(s => s.replaceAll(nonAlphaNumericRegex, '_'))
       .join('--') }.tsv`
 
-    const basePath = '_scp_internal/differential_expression/'
+    const basePath = '_scp_internal/differential_expression/new_de_tmp/'
     const deFilePath = `${basePath}${deFileName}`.replaceAll('/', '%2F')
 
     const deGenes = await fetchDeGenes(bucketId, deFilePath)

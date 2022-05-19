@@ -543,7 +543,11 @@ export default function ExploreDisplayTabs({
               deGenes={deGenes}
               deFileUrl={deFileUrl}
               searchGenes={searchGenes}
+              exploreParamsWithDefaults={exploreParamsWithDefaults}
               exploreInfo={exploreInfo}
+              clusterName={exploreParamsWithDefaults.cluster}
+              bucketId={exploreInfo?.bucketId}
+              annotation={exploreParamsWithDefaults.annotation}
               setShowDeGroupPicker={setShowDeGroupPicker}
               setDeGenes={setDeGenes}
               setDeGroup={setDeGroup}
