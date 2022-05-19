@@ -22,10 +22,6 @@ export default function DifferentialExpressionPanel({
   deGroup, deGenes, deFileUrl, searchGenes,
   exploreInfo, exploreParamsWithDefaults, setShowDeGroupPicker, setDeGenes, setDeGroup, setDeFileUrl
 }) {
-  console.log('exploreInfo')
-  console.log(exploreInfo)
-  console.log('exploreParamsWithDefaults')
-  console.log(exploreParamsWithDefaults)
   const clusterName = exploreParamsWithDefaults?.cluster
   const bucketId = exploreInfo?.bucketId
   const annotation = getAnnotationObject(exploreParamsWithDefaults, exploreInfo)
@@ -84,7 +80,6 @@ export default function DifferentialExpressionPanel({
                     ><input
                         type="radio"
                         analytics-name="de-gene-link"
-                        style={{ 'marginRight': '10px' }}
                         name="selected-gene-differential-expression"
                         onClick={() => {searchGenes([deGene.name])}}/>
                       {deGene.name}</label></td>
