@@ -335,6 +335,7 @@ export default function ExploreDisplayTabs({
                     plotPointsSelected,
                     showRelatedGenesIdeogram,
                     showViewOptionsControls,
+                    scatterColor: exploreParamsWithDefaults.scatterColor,
                     dataCache
                   }}/>
               </div>

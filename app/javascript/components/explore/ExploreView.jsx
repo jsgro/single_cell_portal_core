@@ -72,7 +72,7 @@ function createExploreParamsWithDefaults(exploreParams, exploreInfo) {
     }
   }
   if (!exploreParams.userSpecified['scatterColor'] && exploreInfo?.colorProfile) {
-    controlExploreParams.scatterColor = exploreInfo.defaultColorProfile
+    controlExploreParams.scatterColor = exploreInfo.colorProfile
   }
   return controlExploreParams
 }
