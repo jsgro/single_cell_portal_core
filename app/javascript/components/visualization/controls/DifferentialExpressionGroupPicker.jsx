@@ -9,7 +9,6 @@ import { fetchBucketFile } from '~/lib/scp-api'
 // Value to show in menu if user has not selected a group for DE
 const noneSelected = 'Select group'
 
-
 /** Takes array of strings, converts it to list options suitable for react-select */
 function getSimpleOptions(stringArray) {
   const assignLabelsAndValues = name => ({ label: name, value: name })
@@ -76,7 +75,7 @@ export default function DeGroupPicker({
   const annotation = exploreInfo?.annotationList?.default_annotation
   const groups = annotation?.values ?? []
 
-  /** Update group in DE picker */
+  /** Update group in differential expression picker */
   async function updateDeGroup(newGroup) {
     setDeGroup(newGroup)
 
@@ -104,8 +103,6 @@ export default function DeGroupPicker({
     const baseUrl = 'https://storage.googleapis.com/download/storage/v1/'
     const deFileUrl = `${baseUrl}/${bucketId}/o/${deFilePath}?alt=media`
     setDeFileUrl(deFileUrl)
-
-    // setShowDeGroupPicker(false)
   }
 
   return (
