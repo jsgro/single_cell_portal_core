@@ -26,26 +26,26 @@ export default function DifferentialExpressionPanel({
       <>
         15 most DE genes
         <span style={{ 'float': 'right' }}>
-          <a href={deFileUrl}
+          {/* <a href={deFileUrl}
             target="_blank"
             data-analytics-name="differential-expression-download"
             data-toggle="tooltip"
             data-original-title="Download all DE genes data for this group"
           >
-            <FontAwesomeIcon icon={faDownload}/></a>
-          <a href="TODO"
+            <FontAwesomeIcon icon={faDownload}/></a> */}
+          <a href="https://singlecell.zendesk.com/hc/en-us/articles/6059411840027"
             target="_blank"
             data-analytics-name="differential-expression-docs"
             style={{ 'marginLeft': '10px' }}
             data-toggle="tooltip"
-            data-original-title="Learn about SCP DE analysis"
+            data-original-title="Learn about SCP DE genes analysis"
           >
             <FontAwesomeIcon
               className="action help-icon" icon={faInfoCircle}
             />
           </a>
         </span>
-        <table className="table table-terra table-scp-compact" style={{ 'width': '105%', 'maxWidth': 'inherit' }}>
+        <table className="table table-terra table-scp-compact">
           <thead>
             <tr>
               <th>Name</th>
@@ -56,7 +56,7 @@ export default function DifferentialExpressionPanel({
           <tbody>
             {deGenes.map((deGene, i) => {
               return (
-                <tr key={i} style={{ 'fontSize': '13px' }}>
+                <tr key={i}>
                   <td>
                     <label
                       title="Click to view gene expression.  Arrow down (↓) and up (↑) to quickly scan."
@@ -73,6 +73,9 @@ export default function DifferentialExpressionPanel({
             })}
           </tbody>
         </table>
+        <a href="https://forms.gle/WJJ3mtsMgdkNkX4A7" target="_blank" title="Take a 1 minute survey">
+            Help improve this new feature
+        </a>
       </>
       }
     </>
