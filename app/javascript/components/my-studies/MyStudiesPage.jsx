@@ -3,7 +3,6 @@ import React, { useEffect, useState } from 'react'
 import { useTable, usePagination, useSortBy, useFilters } from 'react-table'
 import Modal from 'react-bootstrap/lib/Modal'
 
-import UserProvider from '~/providers/UserProvider'
 import LoadingSpinner from '~/lib/LoadingSpinner'
 import { fetchEditableStudies } from '~/lib/scp-api'
 import PagingControl from '~/components/search/results/PagingControl'
@@ -21,13 +20,9 @@ const columns = [{
   Header: 'Title ',
   accessor: 'name',
   Cell: ({ value, row: { original: { accession, description } } }) => {
-    let shortDesc = description.substring(0, 100)
-    if (description.length > 100) {
-      shortDesc += '...'
-    }
     return <div>
       <a href={`/single_cell/study/${accession}`}>{value}</a><br/>
-      <span className="detail">{shortDesc}</span>
+      <div className="detail no-wrap-ellipsis">{description}</div>
 
     </div>
   },
@@ -63,7 +58,7 @@ const columns = [{
   accessor: 'createdAt',
   Cell: ({ value }) => {
     const date = new Date(value)
-    return `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`
+    return date.toLocaleDateString('default', { month: 'short', day: 'numeric', year: 'numeric' })
   },
   sortType: (rowA, rowB) => {
     return new Date(rowA.original.createdAt) - new Date(rowB.original.createdAt)
