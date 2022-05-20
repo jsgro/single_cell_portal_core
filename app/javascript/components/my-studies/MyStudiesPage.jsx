@@ -20,9 +20,13 @@ const columns = [{
   Header: 'Title ',
   accessor: 'name',
   Cell: ({ value, row: { original: { accession, description } } }) => {
+    let shortDesc = description.substring(0, 100)
+    if (description.length > 100) {
+      shortDesc += '...'
+    }
     return <div>
       <a href={`/single_cell/study/${accession}`}>{value}</a><br/>
-      <div className="detail no-wrap-ellipsis">{description}</div>
+      <span className="detail">{shortDesc}</span>
 
     </div>
   },
