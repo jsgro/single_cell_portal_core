@@ -21,7 +21,8 @@ function getAnnotationObject(exploreParamsWithDefaults, exploreInfo) {
 /** Differential expression panel shown at right in Explore tab */
 export default function DifferentialExpressionPanel({
   deGroup, deGenes, deFileUrl, searchGenes,
-  exploreInfo, exploreParamsWithDefaults, setShowDeGroupPicker, setDeGenes, setDeGroup, setDeFileUrl
+  exploreInfo, exploreParamsWithDefaults, setShowDeGroupPicker, setDeGenes, setDeGroup, setDeFileUrl,
+  countsByLabel
 }) {
   const clusterName = exploreParamsWithDefaults?.cluster
   const bucketId = exploreInfo?.bucketId
@@ -39,6 +40,7 @@ export default function DifferentialExpressionPanel({
         deGroup={deGroup}
         setDeGroup={setDeGroup}
         setDeFileUrl={setDeFileUrl}
+        countsByLabel={countsByLabel}
       />
 
       {deGenes &&

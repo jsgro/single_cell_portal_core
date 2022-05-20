@@ -5,6 +5,8 @@ import Select from '~/lib/InstrumentedSelect'
 import { clusterSelectStyle } from '~/lib/cluster-utils'
 import { newlineRegex } from '~/lib/validation/io'
 import { fetchBucketFile } from '~/lib/scp-api'
+import PlotUtils from '~/lib/plot'
+const { getLegendSortedLabels } = PlotUtils
 
 // Value to show in menu if user has not selected a group for DE
 const noneSelected = 'Select group'
@@ -70,14 +72,12 @@ async function fetchDeGenes(bucketId, deFilePath, numGenes=15) {
 
 /** Pick groups of cells for differential expression (DE) */
 export default function DeGroupPicker({
-  bucketId, clusterName, annotation, deGenes, deGroup, setDeGroup, setDeGenes, setDeFileUrl
+  bucketId, clusterName, annotation, deGenes, deGroup, setDeGroup, setDeGenes, setDeFileUrl,
+  countsByLabel
 }) {
-  // const annotation = exploreInfo?.annotationList?.default_annotation
-  // console.log('exploreInfo')
-  // console.log(exploreInfo)
-  console.log('annotation')
-  console.log(annotation)
-  const groups = annotation?.values ?? []
+  console.log('in DeGroupPicker, countsByLabel:')
+  console.log(countsByLabel)
+  const groups = getLegendSortedLabels(countsByLabel)
 
   /** Update group in differential expression picker */
   async function updateDeGroup(newGroup) {

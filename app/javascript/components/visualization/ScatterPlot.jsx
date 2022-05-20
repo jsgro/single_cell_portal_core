@@ -42,14 +42,13 @@ window.Plotly = Plotly
 function RawScatterPlot({
   studyAccession, cluster, annotation, subsample, consensus, genes, scatterColor, dimensionProps,
   isAnnotatedScatter=false, isCorrelatedScatter=false, isCellSelecting=false, plotPointsSelected, dataCache,
-  canEdit, expressionFilter=[0, 1]
+  canEdit, expressionFilter=[0, 1],
+  countsByLabel, setCountsByLabel
 }) {
   const [isLoading, setIsLoading] = useState(false)
   const [bulkCorrelation, setBulkCorrelation] = useState(null)
   const [labelCorrelations, setLabelCorrelations] = useState(null)
   const [scatterData, setScatterData] = useState(null)
-  // hash of trace label names to the number of points in that trace
-  const [countsByLabel, setCountsByLabel] = useState(null)
   // array of trace names (strings) to show in the graph
   const [hiddenTraces, setHiddenTraces] = useState([])
   const [graphElementId] = useState(_uniqueId('study-scatter-'))

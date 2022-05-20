@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faPalette } from '@fortawesome/free-solid-svg-icons'
 import Modal from 'react-bootstrap/lib/Modal'
@@ -151,6 +151,8 @@ export default function ScatterPlotLegend({
   // whether a request to the server to save colors is pending
   const labels = getLegendSortedLabels(countsByLabel)
   const numLabels = labels.length
+
+  // setLegendLabels(labels)
 
   const legendEntries = labels
     .map((label, i) => {

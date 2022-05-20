@@ -773,7 +773,7 @@ export function getFullUrl(path, mock=false) {
 
 /** Fetch, leveraging web cache if available */
 async function fetchWithWebCache(url, init) {
-  const webCache = await caches.open(`singlecellportal-${env}-1.6.0`)
+  const webCache = await caches.open(`scp-${env}-1.6.0`)
   let response = await webCache.match(url)
   let hitOrMiss = 'hit'
   if (typeof response === 'undefined') {

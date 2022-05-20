@@ -84,6 +84,19 @@ export default function ExploreDisplayTabs({
   const [deFileUrl, setDeFileUrl] = useState(null)
   const [showDifferentialExpressionPanel, setShowDifferentialExpressionPanel] = useState(deGenes !== null)
 
+
+  // hash of trace label names to the number of points in that trace
+  const [countsByLabel, setCountsByLabel] = useState(null)
+
+  // let eligibleDifferentialExpressionGroups = null
+  // /** Update DE groups for DE picker  */
+  // function updateEligibleDifferentialExpressionGroups(labels) {
+  //   console.log('in updateEligibleDifferentialExpressionGroups, labels:')
+  //   console.log(labels)
+  //   eligibleDifferentialExpressionGroups = labels
+  // }
+
+  // const [legendLabels, setLegendLabels] = useState(null)
   // // For readability, until approach outlined in TODO above can be fully
   // // attempted, which will likely be tightly couple with UX changes suggested
   // // at 2022-05-06 demo.
@@ -336,7 +349,8 @@ export default function ExploreDisplayTabs({
                     plotPointsSelected,
                     showRelatedGenesIdeogram,
                     showViewOptionsControls,
-                    dataCache
+                    dataCache,
+                    countsByLabel, setCountsByLabel
                   }}/>
               </div>
             }
@@ -536,7 +550,7 @@ export default function ExploreDisplayTabs({
             </button>
           </>
           }
-          {showDifferentialExpressionPanel &&
+          {showDifferentialExpressionPanel && countsByLabel &&
           <>
             <DifferentialExpressionPanel
               deGroup={deGroup}
@@ -552,6 +566,7 @@ export default function ExploreDisplayTabs({
               setDeGenes={setDeGenes}
               setDeGroup={setDeGroup}
               setDeFileUrl={setDeFileUrl}
+              countsByLabel={countsByLabel}
             />
           </>
           }
