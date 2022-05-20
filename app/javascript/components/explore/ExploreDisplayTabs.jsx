@@ -93,7 +93,7 @@ export default function ExploreDisplayTabs({
   let isDifferentialExpressionEnabled = false
   const flags = getFeatureFlagsWithDefaults()
   if (flags?.differential_expression_frontend) {
-    isDifferentialExpressionEnabled = true
+    isDifferentialExpressionEnabled = (exploreParams.annotation.type === 'group')
   }
 
   const plotContainerClass = 'explore-plot-tab-content'
