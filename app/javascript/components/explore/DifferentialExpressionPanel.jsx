@@ -4,7 +4,10 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faArrowLeft, faTimes, faDownload, faInfoCircle } from '@fortawesome/free-solid-svg-icons'
 
 import DifferentialExpressionGroupPicker from '~/components/visualization/controls/DifferentialExpressionGroupPicker'
-import { logStudyGeneSearch } from '~/lib/metrics-api'
+import { logSearchFromDifferentialExpression } from '~/lib/search-metrics'
+
+const numSelectionEventsSincePageView = 0
+let timeLastSelection
 
 /** Return selected annotation object, including its `values` a.k.a. groups */
 function getAnnotationObject(exploreParamsWithDefaults, exploreInfo) {
@@ -26,6 +29,7 @@ export default function DifferentialExpressionPanel({
   const clusterName = exploreParamsWithDefaults?.cluster
   const bucketId = exploreInfo?.bucketId
   const annotation = getAnnotationObject(exploreParamsWithDefaults, exploreInfo)
+
   return (
     <>
       <DifferentialExpressionGroupPicker
@@ -84,29 +88,14 @@ export default function DifferentialExpressionPanel({
                         name="selected-gene-differential-expression"
                         onClick={event => {
                           searchGenes([deGene.name])
-                          const pointerType = event.nativeEvent.pointerType
-                          const action = (pointerType === 'mouse') ? 'click' : 'arrow'
-                          const trigger = `${action}-differential-expression`
+
+                          // Log this search to Mixpanel
                           const speciesList = exploreInfo?.taxonNames
-
-                          // Put DE properties together, for more coherent analyst UX
-                          const deProps = {}
-                          Object.entries(deGene).forEach(([key, value]) => {
-                            if (key === 'name') {
-                              // Redundant with pre-existing `genes` Mixpanel prop
-                              return
-                            }
-                            deProps[`de:${key}`] = value
-                          })
-                          deProps['de:rank'] = i
-
-                          // Consider logging cluster and annotation for all Explore events
-                          const otherProps = Object.assign({
-                            cluster: clusterName,
-                            annotation: annotation.name
-                          }, deProps)
-
-                          logStudyGeneSearch([deGene.name], trigger, speciesList, otherProps)
+                          const rank = i
+                          logSearchFromDifferentialExpression(
+                            event, deGene, speciesList, rank,
+                            clusterName, annotation.name
+                          )
                         }}/>
                       {deGene.name}</label></td>
                   <td>{deGene.log2FoldChange}</td>

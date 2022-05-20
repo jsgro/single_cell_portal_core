@@ -7,7 +7,8 @@ import CreatableSelect from 'react-select/creatable'
 import _differenceBy from 'lodash/differenceBy'
 
 import { getAutocompleteSuggestions } from '~/lib/search-utils'
-import { log, logStudyGeneSearch } from '~/lib/metrics-api'
+import { log } from '~/lib/metrics-api'
+import { logStudyGeneSearch } from '~/lib/search-metrics'
 
 
 /** renders the gene text input

@@ -175,6 +175,29 @@ export function logSearch(type, searchParams, perfTimes, searchResults) {
   )
 }
 
+
+/** log a search from the study explore tab */
+export function logStudyGeneSearch(genes, trigger, speciesList, otherProps) {
+  // Properties logged for all gene searches from Study Overview
+  const logProps = {
+    type: 'gene',
+    context: 'study',
+    genes,
+    numGenes: genes.length,
+    trigger, // "submit", "click", or "click-related-genes"
+    speciesList
+  }
+
+  // Merge log props from custom event
+  if (otherProps) {
+    Object.assign(logProps, otherProps)
+  }
+  log('search', logProps)
+}
+
+let numDifferentialGeneSelections = 0
+let timeLastDifferentialExpressionSelection
+
 /**
  * Log analytics about search result selection to Mixpanel
  *
@@ -268,4 +291,50 @@ export function logSelectSearchResult(study, logProps={}) {
   delete refinedLogProps[`results:facets`] // Refactor as part of SCP-4256
 
   log('select-search-result', refinedLogProps)
+}
+
+/** Log study gene search triggered by selection in differential expression panel */
+export function logSearchFromDifferentialExpression(
+  event, deGene, speciesList, rank, cluster, annotation
+) {
+  // Users can click or press up/down arrow keys to search via DE panel
+  const pointerType = event.nativeEvent.pointerType
+  const action = (pointerType === 'mouse') ? 'click' : 'arrow'
+  const trigger = `${action}-differential-expression`
+
+  numDifferentialGeneSelections += 1
+
+  // Put DE properties together by prepending them with `de:`.
+  // This makes them more coherent in Network panel and Mixpanel "Events" view
+  const deProps = {}
+  Object.entries(deGene).forEach(([key, value]) => {
+    if (key === 'name') {
+      // Redundant with pre-existing `genes` Mixpanel prop
+      return
+    }
+    deProps[`de:${key}`] = value
+  })
+  deProps['de:rank'] = rank
+
+  const otherProps = Object.assign({
+    // Consider logging cluster and annotation for all Explore events
+    cluster,
+    annotation,
+
+    // Helps assess level of engagement
+    numEventsSincePageView: numDifferentialGeneSelections
+  }, deProps)
+
+  // Log time since last search via DE gene selection.  This can help answer
+  // questions like "How much would instant gene expression plots help?" and
+  // "Do users scrutinize the resulting view, or glance and quickly move on?"
+  // (and other questions we've yet to consider).
+  if (numDifferentialGeneSelections > 1) {
+    const timeLast = performance.now() - timeLastDifferentialExpressionSelection
+    otherProps.timeSinceLastSelection = timeLast
+  }
+
+  logStudyGeneSearch([deGene.name], trigger, speciesList, otherProps)
+
+  timeLastDifferentialExpressionSelection = performance.now()
 }
