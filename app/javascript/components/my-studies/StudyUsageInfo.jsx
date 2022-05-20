@@ -20,7 +20,7 @@ export default function StudyUsageInfo({ study }) {
 
   /** get the usage information via API call */
   useEffect(() => {
-    fetchStudyUsage(study._id.$oid).then(response => {
+    fetchStudyUsage(study.accession).then(response => {
       setUsageInfo(response)
       setIsLoading(false)
     })
