@@ -398,7 +398,6 @@ function getPlotlyTraces({
   hiddenTraces,
   scatter: {
     axes, data, pointAlpha, pointSize, is3D,
-    scatterColor: dataScatterColor,
     annotParams: { name: annotName, type: annotType },
     customColors = {}
   },
@@ -459,13 +458,12 @@ function getPlotlyTraces({
     }
 
     if (!isAnnotatedScatter) {
-      const appliedScatterColor = getScatterColorToApply(dataScatterColor, scatterColor)
       const title = isGeneExpressionForColor ? axes.titles.magnitude : annotName
 
       Object.assign(workingTrace.marker, {
         showscale: true,
-        colorscale: appliedScatterColor,
-        reversescale: shouldReverseScale(appliedScatterColor),
+        colorscale: scatterColor,
+        reversescale: shouldReverseScale(scatterColor),
         color: colors,
         colorbar: { title, titleside: 'right' }
       })
@@ -508,15 +506,6 @@ function addHoverLabel(trace, annotName, annotType, genes, isAnnotatedScatter, i
     groupHoverTemplate = `(%{x}, %{y})<br>%{text} (%{meta})<br>${bottomRowLabel}: %{marker.color}<extra></extra>`
   }
   trace.hovertemplate = groupHoverTemplate
-}
-
-/** Gets color on the given traces.  If no color is specified, use color from data */
-function getScatterColorToApply(dataScatterColor, scatterColor) {
-  // Set color scale
-  if (!scatterColor) {
-    scatterColor = dataScatterColor
-  }
-  return scatterColor
 }
 
 /** Gets Plotly layout object for scatter plot */
