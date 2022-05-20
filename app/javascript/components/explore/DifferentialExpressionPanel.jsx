@@ -71,8 +71,16 @@ export default function DifferentialExpressionPanel({
           <thead>
             <tr>
               <th>Name</th>
-              <th>log<sub>2</sub>(FC)</th>
-              <th>Adj. p-value</th>
+              <th>
+                <span className="glossary" data-toggle="tooltip" data-original-title="Log (base 2) of fold change">
+                  log<sub>2</sub>(FC)
+                </span>
+              </th>
+              <th>
+                <span className="glossary" data-toggle="tooltip" data-original-title="p-value adjusted with Benjamini-Hochberg FDR correction">
+                  Adj. p-value
+                </span>
+              </th>
             </tr>
           </thead>
           <tbody>

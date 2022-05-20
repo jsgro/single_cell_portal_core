@@ -331,7 +331,7 @@ export function logSearchFromDifferentialExpression(
   // (and other questions we've yet to consider).
   if (numDifferentialGeneSelections > 1) {
     const timeLast = performance.now() - timeLastDifferentialExpressionSelection
-    otherProps.timeSinceLastSelection = timeLast
+    otherProps.timeSinceLastSelection = Math.round(timeLast)
   }
 
   logStudyGeneSearch([deGene.name], trigger, speciesList, otherProps)

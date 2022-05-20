@@ -55,7 +55,7 @@ function parseDeFile(tsvText) {
  *   score: Differential expression score assigned by Scanpy.
  *   log2FoldChange: Log-2 fold change.  How many times more expression (1 = 2, 2 = 4, 3 = 8).
  *   pval: p-value.  Statistical significance of the `score` value.
- *   pvalAdj: Adjusted p-value.  p-value adjusted for false discovery rate (FDR).
+ *   pvalAdj: Adjusted p-value.  p-value adjusted with Benjamini-Hochberg FDR correction
  *   pctNzGroup: Percent non-zero, group.  % of cells with non-zero expression in selected group.
  *   pctNzReference: Percent non-zero, reference.  % of cells with non-zero expression in non-selected groups.
  **/
