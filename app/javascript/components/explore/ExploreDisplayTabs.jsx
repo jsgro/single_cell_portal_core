@@ -84,23 +84,8 @@ export default function ExploreDisplayTabs({
   const [deFileUrl, setDeFileUrl] = useState(null)
   const [showDifferentialExpressionPanel, setShowDifferentialExpressionPanel] = useState(deGenes !== null)
 
-
   // hash of trace label names to the number of points in that trace
   const [countsByLabel, setCountsByLabel] = useState(null)
-
-  // let eligibleDifferentialExpressionGroups = null
-  // /** Update DE groups for DE picker  */
-  // function updateEligibleDifferentialExpressionGroups(labels) {
-  //   console.log('in updateEligibleDifferentialExpressionGroups, labels:')
-  //   console.log(labels)
-  //   eligibleDifferentialExpressionGroups = labels
-  // }
-
-  // const [legendLabels, setLegendLabels] = useState(null)
-  // // For readability, until approach outlined in TODO above can be fully
-  // // attempted, which will likely be tightly couple with UX changes suggested
-  // // at 2022-05-06 demo.
-  // const showDifferentialExpressionPanel = deGenes !== null
 
   // TODO (SCP-4321): In addition to feature flag, check
   // is_differential_expression_enabled attribute from forthcoming update to
@@ -315,6 +300,8 @@ export default function ExploreDisplayTabs({
                   }}
                   isCellSelecting={isCellSelecting}
                   plotPointsSelected={plotPointsSelected}
+                  countsByLabel={countsByLabel}
+                  setCountsByLabel={setCountsByLabel}
                 />
               </div>
             }
@@ -330,6 +317,8 @@ export default function ExploreDisplayTabs({
                   }}
                   isCellSelecting={isCellSelecting}
                   plotPointsSelected={plotPointsSelected}
+                  countsByLabel={countsByLabel}
+                  setCountsByLabel={setCountsByLabel}
                 />
               </div>
             }

@@ -58,6 +58,8 @@ function RawScatterPlot({
   const [editedCustomColors, setEditedCustomColors] = useState({})
   const [splitLabelArrays, setSplitLabelArrays] = useState(null)
 
+  const [isRefGroup, setIsRefGroup] = useState(false)
+
   /**
    * Handle user interaction with one or more labels in legend.
    *
@@ -136,8 +138,8 @@ function RawScatterPlot({
   }
 
   /** Update legend counts and recompute traces, without recomputing layout */
-  function updateCountsAndGetTraces(scatter) {
-    const [traces, labelCounts, isRefGroup] = getPlotlyTraces({
+  function updateCountsAndGetTraces(scatter, isRefGroup) {
+    const [traces, labelCounts] = getPlotlyTraces({
       genes,
       isAnnotatedScatter,
       isCorrelatedScatter,
@@ -147,9 +149,12 @@ function RawScatterPlot({
       scatter,
       activeTraceLabel,
       expressionFilter,
-      splitLabelArrays: splitLabelArrays ?? scatter.splitLabelArrays
+      splitLabelArrays: splitLabelArrays ?? scatter.splitLabelArrays,
+      isRefGroup
     })
-    setCountsByLabel(isRefGroup ? labelCounts : null)
+    if (isRefGroup) {
+      setCountsByLabel(labelCounts)
+    }
     return traces
   }
 
@@ -161,7 +166,10 @@ function RawScatterPlot({
     scatter = updateScatterLayout(scatter)
     const layout = scatter.layout
 
-    const plotlyTraces = updateCountsAndGetTraces(scatter)
+    const isRG = getIsRefGroup(scatter.annotParams.type, genes, isCorrelatedScatter)
+    setIsRefGroup(isRG)
+
+    const plotlyTraces = updateCountsAndGetTraces(scatter, isRG)
 
     const startTime = performance.now()
     Plotly.react(graphElementId, plotlyTraces, layout)
@@ -188,7 +196,8 @@ function RawScatterPlot({
       })
     }
 
-    scatter.hasArrayLabels = scatter.annotParams.type === 'group' && scatter.data.annotations.some(annot => annot.includes('|'))
+    scatter.hasArrayLabels =
+      scatter.annotParams.type === 'group' && scatter.data.annotations.some(annot => annot.includes('|'))
 
     if (clusterResponse) {
       setScatterData(scatter)
@@ -306,7 +315,7 @@ function RawScatterPlot({
         id={graphElementId}
         data-testid={graphElementId}
       >
-        { scatterData && countsByLabel &&
+        { scatterData && countsByLabel && isRefGroup &&
           <ScatterPlotLegend
             name={scatterData.annotParams.name}
             height={scatterData.height}
@@ -403,7 +412,8 @@ function getPlotlyTraces({
   },
   activeTraceLabel,
   expressionFilter,
-  splitLabelArrays
+  splitLabelArrays,
+  isRefGroup
 }) {
   const unfilteredTrace = {
     type: is3D ? 'scatter3d' : 'scattergl',
@@ -419,8 +429,6 @@ function getPlotlyTraces({
     unfilteredTrace.z = data.z
   }
 
-
-  const isRefGroup = getIsRefGroup(annotType, genes, isCorrelatedScatter)
   const isGeneExpressionForColor = !isCorrelatedScatter && !isAnnotatedScatter && genes.length
 
   const [traces, countsByLabel, expRange] = filterTrace({
