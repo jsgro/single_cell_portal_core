@@ -6,9 +6,6 @@ import { faArrowLeft, faTimes, faDownload, faInfoCircle } from '@fortawesome/fre
 import DifferentialExpressionGroupPicker from '~/components/visualization/controls/DifferentialExpressionGroupPicker'
 import { logSearchFromDifferentialExpression } from '~/lib/search-metrics'
 
-const numSelectionEventsSincePageView = 0
-let timeLastSelection
-
 /** Return selected annotation object, including its `values` a.k.a. groups */
 function getAnnotationObject(exploreParamsWithDefaults, exploreInfo) {
   const selectedAnnotation = exploreParamsWithDefaults?.annotation
@@ -47,7 +44,7 @@ export default function DifferentialExpressionPanel({
       {deGenes &&
       <>
         15 most DE genes
-        <span style={{ 'float': 'right' }}>
+        <span className="pull-right">
           {/* <a href={deFileUrl}
             target="_blank"
             data-analytics-name="differential-expression-download"
@@ -58,7 +55,7 @@ export default function DifferentialExpressionPanel({
           <a href="https://singlecell.zendesk.com/hc/en-us/articles/6059411840027"
             target="_blank"
             data-analytics-name="differential-expression-docs"
-            style={{ 'marginLeft': '10px' }}
+            // style={{ 'marginLeft': '10px' }} // Dev placeholder for when download is enable
             data-toggle="tooltip"
             data-original-title="Learn about SCP DE genes analysis"
           >
@@ -113,7 +110,7 @@ export default function DifferentialExpressionPanel({
           </tbody>
         </table>
         <a href="https://forms.gle/WJJ3mtsMgdkNkX4A7" target="_blank" title="Take a 1 minute survey">
-            Help improve this new feature
+          Help improve this new feature
         </a>
       </>
       }
