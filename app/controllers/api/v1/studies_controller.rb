@@ -49,7 +49,7 @@ module Api
       def index
         @studies = Study.editable(current_api_user)
         study_owner_ids = @studies.pluck(:id, :user_id)
-        user_info = User.where(:id.in => study_owner_ids.map{ |a| a[1] }).pluck(:id, :email)
+        user_info = User.where(:id.in => study_owner_ids.map{ |plucked_arr| plucked_arr[1] }).pluck(:id, :email)
         # create a hash of study_id => owner email
         @study_owner_emails = study_owner_ids.reduce({}) do |hash, study_owner_id|
           hash[study_owner_id[0].to_s] = user_info.find { |user| user[0] == study_owner_id[1] }[1]
