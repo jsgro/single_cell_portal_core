@@ -8,7 +8,7 @@ const PagingControl = ({ currentPage, totalPages, changePage, canPreviousPage, c
     <div className="pagination">
       <button
         className="text-button"
-        onClick={() => {changePage(1)}}
+        onClick={() => {changePage(zeroIndexed ? 0 : 1)}}
         disabled={!canPreviousPage}>
         <FontAwesomeIcon icon={faAngleDoubleLeft}/>
       </button>
@@ -29,7 +29,7 @@ const PagingControl = ({ currentPage, totalPages, changePage, canPreviousPage, c
       </button>
       <button
         className="text-button"
-        onClick={() => {changePage(totalPages)}}
+        onClick={() => {changePage(zeroIndexed ? totalPages - 1 : totalPages)}}
         disabled={!canNextPage}>
         <FontAwesomeIcon icon={faAngleDoubleRight}/>
       </button>
