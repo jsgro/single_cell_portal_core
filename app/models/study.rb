@@ -1192,6 +1192,28 @@ class Study
     self.default_options[:color_profile].presence
   end
 
+  # array of names of annotations to ignore the unique values limit for visualizing
+  def override_viz_limit_annotations
+    self.default_options[:override_viz_limit_annotations] || []
+  end
+
+  # make an annotation visualizable despite exceeding the default values limit
+  def add_override_viz_limit_annotation(annotation_name)
+    cell_metadatum = self.cell_metadata.find_by(name: annotation_name)
+    if cell_metadatum
+      # we need to populate the 'values' array, since that will not have been done at ingest
+      uniq_vals = cell_metadatum.concatenate_data_arrays(annotation_name, 'annotations').uniq
+      cell_metadatum.update!(values: uniq_vals)
+    end
+
+    updated_list = override_viz_limit_annotations
+    updated_list.push(annotation_name)
+    self.default_options[:override_viz_limit_annotations] = updated_list
+    self.save
+    # clear the cache so that explore data is fetched correctly
+    CacheRemovalJob.new(accession).perform
+  end
+
   # return the value of the expression axis label
   def default_expression_label
     self.default_options[:expression_label].present? ? self.default_options[:expression_label] : 'Expression'

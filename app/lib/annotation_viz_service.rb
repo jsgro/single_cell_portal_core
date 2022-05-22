@@ -141,7 +141,9 @@ class AnnotationVizService
     all_metadata.map do |annot|
       # viewable if the type is numeric or there's no corresponding label and it's within the range of visualization values
       is_viewable = annot.annotation_type == 'numeric' ||
-        all_names.exclude?(annot.name + '__ontology_label') && CellMetadatum::GROUP_VIZ_THRESHOLD === annot.values.size
+        study.override_viz_limit_annotations.include?(annot.name) ||
+        all_names.exclude?(annot.name + '__ontology_label') &&
+        CellMetadatum::GROUP_VIZ_THRESHOLD === annot.values.size
       {
         name: annot.name,
         type: annot.annotation_type,
