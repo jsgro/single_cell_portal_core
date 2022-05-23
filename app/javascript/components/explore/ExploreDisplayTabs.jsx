@@ -81,7 +81,6 @@ export default function ExploreDisplayTabs({
   const [showDeGroupPicker, setShowDeGroupPicker] = useState(false)
   const [deGenes, setDeGenes] = useState(null)
   const [deGroup, setDeGroup] = useState(null)
-  const [deFileUrl, setDeFileUrl] = useState(null)
   const [showDifferentialExpressionPanel, setShowDifferentialExpressionPanel] = useState(deGenes !== null)
 
   // hash of trace label names to the number of points in that trace
@@ -90,11 +89,22 @@ export default function ExploreDisplayTabs({
   // TODO (SCP-4321): In addition to feature flag, check
   // is_differential_expression_enabled attribute from forthcoming update to
   // an API response
-  let isDifferentialExpressionEnabled = false
   const flags = getFeatureFlagsWithDefaults()
-  if (flags?.differential_expression_frontend) {
-    isDifferentialExpressionEnabled = (exploreParams.annotation.type === 'group')
-  }
+  const availableDeClusterAnnotations = [
+    'All_Cells_UMAP--General_celltype',
+    'All_Cells_UMAP--cell_type__ontology_label',
+    'All_Cells_UMAP--milk_stage',
+    'Epithelial_Cells_UMAP--Epithelial_Cell_Subclusters',
+    'Epithelial_Cells_UMAP--General_celltype',
+    'Epithelial_Cells_UMAP--milk_stage'
+
+  ]
+  const clusterAnnotation =
+    `${exploreParams.cluster}--${exploreParams.annotation.name}`.replaceAll(' ', '_')
+  const isDifferentialExpressionEnabled = (
+    flags?.differential_expression_frontend &&
+    availableDeClusterAnnotations.includes(clusterAnnotation)
+  )
 
   const plotContainerClass = 'explore-plot-tab-content'
 
@@ -544,7 +554,6 @@ export default function ExploreDisplayTabs({
             <DifferentialExpressionPanel
               deGroup={deGroup}
               deGenes={deGenes}
-              deFileUrl={deFileUrl}
               searchGenes={searchGenes}
               exploreParamsWithDefaults={exploreParamsWithDefaults}
               exploreInfo={exploreInfo}
@@ -554,7 +563,6 @@ export default function ExploreDisplayTabs({
               setShowDeGroupPicker={setShowDeGroupPicker}
               setDeGenes={setDeGenes}
               setDeGroup={setDeGroup}
-              setDeFileUrl={setDeFileUrl}
               countsByLabel={countsByLabel}
             />
           </>

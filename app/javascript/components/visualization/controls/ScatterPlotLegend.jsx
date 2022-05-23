@@ -15,7 +15,6 @@ function getActivity(isActive) {
   return isActive ? 'active' : 'disabled'
 }
 
-
 /** Component for row in legend */
 function LegendEntry({
   label, numPoints, iconColor, correlations,

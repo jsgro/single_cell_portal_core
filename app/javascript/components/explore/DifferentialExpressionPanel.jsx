@@ -1,5 +1,5 @@
 
-import React from 'react'
+import React, { useState } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faArrowLeft, faTimes, faDownload, faInfoCircle } from '@fortawesome/free-solid-svg-icons'
 
@@ -20,13 +20,16 @@ function getAnnotationObject(exploreParamsWithDefaults, exploreInfo) {
 
 /** Differential expression panel shown at right in Explore tab */
 export default function DifferentialExpressionPanel({
-  deGroup, deGenes, deFileUrl, searchGenes,
-  exploreInfo, exploreParamsWithDefaults, setShowDeGroupPicker, setDeGenes, setDeGroup, setDeFileUrl,
+  deGroup, deGenes, searchGenes,
+  exploreInfo, exploreParamsWithDefaults, setShowDeGroupPicker, setDeGenes, setDeGroup,
   countsByLabel
 }) {
   const clusterName = exploreParamsWithDefaults?.cluster
   const bucketId = exploreInfo?.bucketId
   const annotation = getAnnotationObject(exploreParamsWithDefaults, exploreInfo)
+
+
+  const [deFileUrl, setDeFileUrl] = useState(null)
 
   return (
     <>
