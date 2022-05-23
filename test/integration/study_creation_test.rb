@@ -96,7 +96,7 @@ class StudyCreationTest < ActionDispatch::IntegrationTest
     seconds_slept = 60
     sleep seconds_slept
     sleep_increment = 15
-    max_seconds_to_sleep = 300
+    max_seconds_to_sleep = 600 # increasing to 10 min to allow for occasional OLS latency
     until ( example_files.values.all? { |e| ['parsed', 'failed'].include? e[:object].parse_status } ) do
       puts "After #{seconds_slept} seconds, " + (example_files.values.map { |e| "#{e[:name]} is #{e[:object].parse_status}"}).join(", ") + '.'
       if seconds_slept >= max_seconds_to_sleep
@@ -158,10 +158,9 @@ class StudyCreationTest < ActionDispatch::IntegrationTest
     group_email = sa_owner_group['groupEmail']
     workspace_acl = ApplicationController.firecloud_client.get_workspace_acl(study.firecloud_project, study.firecloud_workspace)
     group_acl = workspace_acl['acl'][group_email]
-    assert group_acl['accessLevel']  == 'OWNER', "Did not correctly set #{group_email} to 'OWNER'; #{group_acl}"
+    assert group_acl['accessLevel'] == 'OWNER', "Did not correctly set #{group_email} to 'OWNER'; #{group_acl}"
 
     # clean up
-    ApplicationController.firecloud_client.delete_workspace(study.firecloud_project, study.firecloud_workspace)
-    study.destroy
+    study.destroy_and_remove_workspace
   end
 end
