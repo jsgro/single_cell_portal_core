@@ -167,7 +167,10 @@ describe('getNewContextMap correctly assigns contexts', () => {
         isGene={true}
         isMultiGene={false}
         getPlotDimensions={() => [10, 10]}
-        dataCache={createCache()}/>
+        dataCache={createCache()}
+        setCountsByLabel={function() {}}
+        countsByLabel={[]}
+      />
     ))
 
     await screen.findByTestId('study-scatter-1')
