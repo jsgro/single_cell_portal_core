@@ -90,16 +90,22 @@ export default function ExploreDisplayTabs({
   // an API response
   const flags = getFeatureFlagsWithDefaults()
   const availableDeClusterAnnotations = [
-    'All_Cells_UMAP--General_celltype',
+    'All_Cells_UMAP--General_Celltype',
     'All_Cells_UMAP--cell_type__ontology_label',
     'All_Cells_UMAP--milk_stage',
     'Epithelial_Cells_UMAP--Epithelial_Cell_Subclusters',
-    'Epithelial_Cells_UMAP--General_celltype',
+    'Epithelial_Cells_UMAP--General_Celltype',
     'Epithelial_Cells_UMAP--milk_stage'
 
   ]
-  const clusterAnnotation =
-    `${exploreParams.cluster}--${exploreParams.annotation.name}`.replaceAll(' ', '_')
+  let clusterAnnotation = null
+  if (exploreParams?.cluster) {
+    clusterAnnotation = `${exploreParams.cluster}--${exploreParams.annotation.name}`.replaceAll(' ', '_')
+  } else if (exploreInfo) {
+    const annotList = exploreInfo.annotationList
+    clusterAnnotation = `${annotList.default_cluster}--${annotList.default_annotation.name}`.replaceAll(' ', '_')
+  }
+
   const isDifferentialExpressionEnabled = (
     flags?.differential_expression_frontend &&
     availableDeClusterAnnotations.includes(clusterAnnotation)

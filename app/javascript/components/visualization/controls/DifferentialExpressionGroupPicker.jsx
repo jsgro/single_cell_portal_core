@@ -73,8 +73,6 @@ export default function DeGroupPicker({
   bucketId, clusterName, annotation, deGenes, deGroup, setDeGroup, setDeGenes, setDeFileUrl,
   countsByLabel
 }) {
-  console.log('in DeGroupPicker, countsByLabel:')
-  console.log(countsByLabel)
   const groups = getLegendSortedLabels(countsByLabel)
 
   /** Update group in differential expression picker */
