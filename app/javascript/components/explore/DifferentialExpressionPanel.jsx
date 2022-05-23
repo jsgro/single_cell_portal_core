@@ -28,7 +28,6 @@ export default function DifferentialExpressionPanel({
   const bucketId = exploreInfo?.bucketId
   const annotation = getAnnotationObject(exploreParamsWithDefaults, exploreInfo)
 
-
   const [deFileUrl, setDeFileUrl] = useState(null)
 
   return (
@@ -69,7 +68,7 @@ export default function DifferentialExpressionPanel({
             />
           </a>
         </span>
-        <table className="table table-terra table-scp-compact">
+        <table data-testid="differential-expression-table" className="table table-terra table-scp-compact">
           <thead>
             <tr>
               <th>Name</th>
