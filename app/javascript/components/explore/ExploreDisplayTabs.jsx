@@ -103,7 +103,7 @@ export default function ExploreDisplayTabs({
     clusterAnnotation = `${exploreParams.cluster}--${exploreParams.annotation.name}`.replaceAll(' ', '_')
   } else if (exploreInfo) {
     const annotList = exploreInfo.annotationList
-    clusterAnnotation = `${annotList.default_cluster}--${annotList.default_annotation.name}`.replaceAll(' ', '_')
+    clusterAnnotation = `${annotList.default_cluster}--${annotList.default_annotation?.name}`.replaceAll(' ', '_')
   }
 
   const isDifferentialExpressionEnabled = (
@@ -354,7 +354,8 @@ export default function ExploreDisplayTabs({
                     showRelatedGenesIdeogram,
                     showViewOptionsControls,
                     scatterColor: exploreParamsWithDefaults.scatterColor,
-                    countsByLabel, setCountsByLabel,
+                    countsByLabel,
+                    setCountsByLabel,
                     dataCache
                   }}/>
               </div>
