@@ -114,7 +114,7 @@ export default function DifferentialExpressionPanel({
             })}
           </tbody>
         </table>
-        <a href="https://forms.gle/WJJ3mtsMgdkNkX4A7" target="_blank" title="Take a 1 minute survey">
+        <a href="https://forms.gle/qPGH5J9oFkurpbD76" target="_blank" title="Take a 1 minute survey">
           Help improve this new feature
         </a>
       </>
