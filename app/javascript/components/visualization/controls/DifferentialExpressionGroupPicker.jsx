@@ -62,8 +62,6 @@ function parseDeFile(tsvText) {
  *   pctNzReference: Percent non-zero, reference.  % of cells with non-zero expression in non-selected groups.
  **/
 async function fetchDeGenes(bucketId, deFilePath, numGenes=15) {
-  // TODO (SCP-4321): Perhaps refine logic for fetching file from bucket, e.g. perhaps add
-  //  token parameter to fetchFileFromBucket
   const data = await fetchBucketFile(bucketId, deFilePath)
   const tsvText = await data.text()
   const deGenes = parseDeFile(tsvText)
@@ -83,8 +81,6 @@ export default function DeGroupPicker({
   async function updateDeGroup(newGroup) {
     setDeGroup(newGroup)
 
-    // TODO (SCP-4321): Incorporate any updates to this general file name structure
-    // <cluster_name>--<annotation_name>--<group_name>--<annotation_scope>--<method>.tsv
     const deFileName = `${[
       clusterName,
       annotation.name,

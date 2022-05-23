@@ -76,17 +76,16 @@ export default function ExploreDisplayTabs({
   const [currentPointsSelected, setCurrentPointsSelected] = useState(null)
 
   // Differential expression settings
-  // TODO (SCP-4321): Try encapsulating these in a DE-specific component,
-  // to simplify this high-level ExploreDisplayTabs component
+  // TODO (SCP-4374): Integrate is_differential_expression_enabled from API
   const [showDeGroupPicker, setShowDeGroupPicker] = useState(false)
   const [deGenes, setDeGenes] = useState(null)
   const [deGroup, setDeGroup] = useState(null)
   const [showDifferentialExpressionPanel, setShowDifferentialExpressionPanel] = useState(deGenes !== null)
 
-  // hash of trace label names to the number of points in that trace
+  // Hash of trace label names to the number of points in that trace
   const [countsByLabel, setCountsByLabel] = useState(null)
 
-  // TODO (SCP-4321): In addition to feature flag, check
+  // TODO (SCP-4374): In addition to feature flag, check
   // is_differential_expression_enabled attribute from forthcoming update to
   // an API response
   const flags = getFeatureFlagsWithDefaults()
