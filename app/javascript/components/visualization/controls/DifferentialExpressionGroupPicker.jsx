@@ -89,7 +89,7 @@ export default function DeGroupPicker({
       .map(s => s.replaceAll(nonAlphaNumericRegex, '_'))
       .join('--') }.tsv`
 
-    const basePath = '_scp_internal/differential_expression/new_de_tmp/'
+    const basePath = '_scp_internal/differential_expression/'
     const deFilePath = `${basePath}${deFileName}`.replaceAll('/', '%2F')
 
     const deGenes = await fetchDeGenes(bucketId, deFilePath)
