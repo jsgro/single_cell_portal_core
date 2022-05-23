@@ -88,8 +88,11 @@ class AnnotationsControllerTest < ActionDispatch::IntegrationTest
     sign_in_and_update @user
     execute_http_request(:get, api_v1_study_annotations_path(@basic_study))
     assert_equal 3, json.length
-    assert_equal(['species', 'disease', 'foo'], json.map {|annot| annot['name']})
-    assert_equal({"name"=>"species", "type"=>"group", "values"=>["dog", "cat"], "scope"=>"study"}, json[0])
+    assert_equal(%w[species disease foo], json.map { |annot| annot['name'] })
+    expected_annotation = {
+      name: 'species', type: 'group', values: %w[dog cat], scope: 'study', is_differential_expression_enabled: false
+    }.with_indifferent_access
+    assert_equal(expected_annotation, json[0])
 
     execute_http_request(:get, api_v1_study_annotations_path(empty_study))
     assert_equal [], json
@@ -114,9 +117,12 @@ class AnnotationsControllerTest < ActionDispatch::IntegrationTest
     execute_http_request(:get,
                          cell_values_api_v1_study_annotation_path(@basic_study,
                                                                   'foo',
-                                                                  params: {annotation_scope: 'cluster',
-                                                                           annotation_type: 'group',
-                                                                           cluster: 'clusterA.txt'}))
+                                                                  params: {
+                                                                    annotation_scope: 'cluster',
+                                                                    annotation_type: 'group',
+                                                                    cluster: 'clusterA.txt'
+                                                                  })
+    )
     assert_equal json, "NAME\tfoo\nA\tbar\nB\tbar\nC\tbaz"
   end
 

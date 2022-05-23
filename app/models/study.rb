@@ -185,7 +185,7 @@ class Study
 
   has_many :cell_metadata do
     def by_name_and_type(name, type)
-      where(name: name, annotation_type: type).first
+      find_by(name: name, annotation_type: type)
     end
   end
 

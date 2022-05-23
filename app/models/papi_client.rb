@@ -1,13 +1,14 @@
 ##
 # PapiClient: a lightweight wrapper around the Google Cloud Genomics V2 Alpha API for submitting/reporting
-# scp-ingest-service jobs to ingest user-uploaded data to Firestore
+# scp-ingest-service jobs to ingest user-uploaded data
 #
 # requires: googleauth, google-api-client, FireCloudClient class (for bucket access)
 #
 # Author::  Jon Bistline  (mailto:bistline@broadinstitute.org)
-
-class PapiClient < Struct.new(:project, :service_account_credentials, :service)
+class PapiClient
   extend ServiceAccountManager
+
+  attr_accessor :project, :service_account_credentials, :service
 
   # Google authentication scopes necessary for running pipelines
   GOOGLE_SCOPES = %w(https://www.googleapis.com/auth/cloud-platform)
@@ -32,8 +33,7 @@ class PapiClient < Struct.new(:project, :service_account_credentials, :service)
   #   - +project+: (Path) => Absolute filepath to service account credentials
   # * *return*
   #   - +PapiClient+
-  def initialize(project=self.class.compute_project, service_account_credentials=self.class.get_primary_keyfile)
-
+  def initialize(project = self.class.compute_project, service_account_credentials = self.class.get_primary_keyfile)
     credentials = {
       scope: GOOGLE_SCOPES,
       json_key_io: File.open(service_account_credentials)

@@ -29,6 +29,7 @@ class CellMetadatum
   field :name, type: String
   field :annotation_type, type: String
   field :values, type: Array
+  field :is_differential_expression_enabled, default: false
 
   index({ name: 1, annotation_type: 1, study_id: 1 }, { unique: true, background: true })
   index({ study_id: 1 }, { unique: false, background: true })

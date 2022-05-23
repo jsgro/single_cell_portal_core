@@ -91,14 +91,14 @@ class FileParseServiceTest < ActiveSupport::TestCase
 
   test 'should prevent parsing coordinate label file after cluster deletes' do
     @cluster_file = FactoryBot.create(:cluster_file,
-                                                  name: 'clusterA.txt',
-                                                  study: @basic_study,
-                                                  cell_input: {
-                                                    x: [1, 4 ,6],
-                                                    y: [7, 5, 3],
-                                                    cells: ['A', 'B', 'C']
-                                                  },
-                                                  annotation_input: [{name: 'foo', type: 'group', values: ['bar', 'bar', 'baz']}])
+                                      name: 'clusterA.txt',
+                                      study: @basic_study,
+                                      cell_input: {
+                                        x: [1, 4 ,6],
+                                        y: [7, 5, 3],
+                                        cells: ['A', 'B', 'C']
+                                      },
+                                      annotation_input: [{name: 'foo', type: 'group', values: ['bar', 'bar', 'baz']}])
 
     # don't use factory bot as we want to test parsing logic
     @coordinate_file = StudyFile.create(file_type: 'Coordinate Labels', name: 'coordinate_labels_2.txt', study_id: @basic_study.id,

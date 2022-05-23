@@ -146,7 +146,8 @@ class AnnotationVizService
         name: annot.name,
         type: annot.annotation_type,
         values: sanitize_values_array(annot.values, annot.annotation_type),
-        scope: is_viewable ? 'study' : 'invalid'
+        scope: is_viewable ? 'study' : 'invalid',
+        is_differential_expression_enabled: annot.is_differential_expression_enabled
       }
     end
   end

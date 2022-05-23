@@ -150,6 +150,11 @@ class StudyFileBundle
     self.original_file_list.map {|file| file['file_type']}
   end
 
+  # get a specific bundled file, by file_type
+  def bundled_file_by_type(file_type)
+    bundled_files.detect { |file| file.file_type == file_type }
+  end
+
   # determine if this is a completed bundle
   def completed?
     child_files = self.bundled_files
