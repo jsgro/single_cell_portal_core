@@ -353,8 +353,9 @@ export default function ExploreDisplayTabs({
                     plotPointsSelected,
                     showRelatedGenesIdeogram,
                     showViewOptionsControls,
-                    dataCache,
-                    countsByLabel, setCountsByLabel
+                    scatterColor: exploreParamsWithDefaults.scatterColor,
+                    countsByLabel, setCountsByLabel,
+                    dataCache
                   }}/>
               </div>
             }

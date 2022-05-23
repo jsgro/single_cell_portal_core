@@ -8,9 +8,11 @@ module Api
         [:index, :show, :file_info]
       end
 
+      before_action :set_study_id_param
       before_action :authenticate_api_user!
       before_action :set_study, except: [:index, :create]
-      before_action :check_study_permission, except: [:index, :create, :generate_manifest]
+      before_action :check_study_detached, except: [:index, :create]
+      before_action :check_study_edit_permission, except: [:index, :create, :generate_manifest]
       before_action :check_study_view_permission, only: [:generate_manifest]
 
       respond_to :json
@@ -729,23 +731,11 @@ module Api
 
       private
 
-      def set_study
-        # enable either id or accession as url param
-        @study = Study.any_of({accession: params[:id]},{id: params[:id]}).first
-        if @study.nil? || @study.queued_for_deletion?
-          head 404 and return
-        elsif @study.detached?
-          head 410 and return
-        end
-      end
-
-      def check_study_permission
-        head 403 unless @study.can_edit?(current_api_user)
-      end
-
-      # checks the view permissions, either for the current_api_user or a totat, if given
-      def check_study_view_permission
-        head 403 unless (@study.public || @study.can_view?(current_api_user))
+      # copy the 'id' param to 'study_id' so that it can be compatible with StudyAware concern
+      # note that renaming the parameter in routes.rb with 'param: study_id' would result in
+      # nested routes getting that parameter as 'study_study_id'
+      def set_study_id_param
+        params[:study_id] = params[:id]
       end
 
       # study params list

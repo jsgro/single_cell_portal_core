@@ -1,10 +1,12 @@
 ##
 # API client bindings for retrieving information about Terra Data Repo datasets/snapshots/schemas from their API
 ##
-class DataRepoClient < Struct.new(:access_token, :api_root, :storage, :expires_at, :service_account_credentials)
+class DataRepoClient
   extend ServiceAccountManager
   include GoogleServiceClient
   include ApiHelpers
+
+  attr_accessor :access_token, :api_root, :storage, :expires_at, :service_account_credentials
 
   # Google authentication scopes necessary for querying TDR API
   GOOGLE_SCOPES = %w(openid email profile https://www.googleapis.com/auth/devstorage.read_only)
@@ -32,7 +34,7 @@ class DataRepoClient < Struct.new(:access_token, :api_root, :storage, :expires_a
   #   - +service_account_key+: (String, Pathname) => Path to service account JSON keyfile
   # * *return*
   #   - +DataRepoClient+ object
-  def initialize(service_account=self.class.get_read_only_keyfile)
+  def initialize(service_account = self.class.get_read_only_keyfile)
     # GCS storage driver attributes
     storage_attr = {
       project: self.class.compute_project,

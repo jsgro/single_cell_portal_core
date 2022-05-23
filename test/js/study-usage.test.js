@@ -42,7 +42,7 @@ describe('Usage info for a given study', () => {
     }
     render(<StudyUsageInfo study={study}/>)
     await waitForElementToBeRemoved(() => screen.getByTestId('study-usage-spinner'))
-    expect(fetchUsageInfo).toHaveBeenLastCalledWith('fakeId4')
+    expect(fetchUsageInfo).toHaveBeenLastCalledWith('SCP12')
 
     expect(mockPlotlyReact).toHaveBeenLastCalledWith('study-usage-graph-2', [{
       type: 'bar',

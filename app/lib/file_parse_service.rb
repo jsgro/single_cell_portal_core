@@ -2,7 +2,7 @@
 # also includes option return status object when being called from Api::V1::StudyFilesController
 class FileParseService
   # * *params*
-  #   - +study_file+      (StudyFile) => File being parsed
+  #   - +study_file+       (StudyFile) => File being parsed
   #   - +study+           (Study) => Study to which StudyFile belongs
   #   - +user+            (User) => User initiating parse action (for email delivery)
   #   - +reparse+         (Boolean) => Control for deleting existing data when initiating parse (default: false)

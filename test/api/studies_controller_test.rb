@@ -47,6 +47,11 @@ class StudiesControllerTest < ActionDispatch::IntegrationTest
       end
     end
 
+    # ensure we can get study by accession
+    execute_http_request(:get, "/single_cell/api/v1/studies/#{@study.accession}")
+    assert_response :success
+    assert_equal @study.accession, json['accession']
+
     # ensure other users cannot access study
     sign_in_and_update(@user_2)
     execute_http_request(:get, api_v1_study_path(@study), user: @user_2)

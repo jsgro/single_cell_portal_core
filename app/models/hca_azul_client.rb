@@ -1,7 +1,9 @@
 # Query Human Cell Atlas Azul service for metadata associated with both experimental and analysis data
 # No ServiceAccountManager or GoogleServiceClient includes as all requests are unauthenticated for public data
-class HcaAzulClient < Struct.new(:api_root)
+class HcaAzulClient
   include ApiHelpers
+
+  attr_accessor :api_root
 
   GOOGLE_SCOPES = %w[openid email profile].freeze
   BASE_URL = 'https://service.azul.data.humancellatlas.org'.freeze
@@ -32,7 +34,6 @@ class HcaAzulClient < Struct.new(:api_root)
   # * *return*
   #   - +HcaAzulClient+ object
   def initialize
-    super
     self.api_root = BASE_URL
   end
 

@@ -1,26 +1,30 @@
 ##
 # PapiClient: a lightweight wrapper around the Google Cloud Genomics V2 Alpha API for submitting/reporting
-# scp-ingest-service jobs to ingest user-uploaded data to Firestore
+# scp-ingest-service jobs to ingest user-uploaded data
 #
 # requires: googleauth, google-api-client, FireCloudClient class (for bucket access)
 #
 # Author::  Jon Bistline  (mailto:bistline@broadinstitute.org)
-
-class PapiClient < Struct.new(:project, :service_account_credentials, :service)
+class PapiClient
   extend ServiceAccountManager
 
-   # Google authentication scopes necessary for running pipelines
+  attr_accessor :project, :service_account_credentials, :service
+
+  # Google authentication scopes necessary for running pipelines
   GOOGLE_SCOPES = %w(https://www.googleapis.com/auth/cloud-platform)
+
   # Network and sub-network names, if needed
   GCP_NETWORK_NAME = ENV['GCP_NETWORK_NAME']
   GCP_SUB_NETWORK_NAME = ENV['GCP_SUB_NETWORK_NAME']
-  # List of scp-ingest-pipeline actions and their allowed file types
+
+   # List of scp-ingest-pipeline actions and their allowed file types
   FILE_TYPES_BY_ACTION = {
-      ingest_expression: ['Expression Matrix', 'MM Coordinate Matrix'],
-      ingest_cluster: ['Cluster'],
-      ingest_cell_metadata: ['Metadata'],
-      ingest_subsample: ['Cluster']
-  }
+    ingest_expression: ['Expression Matrix', 'MM Coordinate Matrix'],
+    ingest_cluster: ['Cluster'],
+    ingest_cell_metadata: ['Metadata'],
+    ingest_subsample: ['Cluster'],
+    differential_expression: ['Cluster']
+  }.freeze
 
   # Default constructor for PapiClient
   #
@@ -29,11 +33,10 @@ class PapiClient < Struct.new(:project, :service_account_credentials, :service)
   #   - +project+: (Path) => Absolute filepath to service account credentials
   # * *return*
   #   - +PapiClient+
-  def initialize(project=self.class.compute_project, service_account_credentials=self.class.get_primary_keyfile)
-
+  def initialize(project = self.class.compute_project, service_account_credentials = self.class.get_primary_keyfile)
     credentials = {
-        scope: GOOGLE_SCOPES,
-        json_key_io: File.open(service_account_credentials)
+      scope: GOOGLE_SCOPES,
+      json_key_io: File.open(service_account_credentials)
     }
 
     authorizer = Google::Auth::ServiceAccountCredentials.make_creds(credentials)
@@ -50,7 +53,7 @@ class PapiClient < Struct.new(:project, :service_account_credentials, :service)
   # * *return*
   #   - (String) Service Account email
   def issuer
-    self.service.authorization.issuer
+    service.authorization.issuer
   end
 
   # Returns a list of all pipelines run in this project
@@ -67,7 +70,7 @@ class PapiClient < Struct.new(:project, :service_account_credentials, :service)
   #   - (Google::Apis::ClientError) =>  The request is invalid and should not be retried without modification
   #   - (Google::Apis::AuthorizationError) => Authorization is required
   def list_pipelines(page_token: nil)
-    self.service.list_project_operations("projects/#{self.project}/operations", page_token: page_token)
+    service.list_project_operations("projects/#{project}/operations", page_token: page_token)
   end
 
   # Runs a pipeline.  Will call sub-methods to instantiate required objects to pass to
@@ -78,6 +81,8 @@ class PapiClient < Struct.new(:project, :service_account_credentials, :service)
   #   - +user+ (User) => User performing ingest action
   #   - +action+ (String) => Action that is being performed, maps to Ingest pipeline action
   #     (e.g. 'ingest_cell_metadata', 'subsample')
+  #   - +params_object+ (Class) => Class containing parameters for PAPI job (like DifferentialExpressionParameters)
+  #                                must implement :to_options_array method
   #
   # * *return*
   #   - (Google::Apis::GenomicsV2alpha1::Operation)
@@ -86,27 +91,28 @@ class PapiClient < Struct.new(:project, :service_account_credentials, :service)
   #   - (Google::Apis::ServerError) => An error occurred on the server and the request can be retried
   #   - (Google::Apis::ClientError) =>  The request is invalid and should not be retried without modification
   #   - (Google::Apis::AuthorizationError) => Authorization is required
-  def run_pipeline(study_file: , user:, action:)
+  def run_pipeline(study_file: , user:, action:, params_object: nil)
     study = study_file.study
     accession = study.accession
-    resources = self.create_resources_object(regions: ['us-central1'])
-    command_line = self.get_command_line(study_file: study_file, action: action, user_metrics_uuid: user.metrics_uuid)
+    resources = create_resources_object(regions: ['us-central1'])
+    command_line = get_command_line(study_file: study_file, action: action, user_metrics_uuid: user.metrics_uuid,
+                                    params_object: params_object)
     labels = {
-        study_accession: accession,
-        user_id: user.id.to_s,
-        file_id: study_file.id.to_s,
-        action: action,
-        docker_image: AdminConfiguration.get_ingest_docker_image
+      study_accession: accession,
+      user_id: user.id.to_s,
+      file_id: study_file.id.to_s,
+      action: action,
+      docker_image: AdminConfiguration.get_ingest_docker_image
     }
-    environment = self.set_environment_variables
-    action = self.create_actions_object(commands: command_line, environment: environment)
-    pipeline = self.create_pipeline_object(actions: [action], environment: environment, resources: resources)
-    pipeline_request = self.create_run_pipeline_request_object(pipeline: pipeline, labels: labels)
+    environment = set_environment_variables
+    action = create_actions_object(commands: command_line, environment: environment)
+    pipeline = create_pipeline_object(actions: [action], environment: environment, resources: resources)
+    pipeline_request = create_run_pipeline_request_object(pipeline: pipeline, labels: labels)
     Rails.logger.info "Request object sent to Google Pipelines API (PAPI), excluding 'environment' parameters:"
     sanitized_pipeline_request = pipeline_request.to_h[:pipeline].except(:environment)
     sanitized_pipeline_request[:actions] = sanitized_pipeline_request[:actions][0].except(:environment)
     Rails.logger.info sanitized_pipeline_request.to_yaml
-    self.service.run_pipeline(pipeline_request, quota_user: user.id.to_s)
+    service.run_pipeline(pipeline_request, quota_user: user.id.to_s)
   end
 
   # Get an existing pipeline run
@@ -120,7 +126,7 @@ class PapiClient < Struct.new(:project, :service_account_credentials, :service)
   #   - (Google::Apis::GenomicsV2alpha1::Operation)
   def get_pipeline(name: , fields: nil, user: nil)
     quota_user = user.present? ? user.id.to_s : nil
-    self.service.get_project_operation(name, fields: fields, quota_user: quota_user)
+    service.get_project_operation(name, fields: fields, quota_user: quota_user)
   end
 
   # Create a run pipeline request object to send to service.run_pipeline
@@ -133,8 +139,8 @@ class PapiClient < Struct.new(:project, :service_account_credentials, :service)
   #   - (Google::Apis::GenomicsV2alpha1::RunPipelineRequest)
   def create_run_pipeline_request_object(pipeline:, labels: {})
     Google::Apis::GenomicsV2alpha1::RunPipelineRequest.new(
-        pipeline: pipeline,
-        labels: labels
+      pipeline: pipeline,
+      labels: labels
     )
   end
 
@@ -150,10 +156,10 @@ class PapiClient < Struct.new(:project, :service_account_credentials, :service)
   #   - (Google::Apis::GenomicsV2alpha1::Pipeline)
   def create_pipeline_object(actions:, environment:, resources:, timeout: nil)
     Google::Apis::GenomicsV2alpha1::Pipeline.new(
-        actions: actions,
-        environment: environment,
-        resources: resources,
-        timeout: timeout
+      actions: actions,
+      environment: environment,
+      resources: resources,
+      timeout: timeout
     )
   end
 
@@ -175,12 +181,12 @@ class PapiClient < Struct.new(:project, :service_account_credentials, :service)
   #   - (Google::Apis::GenomicsV2alpha1::Action)
   def create_actions_object(commands: [], environment: {}, flags: [], labels: {}, timeout: nil)
     Google::Apis::GenomicsV2alpha1::Action.new(
-        commands: commands,
-        environment: environment,
-        flags: flags,
-        image_uri: AdminConfiguration.get_ingest_docker_image,
-        labels: labels,
-        timeout: timeout
+      commands: commands,
+      environment: environment,
+      flags: flags,
+      image_uri: AdminConfiguration.get_ingest_docker_image,
+      labels: labels,
+      timeout: timeout
     )
   end
 
@@ -197,13 +203,13 @@ class PapiClient < Struct.new(:project, :service_account_credentials, :service)
   #   - (Hash) => Hash of required environment variables
   def set_environment_variables
     {
-        'DATABASE_HOST' => ENV['MONGO_INTERNAL_IP'],
-        'MONGODB_USERNAME' => 'single_cell',
-        'MONGODB_PASSWORD' => ENV['PROD_DATABASE_PASSWORD'],
-        'DATABASE_NAME' => Mongoid::Config.clients["default"]["database"],
-        'GOOGLE_PROJECT_ID' => self.project,
-        'SENTRY_DSN' => ENV['SENTRY_DSN'],
-        'BARD_HOST_URL' => Rails.application.config.bard_host_url
+      'DATABASE_HOST' => ENV['MONGO_INTERNAL_IP'],
+      'MONGODB_USERNAME' => 'single_cell',
+      'MONGODB_PASSWORD' => ENV['PROD_DATABASE_PASSWORD'],
+      'DATABASE_NAME' => Mongoid::Config.clients["default"]["database"],
+      'GOOGLE_PROJECT_ID' => project,
+      'SENTRY_DSN' => ENV['SENTRY_DSN'],
+      'BARD_HOST_URL' => Rails.application.config.bard_host_url
     }
   end
 
@@ -211,14 +217,15 @@ class PapiClient < Struct.new(:project, :service_account_credentials, :service)
   #
   # * *params*
   #   - regions: (Array<String>) => An array of GCP regions allowed for VM allocation
+  #   - vm: (Google::Apis::GenomicsV2alpha1::VirtualMachine) => Existing VM config to use, other than default
   #
   # * *return*
   #   - (Google::Apis::GenomicsV2alpha1::Resources)
-  def create_resources_object(regions:)
+  def create_resources_object(regions:, vm: nil)
     Google::Apis::GenomicsV2alpha1::Resources.new(
-         project_id: self.project,
-         regions: regions,
-         virtual_machine: self.create_virtual_machine_object
+      project_id: project,
+      regions: regions,
+      virtual_machine: vm.nil? ? create_virtual_machine_object : vm
     )
   end
 
@@ -234,10 +241,10 @@ class PapiClient < Struct.new(:project, :service_account_credentials, :service)
   #   - (Google::Apis::GenomicsV2alpha1::VirtualMachine)
   def create_virtual_machine_object(machine_type: 'n1-highmem-4', boot_disk_size_gb: 300, preemptible: false)
     virtual_machine = Google::Apis::GenomicsV2alpha1::VirtualMachine.new(
-        machine_type: machine_type,
-        preemptible: preemptible,
-        boot_disk_size_gb: boot_disk_size_gb,
-        service_account: Google::Apis::GenomicsV2alpha1::ServiceAccount.new(email: self.issuer, scopes: GOOGLE_SCOPES)
+      machine_type: machine_type,
+      preemptible: preemptible,
+      boot_disk_size_gb: boot_disk_size_gb,
+      service_account: Google::Apis::GenomicsV2alpha1::ServiceAccount.new(email: issuer, scopes: GOOGLE_SCOPES)
     )
     # assign correct network/sub-network if specified
     if GCP_NETWORK_NAME.present? && GCP_SUB_NETWORK_NAME.present?
@@ -252,16 +259,19 @@ class PapiClient < Struct.new(:project, :service_account_credentials, :service)
   # * *params*
   #   - +study_file+ (StudyFile) => StudyFile to be ingested
   #   - +action+ (String/Symbol) => Action to perform on ingest
+  #   - +params_object+ (Class) => Class containing parameters for PAPI job (like DifferentialExpressionParameters)
+  #                                must implement :to_options_array method
   #
   # * *return*
   #   - (Array) Command Line, in Docker "exec" format
   #
   # * *raises*
   #   - (ArgumentError) => The requested StudyFile and action do not correspond with each other, or cannot be run yet
-  def get_command_line(study_file:, action:, user_metrics_uuid:)
+  def get_command_line(study_file:, action:, user_metrics_uuid:, params_object: nil)
     validate_action_by_file(action, study_file)
     study = study_file.study
-    command_line = "python ingest_pipeline.py --study-id #{study.id} --study-file-id #{study_file.id} --user-metrics-uuid #{user_metrics_uuid} #{action}"
+    command_line = "python ingest_pipeline.py --study-id #{study.id} --study-file-id #{study_file.id} " \
+                   "--user-metrics-uuid #{user_metrics_uuid} #{action}"
     case action.to_s
     when 'ingest_expression'
       if study_file.file_type == 'Expression Matrix'
@@ -274,22 +284,34 @@ class PapiClient < Struct.new(:project, :service_account_credentials, :service)
                       " --gene-file #{genes_file.gs_url} --barcode-file #{barcodes_file.gs_url}"
       end
     when 'ingest_cell_metadata'
-      command_line += " --cell-metadata-file #{study_file.gs_url} --study-accession #{study.accession} --ingest-cell-metadata"
+      command_line += " --cell-metadata-file #{study_file.gs_url} --study-accession #{study.accession} " \
+                      "--ingest-cell-metadata"
       if study_file.use_metadata_convention
-        command_line += " --validate-convention --bq-dataset #{CellMetadatum::BIGQUERY_DATASET} --bq-table #{CellMetadatum::BIGQUERY_TABLE}"
+        command_line += " --validate-convention --bq-dataset #{CellMetadatum::BIGQUERY_DATASET} " \
+                        "--bq-table #{CellMetadatum::BIGQUERY_TABLE}"
       end
     when 'ingest_cluster'
       command_line += " --cluster-file #{study_file.gs_url} --ingest-cluster"
     when 'ingest_subsample'
       metadata_file = study.metadata_file
       command_line += " --cluster-file #{study_file.gs_url} --cell-metadata-file #{metadata_file.gs_url} --subsample"
+    when 'differential_expression'
+      command_line += " --study-accession #{study.accession}"
     end
 
-    # add optional command line arguments based on file type
-    optional_args = self.get_command_line_options(study_file, action)
+    # add optional command line arguments based on file type and action
+    if action.to_s == 'differential_expression'
+      unless params_object.present? && params_object.respond_to?(:to_options_array)
+        raise ArgumentError, "invalid params_object for differential_expression: #{params_object.inspect}"
+      end
+
+      optional_args = params_object.to_options_array
+    else
+      optional_args = get_command_line_options(study_file, action)
+    end
+
     # return an array of tokens (Docker expects exec form, which runs without a shell, so cannot be a single command)
-    exec_form = command_line.split + optional_args
-    exec_form
+    command_line.split + optional_args
   end
 
   # Assemble any optional command line options for ingest by file type

@@ -1,10 +1,12 @@
 ##
 # BigQueryClient: lightweight shim around Google::Cloud::BigQuery library to DRY up references to credentials/datasets
 
-class BigQueryClient < Struct.new(:project, :service_account_credentials, :client)
+class BigQueryClient
   extend ServiceAccountManager
 
-  def initialize(service_account=self.class.get_primary_keyfile, compute_project=self.class.compute_project)
+  attr_accessor :project, :service_account_credentials, :client
+
+  def initialize(service_account = self.class.get_primary_keyfile, compute_project = self.class.compute_project)
     Google::Cloud::Bigquery.configure do |config|
       config.project_id  = compute_project
       config.credentials = service_account
