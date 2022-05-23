@@ -1,5 +1,4 @@
 import React from 'react'
-// import Modal from 'react-bootstrap/lib/Modal'
 
 import Select from '~/lib/InstrumentedSelect'
 import { clusterSelectStyle } from '~/lib/cluster-utils'

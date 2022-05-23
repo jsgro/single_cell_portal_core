@@ -18,6 +18,16 @@ function getAnnotationObject(exploreParamsWithDefaults, exploreInfo) {
   })
 }
 
+/** Set up radio buttons to be all unchecked upon changing dropdown value */
+function initChecked(deGenes, checkedGene) {
+  const checked = {}
+  if (!deGenes) {return checked}
+  deGenes.forEach(deGene => {
+    checked[deGene.name] = checkedGene && checkedGene === deGene.name
+  })
+  return checked
+}
+
 /** Differential expression panel shown at right in Explore tab */
 export default function DifferentialExpressionPanel({
   deGroup, deGenes, searchGenes,
@@ -28,7 +38,14 @@ export default function DifferentialExpressionPanel({
   const bucketId = exploreInfo?.bucketId
   const annotation = getAnnotationObject(exploreParamsWithDefaults, exploreInfo)
 
+  const [checked, setChecked] = useState(initChecked(deGenes))
   const [deFileUrl, setDeFileUrl] = useState(null)
+
+  /** Check radio button such that changing group unchecks all buttons */
+  function changeRadio(event) {
+    const newChecked = initChecked(deGenes, event.target.value)
+    setChecked(newChecked)
+  }
 
   return (
     <>
@@ -93,8 +110,9 @@ export default function DifferentialExpressionPanel({
                       title="Click to view gene expression.  Arrow down (↓) and up (↑) to quickly scan."
                     ><input
                         type="radio"
-                        analytics-name="de-gene-link"
-                        name="selected-gene-differential-expression"
+                        checked={checked[deGene.name]}
+                        data-analytics-name="selected-gene-differential-expression"
+                        value={deGene.name}
                         onClick={event => {
                           searchGenes([deGene.name])
 
@@ -105,6 +123,8 @@ export default function DifferentialExpressionPanel({
                             event, deGene, speciesList, rank,
                             clusterName, annotation.name
                           )
+
+                          changeRadio(event)
                         }}/>
                       {deGene.name}</label></td>
                   <td>{deGene.log2FoldChange}</td>
