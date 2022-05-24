@@ -9,14 +9,18 @@ import React from 'react'
 import camelcaseKeys from 'camelcase-keys'
 import _compact from 'lodash/compact'
 import * as queryString from 'query-string'
-import { logJSFetchExceptionToSentry, logJSFetchErrorToSentry } from '~/lib/sentry-logging'
 
+import { logJSFetchExceptionToSentry, logJSFetchErrorToSentry } from '~/lib/sentry-logging'
+import getSCPContext from '~/providers/SCPContextProvider'
 import { getAccessToken } from '~/providers/UserProvider'
 import {
   logDownloadAuthorization, logCreateUserAnnotation
 } from './scp-api-metrics'
 import { logSearch, mapFiltersForLogging } from './search-metrics'
 import { showMessage } from '~/lib/MessageModal'
+
+
+const env = getSCPContext().environment
 
 // If true, returns mock data for all API responses.  Only for dev.
 let globalMock = false

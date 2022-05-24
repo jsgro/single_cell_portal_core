@@ -6,7 +6,7 @@ import { stringifyQuery, geneParamToArray, geneArrayToParam } from '~/lib/scp-ap
 import { getIdentifierForAnnotation, getAnnotationForIdentifier } from '~/lib/cluster-utils'
 import PlotOptions from '~/components/visualization/plot-options'
 const { DEFAULT_ROW_CENTERING } = PlotOptions
-import { logStudyGeneSearch } from '~/lib/metrics-api'
+import { logStudyGeneSearch } from '~/lib/search-metrics'
 
 
 const SPATIAL_GROUPS_EMPTY = '--'
