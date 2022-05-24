@@ -122,9 +122,12 @@ class ExpressionVizService
     viz_data = ClusterVizService.load_cluster_group_data_array_points(study, cluster, annotation, subsample,
       include_annotations: include_annotation, include_coords: include_coords)
 
-
+    # this is a poor proxy for a control list, but getting a map of all cells observed => genes will not scale
+    filtered_cells = filter_cells_for_gene(study, cells, genes[0]['name'])
     viz_data[:expression] = viz_data[:cells].map do |cell|
-      if consensus == 'median'
+      if !filtered_cells.include?(cell)
+        expression_score = nil # will default to dark grey, and read as "null" in the UI
+      elsif consensus == 'median'
         expression_score = calculate_median(genes, cell)
       elsif consensus == 'mean'
         expression_score = calculate_mean(genes, cell)
