@@ -18,6 +18,16 @@ jest.mock('components/visualization/InferCNVIdeogram', () => {
 })
 
 import { getEnabledTabs } from 'components/explore/ExploreDisplayTabs'
+import React from 'react'
+import { render, screen, waitForElementToBeRemoved } from '@testing-library/react'
+import '@testing-library/jest-dom/extend-expect'
+import * as Reach from '@reach/router'
+import jquery from 'jquery'
+
+import MockRouter from '../lib/MockRouter'
+import * as ScpApi from 'lib/scp-api'
+import ExploreView from 'components/explore/ExploreView'
+import { mockPerformance } from '../mock-performance'
 
 // mock explore info from a study
 const defaultExploreInfo = {
@@ -282,3 +292,50 @@ describe('explore tabs are activated based on study info and parameters', () => 
     expect(expectedResults).toEqual(getEnabledTabs(exploreInfo, exploreParams))
   })
 })
+
+beforeAll(() => {
+  global.$ = jquery
+  mockPerformance('')
+})
+// Note: tests that mock global.fetch must be cleared after every test
+afterEach(() => {
+  // Restores all mocks back to their original value
+  jest.restoreAllMocks()
+})
+
+
+describe('it hides gene search for studies with no genes', () => {
+  it('hides gene search for studies with no genes', async () => {
+    const routerNav = jest.spyOn(Reach, 'navigate')
+    const exploreSpy = jest.spyOn(ScpApi, 'fetchExplore')
+    exploreSpy.mockImplementation(() => ({
+      'inferCNVIdeogramFiles': null,
+      'bamBundleList': [],
+      'uniqueGenes': [],
+      'geneLists': [],
+      'annotationList': {
+        'default_cluster': 'foo',
+        'default_annotation': { name: 'bar', scope: 'study', type: 'group', values: ['a', 'b', 'c'] },
+        'annotations': [{ name: 'bar', scope: 'study', type: 'group', values: ['a', 'b', 'c'] }],
+        'clusters': ['foo'],
+        'subsample_thresholds': {}
+      },
+      'clusterGroupNames': ['foo'],
+      'spatialGroups': [],
+      'imageFiles': [],
+      'taxonNames': [],
+      'genes': [],
+      'clusterPointAlpha': 1,
+      'colorProfile': null,
+      'bucketId': 'fc-6e8a0a4d-6493-401c-b47c-1025a583f237'
+    }))
+
+    render(<MockRouter><ExploreView studyAccession='SCP101'/></MockRouter>)
+    await waitForElementToBeRemoved(() => screen.getByTestId('explore-spinner'))
+    // should set the geneList and the heatmapFit to 'both'
+    expect(routerNav).toHaveBeenLastCalledWith('?geneList=time_varying_genes&heatmapFit=both#study-visualize', { replace: true })
+    // the heatmap tab should have the description displayed
+    expect(screen.getByText('genes varying over time (SCP4 staging)')).toBeInTheDocument()
+  })
+})
+

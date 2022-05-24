@@ -146,12 +146,14 @@ export default function StudyGeneField({ genes, searchGenes, allGenes, speciesLi
     }
   }, [genes.join(',')])
 
+  const searchDisabled = !allGenes?.length
+
   return (
     <form className="gene-keyword-search gene-study-keyword-search form-horizontal" onSubmit={handleSearch}>
       <div className="flexbox align-center">
         <div className="input-group">
           <div className="input-group-append">
-            <Button type="button" data-analytics-name="gene-search-submit" onClick={handleSearch}>
+            <Button type="button" data-analytics-name="gene-search-submit" onClick={handleSearch} disabled={searchDisabled}>
               <FontAwesomeIcon icon={faSearch} />
             </Button>
           </div>
@@ -159,7 +161,7 @@ export default function StudyGeneField({ genes, searchGenes, allGenes, speciesLi
             components={{ DropdownIndicator: null }}
             inputValue={inputText}
             value={geneArray}
-            className="gene-keyword-search-input"
+            className={searchDisabled ? 'gene-keyword-search-input disabled' : 'gene-keyword-search-input'}
             isClearable
             isMulti
             isValidNewOption={() => false}
@@ -171,7 +173,8 @@ export default function StudyGeneField({ genes, searchGenes, allGenes, speciesLi
             // the default blur behavior removes any entered free text,
             // we want to instead auto-convert entered free text to a gene tag
             onBlur={syncGeneArrayToInputText}
-            placeholder={'Genes (e.g. "PTEN NF2")'}
+            placeholder={searchDisabled ? 'No expression data to search' : 'Genes (e.g. "PTEN NF2")'}
+            isDisabled={searchDisabled}
             styles={{
               // if more genes are entered than fit, use a vertical scrollbar
               // this is probably not optimal UX, but good enough for first release and monitoring
@@ -188,13 +191,13 @@ export default function StudyGeneField({ genes, searchGenes, allGenes, speciesLi
             }}
           />
         </div>
-        <label htmlFor="gene-list-upload"
+        {!searchDisabled && <label htmlFor="gene-list-upload"
           data-toggle="tooltip"
           className="icon-button"
           title="Upload a list of genes to search from a file">
           <input id="gene-list-upload" type="file" onChange={e => readGeneListFile(e.target.files[0])}/>
           <FontAwesomeIcon className="action fa-lg" icon={faFileUpload} />
-        </label>
+        </label>}
       </div>
       <Modal
         show={showEmptySearchModal}
