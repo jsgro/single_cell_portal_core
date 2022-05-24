@@ -1433,6 +1433,11 @@ class Study
     self.study_files.where(:file_type.in => ['Expression Matrix', 'MM Coordinate Matrix'])
   end
 
+  # get all processed (i.e. non-raw count) matrix files
+  def processed_expression_matrices
+    expression_matrices.any_of({ expression_file_info: nil }, { 'expression_file_info.is_raw_counts' => false })
+  end
+
   # helper method to directly access expression matrix file by name
   def expression_matrix_file(name)
     self.expression_matrices.find_by(name: name)

@@ -23,31 +23,40 @@ class Gene
 
   # concatenate all the necessary data_array objects and construct a hash of cell names => expression values
   def scores
-    cells = self.concatenate_data_arrays(self.cell_key, 'cells')
-    exp_values = self.concatenate_data_arrays(self.score_key, 'expression')
+    cells = observed_values('cells')
+    exp_values = observed_values('expression')
     Hash[cells.zip(exp_values)]
+  end
+
+  # return an array of all observed values, e.g. 'cells' or 'expression'
+  # used in both creating scores hash, and finding intersection between genes and clustering data
+  def observed_values(data_type)
+    case data_type
+    when 'cells'
+      concatenate_data_arrays(cell_key, data_type)
+    when 'expression'
+      concatenate_data_arrays(score_key, data_type)
+    else
+      []
+    end
   end
 
   # key to retrieve data arrays of cell names for this gene
   def cell_key
-    "#{self.name} Cells"
+    "#{name} Cells"
   end
 
   # key to retrieve data arrays of expression values for this gene
   def score_key
-    "#{self.name} Expression"
+    "#{name} Expression"
   end
 
   # concatenate data arrays of a given name/type in order
   def concatenate_data_arrays(array_name, array_type)
     query = {
-      name: array_name, array_type: array_type, linear_data_type: 'Gene', linear_data_id: self.id
+      name: array_name, array_type: array_type, linear_data_type: 'Gene', linear_data_id: id
     }
     DataArray.concatenate_arrays(query)
-  end
-
-  def autocomplete_label
-    self.gene_id.blank? ? self.name : "#{self.name} (#{self.gene_id})"
   end
 
   def taxon
@@ -62,9 +71,24 @@ class Gene
   # CLASS INSTANCE METHODS
   ##
 
+  # return a cursor mapping to all instances of a gene in a given study
+  # uses IDs rather than objects for better performance
+  # performs case-sensitive search as some studies may have multi-species data, and case is deterministic
+  def self.instances_from_study(study_id:, study_file_ids:, gene_name:)
+    Gene.where(study_id: study_id, :study_file_id.in => study_file_ids, name: gene_name)
+  end
+
   # find if a study has a given gene quickly for search gating
-  def self.study_has_gene?(study_id:, expr_matrix_ids:, gene_name:)
-    Gene.where(study_id: study_id, :study_file_id.in => expr_matrix_ids).any_of({name: gene_name},{searchable_name: gene_name.downcase}).exists?
+  # uses IDs rather than objects for better performance
+  def self.study_has_gene?(study_id:, study_file_ids:, gene_name:)
+    Gene.instances_from_study(study_id: study_id, study_file_ids: study_file_ids, gene_name: gene_name).exists?
+  end
+
+  # return a list of all cells observed for a given gene
+  def self.cells_observed_by_gene(study_id:, study_file_ids:, gene_name:)
+    Gene.instances_from_study(study_id: study_id, study_file_ids: study_file_ids, gene_name: gene_name).map do |gene|
+      gene.observed_values('cells')
+    end.reduce(:+)
   end
 
   # calculate a mean value for a given gene based on merged expression scores hash
