@@ -140,7 +140,7 @@ class ClusterGroup
     annot = annotation.with_indifferent_access
     if annot[:type] == 'group'
       CellMetadatum::GROUP_VIZ_THRESHOLD === annot[:values].count ||
-        study.override_viz_limit_annotations.include?(annot[:name])
+        self.study.override_viz_limit_annotations.include?(annot[:name])
     else
       true
     end
