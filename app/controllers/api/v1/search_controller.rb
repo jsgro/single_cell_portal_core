@@ -368,6 +368,15 @@ module Api
           end
         end
 
+        # Pin public DE pilot study to second row of home page default study list
+        # TODO (SCP-4374): Remove this block once frontend uses is_differential_expression_enabled
+        if Rails.env.production? && params[:terms].blank? && @facets.empty?
+          de_accession = "SCP1671"
+          differential_expression_study = @studies.find {|study| study.accession == de_accession}
+          @studies.delete_if {|study| study.accession == de_accession}
+          @studies.insert(1, differential_expression_study)
+        end
+
         @matching_accessions = @studies.map { |study| self.class.get_study_attribute(study, :accession) }
 
         logger.info "Final list of matching studies: #{@matching_accessions}"

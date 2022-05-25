@@ -31,7 +31,6 @@ import useResizeEffect from '~/hooks/useResizeEffect'
 import LoadingSpinner from '~/lib/LoadingSpinner'
 import { log } from '~/lib/metrics-api'
 import { getFeatureFlagsWithDefaults } from '~/providers/UserProvider'
-import DifferentialExpressionGroupPicker from '~/components/visualization/controls/DifferentialExpressionGroupPicker'
 import DifferentialExpressionPanel, { DifferentialExpressionPanelHeader } from './DifferentialExpressionPanel'
 
 const tabList = [
@@ -77,25 +76,40 @@ export default function ExploreDisplayTabs({
   const [currentPointsSelected, setCurrentPointsSelected] = useState(null)
 
   // Differential expression settings
-  // TODO (SCP-4321): Try encapsulating these in a DE-specific component,
-  // to simplify this high-level ExploreDisplayTabs component
+  // TODO (SCP-4374): Integrate is_differential_expression_enabled from API
   const [showDeGroupPicker, setShowDeGroupPicker] = useState(false)
   const [deGenes, setDeGenes] = useState(null)
   const [deGroup, setDeGroup] = useState(null)
+  const [showDifferentialExpressionPanel, setShowDifferentialExpressionPanel] = useState(deGenes !== null)
 
-  // For readability, until approach outlined in TODO above can be fully
-  // attempted, which will likely be tightly couple with UX changes suggested
-  // at 2022-05-06 demo.
-  const showDifferentialExpressionPanel = deGenes !== null
+  // Hash of trace label names to the number of points in that trace
+  const [countsByLabel, setCountsByLabel] = useState(null)
 
-  // TODO (SCP-4321): In addition to feature flag, check
+  // TODO (SCP-4374): In addition to feature flag, check
   // is_differential_expression_enabled attribute from forthcoming update to
   // an API response
-  let isDifferentialExpressionEnabled = false
   const flags = getFeatureFlagsWithDefaults()
-  if (flags?.differential_expression_frontend) {
-    isDifferentialExpressionEnabled = true
+  const availableDeClusterAnnotations = [
+    'All_Cells_UMAP--General_Celltype',
+    'All_Cells_UMAP--cell_type__ontology_label',
+    'All_Cells_UMAP--milk_stage',
+    'Epithelial_Cells_UMAP--Epithelial_Cell_Subclusters',
+    'Epithelial_Cells_UMAP--General_Celltype',
+    'Epithelial_Cells_UMAP--milk_stage'
+
+  ]
+  let clusterAnnotation = null
+  if (exploreParams?.cluster) {
+    clusterAnnotation = `${exploreParams.cluster}--${exploreParams.annotation.name}`.replaceAll(' ', '_')
+  } else if (exploreInfo) {
+    const annotList = exploreInfo.annotationList
+    clusterAnnotation = `${annotList.default_cluster}--${annotList.default_annotation?.name}`.replaceAll(' ', '_')
   }
+
+  const isDifferentialExpressionEnabled = (
+    flags?.differential_expression_frontend &&
+    availableDeClusterAnnotations.includes(clusterAnnotation)
+  )
 
   const plotContainerClass = 'explore-plot-tab-content'
 
@@ -301,6 +315,8 @@ export default function ExploreDisplayTabs({
                   }}
                   isCellSelecting={isCellSelecting}
                   plotPointsSelected={plotPointsSelected}
+                  countsByLabel={countsByLabel}
+                  setCountsByLabel={setCountsByLabel}
                 />
               </div>
             }
@@ -316,6 +332,8 @@ export default function ExploreDisplayTabs({
                   }}
                   isCellSelecting={isCellSelecting}
                   plotPointsSelected={plotPointsSelected}
+                  countsByLabel={countsByLabel}
+                  setCountsByLabel={setCountsByLabel}
                 />
               </div>
             }
@@ -336,6 +354,8 @@ export default function ExploreDisplayTabs({
                     showRelatedGenesIdeogram,
                     showViewOptionsControls,
                     scatterColor: exploreParamsWithDefaults.scatterColor,
+                    countsByLabel,
+                    setCountsByLabel,
                     dataCache
                   }}/>
               </div>
@@ -440,8 +460,9 @@ export default function ExploreDisplayTabs({
             }
             {showDifferentialExpressionPanel &&
               <DifferentialExpressionPanelHeader
-                toggleViewOptions={toggleViewOptions}
                 setDeGenes={setDeGenes}
+                setDeGroup={setDeGroup}
+                setShowDifferentialExpressionPanel={setShowDifferentialExpressionPanel}
               />
             }
           </div>
@@ -478,6 +499,18 @@ export default function ExploreDisplayTabs({
                   setAnnotationList={setAnnotationList}
                   studyAccession={studyAccession}/>
                 }
+                {isDifferentialExpressionEnabled &&
+                <>
+                  <button
+                    className="btn btn-primary"
+                    onClick={() => {
+                      setShowDifferentialExpressionPanel(true)
+                      setShowDeGroupPicker(true)
+                    }}
+                  >Differential expression</button>
+                  <br/><br/>
+                </>
+                }
                 <SubsampleSelector
                   annotationList={annotationList}
                   cluster={exploreParamsWithDefaults.cluster}
@@ -509,25 +542,6 @@ export default function ExploreDisplayTabs({
               exploreParams={exploreParamsWithDefaults}
               updateExploreParams={updateExploreParams}
               allGenes={exploreInfo ? exploreInfo.uniqueGenes : []}/>
-            {isDifferentialExpressionEnabled &&
-            <>
-              <button
-                className="btn btn-primary"
-                onClick={() => {setShowDeGroupPicker(true)}}
-              >Differential expression</button>
-              <br/><br/>
-            </>
-            }
-            {showDeGroupPicker &&
-            <>
-              <DifferentialExpressionGroupPicker
-                exploreInfo={exploreInfo}
-                setShowDeGroupPicker={setShowDeGroupPicker}
-                setDeGenes={setDeGenes}
-                setDeGroup={setDeGroup}
-              />
-            </>
-            }
             <button className="action"
               onClick={clearExploreParams}
               title="Reset all view options"
@@ -542,12 +556,23 @@ export default function ExploreDisplayTabs({
             </button>
           </>
           }
-          {showDifferentialExpressionPanel &&
+          {showDifferentialExpressionPanel && countsByLabel &&
+          <>
             <DifferentialExpressionPanel
               deGroup={deGroup}
               deGenes={deGenes}
               searchGenes={searchGenes}
+              exploreParamsWithDefaults={exploreParamsWithDefaults}
+              exploreInfo={exploreInfo}
+              clusterName={exploreParamsWithDefaults.cluster}
+              bucketId={exploreInfo?.bucketId}
+              annotation={exploreParamsWithDefaults.annotation}
+              setShowDeGroupPicker={setShowDeGroupPicker}
+              setDeGenes={setDeGenes}
+              setDeGroup={setDeGroup}
+              countsByLabel={countsByLabel}
             />
+          </>
           }
         </div>
       </div>
