@@ -12,7 +12,7 @@ import * as MetricsApi from 'lib/metrics-api'
 
 import '@testing-library/jest-dom/extend-expect'
 
-import { BASIC_PLOT_DATA, MANY_LABELS_MOCKS } from './scatter-plot.test-data'
+import { BASIC_PLOT_DATA, MANY_LABELS_MOCKS, COUNTS_BY_LABEL } from './scatter-plot.test-data'
 
 const CACHE_PERF_PARAMS = {
   legacyBackend: 0,
@@ -58,6 +58,8 @@ it('shows custom legend with default group scatter plot', async () => {
   const fakeLog = jest.spyOn(MetricsApi, 'log')
   fakeLog.mockImplementation(() => {})
 
+  const countsByLabel = COUNTS_BY_LABEL
+
   const { container } = render((
     <ScatterPlot studyAccession='SCP101'
       {...{
@@ -70,7 +72,9 @@ it('shows custom legend with default group scatter plot', async () => {
         subsample: 'all',
         consensus: null,
         genes: [],
-        dimensionProps: BASIC_DIMENSION_PROPS
+        dimensionProps: BASIC_DIMENSION_PROPS,
+        setCountsByLabel() {},
+        countsByLabel
       }}/>
   ))
 

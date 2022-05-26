@@ -1,18 +1,19 @@
-import React, { useState } from 'react'
-import Modal from 'react-bootstrap/lib/Modal'
+import React from 'react'
 
 import Select from '~/lib/InstrumentedSelect'
 import { clusterSelectStyle } from '~/lib/cluster-utils'
 import { newlineRegex } from '~/lib/validation/io'
 import { fetchBucketFile } from '~/lib/scp-api'
+import PlotUtils from '~/lib/plot'
+const { getLegendSortedLabels } = PlotUtils
 
 // Value to show in menu if user has not selected a group for DE
-const noneSelected = 'Select a group'
+const noneSelected = 'Select group'
 
 /** Takes array of strings, converts it to list options suitable for react-select */
 function getSimpleOptions(stringArray) {
   const assignLabelsAndValues = name => ({ label: name, value: name })
-  return [{ label: noneSelected, value: '' }].concat(stringArray.map(assignLabelsAndValues))
+  return stringArray.map(assignLabelsAndValues)
 }
 
 const nonAlphaNumericRegex = /\W/g
@@ -47,7 +48,7 @@ function parseDeFile(tsvText) {
  * Fetch array of differential expression gene objects
  *
  * @param {String} bucketId Identifier for study's Google bucket
- * @param {String} deFileName Name of differential expression file
+ * @param {String} deFilePath File path of differential expression file in Google bucket
  * @param {Integer} numGenes Number of genes to include in returned deGenes array
  *
  * @return {Array} deGenes Array of DE gene objects, each with properties:
@@ -55,82 +56,86 @@ function parseDeFile(tsvText) {
  *   score: Differential expression score assigned by Scanpy.
  *   log2FoldChange: Log-2 fold change.  How many times more expression (1 = 2, 2 = 4, 3 = 8).
  *   pval: p-value.  Statistical significance of the `score` value.
- *   pvalAdj: Adjusted p-value.  p-value adjusted for false discovery rate (FDR).
+ *   pvalAdj: Adjusted p-value.  p-value adjusted with Benjamini-Hochberg FDR correction
  *   pctNzGroup: Percent non-zero, group.  % of cells with non-zero expression in selected group.
  *   pctNzReference: Percent non-zero, reference.  % of cells with non-zero expression in non-selected groups.
  **/
-async function fetchDeGenes(bucketId, deFileName, numGenes=20) {
-  const deFilePath = `_scp-internal/differential-expression/${deFileName}`.replaceAll('/', '%2F')
-
-  // TODO (SCP-4321): Perhaps refine logic for fetching file from bucket, e.g. perhaps add
-  //  token parameter to fetchFileFromBucket
+async function fetchDeGenes(bucketId, deFilePath, numGenes=15) {
   const data = await fetchBucketFile(bucketId, deFilePath)
   const tsvText = await data.text()
   const deGenes = parseDeFile(tsvText)
-
   return deGenes.slice(0, numGenes)
 }
 
 /** Pick groups of cells for differential expression (DE) */
 export default function DeGroupPicker({
-  exploreInfo, setShowDeGroupPicker, setDeGroup, setDeGenes
+  bucketId, clusterName, annotation, deGenes, deGroup, setDeGroup, setDeGenes, setDeFileUrl,
+  countsByLabel
 }) {
-  const annotation = exploreInfo?.annotationList?.default_annotation
-  const groups = annotation?.values ?? []
+  const groups = getLegendSortedLabels(countsByLabel)
 
-  const [group, setGroup] = useState(noneSelected)
+  /** Update group in differential expression picker */
+  async function updateDeGroup(newGroup) {
+    setDeGroup(newGroup)
 
-  /** Update group in DE picker */
-  async function updateDeGroup() {
-    const bucketId = exploreInfo?.bucketId
-
-    // TODO (SCP-4321): Incorporate any updates to this general file name structure
-    // <cluster_name>--<annotation_name>--<group_name>--<annotation_scope>--<method>.tsv
     const deFileName = `${[
-      exploreInfo?.annotationList?.default_cluster,
+      clusterName,
       annotation.name,
-      group,
+      newGroup,
+      annotation.scope,
       'wilcoxon'
     ]
       .map(s => s.replaceAll(nonAlphaNumericRegex, '_'))
       .join('--') }.tsv`
 
-    const deGenes = await fetchDeGenes(bucketId, deFileName)
+    const basePath = '_scp_internal/differential_expression/'
+    const deFilePath = `${basePath}${deFileName}`.replaceAll('/', '%2F')
 
-    setDeGroup(group)
+    const deGenes = await fetchDeGenes(bucketId, deFilePath)
+
+    setDeGroup(newGroup)
     setDeGenes(deGenes)
 
-    setShowDeGroupPicker(false)
+    const baseUrl = 'https://storage.googleapis.com/download/storage/v1/'
+    const deFileUrl = `${baseUrl}/${bucketId}/o/${deFilePath}?alt=media`
+    setDeFileUrl(deFileUrl)
   }
 
-  // TODO (SCP-4321): Replace modal with dropdown at top of DE panel at right
-  // TODO (SCP-4321): Move ← icon to left
   return (
-    <Modal
-      id='de-group-picker-modal'
-      onHide={() => setShowDeGroupPicker(false)}
-      show={true}
-      animation={false}
-      bsSize='small'>
-      <Modal.Body>
+    <>
+      {!deGenes &&
         <div className="flexbox-align-center flexbox-column">
-          <span>Choose a group to compare to all other groups</span>
+          <span>Compare one group to all others</span>
           <Select
+            defaultMenuIsOpen
             options={getSimpleOptions(groups)}
             data-analytics-name="de-group-select"
             value={{
-              label: group === '' ? noneSelected : group,
-              value: group
+              label: deGroup === null ? noneSelected : deGroup,
+              value: deGroup
             }}
-            onChange={newGroup => setGroup(newGroup.value)}
+            onChange={newGroup => updateDeGroup(newGroup.value)}
             styles={clusterSelectStyle}
           />
         </div>
-      </Modal.Body>
-      <Modal.Footer>
-        <button className="btn btn-primary" onClick={() => {updateDeGroup()}}>OK</button>
-        <button className="btn terra-btn-secondary" onClick={() => setShowDeGroupPicker(false)}>Cancel</button>
-      </Modal.Footer>
-    </Modal>
+      }
+      {deGenes &&
+      <>
+        <Select
+          options={getSimpleOptions(groups)}
+          data-analytics-name="de-group-select"
+          value={{
+            label: deGroup === null ? noneSelected : deGroup,
+            value: deGroup
+          }}
+          onChange={newGroup => updateDeGroup(newGroup.value)}
+          styles={clusterSelectStyle}
+        />
+        <span>vs. all other groups</span>
+        <br/>
+        <br/>
+      </>
+      }
+    </>
   )
 }

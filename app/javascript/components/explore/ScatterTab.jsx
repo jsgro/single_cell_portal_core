@@ -16,11 +16,13 @@ const MAX_PLOTS = PLOTLY_CONTEXT_NAMES.length
   */
 export default function ScatterTab({
   exploreInfo, exploreParams, updateExploreParams, studyAccession, isGene, isMultiGene,
-  plotPointsSelected, isCellSelecting, showRelatedGenesIdeogram, showViewOptionsControls, scatterColor, dataCache
+  plotPointsSelected, isCellSelecting, showRelatedGenesIdeogram, showViewOptionsControls, scatterColor,
+  countsByLabel, setCountsByLabel, dataCache
 }) {
   // maintain the map of plotly contexts to the params that generated the corresponding visualization
   const plotlyContextMap = useRef({})
-  const { scatterParams, isTwoColumn, isMultiRow, firstRowSingleCol } = getScatterParams(exploreParams, isGene, isMultiGene)
+  const { scatterParams, isTwoColumn, isMultiRow, firstRowSingleCol } =
+    getScatterParams(exploreParams, isGene, isMultiGene)
 
   const imagesForClusters = {}
   exploreInfo.imageFiles.map(file => {
@@ -61,7 +63,8 @@ export default function ScatterTab({
           <div className={isTwoColRow ? 'col-md-6' : 'col-md-12'} key={key}>
             <ScatterPlot
               {...{
-                studyAccession, plotPointsSelected, isCellSelecting, updateScatterColor
+                studyAccession, plotPointsSelected, isCellSelecting, updateScatterColor,
+                countsByLabel, setCountsByLabel
               }}
               {...params}
               dataCache={dataCache}

@@ -185,7 +185,7 @@ class Study
 
   has_many :cell_metadata do
     def by_name_and_type(name, type)
-      where(name: name, annotation_type: type).first
+      find_by(name: name, annotation_type: type)
     end
   end
 
@@ -1034,7 +1034,11 @@ class Study
   # into existing endpoints, or perhaps a new endpoint, where the token is returned as part
   # of the API response.
   def has_streamable_files(user)
-    has_bam_files? || has_analysis_outputs?('infercnv', 'ideogram.js') || has_image_files? || user && user.feature_flag_for('differential_expression_frontend')
+    has_bam_files? ||
+    has_analysis_outputs?('infercnv', 'ideogram.js') ||
+    has_image_files? ||
+    user && user.feature_flag_for('differential_expression_frontend') ||
+    self.feature_flag_for('differential_expression_frontend')
   end
 
   # quick getter to return any cell metadata that can_visualize?

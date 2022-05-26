@@ -6,7 +6,7 @@ import '@testing-library/jest-dom/extend-expect'
 import Plotly from 'plotly.js-dist'
 
 import * as ScpApi from 'lib/scp-api'
-import { createCache } from 'components/explore//plot-data-cache'
+import { createCache } from 'components/explore/plot-data-cache'
 import ScatterTab, { getNewContextMap } from 'components/explore/ScatterTab'
 import * as ScpApiMetrics from 'lib/scp-api-metrics'
 
@@ -167,7 +167,10 @@ describe('getNewContextMap correctly assigns contexts', () => {
         isGene={true}
         isMultiGene={false}
         getPlotDimensions={() => [10, 10]}
-        dataCache={createCache()}/>
+        dataCache={createCache()}
+        setCountsByLabel={function() {}}
+        countsByLabel={[]}
+      />
     ))
 
     await screen.findByTestId('study-scatter-1')

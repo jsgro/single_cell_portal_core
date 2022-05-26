@@ -16,6 +16,7 @@ FactoryBot.define do
     }
     name { annotation_input[:name] }
     annotation_type { annotation_input[:type] }
+    is_differential_expression_enabled { false }
 
     after(:create) do |metadata, evaluator|
       FactoryBot.create(:data_array,

@@ -10,6 +10,13 @@ class ClusterGroup
 
   field :name, type: String
   field :cluster_type, type: String
+  # cell_annotations array of Hash objects with the following format
+  # {
+  #   name: name of annotation,
+  #   type: 'group' or 'numeric',
+  #   values: unique values, if group.
+  #   is_differential_expression_enabled: T/F if annotation has DE outputs, default is false
+  # }
   field :cell_annotations, type: Array
   field :domain_ranges, type: Hash
   field :points, type: Integer, default: 0
@@ -137,6 +144,8 @@ class ClusterGroup
 
   # determine if this annotation is "useful" to visualize
   def can_visualize_cell_annotation?(annotation)
+    return false if annotation.nil?
+
     annot = annotation.with_indifferent_access
     if annot[:type] == 'group'
       CellMetadatum::GROUP_VIZ_THRESHOLD === annot[:values].count ||

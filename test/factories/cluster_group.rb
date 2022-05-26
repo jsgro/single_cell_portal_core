@@ -36,7 +36,9 @@ FactoryBot.define do
         }
       end
       cell_annotations {
-        annotation_input.map { |a| { name: a[:name], type: a[:type], values: a[:values].uniq } }
+        annotation_input.map do |a|
+          { name: a[:name], type: a[:type], values: a[:values].uniq, is_differential_expression_enabled: false }
+        end
       }
       domain_ranges { range_input if range_input.any? }
       after(:create) do |cluster, evaluator|
