@@ -788,7 +788,7 @@ figcaption.ck-editor__editable {
 }
 
 .no-wrap {
-  whitespace: no-wrap;
+  white-space: nowrap;
 }
 
 .min-width-100 {
@@ -850,6 +850,14 @@ figcaption.ck-editor__editable {
   padding-inline-start: 0px;
   li {
     margin: 1em
+  }
+}
+
+.list-style-none-menu {
+  list-style: none;
+  padding-inline-start: 0px;
+  li {
+    margin: 0.4em
   }
 }
 

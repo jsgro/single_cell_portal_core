@@ -3,12 +3,12 @@ import { faAngleDoubleLeft, faAngleLeft, faAngleRight, faAngleDoubleRight } from
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 
 // Taken from https://codesandbox.io/s/github/tannerlinsley/react-table/tree/master/examples/pagination
-const PagingControl = ({ currentPage, totalPages, changePage, canPreviousPage, canNextPage }) => {
+const PagingControl = ({ currentPage, totalPages, changePage, canPreviousPage, canNextPage, zeroIndexed=false }) => {
   return (
     <div className="pagination">
       <button
         className="text-button"
-        onClick={() => {changePage(1)}}
+        onClick={() => {changePage(zeroIndexed ? 0 : 1)}}
         disabled={!canPreviousPage}>
         <FontAwesomeIcon icon={faAngleDoubleLeft}/>
       </button>
@@ -19,7 +19,7 @@ const PagingControl = ({ currentPage, totalPages, changePage, canPreviousPage, c
         <FontAwesomeIcon icon={faAngleLeft}/>
       </button>
       <span className="currentPage">
-          Page {currentPage} of {totalPages}
+          Page {zeroIndexed ? currentPage + 1 : currentPage} of {totalPages}
       </span>
       <button
         className="text-button"
@@ -29,7 +29,7 @@ const PagingControl = ({ currentPage, totalPages, changePage, canPreviousPage, c
       </button>
       <button
         className="text-button"
-        onClick={() => {changePage(totalPages)}}
+        onClick={() => {changePage(zeroIndexed ? totalPages - 1 : totalPages)}}
         disabled={!canNextPage}>
         <FontAwesomeIcon icon={faAngleDoubleRight}/>
       </button>
