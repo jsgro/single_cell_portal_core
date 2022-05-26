@@ -1202,8 +1202,13 @@ class Study
     cell_metadatum = self.cell_metadata.find_by(name: annotation_name)
     if cell_metadatum
       # we need to populate the 'values' array, since that will not have been done at ingest
-      uniq_vals = cell_metadatum.concatenate_data_arrays(annotation_name, 'annotations').uniq
-      cell_metadatum.update!(values: uniq_vals)
+      begin
+        uniq_vals = cell_metadatum.concatenate_data_arrays(annotation_name, 'annotations').uniq
+        cell_metadatum.update!(values: uniq_vals)
+      rescue => e
+        Rails.logger.error "Could not cache unique annotation values: #{e.message}"
+        Rails.logger.error "This means values array will be fetched on-demand for visualization requests"
+      end
     end
 
     updated_list = override_viz_limit_annotations

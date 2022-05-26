@@ -144,10 +144,15 @@ class AnnotationVizService
         study.override_viz_limit_annotations.include?(annot.name) ||
         all_names.exclude?(annot.name + '__ontology_label') &&
         CellMetadatum::GROUP_VIZ_THRESHOLD === annot.values.size
+      annot_values_array = annot.values
+      if study.override_viz_limit_annotations.include?(annot.name) && annot_values_array.length == 0
+        # we need to dynamically build the array
+        annot_values_array = annot.concatenate_data_arrays(annot.name, 'annotations').uniq
+      end
       {
         name: annot.name,
         type: annot.annotation_type,
-        values: sanitize_values_array(annot.values, annot.annotation_type),
+        values: sanitize_values_array(annot_values_array, annot.annotation_type),
         scope: is_viewable ? 'study' : 'invalid'
       }
     end
