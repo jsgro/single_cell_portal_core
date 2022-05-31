@@ -370,7 +370,7 @@ module Api
 
         # Pin public DE pilot study to second row of home page default study list
         # TODO (SCP-4374): Remove this block once frontend uses is_differential_expression_enabled
-        if Rails.env.production? && params[:terms].blank? && @facets.empty?
+        if Rails.env.production? && params[:terms].blank? && @facets.empty? && @selected_branding_group.nil?
           de_accession = "SCP1671"
           differential_expression_study = @studies.find {|study| study.accession == de_accession}
           @studies.delete_if {|study| study.accession == de_accession}
