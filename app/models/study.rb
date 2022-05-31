@@ -1354,6 +1354,19 @@ class Study
     all_cells.uniq # account for raw counts & processed matrix files repeating cell names
   end
 
+  # array of all cell names from non-raw count matrix files
+  # used in filtering distribution-based expression visualizations (violin/dot plots)
+  def processed_matrix_cells
+    file_ids = processed_expression_matrices.pluck(:id)
+    name_keys = processed_expression_matrices.pluck(:upload_file_name).map { |filename| "#{filename} Cells" }
+    query = {
+      :name.in => name_keys, array_type: 'cells', linear_data_type: 'Study',
+      linear_data_id: id, :study_file_id.in => file_ids, cluster_group_id: nil, subsample_annotation: nil,
+      subsample_threshold: nil
+    }
+    DataArray.concatenate_arrays(query)
+  end
+
   # return the cells found in a single expression matrix
   def expression_matrix_cells(study_file)
     query = {

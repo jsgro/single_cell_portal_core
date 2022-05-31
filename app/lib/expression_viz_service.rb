@@ -77,7 +77,7 @@ class ExpressionVizService
     else
       cells = cluster.concatenate_data_arrays('text', 'cells', subsample_threshold, subsample_annotation)
     end
-    filtered_cells = filter_cells_for_gene(study, cells, gene['name'])
+    filtered_cells = filter_cells_for_plot(study, cells)
     annotations = AnnotationVizService.get_annotation_as_hash(study, cluster, annotation, subsample_threshold)
 
     # use filtered cells & annotations hash to populate expression data plot
@@ -101,14 +101,14 @@ class ExpressionVizService
     # construct annotation key to load subsample data_arrays if needed, will be identical to params[:annotation]
     subsample_annotation = "#{annotation[:name]}--#{annotation[:type]}--#{annotation[:scope]}"
     cells = cluster.concatenate_data_arrays('text', 'cells', subsample_threshold, subsample_annotation)
-    filtered_cells = filter_cells_for_gene(study, cells, gene['name'])
-    annotations = AnnotationVizService.get_annotation_as_hash(study, cluster, annotation, subsample_threshold)
-    annotation_array = filtered_cells.map { |cell| annotations[cell] }
+    annotation_array = ClusterVizService.get_annotation_values_array(
+      study, cluster, annotation, cells, subsample_annotation, subsample_threshold
+    )
 
     {
       x: annotation_array,
-      y: filtered_cells.map { |cell| gene['scores'][cell].to_f.round(4) },
-      cells: filtered_cells,
+      y: cells.map { |cell| gene['scores'][cell].to_f.round(4) },
+      cells: cells,
       annotations: annotation_array
     }
   end
@@ -122,12 +122,8 @@ class ExpressionVizService
     viz_data = ClusterVizService.load_cluster_group_data_array_points(study, cluster, annotation, subsample,
       include_annotations: include_annotation, include_coords: include_coords)
 
-    # this is a poor proxy for a control list, but getting a map of all cells observed => genes will not scale
-    filtered_cells = filter_cells_for_gene(study, cells, genes[0]['name'])
     viz_data[:expression] = viz_data[:cells].map do |cell|
-      if !filtered_cells.include?(cell)
-        expression_score = nil # will default to dark grey, and read as "null" in the UI
-      elsif consensus == 'median'
+      if consensus == 'median'
         expression_score = calculate_median(genes, cell)
       elsif consensus == 'mean'
         expression_score = calculate_mean(genes, cell)
@@ -274,16 +270,11 @@ class ExpressionVizService
     viz_data
   end
 
-  # filter list of cells to only include those observed in the expression matrices for the requested
-  # study & gene to avoid over-inflation of 0 values due to nil.to_f => 0.0
-  def self.filter_cells_for_gene(study, cluster_cells, gene_name)
-    processed_matrix_ids = study.processed_expression_matrices.pluck(:id)
-    matrix_cells = Gene.cells_observed_by_gene(study_id: study.id, study_file_ids: processed_matrix_ids,
-                                               gene_name: gene_name)
-    cluster_cells & matrix_cells
+  # filter list of cells to only include those observed in the expression matrices for the requested study to
+  # avoid over-inflation of 0 values due to nil.to_f => 0.0
+  def self.filter_cells_for_plot(study, cluster_cells)
+    cluster_cells & study.processed_matrix_cells
   end
-
-
 
   # method to initialize containers for plotly by annotation values
   def self.initialize_plotly_objects_by_annotation(annotation)
@@ -330,12 +321,13 @@ class ExpressionVizService
     return '' if cluster.nil?
 
     cells = cluster.concatenate_data_arrays('text', 'cells')
+    filtered_cells = filter_cells_for_plot(study, cells)
     row_data = []
     case file_type
     when :gct
       headers = %w(Name Description)
-      cols = cells.size
-      cells.each do |cell|
+      cols = filtered_cells.size
+      filtered_cells.each do |cell|
         headers << cell
       end
       rows = []
@@ -343,13 +335,13 @@ class ExpressionVizService
         row = [gene['name'], ""]
         case collapse_by
         when 'z-score'
-          vals = Gene.z_score(gene['scores'], cells)
+          vals = Gene.z_score(gene['scores'], filtered_cells)
           row += vals
         when 'robust-z-score'
-          vals = Gene.robust_z_score(gene['scores'], cells)
+          vals = Gene.robust_z_score(gene['scores'], filtered_cells)
           row += vals
         else
-          cells.each do |cell|
+          filtered_cells.each do |cell|
             row << gene['scores'][cell].to_f
           end
         end
