@@ -77,6 +77,7 @@ class ExpressionVizService
     else
       cells = cluster.concatenate_data_arrays('text', 'cells', subsample_threshold, subsample_annotation)
     end
+    # filter list of cells down to only those observed in expression matrix
     filtered_cells = filter_cells_for_plot(study, cells)
     annotations = AnnotationVizService.get_annotation_as_hash(study, cluster, annotation, subsample_threshold)
 
