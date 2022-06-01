@@ -74,7 +74,8 @@ it('shows custom legend with default group scatter plot', async () => {
         genes: [],
         dimensionProps: BASIC_DIMENSION_PROPS,
         setCountsByLabel() {},
-        countsByLabel
+        countsByLabel,
+        updateExploreParams: () => {}
       }}/>
   ))
 

@@ -37,22 +37,22 @@ window.Plotly = Plotly
   * @param isCellSelecting whether plotly's lasso selection tool is enabled
   * @param plotPointsSelected {function} callback for when a user selects points on the plot, which corresponds
   *   to the plotly "points_selected" event
+  * @param hiddenTraces {String[]} labels to hide from the plot
   * @param canEdit {Boolean} whether the current user has permissions to edit this study
   */
 function RawScatterPlot({
   studyAccession, cluster, annotation, subsample, consensus, genes, scatterColor, dimensionProps,
   isAnnotatedScatter=false, isCorrelatedScatter=false, isCellSelecting=false, plotPointsSelected, dataCache,
   canEdit, expressionFilter=[0, 1],
-  countsByLabel, setCountsByLabel
+  countsByLabel, setCountsByLabel, hiddenTraces=[], updateExploreParams
 }) {
   const [isLoading, setIsLoading] = useState(false)
   const [bulkCorrelation, setBulkCorrelation] = useState(null)
   const [labelCorrelations, setLabelCorrelations] = useState(null)
   const [scatterData, setScatterData] = useState(null)
   // array of trace names (strings) to show in the graph
-  const [hiddenTraces, setHiddenTraces] = useState([])
   const [graphElementId] = useState(_uniqueId('study-scatter-'))
-  const { ErrorComponent, setShowError, setErrorContent } = useErrorMessage()
+  const { ErrorComponent, setShowError } = useErrorMessage()
   const [activeTraceLabel, setActiveTraceLabel] = useState(null)
   // map of label name to color hex codes, for any labels the user has picked a color for
   const [editedCustomColors, setEditedCustomColors] = useState({})
@@ -68,24 +68,24 @@ function RawScatterPlot({
    * plot.
    */
   function updateHiddenTraces(labels, value, applyToAll=false) {
-    let newShownTraces
+    let newHiddenTraces
     if (applyToAll) {
       // Handle multi-filter interaction
-      newShownTraces = (value ? labels : [])
+      newHiddenTraces = (value ? labels : [])
     } else {
       // Handle single-filter interaction
       const label = labels
-      newShownTraces = [...hiddenTraces]
+      newHiddenTraces = [...hiddenTraces]
 
-      if (value && !newShownTraces.includes(label)) {
-        newShownTraces.push(label)
+      if (value && !newHiddenTraces.includes(label)) {
+        newHiddenTraces.push(label)
       }
       if (!value) {
-        _remove(newShownTraces, thisLabel => {return thisLabel === label})
+        _remove(newHiddenTraces, thisLabel => {return thisLabel === label})
       }
     }
 
-    setHiddenTraces(newShownTraces)
+    updateExploreParams({ hiddenTraces: newHiddenTraces })
   }
 
   /** Get new, updated scatter object instance, and new layout */

@@ -95,6 +95,7 @@ describe('dataParams are appropriately managed on the url', () => {
       scatterColor: '',
       tab: '',
       expressionFilter: [0, 1],
+      hiddenTraces: [],
       userSpecified: {
         annotation: true,
         bamFileName: true,
