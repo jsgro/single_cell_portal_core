@@ -4,7 +4,7 @@ Developing on SCP without a Docker container, while less robust, opens up some f
 
 ## SETUP
 
-1.  Run `ruby -v` to ensure Ruby 2.6.6 (as of June 2021) is installed on your local machine.  If not, [install rbenv](https://github.com/rbenv/rbenv#installation), (if on MacOS `brew install rbenv`) then `rbenv init` to set up rbenv in your shell. Then close out terminal and reopen and run `rbenv install 2.6.6`.
+1.  Run `ruby -v` to ensure Ruby 2.6.6 (as of June 2021) is installed on your local machine.  If not, [install rbenv](https://github.com/rbenv/rbenv#installation), (if on MacOS `brew install rbenv`) then `rbenv init` to set up rbenv in your shell. Then close out terminal and reopen and run `rbenv install 2.6.9`. (version is current as of 06/01/2022)
 2.  Run `bundler -v` to ensure Bundler is installed.  If not, `gem install bundler`.
 3.  Make sure you have node installed, if not, [install via](https://nodejs.org/en/download/)
 4.  Run `yarn -v` to ensure yarn is installed. If not install yarn via `brew install yarn`
