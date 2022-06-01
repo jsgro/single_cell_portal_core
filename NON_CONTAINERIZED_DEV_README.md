@@ -6,19 +6,20 @@ Developing on SCP without a Docker container, while less robust, opens up some f
 
 1.  Run `ruby -v` to ensure Ruby 2.6.6 (as of June 2021) is installed on your local machine.  If not, [install rbenv](https://github.com/rbenv/rbenv#installation), (if on MacOS `brew install rbenv`) then `rbenv init` to set up rbenv in your shell. Then close out terminal and reopen and run `rbenv install 2.6.6`.
 2.  Run `bundler -v` to ensure Bundler is installed.  If not, `gem install bundler`.
-3.  Run `yarn -v` to ensure Yarn is install. If not install yarn via `brew install yarn`
-4.  `cd` to where you have the `single_cell_portal_core` Git repo checked out.
-5.  Run `bundle install`
-6.  Run `yarn install`
-7.  Run `ruby rails_local_setup.rb $BROAD_USERNAME`, where $BROAD_USERNAME is a something like eweitz -- this creates a file in config/secrets with commands to export needed environment variables
-8.  Run the source command the script outputs -- this will export those needed variables into the current shell
-9.  Add config/local_ssl/localhost.crt to your systems trusted certificates (on macOS, you can drag this file into the keychain access app, use the 'System' keychain, and the 'Certificates' category. Then you will likely need to open the newly added certificate in the keychain access app and update the 'Trust' setting to be 'Always Trust' rather than 'Use System Defaults')
-10.  Run `rails s`
-11.  (optional, for live reload) In a separate terminal, run bin/webpack-dev-server
-12. (needed if you are working on functionality that involves delayed jobs).
+3.  Make sure you have node installed, if not, [install via](https://nodejs.org/en/download/)
+4.  Run `yarn -v` to ensure yarn is installed. If not install yarn via `brew install yarn`
+5.  `cd` to where you have the `single_cell_portal_core` Git repo checked out.
+6.  Run `bundle install`
+7.  Run `yarn install`
+8.  Run `ruby rails_local_setup.rb $BROAD_USERNAME`, where $BROAD_USERNAME is a something like eweitz -- this creates a file in config/secrets with commands to export needed environment variables
+9.  Run the source command the script outputs -- this will export those needed variables into the current shell
+10.  Add config/local_ssl/localhost.crt to your systems trusted certificates (on macOS, you can drag this file into the keychain access app, use the 'System' keychain, and the 'Certificates' category. Then you will likely need to open the newly added certificate in the keychain access app and update the 'Trust' setting to be 'Always Trust' rather than 'Use System Defaults')
+11.  Run `rails s`
+12.  (optional, for live reload) In a separate terminal, run bin/webpack-dev-server
+13. (needed if you are working on functionality that involves delayed jobs).
     * In another terminal, run the source command output in step 7
     * run `rails jobs:work`
-13.  You're all set!  You can now go to https://localhost:3000 and see the website.
+14.  You're all set!  You can now go to https://localhost:3000 and see the website.
 
 ## REGULAR DEVELOPMENT
 Adding `source <<path-to-single-cell-portal-core>>/config/secrets/.source_env.bash` to your .bash_profile will source the secrets read from vault to each new shell, saving you the trouble of rerunning the setup process every time you open a new shell.
