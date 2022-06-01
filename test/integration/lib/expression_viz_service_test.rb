@@ -352,4 +352,23 @@ class ExpressionVizServiceTest < ActiveSupport::TestCase
     expected = {:annotations=>["dog", "cat", "dog"], :cells=>["A", "B", "C"], :x=>[0.0, 3.0, 1.5], :y=>[0.0, 0.0, 8.0]}
     assert_equal expected, viz_data
   end
+
+  test 'should filter cells for plot' do
+    study = FactoryBot.create(:detached_study,
+                              name_prefix: 'Filter test',
+                              user: @user,
+                              test_array: @@studies_to_clean)
+    matrix = FactoryBot.create(:study_file,
+                               name: 'dense.txt',
+                               file_type: 'Expression Matrix',
+                               study: study)
+    # we have to manually create the "all cells" array as we don't have a Factory for this yet
+    DataArray.create!(name: 'dense.txt Cells', array_type: 'cells', linear_data_type: 'Study', linear_data_id: study.id,
+                      values: %w[A b c], study_id: study.id, study_file_id: matrix.id, cluster_name: 'dense.txt Cells',
+                      cluster_group_id: nil, array_index: 0, subsample_annotation: nil, subsample_threshold: nil)
+
+    study.reload
+    filtered_cells = ExpressionVizService.filter_cells_for_plot(study, %w[A B C])
+    assert_equal %w[A], filtered_cells
+  end
 end
