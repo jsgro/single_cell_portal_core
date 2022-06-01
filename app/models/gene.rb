@@ -29,7 +29,6 @@ class Gene
   end
 
   # return an array of all observed values, e.g. 'cells' or 'expression'
-  # used in both creating scores hash, and finding intersection between genes and clustering data
   def observed_values(data_type)
     case data_type
     when 'cells'
