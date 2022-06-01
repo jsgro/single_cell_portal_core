@@ -17,6 +17,9 @@ class DifferentialExpressionService
   def self.run_differential_expression_on_default(study_accession, user: nil)
     study = Study.find_by(accession: study_accession)
     validate_study(study)
+    raise ArgumentError, "#{study.accession} has no default cluster" if study.default_cluster.blank?
+    raise ArgumentError, "#{study.accession} has no default annotation" if study.default_annotation.blank?
+
     annotation_name, annotation_type, annotation_scope = study.default_annotation.split('--')
     annotation = {
       annotation_name: annotation_name,
@@ -36,6 +39,9 @@ class DifferentialExpressionService
   #
   # * *yields*
   #   - (IngestJob) => Differential expression job in PAPI for each valid cluster/annotation combination
+  #
+  # * *returns*
+  #   - (Integer) => Number of DE jobs yielded
   #
   # * *raises*
   #   - (ArgumentError) => if requested study cannot run any DE jobs
@@ -89,7 +95,7 @@ class DifferentialExpressionService
 
           annotation_params = annotation.deep_dup # make a copy so we don't lose the association next time we check
           annotation_params.delete(:cluster_file_id)
-          job_identifier = "#{study_accession}: #{cluster_file.name} (#{annotation_params})"
+          job_identifier = "#{study_accession}: #{cluster_file.name} (#{annotation_params.values.join('--')})"
           log_message "Checking DE job for #{job_identifier}"
           DifferentialExpressionService.run_differential_expression_job(
             cluster_file, study, requested_user, **annotation_params
@@ -102,6 +108,7 @@ class DifferentialExpressionService
       end
     end
     log_message "#{study_accession} yielded #{job_count} differential expression jobs"
+    job_count
   end
 
   # handle setting up and launching a differential expression job
@@ -204,8 +211,6 @@ class DifferentialExpressionService
     raise ArgumentError, 'Requested study does not exist' if study.nil?
     raise ArgumentError, "#{study.accession} is not public" unless study.public?
     raise ArgumentError, "#{study.accession} is not initialized" unless study.initialized?
-    raise ArgumentError, "#{study.accession} has no default cluster" if study.default_cluster.blank?
-    raise ArgumentError, "#{study.accession} has no default annotation" if study.default_annotation.blank?
   end
 
   # shortcut to log to STDOUT and Rails log simultaneously
