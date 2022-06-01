@@ -123,8 +123,12 @@ class ExpressionVizService
     viz_data = ClusterVizService.load_cluster_group_data_array_points(study, cluster, annotation, subsample,
       include_annotations: include_annotation, include_coords: include_coords)
 
+    filtered_cells = filter_cells_for_plot(study, viz_data[:cells])
+
     viz_data[:expression] = viz_data[:cells].map do |cell|
-      if consensus == 'median'
+      if !filtered_cells.include?(cell)
+        expression_score = nil
+      elsif consensus == 'median'
         expression_score = calculate_median(genes, cell)
       elsif consensus == 'mean'
         expression_score = calculate_mean(genes, cell)
@@ -164,66 +168,32 @@ class ExpressionVizService
     # construct annotation key to load subsample data_arrays if needed, will be identical to params[:annotation]
     subsample_annotation = "#{annotation[:name]}--#{annotation[:type]}--#{annotation[:scope]}"
     # grab all cells present in the cluster, and use as keys to load expression scores
-    # if a cell is not present for the gene, score gets set as 0.0
+    # if a cell is not present for the gene, score gets set as 0.0 unless not observed in expression matrix
     # will check if there are more than SUBSAMPLE_THRESHOLD cells present in the cluster, and subsample accordingly
     # values hash will be assembled differently depending on annotation scope (cluster-based is array, study-based is a hash)
-    cells = cluster.concatenate_data_arrays('text', 'cells', subsample_threshold, subsample_annotation)
-
-    case annotation[:scope]
-    when 'cluster'
-      annotations = AnnotationVizService.sanitize_values_array(
-        cluster.concatenate_data_arrays(annotation[:name], 'annotations', subsample_threshold, subsample_annotation),
-        annotation[:type]
-      )
-      cells.each_with_index do |cell, index|
-        values[annotations[index]][:annotations] << annotations[index]
-        case consensus
-        when 'mean'
-          values[annotations[index]][:y] << calculate_mean(genes, cell)
-        when 'median'
-          values[annotations[index]][:y] << calculate_median(genes, cell)
-        else
-          values[annotations[index]][:y] << calculate_mean(genes, cell)
-        end
-      end
-    when 'user'
-      # for user annotations, we have to load by id as names may not be unique to clusters
+    if annotation[:scope] == 'user'
       user_annotation = UserAnnotation.find(annotation[:id])
       return values if user_annotation.nil?
 
-      subsample_annotation = user_annotation.formatted_annotation_identifier
-      annotations = AnnotationVizService.sanitize_values_array(
-        user_annotation.concatenate_data_arrays(annotation[:name], 'annotations', subsample_threshold, subsample_annotation),
-        'group'
-      )
       cells = user_annotation.concatenate_data_arrays('text', 'cells', subsample_threshold, subsample_annotation)
-      cells.each_with_index do |cell, index|
-        values[annotations[index]][:annotations] << annotations[index]
+    else
+      cells = cluster.concatenate_data_arrays('text', 'cells', subsample_threshold, subsample_annotation)
+    end
+    # filter list of cells down to only those observed in expression matrix
+    filtered_cells = filter_cells_for_plot(study, cells)
+    annotations = AnnotationVizService.get_annotation_as_hash(study, cluster, annotation, subsample_threshold)
+    filtered_cells.each do |cell|
+      val = annotations[cell]
+      # must check if key exists
+      if values.has_key?(val)
+        values[annotations[cell]][:cells] << cell
         case consensus
         when 'mean'
-          values[annotations[index]][:y] << calculate_mean(genes, cell)
+          values[annotations[cell]][:y] << calculate_mean(genes, cell)
         when 'median'
-          values[annotations[index]][:y] << calculate_median(genes, cell)
+          values[annotations[cell]][:y] << calculate_median(genes, cell)
         else
-          values[annotations[index]][:y] << calculate_mean(genes, cell)
-        end
-      end
-    else
-      # no need to subsample annotation since they are in hash format (lookup done by key)
-      annotations = study.cell_metadata.by_name_and_type(annotation[:name], annotation[:type])&.cell_annotations || {}
-      cells.each do |cell|
-        val = annotations[cell]
-        # must check if key exists
-        if values.has_key?(val)
-          values[annotations[cell]][:cells] << cell
-          case consensus
-          when 'mean'
-            values[annotations[cell]][:y] << calculate_mean(genes, cell)
-          when 'median'
-            values[annotations[cell]][:y] << calculate_median(genes, cell)
-          else
-            values[annotations[cell]][:y] << calculate_mean(genes, cell)
-          end
+          values[annotations[cell]][:y] << calculate_mean(genes, cell)
         end
       end
     end
