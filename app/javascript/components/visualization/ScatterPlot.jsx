@@ -44,7 +44,7 @@ function RawScatterPlot({
   studyAccession, cluster, annotation, subsample, consensus, genes, scatterColor, dimensionProps,
   isAnnotatedScatter=false, isCorrelatedScatter=false, isCellSelecting=false, plotPointsSelected, dataCache,
   canEdit, expressionFilter=[0, 1],
-  countsByLabel, setCountsByLabel, hiddenTraces=[], updateExploreParams
+  countsByLabel, setCountsByLabel, hiddenTraces=[], splitLabelArrays, updateExploreParams
 }) {
   const [isLoading, setIsLoading] = useState(false)
   const [bulkCorrelation, setBulkCorrelation] = useState(null)
@@ -56,9 +56,8 @@ function RawScatterPlot({
   const [activeTraceLabel, setActiveTraceLabel] = useState(null)
   // map of label name to color hex codes, for any labels the user has picked a color for
   const [editedCustomColors, setEditedCustomColors] = useState({})
-  const [splitLabelArrays, setSplitLabelArrays] = useState(null)
 
-  const [isRefGroup, setIsRefGroup] = useState(false)
+  const isRefGroup = getIsRefGroup(annotation?.type, genes, isCorrelatedScatter)
 
   /**
    * Handle user interaction with one or more labels in legend.
@@ -86,6 +85,11 @@ function RawScatterPlot({
     }
 
     updateExploreParams({ hiddenTraces: newHiddenTraces })
+  }
+
+  /** updates whether pipe-delimited label values should be split */
+  function setSplitLabelArrays(value) {
+    updateExploreParams({ splitLabelArrays: value })
   }
 
   /** Get new, updated scatter object instance, and new layout */
@@ -138,7 +142,11 @@ function RawScatterPlot({
   }
 
   /** Update legend counts and recompute traces, without recomputing layout */
-  function updateCountsAndGetTraces(scatter, isRefGroup) {
+  function updateCountsAndGetTraces(scatter) {
+    // note that we don't use the previously defined `isRefGroup` constant here, since the value
+    // may change as a result of the fetched data, but not be reflected in the isRefGroup constant
+    // until `setScatterData` is called
+    const isRG = getIsRefGroup(scatter.annotParams.type, genes, isCorrelatedScatter)
     const [traces, labelCounts] = getPlotlyTraces({
       genes,
       isAnnotatedScatter,
@@ -150,9 +158,9 @@ function RawScatterPlot({
       activeTraceLabel,
       expressionFilter,
       splitLabelArrays: splitLabelArrays ?? scatter.splitLabelArrays,
-      isRefGroup
+      isRefGroup: isRG
     })
-    if (isRefGroup) {
+    if (isRG) {
       setCountsByLabel(labelCounts)
     }
     return traces
@@ -166,10 +174,7 @@ function RawScatterPlot({
     scatter = updateScatterLayout(scatter)
     const layout = scatter.layout
 
-    const isRG = getIsRefGroup(scatter.annotParams.type, genes, isCorrelatedScatter)
-    setIsRefGroup(isRG)
-
-    const plotlyTraces = updateCountsAndGetTraces(scatter, isRG)
+    const plotlyTraces = updateCountsAndGetTraces(scatter)
 
     const startTime = performance.now()
     Plotly.react(graphElementId, plotlyTraces, layout)
