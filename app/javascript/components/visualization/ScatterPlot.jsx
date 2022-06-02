@@ -220,7 +220,11 @@ function RawScatterPlot({
       genes,
       isAnnotatedScatter,
       isCorrelatedScatter
-    }).then(processScatterPlot)
+    }).then(processScatterPlot).catch(err => { 
+      setIsLoading(false)
+      setErrorContent([`${err}`])
+      setShowError(true)
+       })
   }, [cluster, annotation.name, subsample, consensus, genes.join(','), isAnnotatedScatter])
 
   // Handles custom scatter legend updates
