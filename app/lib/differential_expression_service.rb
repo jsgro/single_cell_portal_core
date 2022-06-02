@@ -31,7 +31,7 @@ class DifferentialExpressionService
     run_differential_expression_job(cluster_file, study, requested_user, **annotation)
   end
 
-  # same as above method, except runs differential expression job on all valid annotations
+  # same as above method, except runs differential expression job on all eligible annotations
   #
   # * *params*
   #   - +study_accession+ (String) => Accession of study to use
@@ -48,17 +48,17 @@ class DifferentialExpressionService
   def self.run_differential_expression_on_all(study_accession, user: nil)
     study = Study.find_by(accession: study_accession)
     validate_study(study)
-    available_annotations = []
+    eligible_annotations = []
 
     metadata = study.cell_metadata.where(annotation_type: 'group', is_differential_expression_enabled: false)
                     .select(&:can_visualize?)
-    available_annotations += metadata.map do |meta|
+    eligible_annotations += metadata.map do |meta|
       { annotation_name: meta.name, annotation_type: meta.annotation_type, annotation_scope: 'study' }
     end
 
     cell_annotations = []
-    study.cluster_groups.each do |cluster|
-      next if cluster.cell_annotations.empty?
+    groups_to_process = study.cluster_groups.select { |cg| cg.cell_annotations.any? }
+    groups_to_process.map do |cluster|
 
       cell_annots = cluster.cell_annotations.select do |annot|
         annot['type'] == 'group' &&
@@ -73,7 +73,7 @@ class DifferentialExpressionService
       cell_annotations += cell_annots
     end
 
-    available_annotations += cell_annotations.map do |annot|
+    eligible_annotations += cell_annotations.map do |annot|
       {
         annotation_name: annot[:name],
         annotation_type: annot[:type],
@@ -81,14 +81,14 @@ class DifferentialExpressionService
         cluster_file_id: annot[:cluster_file_id]
       }
     end
-    raise ArgumentError, "#{study_accession} does not have any valid annotations" if available_annotations.empty?
+    raise ArgumentError, "#{study_accession} does not have any eligible annotations" if eligible_annotations.empty?
 
-    log_message "#{study_accession} has data available for DE; validating inputs"
+    log_message "#{study_accession} has annotations eligible for DE; validating inputs"
     requested_user = user || study.user
 
     job_count = 0
     study.cluster_ordinations_files.each do |cluster_file|
-      available_annotations.each do |annotation|
+      eligible_annotations.each do |annotation|
         begin
           # skip if this is a cluster-based annotation and is not available on this cluster file
           next if annotation[:scope] == 'cluster' && annotation[:cluster_file_id] != cluster_file.id
