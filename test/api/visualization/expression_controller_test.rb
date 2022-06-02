@@ -30,10 +30,12 @@ class ExpressionControllerTest < ActionDispatch::IntegrationTest
                                                      {name: 'species', type: 'group', values: ['dog', 'cat', 'dog']},
                                                      {name: 'disease', type: 'group', values: ['none', 'none', 'measles']}
                                                    ])
-    @basic_study_exp_file = FactoryBot.create(:study_file,
+    @basic_study_exp_file = FactoryBot.create(:expression_file,
                                               name: 'dense.txt',
                                               file_type: 'Expression Matrix',
                                               taxon: Taxon.first,
+                                              expression_input: [],
+                                              cell_input: %w[A B C],
                                               study: @basic_study)
     @pten_gene = FactoryBot.create(:gene_with_expression,
                                    name: 'PTEN',

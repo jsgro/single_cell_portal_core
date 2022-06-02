@@ -9,54 +9,55 @@ class ExpressionVizServiceTest < ActiveSupport::TestCase
                                      user: @user,
                                      test_array: @@studies_to_clean)
     @basic_study_cluster_file = FactoryBot.create(:cluster_file,
-                                              name: 'cluster_1.txt', study: @basic_study,
-                                              cell_input: {
-                                                  x: [1, 4 ,6],
-                                                  y: [7, 5, 3],
-                                                  z: [2, 8, 9],
-                                                  cells: ['A', 'B', 'C']
-                                              },
-                                              x_axis_label: 'PCA 1',
-                                              y_axis_label: 'PCA 2',
-                                              z_axis_label: 'PCA 3',
-                                              cluster_type: '3d',
-                                              annotation_input: [
-                                                  {name: 'Category', type: 'group', values: ['bar', 'bar', 'baz']},
-                                                  {name: 'Intensity', type: 'numeric', values: [1.1, 2.2, 3.3]}
-                                              ])
+                                                  name: 'cluster_1.txt', study: @basic_study,
+                                                  cell_input: {
+                                                      x: [1, 4 ,6],
+                                                      y: [7, 5, 3],
+                                                      z: [2, 8, 9],
+                                                      cells: %w[A B C]
+                                                  },
+                                                  x_axis_label: 'PCA 1',
+                                                  y_axis_label: 'PCA 2',
+                                                  z_axis_label: 'PCA 3',
+                                                  cluster_type: '3d',
+                                                  annotation_input: [
+                                                    { name: 'Category', type: 'group', values: %w[bar bar baz] },
+                                                    { name: 'Intensity', type: 'numeric', values: [1.1, 2.2, 3.3] }
+                                                  ])
 
     @study_cluster_file_2 = FactoryBot.create(:cluster_file,
                                               name: 'cluster_2.txt', study: @basic_study,
                                               cell_input: {
                                                 x: [1, 2, 3],
                                                 y: [4, 5, 6],
-                                                cells: ['A', 'B', 'C']
+                                                cells: %w[A B C]
                                               },
                                               annotation_input: [
-                                                {name: 'Blanks', type: 'group', values: ['bar', 'bar', '']}
+                                                { name: 'Blanks', type: 'group', values: ['bar', 'bar', ''] }
                                               ])
 
-    @basic_study_exp_file = FactoryBot.create(:study_file,
-                                                  name: 'dense.txt',
-                                                  file_type: 'Expression Matrix',
-                                                  study: @basic_study)
+    @basic_study_exp_file = FactoryBot.create(:expression_file,
+                                              name: 'dense.txt',
+                                              file_type: 'Expression Matrix',
+                                              cell_input: %w[A B C],
+                                              study: @basic_study)
 
     @study_metadata_file = FactoryBot.create(:metadata_file,
                                              name: 'metadata.txt', study: @basic_study,
-                                             cell_input: ['A', 'B', 'C'],
+                                             cell_input: %w[A B C],
                                              annotation_input: [
-                                                 {name: 'species', type: 'group', values: ['dog', 'cat', 'dog']},
-                                                 {name: 'disease', type: 'group', values: ['none', 'none', 'measles']}
+                                               { name: 'species', type: 'group', values: %w[dog cat dog] },
+                                               { name: 'disease', type: 'group', values: %w[none none measles] }
                                              ])
 
     @pten_gene = FactoryBot.create(:gene_with_expression,
                                    name: 'PTEN',
                                    study_file: @basic_study_exp_file,
-                                   expression_input: [['A', 0],['B', 3],['C', 1.5]])
+                                   expression_input: [['A', 0], ['B', 3], ['C', 1.5]])
     @agpat2_gene = FactoryBot.create(:gene_with_expression,
                                      name: 'AGPAT2',
                                      study_file: @basic_study_exp_file,
-                                     expression_input: [['A', 0],['B', 0],['C', 8]])
+                                     expression_input: [['A', 0], ['B', 0], ['C', 8]])
     defaults = {
         cluster: 'cluster_1.txt',
         annotation: 'species--group--study'
@@ -358,16 +359,13 @@ class ExpressionVizServiceTest < ActiveSupport::TestCase
                               name_prefix: 'Filter test',
                               user: @user,
                               test_array: @@studies_to_clean)
-    matrix = FactoryBot.create(:study_file,
+    matrix = FactoryBot.create(:expression_file,
                                name: 'dense.txt',
+                               cell_input: %w[A b c],
+                               expression_input: [],
                                file_type: 'Expression Matrix',
                                study: study)
-    # we have to manually create the "all cells" array as we don't have a Factory for this yet
-    DataArray.create!(name: 'dense.txt Cells', array_type: 'cells', linear_data_type: 'Study', linear_data_id: study.id,
-                      values: %w[A b c], study_id: study.id, study_file_id: matrix.id, cluster_name: 'dense.txt Cells',
-                      cluster_group_id: nil, array_index: 0, subsample_annotation: nil, subsample_threshold: nil)
 
-    study.reload
     filtered_cells = ExpressionVizService.filter_cells_for_plot(study, %w[A B C])
     assert_equal %w[A], filtered_cells
   end

@@ -94,7 +94,7 @@ class AnnotationVizService
     else
       # cluster- and user-based annotations behave the same in this case
       cells = cluster.concatenate_data_arrays('text', 'cells', subsample_threshold, subsample_annotation)
-      annotation_array = get_annotation_values_array(
+      annotation_array = ClusterVizService.get_annotation_values_array(
         study, cluster, annotation, cells, subsample_annotation, subsample_threshold
       )
       Hash[cells.zip(annotation_array)]
