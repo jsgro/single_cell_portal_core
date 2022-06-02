@@ -105,33 +105,33 @@ describe('Library for client-side usage analytics', () => {
     })
   })
 
-  it('throttles Sentry logging as specified', done => {
+  it('throttles Sentry logging as specified', () => {
 
     console.error = jest.fn();
 
-    let sampleRate = 0.99 // Log 99% of events
-    setEnv('log-test')
-    shouldLog({}, true, sampleRate)
+    setEnv('log-test') // Mimic an environment where Sentry events aren't suppressed
 
-    sampleRate = 0.01 // Log 1% of events
-    setEnv('test')
-
-    const target = {
-        classList: ['class-name-1', 'class-name-2'],
-        innerText: 'dif Text that is linked',
-        id: "link-id",
-        dataset: {},
+    // Almost no events should suppressed from Sentry with sampleRate = 0.99
+    let sampleRate = 0.99
+    for (let i = 0; i < 100; i++) {
+      shouldLog({}, true, sampleRate)
     }
-    logClickLink(target)
+    const numDroppedInHighSampleRate = console.error.mock.calls.length / 2
+    expect(numDroppedInHighSampleRate).toBeLessThan(20)
 
-    let expected = '\"text\":\"dif Text that is linked\",\"classList\":[\"class-name-1\",\"class-name-2\"],\"id\":\"link-id\"'
-    expect(global.fetch).toHaveBeenCalledWith(
-      expect.anything(), // URL
-      expect.objectContaining({
-        body: expect.stringContaining(
-          expected
-        )
-      })
-    )
+    // Almost all events should suppressed from Sentry with sampleRate = 0.01
+    sampleRate = 0.01
+    for (let i = 0; i < 100; i++) {
+      shouldLog({}, true, sampleRate)
+    }
+    const numDroppedInLowSampleRate = console.error.mock.calls.length / 2 - numDroppedInHighSampleRate
+    expect(numDroppedInLowSampleRate).toBeGreaterThan(80)
+
+    // Nothing should be logged with env = development
+    setEnv('development')
+    shouldLog()
+    const numNewlyDropped = console.error.mock.calls.length / 2 - numDroppedInLowSampleRate
+    expect(numNewlyDropped).toEqual(1)
   })
+
 })

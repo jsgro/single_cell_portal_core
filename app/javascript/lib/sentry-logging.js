@@ -60,7 +60,7 @@ export function shouldLog(event, useThrottle = false, sampleRate = 0.1) {
   // to test locally, set `isLoggedEnv = true`
   const isSuppressedEnv = ['development', 'test'].includes(env)
 
-  const isThrottled = useThrottle && Math.random() <= sampleRate
+  const isThrottled = useThrottle && Math.random() >= sampleRate
 
   if (isSuppressedEnv || isThrottled) {
     console.error('Suppressing error reporting to Sentry:')
