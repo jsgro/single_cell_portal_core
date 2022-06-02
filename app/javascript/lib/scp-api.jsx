@@ -743,6 +743,12 @@ export function buildFacetsFromQueryString(facetsParamString) {
   return facets
 }
 
+/** gets the list of editable studies for the current user */
+export async function fetchEditableStudies(mock=false) {
+  const [studyList] = await scpApi(`/studies`, defaultInit(), mock)
+  return studyList
+}
+
 /** retrieve usage info for the given study */
 export async function fetchStudyUsage(studyAccession, mock=false) {
   const [usageInfo] = await scpApi(`/studies/${studyAccession}/usage_stats`, defaultInit(), mock)

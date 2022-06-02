@@ -291,7 +291,9 @@ Rails.application.routes.draw do
     # avoid exception for igv css map missing -- just return no content.
     # this file is only requested in development
     get '*a/igv.css.map', to: -> (env) { [204, {}, ['']] }
+    get 'igv.css.map', to: -> (env) { [204, {}, ['']] }
 
     root to: 'site#index'
     end
+  get 'igv.css.map', to: -> (env) { [204, {}, ['']] }
 end
