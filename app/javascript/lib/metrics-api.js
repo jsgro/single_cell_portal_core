@@ -406,12 +406,12 @@ export function log(name, props = {}) {
   if ('SCP' in window || metricsApiMock) {
     fetch(`${bardDomain}/api/event/`, init).then(response => {
       // log failed attempts to connect with Bard to Sentry
-      if (!response.ok) {
-        logJSFetchExceptionToSentry(response, 'Error in fetch response when logging event to Bard')
-      }
+      // if (!response.ok) {
+      logJSFetchExceptionToSentry(response, 'Error in fetch response when logging event to Bard', true)
+      // }
     // log errored attempts to connect with Bard to Sentry
     }).catch(error => {
-      logJSFetchErrorToSentry(error, 'Error in JavaScript when logging event to Bard')
+      logJSFetchErrorToSentry(error, 'Error in JavaScript when logging event to Bard', true)
     })
   }
 }

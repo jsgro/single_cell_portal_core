@@ -2,9 +2,11 @@
 /* eslint-disable*/
 
 const fetch = require('node-fetch')
-import {logClick, logClickLink, logMenuChange, setMetricsApiMockFlag} from 'lib/metrics-api'
 import { screen, render, fireEvent } from '@testing-library/react'
 import React from 'react';
+
+import {logClick, logClickLink, logMenuChange, setMetricsApiMockFlag} from 'lib/metrics-api'
+import {shouldLog, setEnv} from 'lib/sentry-logging'
 
 describe('Library for client-side usage analytics', () => {
   beforeAll(() => {
@@ -101,5 +103,35 @@ describe('Library for client-side usage analytics', () => {
     process.nextTick(() => {
       done()
     })
+  })
+
+  it('throttles Sentry logging as specified', done => {
+
+    console.error = jest.fn();
+
+    let sampleRate = 0.99 // Log 99% of events
+    setEnv('log-test')
+    shouldLog({}, true, sampleRate)
+
+    sampleRate = 0.01 // Log 1% of events
+    setEnv('test')
+
+    const target = {
+        classList: ['class-name-1', 'class-name-2'],
+        innerText: 'dif Text that is linked',
+        id: "link-id",
+        dataset: {},
+    }
+    logClickLink(target)
+
+    let expected = '\"text\":\"dif Text that is linked\",\"classList\":[\"class-name-1\",\"class-name-2\"],\"id\":\"link-id\"'
+    expect(global.fetch).toHaveBeenCalledWith(
+      expect.anything(), // URL
+      expect.objectContaining({
+        body: expect.stringContaining(
+          expected
+        )
+      })
+    )
   })
 })
