@@ -42,14 +42,13 @@ window.Plotly = Plotly
 function RawScatterPlot({
   studyAccession, cluster, annotation, subsample, consensus, genes, scatterColor, dimensionProps,
   isAnnotatedScatter=false, isCorrelatedScatter=false, isCellSelecting=false, plotPointsSelected, dataCache,
-  canEdit, expressionFilter=[0, 1]
+  canEdit, expressionFilter=[0, 1],
+  countsByLabel, setCountsByLabel
 }) {
   const [isLoading, setIsLoading] = useState(false)
   const [bulkCorrelation, setBulkCorrelation] = useState(null)
   const [labelCorrelations, setLabelCorrelations] = useState(null)
   const [scatterData, setScatterData] = useState(null)
-  // hash of trace label names to the number of points in that trace
-  const [countsByLabel, setCountsByLabel] = useState(null)
   // array of trace names (strings) to show in the graph
   const [hiddenTraces, setHiddenTraces] = useState([])
   const [graphElementId] = useState(_uniqueId('study-scatter-'))
@@ -58,6 +57,8 @@ function RawScatterPlot({
   // map of label name to color hex codes, for any labels the user has picked a color for
   const [editedCustomColors, setEditedCustomColors] = useState({})
   const [splitLabelArrays, setSplitLabelArrays] = useState(null)
+
+  const [isRefGroup, setIsRefGroup] = useState(false)
 
   /**
    * Handle user interaction with one or more labels in legend.
@@ -137,8 +138,8 @@ function RawScatterPlot({
   }
 
   /** Update legend counts and recompute traces, without recomputing layout */
-  function updateCountsAndGetTraces(scatter) {
-    const [traces, labelCounts, isRefGroup] = getPlotlyTraces({
+  function updateCountsAndGetTraces(scatter, isRefGroup) {
+    const [traces, labelCounts] = getPlotlyTraces({
       genes,
       isAnnotatedScatter,
       isCorrelatedScatter,
@@ -148,9 +149,12 @@ function RawScatterPlot({
       scatter,
       activeTraceLabel,
       expressionFilter,
-      splitLabelArrays: splitLabelArrays ?? scatter.splitLabelArrays
+      splitLabelArrays: splitLabelArrays ?? scatter.splitLabelArrays,
+      isRefGroup
     })
-    setCountsByLabel(isRefGroup ? labelCounts : null)
+    if (isRefGroup) {
+      setCountsByLabel(labelCounts)
+    }
     return traces
   }
 
@@ -162,7 +166,10 @@ function RawScatterPlot({
     scatter = updateScatterLayout(scatter)
     const layout = scatter.layout
 
-    const plotlyTraces = updateCountsAndGetTraces(scatter)
+    const isRG = getIsRefGroup(scatter.annotParams.type, genes, isCorrelatedScatter)
+    setIsRefGroup(isRG)
+
+    const plotlyTraces = updateCountsAndGetTraces(scatter, isRG)
 
     const startTime = performance.now()
     Plotly.react(graphElementId, plotlyTraces, layout)
@@ -189,7 +196,8 @@ function RawScatterPlot({
       })
     }
 
-    scatter.hasArrayLabels = scatter.annotParams.type === 'group' && scatter.data.annotations.some(annot => annot.includes('|'))
+    scatter.hasArrayLabels =
+      scatter.annotParams.type === 'group' && scatter.data.annotations.some(annot => annot.includes('|'))
 
     if (clusterResponse) {
       setScatterData(scatter)
@@ -307,7 +315,7 @@ function RawScatterPlot({
         id={graphElementId}
         data-testid={graphElementId}
       >
-        { scatterData && countsByLabel &&
+        { scatterData && countsByLabel && isRefGroup &&
           <ScatterPlotLegend
             name={scatterData.annotParams.name}
             height={scatterData.height}
@@ -398,13 +406,13 @@ function getPlotlyTraces({
   hiddenTraces,
   scatter: {
     axes, data, pointAlpha, pointSize, is3D,
-    scatterColor: dataScatterColor,
     annotParams: { name: annotName, type: annotType },
     customColors = {}
   },
   activeTraceLabel,
   expressionFilter,
-  splitLabelArrays
+  splitLabelArrays,
+  isRefGroup
 }) {
   const unfilteredTrace = {
     type: is3D ? 'scatter3d' : 'scattergl',
@@ -420,8 +428,6 @@ function getPlotlyTraces({
     unfilteredTrace.z = data.z
   }
 
-
-  const isRefGroup = getIsRefGroup(annotType, genes, isCorrelatedScatter)
   const isGeneExpressionForColor = !isCorrelatedScatter && !isAnnotatedScatter && genes.length
 
   const [traces, countsByLabel, expRange] = filterTrace({
@@ -459,13 +465,12 @@ function getPlotlyTraces({
     }
 
     if (!isAnnotatedScatter) {
-      const appliedScatterColor = getScatterColorToApply(dataScatterColor, scatterColor)
       const title = isGeneExpressionForColor ? axes.titles.magnitude : annotName
 
       Object.assign(workingTrace.marker, {
         showscale: true,
-        colorscale: appliedScatterColor,
-        reversescale: shouldReverseScale(appliedScatterColor),
+        colorscale: scatterColor,
+        reversescale: shouldReverseScale(scatterColor),
         color: colors,
         colorbar: { title, titleside: 'right' }
       })
@@ -508,15 +513,6 @@ function addHoverLabel(trace, annotName, annotType, genes, isAnnotatedScatter, i
     groupHoverTemplate = `(%{x}, %{y})<br>%{text} (%{meta})<br>${bottomRowLabel}: %{marker.color}<extra></extra>`
   }
   trace.hovertemplate = groupHoverTemplate
-}
-
-/** Gets color on the given traces.  If no color is specified, use color from data */
-function getScatterColorToApply(dataScatterColor, scatterColor) {
-  // Set color scale
-  if (!scatterColor) {
-    scatterColor = dataScatterColor
-  }
-  return scatterColor
 }
 
 /** Gets Plotly layout object for scatter plot */

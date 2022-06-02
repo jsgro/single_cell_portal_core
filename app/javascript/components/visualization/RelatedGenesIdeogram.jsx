@@ -16,7 +16,8 @@ import Ideogram from 'ideogram'
 
 import PlotUtils from '~/lib/plot'
 const ideogramHeight = PlotUtils.ideogramHeight
-import { logStudyGeneSearch, log } from '~/lib/metrics-api'
+import { log } from '~/lib/metrics-api'
+import { logStudyGeneSearch } from '~/lib/search-metrics'
 
 /** Handle clicks on Ideogram annotations */
 function onClickAnnot(annot) {

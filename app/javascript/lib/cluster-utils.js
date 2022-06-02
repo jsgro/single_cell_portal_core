@@ -59,7 +59,8 @@ export function getAnnotationDisplayName(annotation) {
     let annotLabel = ''
     if (annotation.values.length === 1) {
       annotLabel = 'Only one value'
-    } else if (annotation.values.length > GROUP_VIZ_THRESHOLD_MAX) {
+    } else if (annotation.values.length === 0) {
+      // if the values array is empty, that means there were too many to send
       annotLabel = 'Too many values'
     } else {
       annotLabel = 'Ontology label used'

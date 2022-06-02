@@ -185,7 +185,7 @@ class Study
 
   has_many :cell_metadata do
     def by_name_and_type(name, type)
-      where(name: name, annotation_type: type).first
+      find_by(name: name, annotation_type: type)
     end
   end
 
@@ -1034,7 +1034,11 @@ class Study
   # into existing endpoints, or perhaps a new endpoint, where the token is returned as part
   # of the API response.
   def has_streamable_files(user)
-    has_bam_files? || has_analysis_outputs?('infercnv', 'ideogram.js') || has_image_files? || user && user.feature_flag_for('differential_expression_frontend')
+    has_bam_files? ||
+    has_analysis_outputs?('infercnv', 'ideogram.js') ||
+    has_image_files? ||
+    user && user.feature_flag_for('differential_expression_frontend') ||
+    self.feature_flag_for('differential_expression_frontend')
   end
 
   # quick getter to return any cell metadata that can_visualize?
@@ -1190,6 +1194,33 @@ class Study
   # return color profile value, converting blanks to nils
   def default_color_profile
     self.default_options[:color_profile].presence
+  end
+
+  # array of names of annotations to ignore the unique values limit for visualizing
+  def override_viz_limit_annotations
+    self.default_options[:override_viz_limit_annotations] || []
+  end
+
+  # make an annotation visualizable despite exceeding the default values limit
+  def add_override_viz_limit_annotation(annotation_name)
+    cell_metadatum = self.cell_metadata.find_by(name: annotation_name)
+    if cell_metadatum
+      # we need to populate the 'values' array, since that will not have been done at ingest
+      begin
+        uniq_vals = cell_metadatum.concatenate_data_arrays(annotation_name, 'annotations').uniq
+        cell_metadatum.update!(values: uniq_vals)
+      rescue => e
+        Rails.logger.error "Could not cache unique annotation values: #{e.message}"
+        Rails.logger.error "This means values array will be fetched on-demand for visualization requests"
+      end
+    end
+
+    updated_list = override_viz_limit_annotations
+    updated_list.push(annotation_name)
+    self.default_options[:override_viz_limit_annotations] = updated_list
+    self.save
+    # clear the cache so that explore data is fetched correctly
+    CacheRemovalJob.new(accession).perform
   end
 
   # return the value of the expression axis label

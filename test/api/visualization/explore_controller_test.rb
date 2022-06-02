@@ -52,7 +52,7 @@ class ExploreControllerTest < ActionDispatch::IntegrationTest
   end
 
   test 'should enforce view permissions' do
-    user2 =  FactoryBot.create(:api_user, test_array: @@users_to_clean)
+    user2 = FactoryBot.create(:api_user, test_array: @@users_to_clean)
     sign_in_and_update user2
     execute_http_request(:get, api_v1_study_explore_path(@basic_study), user: user2)
     assert_equal 403, response.status
@@ -86,7 +86,12 @@ class ExploreControllerTest < ActionDispatch::IntegrationTest
     assert_response :success
 
     assert_equal 'clusterA.txt', json['default_cluster']
-    expected_annotations = [{"name"=>"foo", "type"=>"group", "values"=>["bar", "baz"], "scope"=>"cluster", "cluster_name"=>"clusterA.txt"}]
+    expected_annotations = [
+      {
+        name: 'foo', type: 'group', values: %w[bar baz], scope: 'cluster', cluster_name: 'clusterA.txt',
+        is_differential_expression_enabled: false
+      }.with_indifferent_access
+    ]
     assert_equal expected_annotations, json['annotations']
     assert_equal({"clusterA.txt"=>[], "spatialA.txt"=>[]}, json['subsample_thresholds'])
 

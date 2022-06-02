@@ -8,9 +8,11 @@ module Api
         [:index, :show, :file_info]
       end
 
+      before_action :set_study_id_param
       before_action :authenticate_api_user!
       before_action :set_study, except: [:index, :create]
-      before_action :check_study_permission, except: [:index, :create, :generate_manifest]
+      before_action :check_study_detached, except: [:index, :create]
+      before_action :check_study_edit_permission, except: [:index, :create, :generate_manifest]
       before_action :check_study_view_permission, only: [:generate_manifest]
 
       respond_to :json
@@ -48,6 +50,14 @@ module Api
       # GET /single_cell/api/v1/studies
       def index
         @studies = Study.editable(current_api_user)
+        study_owner_ids = @studies.pluck(:id, :user_id)
+        user_info = User.where(:id.in => study_owner_ids.map{ |plucked_arr| plucked_arr[1] }).pluck(:id, :email)
+        # create a hash of study_id => owner email
+        @study_owner_emails = study_owner_ids.reduce({}) do |hash, study_owner_id|
+          hash[study_owner_id[0].to_s] = user_info.find { |user| user[0] == study_owner_id[1] }[1]
+          hash
+        end
+
       end
 
       swagger_path '/studies/{id}' do
@@ -729,23 +739,11 @@ module Api
 
       private
 
-      def set_study
-        # enable either id or accession as url param
-        @study = Study.any_of({accession: params[:id]},{id: params[:id]}).first
-        if @study.nil? || @study.queued_for_deletion?
-          head 404 and return
-        elsif @study.detached?
-          head 410 and return
-        end
-      end
-
-      def check_study_permission
-        head 403 unless @study.can_edit?(current_api_user)
-      end
-
-      # checks the view permissions, either for the current_api_user or a totat, if given
-      def check_study_view_permission
-        head 403 unless (@study.public || @study.can_view?(current_api_user))
+      # copy the 'id' param to 'study_id' so that it can be compatible with StudyAware concern
+      # note that renaming the parameter in routes.rb with 'param: study_id' would result in
+      # nested routes getting that parameter as 'study_study_id'
+      def set_study_id_param
+        params[:study_id] = params[:id]
       end
 
       # study params list

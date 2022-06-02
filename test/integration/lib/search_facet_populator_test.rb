@@ -1,7 +1,6 @@
 require 'test_helper'
-require 'includes_helper'
 
-class SearchFacetPopulatorTest < ActionDispatch::IntegrationTest
+class SearchFacetPopulatorTest < ActiveSupport::TestCase
 
   after(:all) do
     SearchFacet.destroy_all

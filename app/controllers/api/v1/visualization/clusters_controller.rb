@@ -167,14 +167,6 @@ module Api
           include_annotation = data_fields.include?('annotation')
           include_cells = data_fields.include?('cells')
 
-          colorscale = url_params[:colorscale]
-          if colorscale.blank?
-            colorscale = study.default_color_profile
-            if colorscale.blank?
-              colorscale = 'Reds'
-            end
-          end
-
           is_annotated_scatter = !url_params[:is_annotated_scatter].blank?
           is_correlated_scatter = !url_params[:is_correlated_scatter].blank?
 

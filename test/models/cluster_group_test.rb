@@ -32,9 +32,14 @@ class ClusterGroupTest < ActiveSupport::TestCase
     annotation_values = []
     300.times { annotation_values << SecureRandom.uuid }
     cell_annotation = {name: 'Group Annotation', type: 'group', values: annotation_values}
-    cluster = ClusterGroup.new(name: 'Group Count Test', cluster_type: '2d', cell_annotations: [cell_annotation])
+    cluster = ClusterGroup.new(name: 'Group Count Test', cluster_type: '2d', cell_annotations: [cell_annotation], study: @study)
     can_visualize = cluster.can_visualize_cell_annotation?(cell_annotation)
-    assert !can_visualize, "Should not be able to visualize group cell annotation with more that 100 unique values: #{can_visualize}"
+    assert !can_visualize, "Should not be able to visualize group cell annotation with more than 200 unique values: #{can_visualize}"
+
+    # check study overrides are respected
+    @study.default_options[:override_viz_limit_annotations] = [cell_annotation[:name]]
+    can_visualize = cluster.can_visualize_cell_annotation?(cell_annotation)
+    assert can_visualize, "Should be able to visualize group cell annotation with more that 200 unique values if override is present"
 
     # check numeric annotations are still fine
     new_cell_annotation = {name: 'Numeric Annotation', type: 'numeric', values: []}

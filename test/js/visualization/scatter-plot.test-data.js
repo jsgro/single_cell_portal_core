@@ -1,5 +1,37 @@
 /** @fileoverview Mock responses for scatter plot tests */
 
+export const COUNTS_BY_LABEL = {
+  'A.Rather.Long.Label.With.Several.Periods': 17,
+  'A': 34,
+  'An_underscored_label': 19,
+  'B label with space and number 4': 18,
+  'B': 18,
+  'C 1': 1,
+  'C 2': 1,
+  'C 3': 1,
+  'C 4': 1,
+  'C 5': 1,
+  'C 6': 1,
+  'C 7': 1,
+  'C 8': 1,
+  'C 9': 1,
+  'C 10': 1,
+  'C 11': 1,
+  'C 12': 1,
+  'C 13': 1,
+  'C 14': 1,
+  'C 15': 1,
+  'C 16': 1,
+  'C 17': 1,
+  'C 18': 1,
+  'C 19': 1,
+  'C 20': 1,
+  'C 21': 1,
+  'C 22': 1,
+  'C 23': 1,
+  'C 24': 1
+}
+
 export const BASIC_PLOT_DATA = {
   scatter: {
     annotParams: {
