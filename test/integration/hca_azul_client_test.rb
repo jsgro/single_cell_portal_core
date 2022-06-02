@@ -257,4 +257,11 @@ class HcaAzulClientTest < ActiveSupport::TestCase
       @hca_azul_client.append_catalog(path, bad_catalog)
     end
   end
+
+  test 'should determine if query is too large' do
+    accession_list = 1.upto(500).map { |n| "FakeHCAProject#{n}" }
+    query = { project: { is: accession_list } }
+    assert @hca_azul_client.query_too_large?(query)
+    assert_not @hca_azul_client.query_too_large?({ project: { is: accession_list.take(10) } })
+  end
 end
