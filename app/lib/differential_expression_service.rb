@@ -1,5 +1,116 @@
 # handle launching differential expression ingest jobs
 class DifferentialExpressionService
+  # run a differential expression job for a given study on the default cluster/annotation
+  #
+  # * *params*
+  #   - +study_accession+ (String) => Accession of study to use
+  #   - +user+ (User) => Corresponding user, will default to study owner
+  #
+  # * *yields*
+  #   - (IngestJob) => Differential expression job in PAPI
+  #
+  # * *returns*
+  #   - (Boolean) => True if job queues successfully
+  #
+  # * *raises*
+  #   - (ArgumentError) => if requested parameters do not validate
+  def self.run_differential_expression_on_default(study_accession, user: nil)
+    study = Study.find_by(accession: study_accession)
+    validate_study(study)
+    raise ArgumentError, "#{study.accession} has no default cluster" if study.default_cluster.blank?
+    raise ArgumentError, "#{study.accession} has no default annotation" if study.default_annotation.blank?
+
+    annotation_name, annotation_type, annotation_scope = study.default_annotation.split('--')
+    annotation = {
+      annotation_name: annotation_name,
+      annotation_type: annotation_type,
+      annotation_scope: annotation_scope
+    }
+    cluster_file = study.default_cluster.study_file
+    requested_user = user || study.user
+    run_differential_expression_job(cluster_file, study, requested_user, **annotation)
+  end
+
+  # same as above method, except runs differential expression job on all eligible annotations
+  #
+  # * *params*
+  #   - +study_accession+ (String) => Accession of study to use
+  #   - +user+ (User) => Corresponding user, will default to study owner
+  #
+  # * *yields*
+  #   - (IngestJob) => Differential expression job in PAPI for each valid cluster/annotation combination
+  #
+  # * *returns*
+  #   - (Integer) => Number of DE jobs yielded
+  #
+  # * *raises*
+  #   - (ArgumentError) => if requested study cannot run any DE jobs
+  def self.run_differential_expression_on_all(study_accession, user: nil)
+    study = Study.find_by(accession: study_accession)
+    validate_study(study)
+    eligible_annotations = []
+
+    metadata = study.cell_metadata.where(annotation_type: 'group', is_differential_expression_enabled: false)
+                    .select(&:can_visualize?)
+    eligible_annotations += metadata.map do |meta|
+      { annotation_name: meta.name, annotation_type: meta.annotation_type, annotation_scope: 'study' }
+    end
+
+    cell_annotations = []
+    groups_to_process = study.cluster_groups.select { |cg| cg.cell_annotations.any? }
+    groups_to_process.map do |cluster|
+
+      cell_annots = cluster.cell_annotations.select do |annot|
+        annot['type'] == 'group' &&
+          cluster.can_visualize_cell_annotation?(annot) &&
+          !annot[:is_differential_expression_enabled]
+      end
+
+      cell_annots.each do |annot|
+        annot[:cluster_file_id] = cluster.study_file.id # for checking associations later
+      end
+
+      cell_annotations += cell_annots
+    end
+
+    eligible_annotations += cell_annotations.map do |annot|
+      {
+        annotation_name: annot[:name],
+        annotation_type: annot[:type],
+        annotation_scope: 'cluster',
+        cluster_file_id: annot[:cluster_file_id]
+      }
+    end
+    raise ArgumentError, "#{study_accession} does not have any eligible annotations" if eligible_annotations.empty?
+
+    log_message "#{study_accession} has annotations eligible for DE; validating inputs"
+    requested_user = user || study.user
+
+    job_count = 0
+    study.cluster_ordinations_files.each do |cluster_file|
+      eligible_annotations.each do |annotation|
+        begin
+          # skip if this is a cluster-based annotation and is not available on this cluster file
+          next if annotation[:scope] == 'cluster' && annotation[:cluster_file_id] != cluster_file.id
+
+          annotation_params = annotation.deep_dup # make a copy so we don't lose the association next time we check
+          annotation_params.delete(:cluster_file_id)
+          job_identifier = "#{study_accession}: #{cluster_file.name} (#{annotation_params.values.join('--')})"
+          log_message "Checking DE job for #{job_identifier}"
+          DifferentialExpressionService.run_differential_expression_job(
+            cluster_file, study, requested_user, **annotation_params
+          )
+          log_message "DE job for #{job_identifier} successfully launched"
+          job_count += 1
+        rescue ArgumentError => e
+          log_message "Skipping DE job for #{job_identifier} due to: #{e.message}"
+        end
+      end
+    end
+    log_message "#{study_accession} yielded #{job_count} differential expression jobs"
+    job_count
+  end
+
   # handle setting up and launching a differential expression job
   #
   # * *params*
@@ -19,6 +130,7 @@ class DifferentialExpressionService
   # * *raises*
   #   - (ArgumentError) => if requested parameters do not validate
   def self.run_differential_expression_job(cluster_file, study, user, annotation_name:, annotation_type:, annotation_scope:)
+    validate_study(study)
     validate_annotation(cluster_file, study, annotation_name, annotation_type, annotation_scope)
 
     # begin assembling parameters
@@ -86,5 +198,24 @@ class DifferentialExpressionService
     identifier = "#{annotation_name}--#{annotation_type}--#{annotation_scope}"
     raise ArgumentError, "#{identifier} is not present" if annotation.nil?
     raise ArgumentError, "#{identifier} cannot be visualized" unless can_visualize
+  end
+
+  # validate a given study is able to run DE job
+  #
+  # * *params*
+  #   - +study+ (Study) => Study to validate
+  #
+  # * *raises*
+  #   - (ArgumentError) => If requested study is not eligible for DE
+  def self.validate_study(study)
+    raise ArgumentError, 'Requested study does not exist' if study.nil?
+    raise ArgumentError, "#{study.accession} is not public" unless study.public?
+    raise ArgumentError, "#{study.accession} is not initialized" unless study.initialized?
+  end
+
+  # shortcut to log to STDOUT and Rails log simultaneously
+  def self.log_message(message)
+    puts message
+    Rails.logger.info message
   end
 end
