@@ -143,7 +143,7 @@ export default function RelatedGenesIdeogram({
   if (taxon === null) {
     // Quick fix to decrease Sentry error log rate
     // TODO (SCP-4360): Address this more robustly a bit upstream, then remove this patch
-    // return null
+    return null
   }
 
   const verticalPad = 40 // Total top and bottom padding

@@ -71,9 +71,9 @@ function printSuppression(reason, response) {
  * @param {Boolean} useThrottle - whether to apply clientside rate limit throttling. Default false.
  * @param {Object} response - Fetch response object.  Default null.
  * @param {Number} sampleRate - % of events to log, only applied if `useThrottle = true`
- *  1 = log all events, 0 = log no events, default = 0.1 (i.e. log 10% of events)
+ *  1 = log all events, 0 = log no events, default = 0.05 (i.e. log 5% of events)
  */
-export function shouldLog(useThrottle = false, response = null, sampleRate = 0.1) {
+export function shouldLog(useThrottle = false, response = null, sampleRate = 0.05) {
   const isThrottled = useThrottle && Math.random() >= sampleRate
 
   if (isSuppressedEnv || isThrottled) {
