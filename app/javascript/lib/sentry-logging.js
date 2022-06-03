@@ -9,8 +9,8 @@ import getSCPContext from '~/providers/SCPContextProvider'
 const env = getSCPContext().environment
 
 // Whether to drop Sentry log events
+// Set to `false` if manually locally testing Sentry logging
 let isSuppressedEnv = ['development', 'test'].includes(env)
-// let isSuppressedEnv = true // Uncomment if manually locally testing Sentry logging
 
 /** Set whether to suppress Sentry logging based environment, e.g. to enable unit testing */
 export function setIsSuppressedEnv(suppressionFlag) {
