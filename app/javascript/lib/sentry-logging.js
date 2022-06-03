@@ -12,7 +12,7 @@ const env = getSCPContext().environment
 // Set to `false` if manually locally testing Sentry logging
 let isSuppressedEnv = ['development', 'test'].includes(env)
 
-/** Set whether to suppress Sentry logging based environment, e.g. to enable unit testing */
+/** Set whether to suppress Sentry logging based on environment, e.g. to enable unit testing */
 export function setIsSuppressedEnv(suppressionFlag) {
   isSuppressedEnv = suppressionFlag
 }

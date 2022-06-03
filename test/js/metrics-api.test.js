@@ -116,7 +116,6 @@ describe('Library for client-side usage analytics', () => {
     for (let i = 0; i < 100; i++) {
       shouldLog(true, null, sampleRate)
     }
-    // Each drop prints two console warning lines
     const numDroppedInHighSampleRate = console.warn.mock.calls.length
     expect(numDroppedInHighSampleRate).toBeLessThan(20)
 
@@ -136,7 +135,7 @@ describe('Library for client-side usage analytics', () => {
     const latestWarning = console.warn.mock.calls.slice(-1)[0][0]
     expect(latestWarning.fakeLoggedValue).toEqual('asdf')
 
-    // Nothing should be logged when Sentry logging is suppressed, and we expect warnings of this
+    // Nothing should be logged when Sentry is suppressed, and we expect warnings of this
     setIsSuppressedEnv(true)
     shouldLog()
     const numDroppedWhenSuppressed = console.warn.mock.calls.length - numDroppedInLowSampleWithResponse
