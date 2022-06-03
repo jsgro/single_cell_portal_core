@@ -6,7 +6,7 @@ import { screen, render, fireEvent } from '@testing-library/react'
 import React from 'react';
 
 import {logClick, logClickLink, logMenuChange, setMetricsApiMockFlag} from 'lib/metrics-api'
-import {shouldLog, setEnv} from 'lib/sentry-logging'
+import {shouldLog, setIsSuppressedEnv} from 'lib/sentry-logging'
 
 describe('Library for client-side usage analytics', () => {
   beforeAll(() => {
@@ -107,16 +107,17 @@ describe('Library for client-side usage analytics', () => {
 
   it('throttles Sentry logging as specified', () => {
 
-    console.error = jest.fn();
+    console.warn = jest.fn();
 
-    setEnv('log-test') // Mimic an environment where Sentry events aren't suppressed
+    setIsSuppressedEnv(false)
 
     // Almost no events should be suppressed from Sentry with sampleRate = 0.99
     let sampleRate = 0.99
     for (let i = 0; i < 100; i++) {
       shouldLog({}, true, sampleRate)
     }
-    const numDroppedInHighSampleRate = console.error.mock.calls.length / 2
+    // Each drop prints two console warning lines
+    const numDroppedInHighSampleRate = console.warn.mock.calls.length / 2
     expect(numDroppedInHighSampleRate).toBeLessThan(20)
 
     // Almost all events should be suppressed from Sentry with sampleRate = 0.01
@@ -124,13 +125,13 @@ describe('Library for client-side usage analytics', () => {
     for (let i = 0; i < 100; i++) {
       shouldLog({}, true, sampleRate)
     }
-    const numDroppedInLowSampleRate = console.error.mock.calls.length / 2 - numDroppedInHighSampleRate
+    const numDroppedInLowSampleRate = console.warn.mock.calls.length / 2 - numDroppedInHighSampleRate
     expect(numDroppedInLowSampleRate).toBeGreaterThan(80)
 
-    // Nothing should be logged with env = development
-    setEnv('development')
+    // Nothing should be logged when Sentry logging is suppressed, and we expect a warning of this
+    setIsSuppressedEnv(true)
     shouldLog()
-    const numNewlyDropped = console.error.mock.calls.length / 2 - numDroppedInLowSampleRate
+    const numNewlyDropped = console.warn.mock.calls.length / 2 - numDroppedInLowSampleRate
     expect(numNewlyDropped).toEqual(1)
   })
 

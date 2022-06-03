@@ -6,11 +6,15 @@ import * as Sentry from '@sentry/react'
 import { BrowserTracing } from '@sentry/tracing'
 import getSCPContext from '~/providers/SCPContextProvider'
 
-let env = getSCPContext().environments
+const env = getSCPContext().environment
 
-/** Set log environment, e.g. for testing */
-export function setEnv(logEnv) {
-  env = logEnv
+// Whether to drop Sentry log events
+// let isSuppressedEnv = ['development', 'test'].includes(env)
+let isSuppressedEnv = true // Uncomment if manually testing Sentry logging
+
+/** Set whether to suppress Sentry logging based environment, e.g. to enable unit testing */
+export function setIsSuppressedEnv(suppressionFlag) {
+  isSuppressedEnv = suppressionFlag
 }
 
 /**
@@ -48,23 +52,25 @@ export function logJSFetchErrorToSentry(error, titleInfo = '', useThrottle = fal
   }
 }
 
+/** Print suppression warning message to the console */
+function printSuppression(event, reason) {
+  console.warn(`Suppressing error reporting to Sentry, because it is ${reason}.  Error / response:`)
+  console.warn(event)
+}
+
 /**
  * Determine if logging should occur based on environment
  * @param {Object} event - response or error object
  * @param {Boolean} useThrottle - whether to apply clientside rate limit throttling
- * @param {Number} sampleRate - Number in range [0, 1] for % of events to log.
+ * @param {Number} sampleRate - % of events to log, only applied if `useThrottle = true`
  *  1 = log all events, 0 = log no events, default = 0.1 (i.e. log 10% of events)
  */
 export function shouldLog(event, useThrottle = false, sampleRate = 0.1) {
-  // Do not log for development or test environments
-  // to test locally, set `isLoggedEnv = true`
-  const isSuppressedEnv = ['development', 'test'].includes(env)
-
   const isThrottled = useThrottle && Math.random() >= sampleRate
 
   if (isSuppressedEnv || isThrottled) {
-    console.error('Suppressing error reporting to Sentry:')
-    console.error(event)
+    const reason = isSuppressedEnv ? 'in an unlogged environment' : 'rate-limited clientside'
+    printSuppression(event, reason)
     return false
   }
 
@@ -78,7 +84,18 @@ export function setupSentry() {
   Sentry.init({
     dsn: 'https://a713dcf8bbce4a26aa1fe3bf19008d26@o54426.ingest.sentry.io/1424198',
     integrations: [new BrowserTracing()],
-    tracesSampleRate: 1.0
+
+    // Sampling rate for transactions, which enrich Sentry events with traces
+    tracesSampleRate: isSuppressedEnv ? 1.0 : 0,
+
+    // Suppress logging events to Sentry if in a noisy environment
+    beforeSend(event) {
+      if (isSuppressedEnv ? 1.0 : 0) {
+        const reason = 'in an unlogged environment'
+        printSuppression(event, reason)
+        return 0
+      }
+    }
   })
 
   // set the logger tag to reflect that the errors are from the frontend
