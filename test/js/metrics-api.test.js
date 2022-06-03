@@ -111,7 +111,7 @@ describe('Library for client-side usage analytics', () => {
 
     setEnv('log-test') // Mimic an environment where Sentry events aren't suppressed
 
-    // Almost no events should suppressed from Sentry with sampleRate = 0.99
+    // Almost no events should be suppressed from Sentry with sampleRate = 0.99
     let sampleRate = 0.99
     for (let i = 0; i < 100; i++) {
       shouldLog({}, true, sampleRate)
@@ -119,7 +119,7 @@ describe('Library for client-side usage analytics', () => {
     const numDroppedInHighSampleRate = console.error.mock.calls.length / 2
     expect(numDroppedInHighSampleRate).toBeLessThan(20)
 
-    // Almost all events should suppressed from Sentry with sampleRate = 0.01
+    // Almost all events should be suppressed from Sentry with sampleRate = 0.01
     sampleRate = 0.01
     for (let i = 0; i < 100; i++) {
       shouldLog({}, true, sampleRate)
