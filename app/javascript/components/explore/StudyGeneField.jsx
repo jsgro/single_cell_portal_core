@@ -32,20 +32,20 @@ export default function StudyGeneField({ genes, searchGenes, allGenes, speciesLi
   const [geneArray, setGeneArray] = useState(enteredGeneArray)
   const [showEmptySearchModal, setShowEmptySearchModal] = useState(false)
 
-  const [badGeneArray, setBadGeneArray] = useState([])
+  const [badGeneSet, setBadGeneSet] = useState(new Set([]))
   const [showBadGeneChoice, setShowBadGeneChoice] = useState(false)
 
   /** handles a user submitting a gene search */
   function handleSearch(event) {
-    setBadGeneArray([])
     event.preventDefault()
     const newGeneArray = syncGeneArrayToInputText()
 
     let shouldSearch = true
     if (newGeneArray) {
       newGeneArray.forEach(gene => {
-        if (geneOptions.length > 0 && !geneOptions.includes(gene)) {
-          setBadGeneArray(badGeneArray.concat(gene.label))
+        // if an entered gene is not in the valid gene options for the study
+        if (geneOptions.length > 0 && !geneOptions.find(geneOpt => geneOpt.label === gene.label) && !badGeneSet?.has(gene.label)) {
+          setBadGeneSet(badGeneSet.add(gene.label))
           shouldSearch = false
         }
       })
@@ -128,7 +128,7 @@ export default function StudyGeneField({ genes, searchGenes, allGenes, speciesLi
     // react-select doesn't expose the actual click events, so we deduce the kind
     // of operation based on whether it lengthened or shortened the list
     const newValue = value ? value : []
-    setBadGeneArray([])
+    setBadGeneSet(new Set([]))
     logGeneArrayChange(newValue)
     setGeneArray(newValue)
   }
@@ -138,7 +138,7 @@ export default function StudyGeneField({ genes, searchGenes, allGenes, speciesLi
       // the genes have been updated elsewhere -- resync
       setGeneArray(getOptionsFromGenes(genes))
       setInputText('')
-      setBadGeneArray([])
+      setBadGeneSet(new Set([]))
     }
   }, [genes.join(',')])
 
@@ -207,7 +207,7 @@ export default function StudyGeneField({ genes, searchGenes, allGenes, speciesLi
         animation={false}
         bsSize='small'>
         <Modal.Body className="text-center">
-        Invalid Search - Please remove &quot;{badGeneArray.join('", "')}&quot; from gene search.
+        Invalid Search - Please remove &quot;{Array.from(badGeneSet).join('", "')}&quot; from gene search.
         </Modal.Body>
       </Modal>
 
