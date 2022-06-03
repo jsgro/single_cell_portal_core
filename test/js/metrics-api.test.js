@@ -105,7 +105,7 @@ describe('Library for client-side usage analytics', () => {
     })
   })
 
-  it('throttles Sentry logging as specified', () => {
+  it('appropriately determines whether to log to Sentry', () => {
 
     console.warn = jest.fn();
 
@@ -114,25 +114,33 @@ describe('Library for client-side usage analytics', () => {
     // Almost no events should be suppressed from Sentry with sampleRate = 0.99
     let sampleRate = 0.99
     for (let i = 0; i < 100; i++) {
-      shouldLog({}, true, sampleRate)
+      shouldLog(true, null, sampleRate)
     }
     // Each drop prints two console warning lines
-    const numDroppedInHighSampleRate = console.warn.mock.calls.length / 2
+    const numDroppedInHighSampleRate = console.warn.mock.calls.length
     expect(numDroppedInHighSampleRate).toBeLessThan(20)
 
     // Almost all events should be suppressed from Sentry with sampleRate = 0.01
     sampleRate = 0.01
     for (let i = 0; i < 100; i++) {
-      shouldLog({}, true, sampleRate)
+      shouldLog(true, null, sampleRate)
     }
-    const numDroppedInLowSampleRate = console.warn.mock.calls.length / 2 - numDroppedInHighSampleRate
+    const numDroppedInLowSampleRate = console.warn.mock.calls.length - numDroppedInHighSampleRate
     expect(numDroppedInLowSampleRate).toBeGreaterThan(80)
 
-    // Nothing should be logged when Sentry logging is suppressed, and we expect a warning of this
+    // Test warnings for throttling with a response object
+    for (let i = 0; i < 100; i++) {
+      shouldLog(true, {fakeLoggedValue: 'asdf'}, sampleRate)
+    }
+    const numDroppedInLowSampleWithResponse = console.warn.mock.calls.length
+    const latestWarning = console.warn.mock.calls.slice(-1)[0][0]
+    expect(latestWarning.fakeLoggedValue).toEqual('asdf')
+
+    // Nothing should be logged when Sentry logging is suppressed, and we expect warnings of this
     setIsSuppressedEnv(true)
     shouldLog()
-    const numNewlyDropped = console.warn.mock.calls.length / 2 - numDroppedInLowSampleRate
-    expect(numNewlyDropped).toEqual(1)
+    const numDroppedWhenSuppressed = console.warn.mock.calls.length - numDroppedInLowSampleWithResponse
+    expect(numDroppedWhenSuppressed).toEqual(1)
   })
 
 })
