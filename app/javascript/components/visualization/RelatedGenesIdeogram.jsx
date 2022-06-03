@@ -140,6 +140,12 @@ function onPlotRelatedGenes() {
 export default function RelatedGenesIdeogram({
   gene, taxon, target, genesInScope, searchGenes, speciesList
 }) {
+  if (taxon === null) {
+    // Quick fix to decrease Sentry error log rate
+    // TODO (SCP-4360): Address this more robustly a bit upstream, then remove this patch
+    // return null
+  }
+
   const verticalPad = 40 // Total top and bottom padding
 
   useEffect(() => {

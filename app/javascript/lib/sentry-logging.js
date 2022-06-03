@@ -33,7 +33,7 @@ export function logJSFetchExceptionToSentry(response, titleInfo = '', useThrottl
     url: response.url
   })
 
-  if (shouldLog(response, useThrottle)) {
+  if (shouldLog(useThrottle, response)) {
     Sentry.captureException(new Error(`${response.status}: ${titleInfo}`))
   }
 }
@@ -47,30 +47,38 @@ export function logJSFetchExceptionToSentry(response, titleInfo = '', useThrottl
  * @param {Boolean} useThrottle - whether to apply clientside rate limit throttling
  */
 export function logJSFetchErrorToSentry(error, titleInfo = '', useThrottle = false) {
-  if (shouldLog(error, useThrottle)) {
+  if (shouldLog(useThrottle)) {
     Sentry.captureException(new Error(`${error}: ${titleInfo}`))
   }
 }
 
 /** Print suppression warning message to the console */
-function printSuppression(event, reason) {
-  console.warn(`Suppressing error reporting to Sentry, because it is ${reason}.  Error / response:`)
-  console.warn(event)
+function printSuppression(reason, response) {
+  if (isSuppressedEnv) {
+    reason = 'in an unlogged environment'
+  }
+  const message = `Suppressing error reporting to Sentry, because it is ${reason}.`
+  console.warn(response ? `${message }  Response:` : message)
+
+  // Error objects are printed via console.error already, so only surface Sentry-suppressed responses
+  if (response) {
+    console.warn(response)
+  }
 }
 
 /**
  * Determine if logging should occur based on environment
- * @param {Object} event - response or error object
- * @param {Boolean} useThrottle - whether to apply clientside rate limit throttling
+ * @param {Boolean} useThrottle - whether to apply clientside rate limit throttling. Default false.
+ * @param {Object} response - Fetch response object.  Default null.
  * @param {Number} sampleRate - % of events to log, only applied if `useThrottle = true`
  *  1 = log all events, 0 = log no events, default = 0.1 (i.e. log 10% of events)
  */
-export function shouldLog(event, useThrottle = false, sampleRate = 0.1) {
+export function shouldLog(useThrottle = false, response = null, sampleRate = 0.1) {
   const isThrottled = useThrottle && Math.random() >= sampleRate
 
   if (isSuppressedEnv || isThrottled) {
-    const reason = isSuppressedEnv ? 'in an unlogged environment' : 'rate-limited clientside'
-    printSuppression(event, reason)
+    const reason = isThrottled ? 'rate-limited clientside' : null
+    printSuppression(reason, response)
     return false
   }
 
@@ -81,21 +89,18 @@ export function shouldLog(event, useThrottle = false, sampleRate = 0.1) {
  *  Initialize Sentry to enable logging JS errors to Sentry
  */
 export function setupSentry() {
+  if (isSuppressedEnv) {
+    const reason = 'in an unlogged environment'
+    printSuppression(reason)
+    return
+  }
+
   Sentry.init({
     dsn: 'https://a713dcf8bbce4a26aa1fe3bf19008d26@o54426.ingest.sentry.io/1424198',
     integrations: [new BrowserTracing()],
 
     // Sampling rate for transactions, which enrich Sentry events with traces
-    tracesSampleRate: isSuppressedEnv ? 1.0 : 0,
-
-    // Suppress logging events to Sentry if in a noisy environment
-    beforeSend(event) {
-      if (isSuppressedEnv ? 1.0 : 0) {
-        const reason = 'in an unlogged environment'
-        printSuppression(event, reason)
-        return 0
-      }
-    }
+    tracesSampleRate: 1.0
   })
 
   // set the logger tag to reflect that the errors are from the frontend
