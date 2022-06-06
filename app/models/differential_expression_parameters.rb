@@ -24,7 +24,7 @@ class DifferentialExpressionParameters
             format: { with: GS_URL_REGEXP, message: 'is not a valid GS url' }
   validates :annotation_type, inclusion: %w[group]
   validates :annotation_scope, inclusion: %w[cluster study]
-  validates :matrix_file_type, inclusion: %w[dense sparse]
+  validates :matrix_file_type, inclusion: %w[dense mtx]
   validates :gene_file, :barcode_file,
             presence: true,
             format: {
