@@ -48,6 +48,7 @@ class FacetNameConverter
     'organ_region' => 'organPart',
     'organism_age' => 'organismAge',
     'preservation_method' => 'preservationMethod',
+    'sample_type' => 'sampleEntityType',
     'sex' => 'biologicalSex',
     'species' => 'genusSpecies',
     'study_accession' => 'projectShortname',
@@ -76,7 +77,7 @@ class FacetNameConverter
   def self.convert_schema_column(source_schema, target_schema, column_name)
     validate_map_name(source_schema, target_schema)
     mappings = get_map(source_schema, target_schema)
-    mappings&.send(:[], column_name) || column_name
+    mappings&.send(:[], column_name) # do not fall back to original name as this can throw a 400 from Azul
   end
 
   # check if a column exists in a metadata schema
