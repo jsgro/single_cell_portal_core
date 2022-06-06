@@ -31,6 +31,7 @@ class FacetNameConverter
     'organ' => 'TerraCore:hasAnatomicalSite',
     'organ_region' => 'TerraCore:hasAnatomicalRegion',
     'organism_age' => 'organism_age',
+    'sample_type' => 'TerraCore:hasBioSampleType',
     'sex' => 'TerraCore:hasSex',
     'species' => 'TerraCore:hasOrganismType',
     'study_name' => 'dct:title',
