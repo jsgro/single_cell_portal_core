@@ -79,7 +79,7 @@ class ExpressionVizService
     end
     # filter list of cells down to only those observed in expression matrix
     filtered_cells = filter_cells_for_plot(study, cells)
-    annotations = AnnotationVizService.get_annotation_as_hash(study, cluster, annotation, subsample_threshold)
+    annotations = AnnotationVizService.get_annotation_as_hash(cluster, annotation, cells, subsample_threshold)
 
     # use filtered cells & annotations hash to populate expression data plot
     filtered_cells.each do |cell|
@@ -181,7 +181,8 @@ class ExpressionVizService
     end
     # filter list of cells down to only those observed in expression matrix
     filtered_cells = filter_cells_for_plot(study, cells)
-    annotations = AnnotationVizService.get_annotation_as_hash(study, cluster, annotation, subsample_threshold)
+    annotations = AnnotationVizService.get_annotation_as_hash(cluster, annotation, cells, subsample_threshold)
+
     filtered_cells.each do |cell|
       val = annotations[cell]
       # must check if key exists

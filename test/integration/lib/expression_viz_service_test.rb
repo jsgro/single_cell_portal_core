@@ -355,18 +355,23 @@ class ExpressionVizServiceTest < ActiveSupport::TestCase
   end
 
   test 'should filter cells for plot' do
+    cells = %w[A foo bar]
     study = FactoryBot.create(:detached_study,
                               name_prefix: 'Filter test',
                               user: @user,
                               test_array: @@studies_to_clean)
     matrix = FactoryBot.create(:expression_file,
                                name: 'dense.txt',
-                               cell_input: %w[A b c],
+                               cell_input: cells,
                                expression_input: [],
                                file_type: 'Expression Matrix',
                                study: study)
 
+    good_cells = ExpressionVizService.filter_cells_for_plot(study, cells)
+    assert_equal cells, good_cells
     filtered_cells = ExpressionVizService.filter_cells_for_plot(study, %w[A B C])
     assert_equal %w[A], filtered_cells
+    no_cells = ExpressionVizService.filter_cells_for_plot(study, %w[n q r])
+    assert_empty no_cells
   end
 end
