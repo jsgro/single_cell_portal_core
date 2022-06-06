@@ -14,6 +14,11 @@ import { logStudyGeneSearch } from '~/lib/search-metrics'
 /** renders the gene text input
   * This shares a lot of logic with search/genes/GeneKeyword, but is kept as a separate component for
   * now, as the need for autocomplete raises additional complexity
+  * 
+  * @param genes Array of genes currently inputted
+  * @param searchGenes Function to call to execute the API search
+  * @param allGenes String array of valid genes in the study
+  * @param speciesList String array of species scientific names
   */
 export default function StudyGeneField({ genes, searchGenes, allGenes, speciesList }) {
   const [inputText, setInputText] = useState('')
@@ -32,8 +37,8 @@ export default function StudyGeneField({ genes, searchGenes, allGenes, speciesLi
   const [geneArray, setGeneArray] = useState(enteredGeneArray)
   const [showEmptySearchModal, setShowEmptySearchModal] = useState(false)
 
-  const [badGeneSet, setBadGeneSet] = useState(new Set([]))
-  const [showBadGeneChoice, setShowBadGeneChoice] = useState(false)
+  const [notPresentGenes, setNotPresentGenes] = useState(new Set([]))
+  const [showNotPresentGeneChoice, setShowNotPresentGeneChoice] = useState(false)
 
   /** handles a user submitting a gene search */
   function handleSearch(event) {
@@ -44,14 +49,14 @@ export default function StudyGeneField({ genes, searchGenes, allGenes, speciesLi
     if (newGeneArray) {
       newGeneArray.forEach(gene => {
         // if an entered gene is not in the valid gene options for the study
-        if (geneOptions.length > 0 && !geneOptions.find(geneOpt => geneOpt.label === gene.label) && !badGeneSet?.has(gene.label)) {
-          setBadGeneSet(badGeneSet.add(gene.label))
+        if (geneOptions.length > 0 && !geneOptions.find(geneOpt => geneOpt.label.toLowerCase() === gene.label.toLowerCase()) && !notPresentGenes?.has(gene.label)) {
+          setNotPresentGenes(notPresentGenes.add(gene.label))
           shouldSearch = false
         }
       })
     }
     if (!shouldSearch) {
-      setShowBadGeneChoice(true)
+      setShowNotPresentGeneChoice(true)
     } else if (newGeneArray && newGeneArray.length) {
       const genesToSearch = newGeneArray.map(g => g.value)
       if (event) { // this was not a 'clear'
@@ -128,7 +133,7 @@ export default function StudyGeneField({ genes, searchGenes, allGenes, speciesLi
     // react-select doesn't expose the actual click events, so we deduce the kind
     // of operation based on whether it lengthened or shortened the list
     const newValue = value ? value : []
-    setBadGeneSet(new Set([]))
+    setNotPresentGenes(new Set([]))
     logGeneArrayChange(newValue)
     setGeneArray(newValue)
   }
@@ -138,7 +143,7 @@ export default function StudyGeneField({ genes, searchGenes, allGenes, speciesLi
       // the genes have been updated elsewhere -- resync
       setGeneArray(getOptionsFromGenes(genes))
       setInputText('')
-      setBadGeneSet(new Set([]))
+      setNotPresentGenes(new Set([]))
     }
   }, [genes.join(',')])
 
@@ -202,12 +207,12 @@ export default function StudyGeneField({ genes, searchGenes, allGenes, speciesLi
         </Modal.Body>
       </Modal>
       <Modal
-        show={showBadGeneChoice}
-        onHide={() => {setShowBadGeneChoice(false)}}
+        show={showNotPresentGeneChoice}
+        onHide={() => {setShowNotPresentGeneChoice(false)}}
         animation={false}
         bsSize='small'>
         <Modal.Body className="text-center">
-        Invalid Search - Please remove &quot;{Array.from(badGeneSet).join('", "')}&quot; from gene search.
+        Invalid Search - Please remove &quot;{Array.from(notPresentGenes).join('", "')}&quot; from gene search.
         </Modal.Body>
       </Modal>
 
