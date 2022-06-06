@@ -31,7 +31,7 @@ class DifferentialExpressionParameters
               with: GS_URL_REGEXP,
               message: 'is not a valid GS url'
             },
-            if: -> { matrix_file_type == 'sparse' }
+            if: -> { matrix_file_type == 'mtx' }
 
   # convert attribute name into CLI-formatted option
   def self.to_cli_opt(param_name)
