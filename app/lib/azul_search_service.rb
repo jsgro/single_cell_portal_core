@@ -236,7 +236,7 @@ class AzulSearchService
       queries = [{ 'project' => { 'is' => accessions } }]
     end
     all_results = []
-    queries.each do |query|
+    Parallel.map(queries, in_threads: queries.size) do |query|
       results = client.projects(query: query)
       results['hits'].map do |entry|
         entry_hash = entry.with_indifferent_access
