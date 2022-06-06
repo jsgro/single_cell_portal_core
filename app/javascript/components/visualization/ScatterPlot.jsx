@@ -241,6 +241,13 @@ function RawScatterPlot({
     if (scatterData && !isLoading) {
       const plotlyTraces = document.getElementById(graphElementId).data
       PlotUtils.updateTraceVisibility(plotlyTraces, hiddenTraces)
+      // disable autorange so graph does not rescale (SCP-3878)
+      // we do not need to explicitly re-enable it since a new cluster will reset the entire layout
+      scatterData.layout.xaxis.autorange = false
+      scatterData.layout.yaxis.autorange = false
+      if (scatterData.layout.zaxis) {
+        scatterData.layout.zaxis.autorange = false
+      }
       Plotly.react(graphElementId, plotlyTraces, scatterData.layout)
     }
     // look for updates of individual properties, so that we don't rerender if the containing array
