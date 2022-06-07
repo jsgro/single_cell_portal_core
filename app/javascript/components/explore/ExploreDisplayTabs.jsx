@@ -51,7 +51,7 @@ const tabList = [
 /** Determine if currently selected annotation has differential expression outputs available */
 function annotHasDe(exploreInfo, exploreParams) {
   const flags = getFeatureFlagsWithDefaults()
-  if (!exploreInfo || flags?.differential_expression_frontend) {
+  if (!flags?.differential_expression_frontend || !exploreInfo) {
     return false
   }
 
