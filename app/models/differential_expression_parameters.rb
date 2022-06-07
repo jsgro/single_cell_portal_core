@@ -59,7 +59,8 @@ class DifferentialExpressionParameters
   def to_options_array
     options_array = []
     attributes.each do |attr_name, value|
-      options_array += [self.class.to_cli_opt(attr_name), value] if value.present?
+      # quote value to allow for non-word characters
+      options_array += [self.class.to_cli_opt(attr_name), "#{value}"] if value.present?
     end
     options_array << '--differential-expression'
     options_array
