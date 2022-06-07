@@ -22,7 +22,7 @@ class DifferentialExpressionParametersTest < ActiveSupport::TestCase
       cluster_file: 'gs://test_bucket/cluster.tsv',
       cluster_name: 'UMAP',
       matrix_file_path: 'gs://test_bucket/sparse.tsv',
-      matrix_file_type: 'sparse',
+      matrix_file_type: 'mtx',
       gene_file: 'gs://test_bucket/genes.tsv',
       barcode_file: 'gs://test_bucket/barcodes.tsv'
     }

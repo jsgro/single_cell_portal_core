@@ -5,7 +5,7 @@ class DifferentialExpressionServiceTest < ActiveSupport::TestCase
   before(:all) do
     @user = FactoryBot.create(:api_user, test_array: @@users_to_clean)
     @basic_study = FactoryBot.create(:detached_study,
-                                     name_prefix: 'File Parse Service Test',
+                                     name_prefix: 'DifferentialExpressionService Test',
                                      user: @user,
                                      test_array: @@studies_to_clean)
 
@@ -84,6 +84,85 @@ class DifferentialExpressionServiceTest < ActiveSupport::TestCase
     IngestJob.stub :new, mock do
       job_launched = DifferentialExpressionService.run_differential_expression_job(
         @cluster_file, @basic_study, @user, **@job_params
+      )
+      assert job_launched
+      mock.verify
+      job_mock.verify
+    end
+  end
+
+  test 'should run differential expression job with sparse matrix' do
+    study = FactoryBot.create(:detached_study,
+                              name_prefix: 'Sparse DE Test',
+                              user: @user,
+                              test_array: @@studies_to_clean)
+
+    cells = %w[Cell_A Cell_B Cell_C]
+    matrix = FactoryBot.create(:study_file,
+                               name: 'raw.txt',
+                               study: study,
+                               file_type: 'MM Coordinate Matrix',
+                               parse_status: 'parsed',
+                               status: 'uploaded',
+                               expression_file_info: {
+                                 is_raw_counts: true,
+                                 units: 'raw counts',
+                                 library_preparation_protocol: 'Drop-seq',
+                                 biosample_input_type: 'Whole cell',
+                                 modality: 'Proteomic'
+                               })
+
+    genes = FactoryBot.create(:study_file,
+                              name: 'genes.txt',
+                              study: study,
+                              status: 'uploaded',
+                              file_type: '10X Genes File')
+
+    barcodes = FactoryBot.create(:study_file,
+                                 name: 'barcodes.txt',
+                                 study: study,
+                                 status: 'uploaded',
+                                 file_type: '10X Barcodes File')
+
+    bundle = StudyFileBundle.new(study: study, bundle_type: matrix.file_type)
+    bundle.add_files(matrix, genes, barcodes)
+    bundle.save!
+    cluster_file = FactoryBot.create(:cluster_file,
+                                    name: 'cluster_diffexp.txt',
+                                    study: study,
+                                    cell_input: {
+                                      x: [1, 4, 6],
+                                      y: [7, 5, 3],
+                                      cells: cells
+                                    })
+    FactoryBot.create(:metadata_file,
+                      name: 'metadata.txt',
+                      study: study,
+                      cell_input: cells,
+                      annotation_input: [
+                        { name: 'species', type: 'group', values: %w[dog cat dog] },
+                        { name: 'disease', type: 'group', values: %w[none none measles] }
+                      ])
+    annotation = {
+      annotation_name: 'species',
+      annotation_type: 'group',
+      annotation_scope: 'study'
+    }
+
+    data_array_params = {
+      name: 'raw.txt Cells', array_type: 'cells', linear_data_type: 'Study', study_id: study.id,
+      cluster_name: 'raw.txt', array_index: 0, linear_data_id: study.id, study_file_id: matrix.id,
+      cluster_group_id: nil, subsample_annotation: nil, subsample_threshold: nil, values: cells
+    }
+    DataArray.create(data_array_params)
+
+    job_mock = Minitest::Mock.new
+    job_mock.expect(:push_remote_and_launch_ingest, Delayed::Job.new, [Hash])
+    mock = Minitest::Mock.new
+    mock.expect(:delay, job_mock)
+    IngestJob.stub :new, mock do
+      job_launched = DifferentialExpressionService.run_differential_expression_job(
+        cluster_file, study, @user, **annotation
       )
       assert job_launched
       mock.verify

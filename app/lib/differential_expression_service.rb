@@ -148,9 +148,11 @@ class DifferentialExpressionService
 
     de_params[:matrix_file_path] = raw_matrix.gs_url
     if raw_matrix.file_type == 'MM Coordinate Matrix'
-      de_params[:matrix_file_type] = 'sparse'
-      gene_file = raw_matrix.bundled_file_by_type('10X Genes File')
-      barcode_file = raw_matrix.bundled_file_by_type('10X Barcodes File')
+      de_params[:matrix_file_type] = 'mtx'
+      # we know bundle exists and is completed as :raw_matrix_for_cluster_cells will throw an exception if it isn't
+      bundle = raw_matrix.study_file_bundle
+      gene_file = bundle.bundled_file_by_type('10X Genes File')
+      barcode_file = bundle.bundled_file_by_type('10X Barcodes File')
       de_params[:gene_file] = gene_file.gs_url
       de_params[:barcode_file] = barcode_file.gs_url
     else
@@ -210,7 +212,7 @@ class DifferentialExpressionService
   def self.validate_study(study)
     raise ArgumentError, 'Requested study does not exist' if study.nil?
     raise ArgumentError, "#{study.accession} is not public" unless study.public?
-    raise ArgumentError, "#{study.accession} is not initialized" unless study.initialized?
+    raise ArgumentError, "#{study.accession} cannot view cluster plots" unless study.can_visualize_clusters?
   end
 
   # shortcut to log to STDOUT and Rails log simultaneously
