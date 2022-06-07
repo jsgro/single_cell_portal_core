@@ -24,7 +24,7 @@ import Heatmap from '~/components/visualization/Heatmap'
 import GeneListHeatmap from '~/components/visualization/GeneListHeatmap'
 import GenomeView from './GenomeView'
 import ImageTab from './ImageTab'
-import { getAnnotationValues, getDefaultSpatialGroupsForCluster } from '~/lib/cluster-utils'
+import { getAnnotationValues, getDefaultSpatialGroupsForCluster, getMatchedAnnotation } from '~/lib/cluster-utils'
 import RelatedGenesIdeogram from '~/components/visualization/RelatedGenesIdeogram'
 import InferCNVIdeogram from '~/components/visualization/InferCNVIdeogram'
 import useResizeEffect from '~/hooks/useResizeEffect'
@@ -61,17 +61,11 @@ function annotHasDe(exploreInfo, exploreParams) {
   if (exploreParams?.cluster) {
     selectedAnnot = exploreParams.annotation
   } else {
-    selectedAnnot = exploreInfo.annotationList.default_annotation
+    selectedAnnot = annotList.default_annotation
   }
 
-  const matchingAnnot = annotList.annotations.find(annot => {
-    return (
-      selectedAnnot.name === annot.name &&
-      selectedAnnot.scope === annot.scope &&
-      selectedAnnot.type === annot.type
-    )
-  })
-  annotHasDe = matchingAnnot.is_differential_expression_enabled
+  const matchingAnnot = getMatchedAnnotation(selectedAnnot, annotList)
+  annotHasDe = matchingAnnot?.is_differential_expression_enabled
 
   return annotHasDe
 }
