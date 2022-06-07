@@ -48,6 +48,34 @@ const tabList = [
   { key: 'images', label: 'Images' }
 ]
 
+/** Determine if currently selected annotation has differential outputs available */
+function annotHasDe(exploreInfo, exploreParams) {
+  const flags = getFeatureFlagsWithDefaults()
+  if (!exploreInfo || flags?.differential_expression_frontend) {
+    return false
+  }
+
+  let annotHasDe = false
+  const annotList = exploreInfo.annotationList
+  let selectedAnnot
+  if (exploreParams?.cluster) {
+    selectedAnnot = exploreParams.annotation
+  } else {
+    selectedAnnot = exploreInfo.annotationList.default_annotation
+  }
+
+  const matchingAnnot = annotList.annotations.find(annot => {
+    return (
+      selectedAnnot.name === annot.name &&
+      selectedAnnot.scope === annot.scope &&
+      selectedAnnot.type === annot.type
+    )
+  })
+  annotHasDe = matchingAnnot.is_differential_expression_enabled
+
+  return annotHasDe
+}
+
 /**
  * Renders the gene search box and the tab selection
  * Responsible for determining which tabs are available for a given view of the study
@@ -85,31 +113,7 @@ export default function ExploreDisplayTabs({
   // Hash of trace label names to the number of points in that trace
   const [countsByLabel, setCountsByLabel] = useState(null)
 
-  // TODO (SCP-4374): In addition to feature flag, check
-  // is_differential_expression_enabled attribute from forthcoming update to
-  // an API response
-  const flags = getFeatureFlagsWithDefaults()
-  const availableDeClusterAnnotations = [
-    'All_Cells_UMAP--General_Celltype',
-    'All_Cells_UMAP--cell_type__ontology_label',
-    'All_Cells_UMAP--milk_stage',
-    'Epithelial_Cells_UMAP--Epithelial_Cell_Subclusters',
-    'Epithelial_Cells_UMAP--General_Celltype',
-    'Epithelial_Cells_UMAP--milk_stage'
-
-  ]
-  let clusterAnnotation = null
-  if (exploreParams?.cluster) {
-    clusterAnnotation = `${exploreParams.cluster}--${exploreParams.annotation.name}`.replaceAll(' ', '_')
-  } else if (exploreInfo) {
-    const annotList = exploreInfo.annotationList
-    clusterAnnotation = `${annotList.default_cluster}--${annotList.default_annotation?.name}`.replaceAll(' ', '_')
-  }
-
-  const isDifferentialExpressionEnabled = (
-    flags?.differential_expression_frontend &&
-    availableDeClusterAnnotations.includes(clusterAnnotation)
-  )
+  const isDifferentialExpressionEnabled = annotHasDe(exploreInfo, exploreParams)
 
   const plotContainerClass = 'explore-plot-tab-content'
 
