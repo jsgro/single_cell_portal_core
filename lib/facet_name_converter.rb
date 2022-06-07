@@ -25,6 +25,7 @@ class FacetNameConverter
   # map of Alexandria metadata convention names to namespace Terra Interoperability Model (TIM) names
   ALEXANDRIA_TO_TIM = {
     'biosample_id' => 'dct:identifier',
+    'biosample_type' => 'TerraCore:hasBioSampleType',
     'donor_id' => 'prov:wasDerivedFrom',
     'disease' => 'TerraCore:hasDisease',
     'library_preparation_protocol' => 'TerraCore:hasLibraryPrep',
@@ -41,6 +42,7 @@ class FacetNameConverter
   # map of alexandria names to HCA Azul facet names (for searching projects/files via the Azul API)
   ALEXANDRIA_TO_AZUL = {
     'biosample_id' => 'sampleId',
+    'biosample_type' => 'sampleEntityType',
     'cell_type' => 'selectedCellType',
     'disease' => 'sampleDisease',
     'library_preparation_protocol' => 'libraryConstructionApproach',
@@ -76,7 +78,7 @@ class FacetNameConverter
   def self.convert_schema_column(source_schema, target_schema, column_name)
     validate_map_name(source_schema, target_schema)
     mappings = get_map(source_schema, target_schema)
-    mappings&.send(:[], column_name) || column_name
+    mappings&.send(:[], column_name) # do not fall back to original name as this can throw a 400 from Azul
   end
 
   # check if a column exists in a metadata schema

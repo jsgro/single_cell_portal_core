@@ -18,8 +18,6 @@ class FacetNameConverterTest < ActiveSupport::TestCase
       converted_name = FacetNameConverter.convert_schema_column(:alexandria, model_name, scp_name)
       assert_equal @expected_conversions[model_name][index], converted_name
     end
-    # test fallback
-    assert_equal @nonexistent_field, FacetNameConverter.convert_schema_column(:alexandria, model_name, @nonexistent_field)
   end
 
   test 'should convert to HCA names' do
@@ -49,5 +47,9 @@ class FacetNameConverterTest < ActiveSupport::TestCase
         assert FacetNameConverter.schema_has_column?(:alexandria, schema, column)
       end
     end
+  end
+
+  test 'should return nil on no match' do
+    assert_nil FacetNameConverter.convert_schema_column(:alexandria, :azul, @nonexistent_field)
   end
 end

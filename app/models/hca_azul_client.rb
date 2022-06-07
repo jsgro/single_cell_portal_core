@@ -269,6 +269,8 @@ class HcaAzulClient
     facets.each do |facet|
       safe_facet = facet.with_indifferent_access
       hca_term = FacetNameConverter.convert_schema_column(:alexandria, :azul, safe_facet[:id])
+      next if hca_term.nil?
+
       scp_facet = facet[:db_facet]
       if scp_facet.is_numeric?
         min = safe_facet.dig(:filters, :min)
