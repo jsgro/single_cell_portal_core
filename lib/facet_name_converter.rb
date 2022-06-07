@@ -25,13 +25,13 @@ class FacetNameConverter
   # map of Alexandria metadata convention names to namespace Terra Interoperability Model (TIM) names
   ALEXANDRIA_TO_TIM = {
     'biosample_id' => 'dct:identifier',
+    'biosample_type' => 'TerraCore:hasBioSampleType',
     'donor_id' => 'prov:wasDerivedFrom',
     'disease' => 'TerraCore:hasDisease',
     'library_preparation_protocol' => 'TerraCore:hasLibraryPrep',
     'organ' => 'TerraCore:hasAnatomicalSite',
     'organ_region' => 'TerraCore:hasAnatomicalRegion',
     'organism_age' => 'organism_age',
-    'sample_type' => 'TerraCore:hasBioSampleType',
     'sex' => 'TerraCore:hasSex',
     'species' => 'TerraCore:hasOrganismType',
     'study_name' => 'dct:title',
@@ -42,6 +42,7 @@ class FacetNameConverter
   # map of alexandria names to HCA Azul facet names (for searching projects/files via the Azul API)
   ALEXANDRIA_TO_AZUL = {
     'biosample_id' => 'sampleId',
+    'biosample_type' => 'sampleEntityType',
     'cell_type' => 'selectedCellType',
     'disease' => 'sampleDisease',
     'library_preparation_protocol' => 'libraryConstructionApproach',
@@ -49,7 +50,6 @@ class FacetNameConverter
     'organ_region' => 'organPart',
     'organism_age' => 'organismAge',
     'preservation_method' => 'preservationMethod',
-    'sample_type' => 'sampleEntityType',
     'sex' => 'biologicalSex',
     'species' => 'genusSpecies',
     'study_accession' => 'projectShortname',
