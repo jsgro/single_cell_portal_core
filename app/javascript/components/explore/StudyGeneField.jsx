@@ -44,18 +44,17 @@ export default function StudyGeneField({ genes, searchGenes, allGenes, speciesLi
   function handleSearch(event) {
     event.preventDefault()
     const newGeneArray = syncGeneArrayToInputText()
-
-    let shouldSearch = true
+    let newNotPresentGenes = new Set([]) 
     if (newGeneArray) {
       newGeneArray.forEach(gene => {
         // if an entered gene is not in the valid gene options for the study
-        if (geneOptions.length > 0 && !geneOptions.find(geneOpt => geneOpt.label.toLowerCase() === gene.label.toLowerCase()) && !notPresentGenes?.has(gene.label)) {
-          setNotPresentGenes(notPresentGenes.add(gene.label))
-          shouldSearch = false
+        if (geneOptions.length > 0 && !geneOptions.find(geneOpt => geneOpt.label.toLowerCase() === gene.label.toLowerCase())) {
+          newNotPresentGenes.add(gene.label)
         }
       })
     }
-    if (!shouldSearch) {
+    setNotPresentGenes(newNotPresentGenes)
+    if (newNotPresentGenes.size > 0) {
       setShowNotPresentGeneChoice(true)
     } else if (newGeneArray && newGeneArray.length) {
       const genesToSearch = newGeneArray.map(g => g.value)
