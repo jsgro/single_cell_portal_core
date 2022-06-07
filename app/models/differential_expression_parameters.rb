@@ -24,14 +24,14 @@ class DifferentialExpressionParameters
             format: { with: GS_URL_REGEXP, message: 'is not a valid GS url' }
   validates :annotation_type, inclusion: %w[group]
   validates :annotation_scope, inclusion: %w[cluster study]
-  validates :matrix_file_type, inclusion: %w[dense sparse]
+  validates :matrix_file_type, inclusion: %w[dense mtx]
   validates :gene_file, :barcode_file,
             presence: true,
             format: {
               with: GS_URL_REGEXP,
               message: 'is not a valid GS url'
             },
-            if: -> { matrix_file_type == 'sparse' }
+            if: -> { matrix_file_type == 'mtx' }
 
   # convert attribute name into CLI-formatted option
   def self.to_cli_opt(param_name)
@@ -59,7 +59,8 @@ class DifferentialExpressionParameters
   def to_options_array
     options_array = []
     attributes.each do |attr_name, value|
-      options_array += [self.class.to_cli_opt(attr_name), value] if value.present?
+      # quote value to allow for non-word characters
+      options_array += [self.class.to_cli_opt(attr_name), "#{value}"] if value.present?
     end
     options_array << '--differential-expression'
     options_array
