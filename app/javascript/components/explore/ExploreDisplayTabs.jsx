@@ -48,7 +48,7 @@ const tabList = [
   { key: 'images', label: 'Images' }
 ]
 
-/** Determine if currently selected annotation has differential outputs available */
+/** Determine if currently selected annotation has differential expression outputs available */
 function annotHasDe(exploreInfo, exploreParams) {
   const flags = getFeatureFlagsWithDefaults()
   if (!exploreInfo || flags?.differential_expression_frontend) {
@@ -104,16 +104,14 @@ export default function ExploreDisplayTabs({
   const [currentPointsSelected, setCurrentPointsSelected] = useState(null)
 
   // Differential expression settings
-  // TODO (SCP-4374): Integrate is_differential_expression_enabled from API
-  const [showDeGroupPicker, setShowDeGroupPicker] = useState(false)
+  const isDifferentialExpressionEnabled = annotHasDe(exploreInfo, exploreParams)
+  const [, setShowDeGroupPicker] = useState(false)
   const [deGenes, setDeGenes] = useState(null)
   const [deGroup, setDeGroup] = useState(null)
   const [showDifferentialExpressionPanel, setShowDifferentialExpressionPanel] = useState(deGenes !== null)
 
   // Hash of trace label names to the number of points in that trace
   const [countsByLabel, setCountsByLabel] = useState(null)
-
-  const isDifferentialExpressionEnabled = annotHasDe(exploreInfo, exploreParams)
 
   const plotContainerClass = 'explore-plot-tab-content'
 
