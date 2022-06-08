@@ -251,14 +251,15 @@ export default function ExploreDisplayTabs({
               searchGenes={searchGenes}
               allGenes={exploreInfo ? exploreInfo.uniqueGenes : []}
               speciesList={exploreInfo ? exploreInfo.taxonNames : []}/>
-            { /* show if this is gene search || gene list */ }
-            <button className={isGene || isGeneList || hasIdeogramOutputs ? 'action fa-lg' : 'hidden'}
-              onClick={() => searchGenes([])}
-              title="Return to cluster view"
-              data-toggle="tooltip"
-              data-analytics-name="back-to-cluster-view">
-              <FontAwesomeIcon icon={faArrowLeft}/>
-            </button>
+            { (isGene || isGeneList || hasIdeogramOutputs) && // show if this is gene search || gene list
+              <button className="action fa-lg"
+                onClick={() => searchGenes([])}
+                title="Return to cluster view"
+                data-toggle="tooltip"
+                data-analytics-name="back-to-cluster-view">
+                <FontAwesomeIcon icon={faArrowLeft}/>
+              </button>
+            }
           </div>
         </div>
         <div className="col-md-4 col-md-offset-1">
