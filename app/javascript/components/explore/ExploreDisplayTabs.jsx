@@ -204,6 +204,11 @@ export default function ExploreDisplayTabs({
     ) {
       updateParams.tab = 'annotatedScatter'
     }
+    // if the user changes annotation, unset hiddenTraces
+    if (newParams.annotation && newParams.annotation.name !== exploreParams.annotation.name) {
+      updateParams.hiddenTraces = []
+    }
+
     updateExploreParams(updateParams)
   }
 

@@ -117,6 +117,9 @@ function buildExploreParamsFromQuery(query) {
       exploreParams.expressionFilter = filterArray
     }
   }
+
+  exploreParams.hiddenTraces = queryParams.hiddenTraces ? queryParams.hiddenTraces.split(',') : []
+  exploreParams.splitLabelArrays = queryParams.splitLabelArrays === 'true' ? true : null
   return exploreParams
 }
 
@@ -138,7 +141,9 @@ function buildQueryFromParams(exploreParams) {
     heatmapFit: exploreParams.heatmapFit,
     bamFileName: exploreParams.bamFileName,
     ideogramFileId: exploreParams.ideogramFileId,
-    expressionFilter: exploreParams.expressionFilter ? exploreParams.expressionFilter.join(FILTER_RANGE_DELIMITER) : undefined
+    expressionFilter: exploreParams.expressionFilter ? exploreParams.expressionFilter.join(FILTER_RANGE_DELIMITER) : undefined,
+    hiddenTraces: exploreParams.hiddenTraces.join(','),
+    splitLabelArrays: exploreParams.splitLabelArrays ? 'true' : undefined
   }
 
   if (querySafeOptions.spatialGroups === '' && exploreParams.userSpecified['spatialGroups']) {
@@ -157,7 +162,7 @@ function buildQueryFromParams(exploreParams) {
 /** controls list in which query string params are rendered into URL bar */
 const PARAM_LIST_ORDER = ['geneList', 'genes', 'cluster', 'spatialGroups', 'annotation', 'subsample', 'consensus',
   'tab', 'scatterColor', 'distributionPlot', 'distributionPoints',
-  'heatmapFit', 'heatmapRowCentering', 'bamFileName', 'ideogramFileId', 'expressionFilter']
+  'heatmapFit', 'heatmapRowCentering', 'bamFileName', 'ideogramFileId', 'expressionFilter', 'splitLabelArrays', 'hiddenTraces']
 /** sort function for passing to stringify to ensure url params are specified in a user-friendly order */
 function paramSorter(a, b) {
   return PARAM_LIST_ORDER.indexOf(a) - PARAM_LIST_ORDER.indexOf(b)
