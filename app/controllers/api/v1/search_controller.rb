@@ -520,7 +520,6 @@ module Api
       def self.get_study_attribute(search_result, attribute)
         if search_result.is_a?(Study)
           search_result.send(attribute)
-        else
         elsif !search_result.nil?
           search_result[attribute]
         else 
