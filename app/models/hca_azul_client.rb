@@ -17,6 +17,9 @@ class HcaAzulClient
   # maximum number of results to return
   MAX_RESULTS = 250
 
+  # maximum length of query string (in characters) for requests
+  MAX_QUERY_LENGTH = 8192
+
   # Default headers for API requests
   DEFAULT_HEADERS = {
     'Accept' => 'application/json',
@@ -360,6 +363,18 @@ class HcaAzulClient
     # replace Ruby => assignment operators with JSON standard colons (:)
     sanitized_params = query_params.to_s.gsub(/=>/, ':')
     CGI.escape(sanitized_params)
+  end
+
+  # determine if a requested query is too long and would result in an HTTP 413 Payload Too Large exception
+  #
+  # * *params*
+  #   - +query_params+ (Hash) => Hash of query parameters
+  #
+  # * *returns*
+  #   - (Boolean) => T/F if query would be too large
+  def query_too_large?(query_params)
+    formatted_query = format_hash_as_query_string(query_params)
+    formatted_query.size >= MAX_QUERY_LENGTH
   end
 
   # append the HCA catalog name, if passed to a method
