@@ -255,6 +255,7 @@ export default function ExploreDisplayTabs({
             <StudyGeneField genes={exploreParams.genes}
               searchGenes={searchGenes}
               allGenes={exploreInfo ? exploreInfo.uniqueGenes : []}
+              isLoading={!exploreInfo}
               speciesList={exploreInfo ? exploreInfo.taxonNames : []}/>
             { (isGene || isGeneList || hasIdeogramOutputs) && // show if this is gene search || gene list
               <button className="action fa-lg"
