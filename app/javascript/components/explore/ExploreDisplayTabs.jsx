@@ -24,7 +24,7 @@ import Heatmap from '~/components/visualization/Heatmap'
 import GeneListHeatmap from '~/components/visualization/GeneListHeatmap'
 import GenomeView from './GenomeView'
 import ImageTab from './ImageTab'
-import { getAnnotationValues, getDefaultSpatialGroupsForCluster } from '~/lib/cluster-utils'
+import { getAnnotationValues, getDefaultSpatialGroupsForCluster, getMatchedAnnotation } from '~/lib/cluster-utils'
 import RelatedGenesIdeogram from '~/components/visualization/RelatedGenesIdeogram'
 import InferCNVIdeogram from '~/components/visualization/InferCNVIdeogram'
 import useResizeEffect from '~/hooks/useResizeEffect'
@@ -47,6 +47,28 @@ const tabList = [
   { key: 'infercnv-genome', label: 'Genome (inferCNV)' },
   { key: 'images', label: 'Images' }
 ]
+
+/** Determine if currently selected annotation has differential expression outputs available */
+function annotHasDe(exploreInfo, exploreParams) {
+  const flags = getFeatureFlagsWithDefaults()
+  if (!flags?.differential_expression_frontend || !exploreInfo) {
+    return false
+  }
+
+  let annotHasDe = false
+  const annotList = exploreInfo.annotationList
+  let selectedAnnot
+  if (exploreParams?.cluster) {
+    selectedAnnot = exploreParams.annotation
+  } else {
+    selectedAnnot = annotList.default_annotation
+  }
+
+  const matchingAnnot = getMatchedAnnotation(selectedAnnot, annotList)
+  annotHasDe = matchingAnnot?.is_differential_expression_enabled
+
+  return annotHasDe
+}
 
 /**
  * Renders the gene search box and the tab selection
@@ -76,40 +98,14 @@ export default function ExploreDisplayTabs({
   const [currentPointsSelected, setCurrentPointsSelected] = useState(null)
 
   // Differential expression settings
-  // TODO (SCP-4374): Integrate is_differential_expression_enabled from API
-  const [showDeGroupPicker, setShowDeGroupPicker] = useState(false)
+  const isDifferentialExpressionEnabled = annotHasDe(exploreInfo, exploreParams)
+  const [, setShowDeGroupPicker] = useState(false)
   const [deGenes, setDeGenes] = useState(null)
   const [deGroup, setDeGroup] = useState(null)
   const [showDifferentialExpressionPanel, setShowDifferentialExpressionPanel] = useState(deGenes !== null)
 
   // Hash of trace label names to the number of points in that trace
   const [countsByLabel, setCountsByLabel] = useState(null)
-
-  // TODO (SCP-4374): In addition to feature flag, check
-  // is_differential_expression_enabled attribute from forthcoming update to
-  // an API response
-  const flags = getFeatureFlagsWithDefaults()
-  const availableDeClusterAnnotations = [
-    'All_Cells_UMAP--General_Celltype',
-    'All_Cells_UMAP--cell_type__ontology_label',
-    'All_Cells_UMAP--milk_stage',
-    'Epithelial_Cells_UMAP--Epithelial_Cell_Subclusters',
-    'Epithelial_Cells_UMAP--General_Celltype',
-    'Epithelial_Cells_UMAP--milk_stage'
-
-  ]
-  let clusterAnnotation = null
-  if (exploreParams?.cluster) {
-    clusterAnnotation = `${exploreParams.cluster}--${exploreParams.annotation.name}`.replaceAll(' ', '_')
-  } else if (exploreInfo) {
-    const annotList = exploreInfo.annotationList
-    clusterAnnotation = `${annotList.default_cluster}--${annotList.default_annotation?.name}`.replaceAll(' ', '_')
-  }
-
-  const isDifferentialExpressionEnabled = (
-    flags?.differential_expression_frontend &&
-    availableDeClusterAnnotations.includes(clusterAnnotation)
-  )
 
   const plotContainerClass = 'explore-plot-tab-content'
 
