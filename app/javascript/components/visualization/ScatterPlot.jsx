@@ -57,7 +57,7 @@ function RawScatterPlot({
   // map of label name to color hex codes, for any labels the user has picked a color for
   const [editedCustomColors, setEditedCustomColors] = useState({})
 
-  const isRefGroup = getIsRefGroup(annotation?.type, genes, isCorrelatedScatter)
+  const isRefGroup = getIsRefGroup(scatterData?.annotParams?.type, genes, isCorrelatedScatter)
 
   /**
    * Handle user interaction with one or more labels in legend.
