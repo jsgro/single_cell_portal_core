@@ -207,7 +207,7 @@ class AzulSearchServiceTest < ActiveSupport::TestCase
   test 'should retrieve all facets/filters' do
     facets = AzulSearchService.get_all_facet_filters
     expected_keys = %w[organ disease organism_age preservation_method species study_name organ_region
-                       library_preparation_protocol sex study_description cell_type].sort
+                       library_preparation_protocol sex study_description cell_type biosample_type].sort
     assert_equal expected_keys, facets.keys.sort
     diseases = facets.dig('disease', 'filters')
     assert_includes diseases, 'normal'
