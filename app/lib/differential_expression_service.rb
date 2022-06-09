@@ -200,6 +200,13 @@ class DifferentialExpressionService
     identifier = "#{annotation_name}--#{annotation_type}--#{annotation_scope}"
     raise ArgumentError, "#{identifier} is not present" if annotation.nil?
     raise ArgumentError, "#{identifier} cannot be visualized" unless can_visualize
+
+    # last, validate that the requested annotation & cluster will provide a valid intersection of annotation values
+    # specifically, discard any annotation/cluster combos that only result in one distinct label
+    cells_by_label = ClusterVizService.get_cells_by_label(cluster, annotation_name, annotation_type, annotation_scope)
+    if cells_by_label.keys < 2
+      raise ArgumentError, "#{identifier} does not have enough labels represented in #{cluster.name}"
+    end
   end
 
   # validate a given study is able to run DE job
