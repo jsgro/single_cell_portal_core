@@ -48,7 +48,7 @@ export default function StudyGeneField({ genes, searchGenes, allGenes, speciesLi
     if (newGeneArray) {
       newGeneArray.forEach(gene => {
         // if an entered gene is not in the valid gene options for the study
-        if (geneOptions.length > 0 && !geneOptions.find(geneOpt => geneOpt.label.toLowerCase() === gene.label.toLowerCase())) {
+        if (allGenes.length > 0 && !allGenes.find(geneOpt => geneOpt.toLowerCase() === gene.label.toLowerCase())) {
           newNotPresentGenes.add(gene.label)
         }
       })
