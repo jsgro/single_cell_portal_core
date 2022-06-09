@@ -14,8 +14,13 @@ import { logStudyGeneSearch } from '~/lib/search-metrics'
 /** renders the gene text input
   * This shares a lot of logic with search/genes/GeneKeyword, but is kept as a separate component for
   * now, as the need for autocomplete raises additional complexity
+  *
+  * @param genes Array of genes currently inputted
+  * @param searchGenes Function to call to execute the API search
+  * @param allGenes String array of valid genes in the study
+  * @param speciesList String array of species scientific names
   */
-export default function StudyGeneField({ genes, searchGenes, allGenes, speciesList }) {
+export default function StudyGeneField({ genes, searchGenes, allGenes, speciesList, isLoading=false }) {
   const [inputText, setInputText] = useState('')
 
   const rawSuggestions = getAutocompleteSuggestions(inputText, allGenes)
@@ -30,14 +35,29 @@ export default function StudyGeneField({ genes, searchGenes, allGenes, speciesLi
     * an array of already entered genes (geneArray),
     * and the current text the user is typing (inputText) */
   const [geneArray, setGeneArray] = useState(enteredGeneArray)
-
   const [showEmptySearchModal, setShowEmptySearchModal] = useState(false)
+
+  const [notPresentGenes, setNotPresentGenes] = useState(new Set([]))
+  const [showNotPresentGeneChoice, setShowNotPresentGeneChoice] = useState(false)
 
   /** handles a user submitting a gene search */
   function handleSearch(event) {
     event.preventDefault()
     const newGeneArray = syncGeneArrayToInputText()
-    if (newGeneArray && newGeneArray.length) {
+    const newNotPresentGenes = new Set([])
+    if (newGeneArray) {
+      newGeneArray.forEach(gene => {
+        // if an entered gene is not in the valid gene options for the study
+        const geneLowercase = gene.label.toLowerCase()
+        if (allGenes.length > 0 && !allGenes.find(geneOpt => geneOpt.toLowerCase() === geneLowercase)) {
+          newNotPresentGenes.add(gene.label)
+        }
+      })
+    }
+    setNotPresentGenes(newNotPresentGenes)
+    if (newNotPresentGenes.size > 0) {
+      setShowNotPresentGeneChoice(true)
+    } else if (newGeneArray && newGeneArray.length) {
       const genesToSearch = newGeneArray.map(g => g.value)
       if (event) { // this was not a 'clear'
         const trigger = event.type // 'click' or 'submit'
@@ -113,6 +133,7 @@ export default function StudyGeneField({ genes, searchGenes, allGenes, speciesLi
     // react-select doesn't expose the actual click events, so we deduce the kind
     // of operation based on whether it lengthened or shortened the list
     const newValue = value ? value : []
+    setNotPresentGenes(new Set([]))
     logGeneArrayChange(newValue)
     setGeneArray(newValue)
   }
@@ -122,15 +143,18 @@ export default function StudyGeneField({ genes, searchGenes, allGenes, speciesLi
       // the genes have been updated elsewhere -- resync
       setGeneArray(getOptionsFromGenes(genes))
       setInputText('')
+      setNotPresentGenes(new Set([]))
     }
   }, [genes.join(',')])
+
+  const searchDisabled = !isLoading && !allGenes?.length
 
   return (
     <form className="gene-keyword-search gene-study-keyword-search form-horizontal" onSubmit={handleSearch}>
       <div className="flexbox align-center">
         <div className="input-group">
           <div className="input-group-append">
-            <Button type="button" data-analytics-name="gene-search-submit" onClick={handleSearch}>
+            <Button type="button" data-analytics-name="gene-search-submit" onClick={handleSearch} disabled={searchDisabled}>
               <FontAwesomeIcon icon={faSearch} />
             </Button>
           </div>
@@ -138,7 +162,7 @@ export default function StudyGeneField({ genes, searchGenes, allGenes, speciesLi
             components={{ DropdownIndicator: null }}
             inputValue={inputText}
             value={geneArray}
-            className="gene-keyword-search-input"
+            className={searchDisabled ? 'gene-keyword-search-input disabled' : 'gene-keyword-search-input'}
             isClearable
             isMulti
             isValidNewOption={() => false}
@@ -150,7 +174,8 @@ export default function StudyGeneField({ genes, searchGenes, allGenes, speciesLi
             // the default blur behavior removes any entered free text,
             // we want to instead auto-convert entered free text to a gene tag
             onBlur={syncGeneArrayToInputText}
-            placeholder={'Genes (e.g. "PTEN NF2")'}
+            placeholder={searchDisabled ? 'No expression data to search' : 'Genes (e.g. "PTEN NF2")'}
+            isDisabled={searchDisabled}
             styles={{
               // if more genes are entered than fit, use a vertical scrollbar
               // this is probably not optimal UX, but good enough for first release and monitoring
@@ -167,13 +192,13 @@ export default function StudyGeneField({ genes, searchGenes, allGenes, speciesLi
             }}
           />
         </div>
-        <label htmlFor="gene-list-upload"
+        {!searchDisabled && <label htmlFor="gene-list-upload"
           data-toggle="tooltip"
           className="icon-button"
           title="Upload a list of genes to search from a file">
           <input id="gene-list-upload" type="file" onChange={e => readGeneListFile(e.target.files[0])}/>
           <FontAwesomeIcon className="action fa-lg" icon={faFileUpload} />
-        </label>
+        </label>}
       </div>
       <Modal
         show={showEmptySearchModal}
@@ -182,6 +207,15 @@ export default function StudyGeneField({ genes, searchGenes, allGenes, speciesLi
         bsSize='small'>
         <Modal.Body className="text-center">
           Enter at least one gene to search
+        </Modal.Body>
+      </Modal>
+      <Modal
+        show={showNotPresentGeneChoice}
+        onHide={() => {setShowNotPresentGeneChoice(false)}}
+        animation={false}
+        bsSize='small'>
+        <Modal.Body className="text-center">
+        Invalid Search - Please remove &quot;{Array.from(notPresentGenes).join('", "')}&quot; from gene search.
         </Modal.Body>
       </Modal>
 

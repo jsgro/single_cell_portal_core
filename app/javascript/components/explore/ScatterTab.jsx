@@ -64,7 +64,7 @@ export default function ScatterTab({
             <ScatterPlot
               {...{
                 studyAccession, plotPointsSelected, isCellSelecting, updateScatterColor,
-                countsByLabel, setCountsByLabel
+                countsByLabel, setCountsByLabel, updateExploreParams
               }}
               {...params}
               dataCache={dataCache}

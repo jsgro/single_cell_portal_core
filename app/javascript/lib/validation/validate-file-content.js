@@ -98,7 +98,7 @@ function validateKeyword(values, expectedValue) {
   } else {
     const msg =
       `${location} must be "${expectedValue}" (case insensitive). ${actual}`
-    const logType = expectedValue.toLowerCase()
+    const logType = expectedValue?.toLowerCase()
     issues.push(['error', `format:cap:${logType}`, msg])
   }
 
