@@ -149,7 +149,8 @@ class SiteController < ApplicationController
 
   # load single study and view top-level clusters
   def study
-    @study.update(view_count: @study.view_count + 1)
+    # this skips all validation/callbacks for efficiency
+    @study.update_attribute(:view_count, @study.view_count + 1)
 
     # set general state of study to enable various tabs in UI
     # double check on download availability: first, check if administrator has disabled downloads
