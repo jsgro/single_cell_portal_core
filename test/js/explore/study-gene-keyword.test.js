@@ -25,6 +25,9 @@ describe('Search query display text', () => {
 
     const { container: emptyContainer } = render(<StudyGeneField genes={[]} searchGenes={() => {}} allGenes={[]} speciesList={[]} />)
     expect(emptyContainer.querySelector('.gene-keyword-search-input').textContent.trim()).toEqual('No expression data to search')
+
+    const { container: loadingContainer } = render(<StudyGeneField genes={[]} searchGenes={() => {}} allGenes={[]} speciesList={[]} isLoading={true}/>)
+    expect(loadingContainer.querySelector('.gene-keyword-search-input').textContent.trim()).toEqual('Genes (e.g. "PTEN NF2")')
   })
 })
 
