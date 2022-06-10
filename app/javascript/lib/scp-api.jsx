@@ -460,8 +460,15 @@ export async function fetchCluster({
   })
   // don't camelcase the keys since those can be cluster names,
   // so send false for the 4th argument
-  const [scatter, perfTimes] = await scpApi(apiUrl, defaultInit(), mock, false)
-
+  
+  let response
+  try{
+    response = await scpApi(apiUrl, defaultInit(), mock, false)
+  } catch (err) {
+    throw new Error(err)
+  }
+ 
+  const [scatter, perfTimes] =  response
   return [scatter, perfTimes]
 }
 
