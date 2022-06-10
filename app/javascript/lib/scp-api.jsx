@@ -460,16 +460,9 @@ export async function fetchCluster({
   })
   // don't camelcase the keys since those can be cluster names,
   // so send false for the 4th argument
-  
-  let response
-  try{
-    response = await scpApi(apiUrl, defaultInit(), mock, false)
-  } catch (err) {
-    throw new Error(err)
-  }
- 
-  const [scatter, perfTimes] =  response
+  const [scatter, perfTimes] = await scpApi(apiUrl, defaultInit(), mock, false)
   return [scatter, perfTimes]
+
 }
 
 /** Helper function for returning a url for fetching cluster data.  See fetchCluster above for documentation */
@@ -550,14 +543,7 @@ export async function fetchExpressionViolin(
   const apiUrl = `/studies/${studyAccession}/expression/violin${stringifyQuery(paramObj)}`
   // don't camelcase the keys since those can be cluster names,
   // so send false for the 4th argument
-  let response
-  try{
-    response = await scpApi(apiUrl, defaultInit(), mock, false)
-  } catch (err) {
-    throw new Error(err)
-  }
- 
-  const [violin, perfTimes] = response
+  const [violin, perfTimes] = await scpApi(apiUrl, defaultInit(), mock, false)
   return [violin, perfTimes]
 }
 
