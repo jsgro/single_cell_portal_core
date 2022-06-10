@@ -12,7 +12,7 @@ import { logJSFetchExceptionToSentry, logJSFetchErrorToSentry } from '~/lib/sent
 
 import { getAccessToken } from '~/providers/UserProvider'
 import { getBrandingGroup } from '~/lib/scp-api'
-import getSCPContext from '~/providers/SCPContextProvider'
+import { getSCPContext } from '~/providers/SCPContextProvider'
 import { setupWebVitalsLog, addPerfMetrics } from './metrics-perf'
 
 let metricsApiMock = false

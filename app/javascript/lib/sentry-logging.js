@@ -4,7 +4,7 @@
  */
 import * as Sentry from '@sentry/react'
 import { BrowserTracing } from '@sentry/tracing'
-import getSCPContext from '~/providers/SCPContextProvider'
+import { getSCPContext } from '~/providers/SCPContextProvider'
 
 /**
  * Log an exception to Sentry for bad response JS fetch executions
@@ -74,7 +74,7 @@ export function logToSentry(error, useThrottle = false, sampleRate = 0.05) {
   const isSuppressedEnv = ['development', 'test'].includes(env)
 
   if (isSuppressedEnv || isThrottled) {
-    const reason = isThrottled ? 'throttled' : 'environment'
+    const reason = isThrottled ? 'throttle' : 'environment'
     printSuppression(error, reason)
     return
   }
