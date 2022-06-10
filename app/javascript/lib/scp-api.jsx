@@ -463,7 +463,6 @@ export async function fetchCluster({
   const [scatter, perfTimes] = await scpApi(apiUrl, defaultInit(), mock, false)
 
   return [scatter, perfTimes]
-
 }
 
 /** Helper function for returning a url for fetching cluster data.  See fetchCluster above for documentation */
