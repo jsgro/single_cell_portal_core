@@ -543,8 +543,14 @@ export async function fetchExpressionViolin(
   const apiUrl = `/studies/${studyAccession}/expression/violin${stringifyQuery(paramObj)}`
   // don't camelcase the keys since those can be cluster names,
   // so send false for the 4th argument
-  const [violin, perfTimes] = await scpApi(apiUrl, defaultInit(), mock, false)
-
+  let response
+  try{
+    response = await scpApi(apiUrl, defaultInit(), mock, false)
+  } catch (err) {
+    throw new Error(err)
+  }
+ 
+  const [violin, perfTimes] = response
   return [violin, perfTimes]
 }
 
