@@ -545,7 +545,7 @@ export async function fetchExpressionViolin(
   // don't camelcase the keys since those can be cluster names,
   // so send false for the 4th argument
   const [violin, perfTimes] = await scpApi(apiUrl, defaultInit(), mock, false)
-  
+
   return [violin, perfTimes]
 }
 
