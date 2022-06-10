@@ -6,17 +6,6 @@ import * as Sentry from '@sentry/react'
 import { BrowserTracing } from '@sentry/tracing'
 import getSCPContext from '~/providers/SCPContextProvider'
 
-const env = getSCPContext().environment
-
-// Whether to drop Sentry log events
-// Set to `false` if manually locally testing Sentry logging
-let isSuppressedEnv = ['development', 'test'].includes(env)
-
-/** Set whether to suppress Sentry logging based on environment, e.g. to enable unit testing */
-export function setIsSuppressedEnv(suppressionFlag) {
-  isSuppressedEnv = suppressionFlag
-}
-
 /**
  * Log an exception to Sentry for bad response JS fetch executions
  * e.g. requests that result in a 404 response
@@ -33,9 +22,9 @@ export function logJSFetchExceptionToSentry(response, titleInfo = '', useThrottl
     url: response.url
   })
 
-  if (shouldLog(useThrottle, response)) {
-    Sentry.captureException(new Error(`${response.status}: ${titleInfo}`))
-  }
+  const errorObj = new Error(`${response.status}: ${titleInfo}`)
+
+  logToSentry(errorObj, useThrottle)
 }
 
 /**
@@ -47,54 +36,56 @@ export function logJSFetchExceptionToSentry(response, titleInfo = '', useThrottl
  * @param {Boolean} useThrottle - whether to apply clientside rate limit throttling
  */
 export function logJSFetchErrorToSentry(error, titleInfo = '', useThrottle = false) {
-  if (shouldLog(useThrottle)) {
-    Sentry.captureException(new Error(`${error}: ${titleInfo}`))
-  }
+  const errorObj = new Error(`${error}: ${titleInfo}`)
+  logToSentry(errorObj, useThrottle)
 }
 
 /** Print suppression warning message to the console */
-function printSuppression(reason, response) {
-  if (isSuppressedEnv) {
-    reason = 'in an unlogged environment'
+function printSuppression(errorObj, reason) {
+  const reasonMap = {
+    environment: 'in an unlogged environment',
+    throttle: 'this event is throttled by client'
   }
-  const message = `Suppressing error reporting to Sentry, because it is ${reason}.`
-  console.warn(response ? `${message }  Response:` : message)
+
+  const message = `Suppressing error report to Sentry: ${reasonMap[reason]}`
+  console.warn(errorObj.url ? `${message }  Error:` : message)
 
   // Error objects are printed via console.error already, so only surface Sentry-suppressed responses
-  if (response) {
-    console.warn(response)
+  if (errorObj.url) {
+    console.warn(errorObj)
   }
 }
 
 /**
- * Determine if logging should occur based on environment
+ * Log to Sentry, except if in unlogged environment or throttled away
+ * @param {Object} error - Error object to log to Sentry
  * @param {Boolean} useThrottle - whether to apply clientside rate limit throttling. Default false.
- * @param {Object} response - Fetch response object.  Default null.
  * @param {Number} sampleRate - % of events to log, only applied if `useThrottle = true`
  *  1 = log all events, 0 = log no events, default = 0.05 (i.e. log 5% of events)
+ *
+ * @return {Array} two-element array: [whether logging should occur, why if not]
  */
-export function shouldLog(useThrottle = false, response = null, sampleRate = 0.05) {
+export function logToSentry(error, useThrottle = false, sampleRate = 0.05) {
   const isThrottled = useThrottle && Math.random() >= sampleRate
 
+  const env = getSCPContext().environment
+  // Whether to drop Sentry log events
+  // Set to `false` if manually locally testing Sentry logging
+  const isSuppressedEnv = ['development', 'test'].includes(env)
+
   if (isSuppressedEnv || isThrottled) {
-    const reason = isThrottled ? 'rate-limited clientside' : null
-    printSuppression(reason, response)
-    return false
+    const reason = isThrottled ? 'throttled' : 'environment'
+    printSuppression(error, reason)
+    return
   }
 
-  return true
+  Sentry.captureException(error)
 }
 
 /**
  *  Initialize Sentry to enable logging JS errors to Sentry
  */
 export function setupSentry() {
-  if (isSuppressedEnv) {
-    const reason = 'in an unlogged environment'
-    printSuppression(reason)
-    return
-  }
-
   Sentry.init({
     dsn: 'https://a713dcf8bbce4a26aa1fe3bf19008d26@o54426.ingest.sentry.io/1424198',
     integrations: [new BrowserTracing()],
