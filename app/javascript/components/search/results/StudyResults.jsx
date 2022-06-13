@@ -74,7 +74,7 @@ export default function StudyResults({ results, changePage, StudyComponent }) {
                   return (
                     <td key={true} {...cell.getCellProps()}>
                       <ErrorBoundary>
-                        <StudyComponent
+                        <StudyComponentIdonotExist
                           study={cell.value}
                           logProps={{
                             results,

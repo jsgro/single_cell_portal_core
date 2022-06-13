@@ -109,7 +109,7 @@ describe('Library for client-side usage analytics', () => {
 
   it('appropriately determines whether to log to Sentry', () => {
 
-    console.warn = jest.fn();
+    console.log = jest.fn();
 
     jest
       .spyOn(SCPContextProvider, 'getSCPContext')
@@ -120,7 +120,7 @@ describe('Library for client-side usage analytics', () => {
     for (let i = 0; i < 100; i++) {
       logToSentry({}, true, sampleRate)
     }
-    const numDroppedInHighSampleRate = console.warn.mock.calls.length
+    const numDroppedInHighSampleRate = console.log.mock.calls.length
     expect(numDroppedInHighSampleRate).toBeLessThan(20)
 
     // Almost all events should be suppressed from Sentry with sampleRate = 0.01
@@ -128,15 +128,15 @@ describe('Library for client-side usage analytics', () => {
     for (let i = 0; i < 100; i++) {
       logToSentry({}, true, sampleRate)
     }
-    const numDroppedInLowSampleRate = console.warn.mock.calls.length - numDroppedInHighSampleRate
+    const numDroppedInLowSampleRate = console.log.mock.calls.length - numDroppedInHighSampleRate
     expect(numDroppedInLowSampleRate).toBeGreaterThan(80)
 
     // Test warnings for throttling with a response object
     for (let i = 0; i < 100; i++) {
       logToSentry({url: 'foo://bar.baz'}, true, sampleRate)
     }
-    const numDroppedInLowSampleWithResponse = console.warn.mock.calls.length
-    const latestWarning = console.warn.mock.calls.slice(-1)[0][0]
+    const numDroppedInLowSampleWithResponse = console.log.mock.calls.length
+    const latestWarning = console.log.mock.calls.slice(-1)[0][0]
     expect(latestWarning.url).toEqual('foo://bar.baz')
 
     // Nothing should be logged when Sentry is suppressed, and we expect warnings of this
@@ -144,7 +144,7 @@ describe('Library for client-side usage analytics', () => {
       .spyOn(SCPContextProvider, 'getSCPContext')
       .mockReturnValue({environment: 'test'})
     logToSentry({})
-    const numDroppedWhenSuppressed = console.warn.mock.calls.length - numDroppedInLowSampleWithResponse
+    const numDroppedWhenSuppressed = console.log.mock.calls.length - numDroppedInLowSampleWithResponse
     expect(numDroppedWhenSuppressed).toEqual(1)
   })
 

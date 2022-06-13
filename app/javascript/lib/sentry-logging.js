@@ -48,11 +48,11 @@ function printSuppression(errorObj, reason) {
   }
 
   const message = `Suppressing error report to Sentry: ${reasonMap[reason]}`
-  console.warn(errorObj.url ? `${message }  Error:` : message)
+  console.log(errorObj.url ? `${message }  Error:` : message)
 
   // Error objects are printed via console.error already, so only surface Sentry-suppressed responses
   if (errorObj.url) {
-    console.warn(errorObj)
+    console.log(errorObj)
   }
 }
 
