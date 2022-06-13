@@ -221,7 +221,8 @@ class AnnotationVizService
         cluster_name: diff_exp_result.cluster_group.name, # use current name, not cached name
         annotation_name: diff_exp_result.annotation_name,
         annotation_scope: diff_exp_result.annotation_scope,
-        observed_values: diff_exp_result.observed_values
+        observed_values: diff_exp_result.observed_values,
+        result_files: diff_exp_result.result_files
       }
     end
   end

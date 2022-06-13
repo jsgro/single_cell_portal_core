@@ -42,11 +42,28 @@ class DifferentialExpressionResult
     end
   end
 
-  # compute the relative path inside a GCS bucket of a DE output file for a given annotation label
+  # compute the relative path inside a GCS bucket of a DE output file for a given label
   def bucket_path_for(label)
-    de_params = [cluster_name, annotation_name, label, annotation_scope, 'wilcoxon']
-    filename = de_params.map { |val| val.gsub(/\W+/, '_') }.join('--')
-    "_scp_internal/differential_expression/#{filename}.tsv"
+    "_scp_internal/differential_expression/#{filename_for(label)}"
+  end
+
+  # individual filename of label-specific result
+  def filename_for(label)
+    basename = [
+      cluster_name,
+      annotation_name,
+      label,
+      annotation_scope,
+      'wilcoxon'
+    ].map { |val| val.gsub(/\W+/, '_') }.join('--')
+    "#{basename}.tsv"
+  end
+
+  # map of all observed result files, of label value => label-specific filenames
+  # this is important as it sidesteps the issue of study owners renaming clusters, as cluster_name is cached here
+  def result_files
+    files = observed_values.map { |label| filename_for(label) }
+    Hash[observed_values.zip(files)]
   end
 
   private
