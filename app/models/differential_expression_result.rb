@@ -48,21 +48,12 @@ class DifferentialExpressionResult
     "_scp_internal/differential_expression/#{filename}.tsv"
   end
 
-  # return array of all media URLs
+  # return a Hash of observed annotation values to GCS media URLs for each DE output file
+  # does not use Ruby GCS bindings as this adds latency; rather, URLs are manually computed since they're static
   def media_urls
-    observed_values.map { |value| media_url_for(value) }.compact
-  end
-
-  # get an individual differential expression output file media url for a given annotation label
-  def media_url_for(label)
-    begin
-      remote = ApplicationController.firecloud_client.get_workspace_file(study.bucket_id, bucket_path_for(label))
-      remote.media_url
-    rescue NoMethodError => e
-      Rails.logger.error "Error retrieving media url for DE output #{label} in #{study.accession}: #{e.message}"
-      ErrorTracker.report_exception(e, nil, self, { requested_label: label })
-      nil # avoid returning integer value from reporting error
-    end
+    base_url = "https://storage.googleapis.com/download/storage/v1/b/#{study.bucket_id}/o"
+    urls = observed_values.map { |label| "#{base_url}/#{bucket_path_for(label)}?alt=media" }
+    Hash[observed_values.zip(urls)]
   end
 
   private

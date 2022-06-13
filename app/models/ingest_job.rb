@@ -490,18 +490,13 @@ class IngestJob
   # set corresponding differential expression flags on associated annotation
   def create_differential_expression_results
     annotation_identifier = "#{params_object.annotation_name}--group--#{params_object.annotation_scope}"
-    Rails.logger.info "Setting differential expression flags for annotation: #{annotation_identifier}"
-    if params_object.annotation_scope == 'cluster'
-      cluster = ClusterGroup.find_by(study_id: study.id, study_file_id: study_file.id)
-      # update cell annotation in place
-      cluster.cell_annotations.each do |annotation|
-        annotation[:is_differential_expression_enabled] = true if annotation[:name] == params_object.annotation_name
-      end
-      cluster.save
-    else
-      meta = study.cell_metadata.by_name_and_type(params_object.annotation_name, params_object.annotation_type)
-      meta.update(is_differential_expression_enabled: true)
-    end
+    Rails.logger.info "Creating differential expression results objects for annotation: #{annotation_identifier}"
+    cluster = ClusterGroup.find_by(study_id: study.id, study_file_id: study_file.id)
+    de_result = DifferentialExpressionResult.new(
+      study: study, cluster_group: cluster, cluster_name: cluster.name,
+      annotation_name: params_object.annotation_name, annotation_scope: params_object.annotation_scope
+    )
+    de_result.save
   end
 
   # set corresponding is_differential_expression_enabled flags on annotations
