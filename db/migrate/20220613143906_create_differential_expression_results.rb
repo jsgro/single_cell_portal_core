@@ -1,37 +1,42 @@
 class CreateDifferentialExpressionResults < Mongoid::Migration
-
+  # validate DE results and determine which files to keep, if any
   def self.check_de_results(results_obj)
     de_identifier = "#{results_obj.study.accession}:#{results_obj.cluster_name} (#{results_obj.annotation_identifier})"
     Rails.logger.info "Checking DE results for #{de_identifier}"
+    annotation = results_obj.annotation_object
+    source_labels = annotation.respond_to?(:values) ? annotation.values : annotation[:values]
     if results_obj.valid?
       Rails.logger.info "Results for #{de_identifier} valid, saving"
       results_obj.save!
+      Rails.logger.info "Save complete, keeping valid outputs for #{results_obj.observed_values.join(', ')}"
       # determine if there are some output files that are still invalid and should be removed
       # can be determined with the difference between the list of original values and observed values
-      annotation = results_obj.annotation_object
-      source_labels = annotation.respond_to?(:values) ? annotation.values : annotation[:values]
       invalid_labels = source_labels - results_obj.observed_values
+      Rails.logger.info "Found #{invalid_labels.count} invalid outputs: #{invalid_labels.join(', ')}"
       invalid_labels.each do |label|
         remove_output_file(results_obj, label)
       end
     else
       Rails.logger.info "Results for #{de_identifier} invalid, removing outputs from bucket"
       # clean up any output files in the bucket
-      annotation = results_obj.annotation_object
-      possible_values = annotation.respond_to?(:values) ? annotation.values : annotation[:values]
-      possible_values.each do |label|
+      source_labels.each do |label|
         remove_output_file(results_obj, label)
       end
       results_obj.delete # remove object as it is invalid
     end
   end
 
+  # remove a given DE result file from a study bucket, if present
   def self.remove_output_file(results_obj, label)
     begin
       output_location = results_obj.bucket_path_for(label)
       remote = ApplicationController.firecloud_client.get_workspace_file(results_obj.study.bucket_id, output_location)
-      remote.delete if remote.present?
-      Rails.logger.info "Removed output file at #{output_location}"
+      if remote.present?
+        remote.delete
+        Rails.logger.info "Removed output file at #{output_location}"
+      else
+        Rails.logger.error "Output file not found at #{output_location}"
+      end
     rescue => e
       Rails.logger.error "Unable to remove possible DE output '#{output_location}' - #{e.message}"
       ErrorTracker.report_exception(e, nil, results_obj, { output_location: output_location })
