@@ -20,6 +20,7 @@ class DifferentialExpressionResult
 
   before_validation :set_observed_values, :set_cluster_name
 
+  # pointer to source annotation object, either CellMetadatum of ClusterGroup#cell_annotation
   def annotation_object
     case annotation_scope
     when 'study'
@@ -46,14 +47,6 @@ class DifferentialExpressionResult
     de_params = [cluster_name, annotation_name, label, annotation_scope, 'wilcoxon']
     filename = de_params.map { |val| val.gsub(/\W+/, '_') }.join('--')
     "_scp_internal/differential_expression/#{filename}.tsv"
-  end
-
-  # return a Hash of observed annotation values to GCS media URLs for each DE output file
-  # does not use Ruby GCS bindings as this adds latency; rather, URLs are manually computed since they're static
-  def media_urls
-    base_url = "https://storage.googleapis.com/download/storage/v1/b/#{study.bucket_id}/o"
-    urls = observed_values.map { |label| "#{base_url}/#{bucket_path_for(label)}?alt=media" }
-    Hash[observed_values.zip(urls)]
   end
 
   private

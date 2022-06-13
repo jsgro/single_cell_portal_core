@@ -219,9 +219,9 @@ class AnnotationVizService
     study.differential_expression_results.map do |diff_exp_result|
       {
         cluster_name: diff_exp_result.cluster_group.name, # use current name, not cached name
-        annotation: diff_exp_result.annotation_identifier,
-        observed_values: diff_exp_result.observed_values,
-        media_urls: diff_exp_result.media_urls
+        annotation_name: diff_exp_result.annotation_name,
+        annotation_scope: diff_exp_result.annotation_scope,
+        observed_values: diff_exp_result.observed_values
       }
     end
   end
