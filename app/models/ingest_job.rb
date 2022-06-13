@@ -374,7 +374,7 @@ class IngestJob
     when :ingest_subsample
       set_subsampling_flags
     when :differential_expression
-      set_differential_expression_flags
+      create_differential_expression_results
     end
     set_study_initialized
   end
@@ -488,7 +488,7 @@ class IngestJob
   end
 
   # set corresponding differential expression flags on associated annotation
-  def set_differential_expression_flags
+  def create_differential_expression_results
     annotation_identifier = "#{params_object.annotation_name}--group--#{params_object.annotation_scope}"
     Rails.logger.info "Setting differential expression flags for annotation: #{annotation_identifier}"
     if params_object.annotation_scope == 'cluster'

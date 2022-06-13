@@ -285,7 +285,7 @@ class ClusterVizService
   #   - +annotation_name+  (String) => Name of requested annotation
   #   - +annotation_type+  (String) => Type of requested annotation (should be 'group')
   #   - +annotation_scope+ (String) => Scope of requested annotation ('study' or 'cluster')
-  def self.get_cells_by_label(cluster, annotation_name, annotation_type, annotation_scope)
+  def self.cells_by_annotation_label(cluster, annotation_name, annotation_type, annotation_scope)
     study = cluster.study
     cells = cluster.concatenate_data_arrays('text', 'cells')
     annotation = { name: annotation_name, scope: annotation_scope, type: annotation_type }
