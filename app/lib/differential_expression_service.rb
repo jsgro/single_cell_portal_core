@@ -204,7 +204,7 @@ class DifferentialExpressionService
     # last, validate that the requested annotation & cluster will provide a valid intersection of annotation values
     # specifically, discard any annotation/cluster combos that only result in one distinct label
     cells_by_label = ClusterVizService.cells_by_annotation_label(cluster, annotation_name, annotation_type, annotation_scope)
-    if cells_by_label.keys < 2
+    if cells_by_label.keys.count < 2
       raise ArgumentError, "#{identifier} does not have enough labels represented in #{cluster.name}"
     end
   end
