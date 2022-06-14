@@ -56,6 +56,13 @@ function printSuppression(errorObj, reason) {
   }
 }
 
+/** Determine if current environment should suppress logging to Sentry */
+function getIsSuppressedEnv() {
+  const env = getSCPContext().environment
+  // Return `false` if manually locally testing Sentry logging
+  return ['development', 'test'].includes(env)
+}
+
 /**
  * Log to Sentry, except if in unlogged environment or throttled away
  * @param {Object} error - Error object to log to Sentry
@@ -68,12 +75,7 @@ function printSuppression(errorObj, reason) {
 export function logToSentry(error, useThrottle = false, sampleRate = 0.05) {
   const isThrottled = useThrottle && Math.random() >= sampleRate
 
-  const env = getSCPContext().environment
-  // Whether to drop Sentry log events
-  // Set to `false` if manually locally testing Sentry logging
-  const isSuppressedEnv = ['development', 'test'].includes(env)
-
-  if (isSuppressedEnv || isThrottled) {
+  if (getIsSuppressedEnv() || isThrottled) {
     const reason = isThrottled ? 'throttle' : 'environment'
     printSuppression(error, reason)
     return
@@ -91,7 +93,14 @@ export function setupSentry() {
     integrations: [new BrowserTracing()],
 
     // Sampling rate for transactions, which enrich Sentry events with traces
-    tracesSampleRate: 1.0
+    tracesSampleRate: getIsSuppressedEnv() ? 0 : 1.0,
+    beforeSend: event => {
+      if (getIsSuppressedEnv()) {
+        return null
+      }
+
+      return event
+    }
   })
 
   // set the logger tag to reflect that the errors are from the frontend
