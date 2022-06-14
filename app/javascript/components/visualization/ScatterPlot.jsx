@@ -52,7 +52,7 @@ function RawScatterPlot({
   const [scatterData, setScatterData] = useState(null)
   // array of trace names (strings) to show in the graph
   const [graphElementId] = useState(_uniqueId('study-scatter-'))
-  const { ErrorComponent, setShowError } = useErrorMessage()
+  const { ErrorComponent, setShowError, setErrorContent } = useErrorMessage()
   const [activeTraceLabel, setActiveTraceLabel] = useState(null)
   // map of label name to color hex codes, for any labels the user has picked a color for
   const [editedCustomColors, setEditedCustomColors] = useState({})
