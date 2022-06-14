@@ -27,7 +27,7 @@ class DifferentialExpressionResult
       study.cell_metadata.by_name_and_type(annotation_name, 'group')
     when 'cluster'
       cluster_group.cell_annotations.detect do |annotation|
-        annotation[:name] == annotation_name && annotation[:scope] == 'group'
+        annotation[:name] == annotation_name && annotation[:type] == 'group'
       end
     end
   end
@@ -64,6 +64,11 @@ class DifferentialExpressionResult
   def result_files
     files = observed_values.map { |label| filename_for(label) }
     Hash[observed_values.zip(files)]
+  end
+
+  # nested array of arrays representation of :result_files (for select menu options)
+  def select_options
+    result_files.to_a
   end
 
   private
