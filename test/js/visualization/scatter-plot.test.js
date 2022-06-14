@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useState } from 'react'
 import _cloneDeep from 'lodash/cloneDeep'
 import jquery from 'jquery'
 import { render, screen, waitFor, fireEvent } from '@testing-library/react'
@@ -60,8 +60,10 @@ it('shows custom legend with default group scatter plot', async () => {
 
   const countsByLabel = COUNTS_BY_LABEL
 
-  const { container } = render((
-    <ScatterPlot studyAccession='SCP101'
+  /** shim for the explore view component that only handles passing hiddenTraces */
+  function ExploreShim() {
+    const [exploreParams, setExploreParams] = useState({ hiddenTraces: [] })
+    return <ScatterPlot studyAccession='SCP101'
       {...{
         cluster: 'cluster_many_long_odd_labels.tsv',
         annotation: {
@@ -74,9 +76,13 @@ it('shows custom legend with default group scatter plot', async () => {
         genes: [],
         dimensionProps: BASIC_DIMENSION_PROPS,
         setCountsByLabel() {},
-        countsByLabel
+        countsByLabel,
+        hiddenTraces: exploreParams.hiddenTraces,
+        updateExploreParams: newParams => setExploreParams(newParams)
       }}/>
-  ))
+  }
+
+  const { container } = render(<ExploreShim/>)
 
   // findByTestId would be more kosher, but the numerical leaf ("1") is
   // assigned randomly in `ScatterPlot`.  This ID has been observed with the

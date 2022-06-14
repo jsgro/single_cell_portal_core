@@ -73,9 +73,18 @@ FactoryBot.define do
         #   farsa: [['cellA', 0.0],['cellB', 1.1], ['cellC', 0.5]],
         #   phex: [['cellA', 0.6],['cellB', 6.1], ['cellC', 4.5]]
         # }
+        cell_input { [] }
         expression_input { {} }
       end
       after(:create) do |file, evaluator|
+        if evaluator.cell_input.any?
+          FactoryBot.create(:data_array,
+                            array_type: 'cells',
+                            name: "#{file.upload_file_name} Cells",
+                            array_index: 0,
+                            values: evaluator.cell_input,
+                            study_file: file)
+        end
         evaluator.expression_input.each do |gene, expression|
           FactoryBot.create(:gene_with_expression,
                             expression_input: expression,

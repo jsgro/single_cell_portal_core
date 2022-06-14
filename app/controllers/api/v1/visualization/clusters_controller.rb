@@ -201,7 +201,7 @@ module Api
               }
             elsif is_correlated_scatter
               if genes.count != 2
-                raise ArgumentError, "Correlated scatter plots require specifying 2 genes"
+                raise ArgumentError, "Correlated scatter plots require specifying 2 valid genes"
               end
               plot_data = ExpressionVizService.load_correlated_data_array_scatter(
                   study, genes, cluster, annotation, subsample)

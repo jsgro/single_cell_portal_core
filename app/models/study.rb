@@ -1196,6 +1196,33 @@ class Study
     self.default_options[:color_profile].presence
   end
 
+  # array of names of annotations to ignore the unique values limit for visualizing
+  def override_viz_limit_annotations
+    self.default_options[:override_viz_limit_annotations] || []
+  end
+
+  # make an annotation visualizable despite exceeding the default values limit
+  def add_override_viz_limit_annotation(annotation_name)
+    cell_metadatum = self.cell_metadata.find_by(name: annotation_name)
+    if cell_metadatum
+      # we need to populate the 'values' array, since that will not have been done at ingest
+      begin
+        uniq_vals = cell_metadatum.concatenate_data_arrays(annotation_name, 'annotations').uniq
+        cell_metadatum.update!(values: uniq_vals)
+      rescue => e
+        Rails.logger.error "Could not cache unique annotation values: #{e.message}"
+        Rails.logger.error "This means values array will be fetched on-demand for visualization requests"
+      end
+    end
+
+    updated_list = override_viz_limit_annotations
+    updated_list.push(annotation_name)
+    self.default_options[:override_viz_limit_annotations] = updated_list
+    self.save
+    # clear the cache so that explore data is fetched correctly
+    CacheRemovalJob.new(accession).perform
+  end
+
   # return the value of the expression axis label
   def default_expression_label
     self.default_options[:expression_label].present? ? self.default_options[:expression_label] : 'Expression'
@@ -1354,6 +1381,19 @@ class Study
     all_cells.uniq # account for raw counts & processed matrix files repeating cell names
   end
 
+  # array of all cell names from non-raw count matrix files
+  # used in filtering distribution-based expression visualizations (violin/dot plots)
+  def processed_matrix_cells
+    file_ids = processed_expression_matrices.pluck(:id)
+    name_keys = processed_expression_matrices.pluck(:upload_file_name).map { |filename| "#{filename} Cells" }
+    query = {
+      :name.in => name_keys, array_type: 'cells', linear_data_type: 'Study',
+      linear_data_id: id, :study_file_id.in => file_ids, cluster_group_id: nil, subsample_annotation: nil,
+      subsample_threshold: nil
+    }
+    DataArray.concatenate_arrays(query)
+  end
+
   # return the cells found in a single expression matrix
   def expression_matrix_cells(study_file)
     query = {
@@ -1431,6 +1471,11 @@ class Study
   # Mongoid criteria for expression files (rather than array of StudyFiles)
   def expression_matrices
     self.study_files.where(:file_type.in => ['Expression Matrix', 'MM Coordinate Matrix'])
+  end
+
+  # get all processed (i.e. non-raw count) matrix files
+  def processed_expression_matrices
+    expression_matrices.any_of({ expression_file_info: nil }, { 'expression_file_info.is_raw_counts' => false })
   end
 
   # helper method to directly access expression matrix file by name
