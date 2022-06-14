@@ -64,7 +64,7 @@ describe('Search query display text', () => {
     const { container } = render((
       <SearchQueryDisplay facets={[]} terms={['foo']}/>
     ))
-    expect(container.getElementsByClassName('query-text')[0].textContent.trim("Text contains: foo")).toEqual()
+    expect(container.getElementsByClassName('query-text')[0].textContent.trim()).toEqual('Text contains: foo')
   })
 
 
@@ -72,7 +72,7 @@ describe('Search query display text', () => {
     const { container } = render((
       <SearchQueryDisplay facets={[]} terms={['(foo']}/>
     ))
-    expect(container.getElementsByClassName('query-text')[0].textContent.trim()).toEqual("Text contains: (foo")
+    expect(container.getElementsByClassName('query-text')[0].textContent.trim()).toEqual('Text contains: (foo')
   })
 
   it('renders terms and a single facet', async () => {
@@ -80,7 +80,7 @@ describe('Search query display text', () => {
       <SearchQueryDisplay facets={oneStringFacet} terms={['foo', 'bar']}/>
     ))
 
-    expect(container.getElementsByClassName('query-text')[0].textContent.trim()).toEqual("(Text contains: foo OR bar) AND (Metadata contains (species: Homo sapiens))")
+    expect(container.getElementsByClassName('query-text')[0].textContent.trim()).toEqual('(Text contains: foo OR bar) AND (Metadata contains (species: Homo sapiens))')
   })
 
   it('renders or-ed facets properly', async () => {
