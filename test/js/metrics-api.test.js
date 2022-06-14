@@ -111,9 +111,10 @@ describe('Library for client-side usage analytics', () => {
 
     console.log = jest.fn();
 
+    // Mimic a logged environment
     jest
       .spyOn(SCPContextProvider, 'getSCPContext')
-      .mockReturnValue({environment: 'logged-env'})
+      .mockReturnValue({environment: 'staging'})
 
     // Almost no events should be suppressed from Sentry with sampleRate = 0.99
     let sampleRate = 0.99
