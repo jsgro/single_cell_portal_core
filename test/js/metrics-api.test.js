@@ -2,9 +2,13 @@
 /* eslint-disable*/
 
 const fetch = require('node-fetch')
-import {logClick, logClickLink, logMenuChange, setMetricsApiMockFlag} from 'lib/metrics-api'
 import { screen, render, fireEvent } from '@testing-library/react'
 import React from 'react';
+
+import {logClick, logClickLink, logMenuChange, setMetricsApiMockFlag} from 'lib/metrics-api'
+import {logToSentry} from 'lib/sentry-logging'
+import * as SCPContextProvider from '~/providers/SCPContextProvider'
+import * as Sentry from '@sentry/react'
 
 describe('Library for client-side usage analytics', () => {
   beforeAll(() => {
@@ -102,4 +106,47 @@ describe('Library for client-side usage analytics', () => {
       done()
     })
   })
+
+  it('appropriately determines whether to log to Sentry', () => {
+
+    console.log = jest.fn();
+
+    // Mimic a logged environment
+    jest
+      .spyOn(SCPContextProvider, 'getSCPContext')
+      .mockReturnValue({environment: 'staging'})
+
+    // Almost no events should be suppressed from Sentry with sampleRate = 0.99
+    let sampleRate = 0.99
+    for (let i = 0; i < 100; i++) {
+      logToSentry({}, true, sampleRate)
+    }
+    const numDroppedInHighSampleRate = console.log.mock.calls.length
+    expect(numDroppedInHighSampleRate).toBeLessThan(20)
+
+    // Almost all events should be suppressed from Sentry with sampleRate = 0.01
+    sampleRate = 0.01
+    for (let i = 0; i < 100; i++) {
+      logToSentry({}, true, sampleRate)
+    }
+    const numDroppedInLowSampleRate = console.log.mock.calls.length - numDroppedInHighSampleRate
+    expect(numDroppedInLowSampleRate).toBeGreaterThan(80)
+
+    // Test warnings for throttling with a response object
+    for (let i = 0; i < 100; i++) {
+      logToSentry({url: 'foo://bar.baz'}, true, sampleRate)
+    }
+    const numDroppedInLowSampleWithResponse = console.log.mock.calls.length
+    const latestWarning = console.log.mock.calls.slice(-1)[0][0]
+    expect(latestWarning.url).toEqual('foo://bar.baz')
+
+    // Nothing should be logged when Sentry is suppressed, and we expect warnings of this
+    jest
+      .spyOn(SCPContextProvider, 'getSCPContext')
+      .mockReturnValue({environment: 'test'})
+    logToSentry({})
+    const numDroppedWhenSuppressed = console.log.mock.calls.length - numDroppedInLowSampleWithResponse
+    expect(numDroppedWhenSuppressed).toEqual(1)
+  })
+
 })
