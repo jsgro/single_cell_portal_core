@@ -1332,6 +1332,9 @@ class StudyFile
   # ensure that metadata file adheres to convention acceptance criteria, if turned on
   # will check for exemption from any users associated with given study
   def ensure_metadata_convention
+    convention_required = FeatureFlag.find_by(name: 'convention_required')
+    return true if convention_required.nil? || convention_required.default_value == false
+
     # check for exemption across all associated users & study object
     user_accounts = study.associated_users(permission: 'Edit')
     unless FeatureFlaggable.flag_override_for_instances(
