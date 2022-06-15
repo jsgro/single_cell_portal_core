@@ -247,9 +247,17 @@ module Api
       end
 
       def file_info
+        files_obj = []
+        @study.study_files.each do |study_file|
+          file_hash = study_file.attributes
+          if study_file.is_bundled?
+            file_hash[:has_completed_bundle] = study_file.has_completed_bundle?
+          end
+          files_obj << file_hash
+        end
         response_obj = {
           study: @study.attributes,
-          files: @study.study_files,
+          files: files_obj,
           feature_flags: FeatureFlaggable.feature_flags_for_instances(current_api_user, @study)
         }
         if params[:include_options]

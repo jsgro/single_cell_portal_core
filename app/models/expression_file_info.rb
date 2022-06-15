@@ -105,11 +105,15 @@ class ExpressionFileInfo
   # enforce assigning associations on "processed" expression matrix files
   # will check for exemption from any users associated with given study
   def enforce_raw_counts_associations
+    raw_counts_required = FeatureFlag.find_by(name: 'raw_counts_required_backend')
+    return true if raw_counts_required.nil? || raw_counts_required.default_value == false
+
     # first ensure raw matrix is present
     if raw_counts_associations.any?
       raw_counts_associations.each do |study_file_id|
         raw_matrix = StudyFile.find(study_file_id)
-        return true if raw_matrix&.is_raw_counts_file?
+        # enforce bundle completion on matrix
+        return true if raw_matrix&.is_raw_counts_file? && raw_matrix&.has_completed_bundle?
       end
     end
 
@@ -118,7 +122,9 @@ class ExpressionFileInfo
     unless FeatureFlaggable.flag_override_for_instances(
       'raw_counts_required_backend', false, *user_accounts, study_file.study
     )
-      errors.add(:base, 'You must specify at least one associated raw count file before saving')
+      errors.add(
+        :base, 'You must specify at least one associated raw count file that has genes and barcodes before saving'
+      )
     end
   end
 end

@@ -39,7 +39,9 @@ function ProcessedUploadForm({
 }) {
   const processedParentFiles = formState.files.filter(processedFileFilter)
   const fileMenuOptions = serverState.menu_options
-  const rawCountsFiles = formState.files.filter(rawCountsFileFilter).filter(f => f.status != 'new')
+  const rawCountsFiles = formState.files.filter(rawCountsFileFilter).filter(
+    f => f.status != 'new' && f?.has_completed_bundle
+  )
   const rawCountsOptions = rawCountsFiles.map(rf => ({ label: rf.name, value: rf._id }))
 
   const featureFlagState = serverState.feature_flags
@@ -58,12 +60,13 @@ function ProcessedUploadForm({
     { !isEnabled &&
       <div className="row">
         <div className="col-md-12 padded">
-          Uploading a raw count matrix is now required in order to access to processed matrix uploads.
-          <br/>
-          <br/>
-          If you are unable or do not wish to upload a raw count matrix, you can request an exemption using the link below.
-          <br/>
-          <br/>
+          <p className="left-margin">
+            Uploading a raw count matrix is now required in order to access to processed matrix uploads.
+          </p>
+          <p className="left-margin">
+            If you are unable or do not wish to upload a raw count matrix, you can request an exemption using the link
+            below.
+          </p>
           <div className="row">
             <div className="col-md-3 col-md-offset-2">
               <a className="action" onClick={() => setCurrentStep({ name: 'rawCounts' })}>
