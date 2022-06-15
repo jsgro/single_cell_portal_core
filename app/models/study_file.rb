@@ -814,6 +814,11 @@ class StudyFile
     self.study_file_bundle.present?
   end
 
+  # determine if study file should have a bundle (i.e. is not valid without completed bundle)
+  def should_bundle?
+    StudyFileBundle::REQUIRE_BUNDLE.include?(file_type)
+  end
+
   # gracefully check if study_file_bundle is both present and completed
   def has_completed_bundle?
     self.study_file_bundle.try(:completed?)

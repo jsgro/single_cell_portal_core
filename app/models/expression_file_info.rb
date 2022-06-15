@@ -112,8 +112,10 @@ class ExpressionFileInfo
     if raw_counts_associations.any?
       raw_counts_associations.each do |study_file_id|
         raw_matrix = StudyFile.find(study_file_id)
-        # enforce bundle completion on matrix
-        return true if raw_matrix&.is_raw_counts_file? && raw_matrix&.has_completed_bundle?
+        # enforce bundle completion on matrix, if needed
+        # if matrix does not need to be bundled (e.g. is dense), then return true for is_completed
+        is_completed = raw_matrix&.should_bundle? ? raw_matrix.has_completed_bundle? : true
+        return true if raw_matrix&.is_raw_counts_file? && is_completed
       end
     end
 
