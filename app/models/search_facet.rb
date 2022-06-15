@@ -353,7 +353,7 @@ class SearchFacet
 
   # find all possible matches for a partial filter value
   def find_filter_matches(filter_value, filter_list: :filters)
-    flatten_filters(filter_list).select { |filter| filter.match(/#{filter_value}/i) }.map(&:to_s)
+    flatten_filters(filter_list).select { |filter| filter.match(/#{Regexp.escape(filter_value)}/i) }.map(&:to_s)
   end
 
   # matches on whole words/phrases for terms to filter list
