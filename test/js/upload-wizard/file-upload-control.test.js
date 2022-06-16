@@ -50,6 +50,42 @@ describe('file upload control defaults the name of the file', () => {
   })
 })
 
+it('updates the file upload name but preserves custom name', async () => {
+  const file = {
+    _id: '123',
+    name: 'previousName',
+    status: 'new',
+    file_type: 'Cluster'
+  }
+  const updateFileHolder = { updateFile: () => {} }
+  const updateFileSpy = jest.spyOn(updateFileHolder, 'updateFile')
+
+  render(
+    <StudyContext.Provider value={{ accession: 'SCP123' }}>
+      <FileUploadControl
+        file={file}
+        allFiles={[file]}
+        updateFile={updateFileHolder.updateFile}
+        allowedFileExts={['.txt']}
+        validationMessages={{}}/>
+    </StudyContext.Provider>
+  )
+
+  expect(screen.getByRole('button')).toHaveTextContent('Choose file')
+  expect(screen.queryByTestId('file-name-validation')).toBeNull()
+
+  const fileObj = fireFileSelectionEvent(screen.getByTestId('file-input'), {
+    fileName: 'cluster.txt',
+    content: 'NAME,X,Y\nTYPE,numeric,numeric\nCell1,1,0\n'
+  })
+  await waitForElementToBeRemoved(() => screen.getByTestId('file-validation-spinner'))
+  expect(updateFileSpy).toHaveBeenLastCalledWith('123', {
+    uploadSelection: fileObj,
+    name: 'previousName',
+    upload_file_name: 'cluster.txt'
+  })
+})
+
 describe('file upload control validates the selected file', () => {
   it('validates the extension', async () => {
     const file = {
