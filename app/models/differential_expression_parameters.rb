@@ -6,7 +6,6 @@ class DifferentialExpressionParameters
   GS_URL_REGEXP = %r{\Ags://}.freeze
 
   # annotation_name: name of annotation to use for DE
-  # annotation_type: type of annotation, must be 'group'
   # annotation_scope: scope of annotation (study, cluster)
   # annotation_file: source file for above annotation
   # cluster_file: clustering file with cells to use as control list for DE
@@ -15,14 +14,13 @@ class DifferentialExpressionParameters
   # matrix_file_type: type of raw counts matrix (dense, sparse)
   # gene_file (optional): genes/features file for sparse matrix
   # barcode_file (optional): barcodes file for sparse matrix
-  attr_accessor :annotation_name, :annotation_type, :annotation_scope, :annotation_file, :cluster_file,
+  attr_accessor :annotation_name, :annotation_scope, :annotation_file, :cluster_file,
                 :cluster_name, :matrix_file_path, :matrix_file_type, :gene_file, :barcode_file
 
-  validates :annotation_name, :annotation_type, :annotation_scope, :annotation_file, :cluster_file,
+  validates :annotation_name, :annotation_scope, :annotation_file, :cluster_file,
             :cluster_name, :matrix_file_path, :matrix_file_type, presence: true
   validates :annotation_file, :cluster_file, :matrix_file_path,
             format: { with: GS_URL_REGEXP, message: 'is not a valid GS url' }
-  validates :annotation_type, inclusion: %w[group]
   validates :annotation_scope, inclusion: %w[cluster study]
   validates :matrix_file_type, inclusion: %w[dense mtx]
   validates :gene_file, :barcode_file,
@@ -42,7 +40,7 @@ class DifferentialExpressionParameters
   def attributes
     {
       annotation_name: annotation_name,
-      annotation_type: annotation_type,
+      annotation_type: 'group',
       annotation_scope: annotation_scope,
       annotation_file: annotation_file,
       cluster_file: cluster_file,
