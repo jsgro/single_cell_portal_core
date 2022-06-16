@@ -125,7 +125,8 @@ class ExpressionFileInfo
       'raw_counts_required_backend', false, *user_accounts, study_file.study
     )
       errors.add(
-        :base, 'You must specify at least one associated raw count file that has genes and barcodes before saving'
+        :base, 'You must specify at least one associated raw count file before saving.  Raw count files in sparse ' \
+               '(MTX) format must also include associated features/barcodes files.'
       )
     end
   end

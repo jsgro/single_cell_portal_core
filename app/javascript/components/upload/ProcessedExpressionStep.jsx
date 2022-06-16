@@ -61,7 +61,8 @@ function ProcessedUploadForm({
       <div className="row">
         <div className="col-md-12 padded">
           <p className="left-margin">
-            Uploading a raw count matrix is now required in order to access to processed matrix uploads.
+            Uploading a raw count matrix is required before uploading a processed matrix. Raw count matrices in sparse
+            (MTX) format must also include associated features/barcodes files.
           </p>
           <p className="left-margin">
             If you are unable or do not wish to upload a raw count matrix, you can request an exemption using the link
