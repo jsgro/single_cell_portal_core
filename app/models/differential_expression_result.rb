@@ -55,7 +55,7 @@ class DifferentialExpressionResult
       label,
       annotation_scope,
       'wilcoxon'
-    ].map { |val| val.gsub(/\W+/, '_') }.join('--')
+    ].map { |val| val.gsub(/\W/, '_') }.join('--')
     "#{basename}.tsv"
   end
 
