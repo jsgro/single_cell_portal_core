@@ -77,7 +77,6 @@ class DifferentialExpressionResult
   def set_observed_values
     cells_by_label = ClusterVizService.cells_by_annotation_label(cluster_group,
                                                                  annotation_name,
-                                                                 'group',
                                                                  annotation_scope)
     observed = cells_by_label.keys.reject { |label| cells_by_label[label].count < MIN_OBSERVED_VALUES }
     self.observed_values = observed
