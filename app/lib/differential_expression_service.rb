@@ -53,7 +53,7 @@ class DifferentialExpressionService
 
     metadata = study.cell_metadata.where(annotation_type: 'group').select(&:can_visualize?)
     eligible_annotations += metadata.map do |meta|
-      { annotation_name: meta.name, annotation_type: meta.annotation_type, annotation_scope: 'study' }
+      { annotation_name: meta.name, annotation_scope: 'study' }
     end
 
     cell_annotations = []
@@ -92,7 +92,10 @@ class DifferentialExpressionService
 
           annotation_params = annotation.deep_dup # make a copy so we don't lose the association next time we check
           annotation_params.delete(:cluster_file_id)
-          job_identifier = "#{study_accession}: #{cluster_file.name} (#{annotation_params.values.join('--')})"
+          annotation_identifier = [annotation_params['annotation_name'],
+                                   'group',
+                                   annotation_params['annotation_scope']].join('--')
+          job_identifier = "#{study_accession}: #{cluster_file.name} (#{annotation_identifier})"
           log_message "Checking DE job for #{job_identifier}"
           DifferentialExpressionService.run_differential_expression_job(
             cluster_file, study, requested_user, **annotation_params
