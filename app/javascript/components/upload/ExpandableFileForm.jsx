@@ -152,7 +152,7 @@ function SaveButton({ file, saveFile, validationMessages = {} }) {
     const validationPopup = <Popover id={`save-invalid-${file._id}`} className="tooltip-wide">
       {Object.keys(validationMessages).map(key => <div key={key}>{validationMessages[key]}</div>)}
     </Popover>
-    saveButton = <OverlayTrigger trigger={['hover', 'focus']} rootClose placement="top" overlay={validationPopup}>
+    saveButton = <OverlayTrigger trigger={['hover', 'focus']} rootClose placement="left" overlay={validationPopup}>
       <div>{saveButton}</div>
     </OverlayTrigger>
   } else if (file.isSaving) {
