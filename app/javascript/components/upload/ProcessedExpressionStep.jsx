@@ -40,7 +40,7 @@ function ProcessedUploadForm({
   const processedParentFiles = formState.files.filter(processedFileFilter)
   const fileMenuOptions = serverState.menu_options
   const rawCountsFiles = formState.files.filter(rawCountsFileFilter).filter(
-    f => f.status != 'new' && f?.has_completed_bundle
+    f => f.status != 'new' && f.is_complete
   )
   const rawCountsOptions = rawCountsFiles.map(rf => ({ label: rf.name, value: rf._id }))
 
@@ -111,7 +111,9 @@ function ProcessedUploadForm({
             rawCountsOptions={rawCountsOptions}
             fileMenuOptions={fileMenuOptions}
             bucketName={formState.study.bucket_id}
-            isInitiallyExpanded={processedParentFiles.length === 1}/>
+            isInitiallyExpanded={processedParentFiles.length === 1}
+            featureFlagState={featureFlagState}
+          />
         })}
         <AddFileButton addNewFile={addNewFile} newFileTemplate={DEFAULT_NEW_PROCESSED_FILE}/>
         { !isEnabled && <div className="file-upload-overlay" data-testid="processed-matrix-overlay"></div> }

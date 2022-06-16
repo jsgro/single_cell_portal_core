@@ -165,7 +165,9 @@ export function validateFile({ file, allFiles, allowedFileExts=[], requiredField
 /** checks required fields are present */
 function validateRequiredFields(file, requiredFields, validationMessages) {
   requiredFields.forEach(field => {
-    if (!_get(file, field.propertyName)) {
+    const existingValue = _get(file, field.propertyName)
+    const isBlank = !existingValue || (typeof existingValue === 'object' && existingValue.length === 0)
+    if (isBlank) {
       validationMessages[field.propertyName] = `You must specify ${field.label}`
     }
   })

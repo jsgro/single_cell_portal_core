@@ -250,9 +250,7 @@ module Api
         files_obj = []
         @study.study_files.each do |study_file|
           file_hash = study_file.attributes
-          if study_file.is_bundled?
-            file_hash[:has_completed_bundle] = study_file.has_completed_bundle?
-          end
+          file_hash[:is_complete] = study_file.should_bundle? ? study_file.has_completed_bundle? : true
           files_obj << file_hash
         end
         response_obj = {

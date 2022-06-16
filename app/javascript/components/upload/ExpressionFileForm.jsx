@@ -16,6 +16,9 @@ const REQUIRED_FIELDS = [{ label: 'species', propertyName: 'taxon_id' },
 const RAW_COUNTS_REQUIRED_FIELDS = REQUIRED_FIELDS.concat([{
   label: 'units', propertyName: 'expression_file_info.units'
 }])
+const PROCESSED_ASSOCIATION_FIELD = [
+  { label: 'Associated raw counts files', propertyName: 'expression_file_info.raw_counts_associations' }
+]
 
 /** renders a form for editing/uploading an expression file (raw or processed) and any bundle children */
 export default function ExpressionFileForm({
@@ -28,7 +31,8 @@ export default function ExpressionFileForm({
   fileMenuOptions,
   rawCountsOptions,
   bucketName,
-  isInitiallyExpanded
+  isInitiallyExpanded,
+  featureFlagState
 }) {
   const associatedChildren = findBundleChildren(file, allFiles)
   const speciesOptions = fileMenuOptions.species.map(spec => ({ label: spec.common_name, value: spec.id }))
@@ -37,7 +41,11 @@ export default function ExpressionFileForm({
   const isRawCountsFile = file.expression_file_info.is_raw_counts
 
   const allowedFileExts = isMtxFile ? FileTypeExtensions.mtx : FileTypeExtensions.plainText
-  const requiredFields = isRawCountsFile ? RAW_COUNTS_REQUIRED_FIELDS : REQUIRED_FIELDS
+  let requiredFields = isRawCountsFile ? RAW_COUNTS_REQUIRED_FIELDS : REQUIRED_FIELDS
+  const rawCountsRequired = featureFlagState && featureFlagState.raw_counts_required_frontend
+  if (rawCountsRequired && !isRawCountsFile) {
+    requiredFields = requiredFields.concat(PROCESSED_ASSOCIATION_FIELD)
+  }
   const validationMessages = validateFile({ file, allFiles, allowedFileExts, requiredFields })
 
   const associatedRawCounts = file.expression_file_info.raw_counts_associations.map(id => ({
