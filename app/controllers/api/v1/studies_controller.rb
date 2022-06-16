@@ -248,7 +248,7 @@ module Api
 
       def file_info
         files_obj = []
-        @study.study_files.each do |study_file|
+        @study.study_files.where(queued_for_deletion: false).each do |study_file|
           file_hash = study_file.attributes
           file_hash[:is_complete] = study_file.should_bundle? ? study_file.has_completed_bundle? : true
           files_obj << file_hash
