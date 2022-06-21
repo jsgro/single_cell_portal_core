@@ -50,8 +50,7 @@ class DifferentialExpressionService
     validate_study(study)
     eligible_annotations = []
 
-    metadata = study.cell_metadata.where(annotation_type: 'group', is_differential_expression_enabled: false)
-                    .select(&:can_visualize?)
+    metadata = study.cell_metadata.where(annotation_type: 'group').select(&:can_visualize?)
     eligible_annotations += metadata.map do |meta|
       { annotation_name: meta.name, annotation_type: meta.annotation_type, annotation_scope: 'study' }
     end
@@ -61,9 +60,7 @@ class DifferentialExpressionService
     groups_to_process.map do |cluster|
 
       cell_annots = cluster.cell_annotations.select do |annot|
-        annot['type'] == 'group' &&
-          cluster.can_visualize_cell_annotation?(annot) &&
-          !annot[:is_differential_expression_enabled]
+        annot['type'] == 'group' && cluster.can_visualize_cell_annotation?(annot)
       end
 
       cell_annots.each do |annot|

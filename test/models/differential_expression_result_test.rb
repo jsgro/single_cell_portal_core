@@ -33,27 +33,32 @@ class DifferentialExpressionResultTest  < ActiveSupport::TestCase
                                         cells: @cells,
                                       },
                                       annotation_input: [
-                                        { name: 'disease', type: 'group', values: @diseases }
+                                        { name: 'disease', type: 'group', values: @diseases },
+                                        { name: 'sub-cluster', type: 'group', values: %w[1 1 1 2 2 2 2] }
                                       ])
     @cluster_group = ClusterGroup.find_by(study: @study, study_file: @cluster_file)
 
-    FactoryBot.create(:metadata_file,
-                      name: 'metadata.txt',
-                      study: @study,
-                      cell_input: @cells,
-                      annotation_input: [
-                        { name: 'species', type: 'group', values: @species },
-                        { name: 'library_preparation_protocol', type: 'group', values: @library_preparation_protocol }
-                      ])
+    @metadata_file = FactoryBot.create(:metadata_file,
+                                       name: 'metadata.txt',
+                                       study: @study,
+                                       cell_input: @cells,
+                                       annotation_input: [
+                                         { name: 'species', type: 'group', values: @species },
+                                         {
+                                           name: 'library_preparation_protocol',
+                                           type: 'group',
+                                           values: @library_preparation_protocol
+                                         }
+                                       ])
 
     @species_result = DifferentialExpressionResult.create(
       study: @study, cluster_group: @cluster_file.cluster_groups.first, annotation_name: 'species',
-      annotation_scope: 'study'
+      annotation_scope: 'study', matrix_file_id: @raw_matrix.id
     )
 
     @disease_result = DifferentialExpressionResult.create(
       study: @study, cluster_group: @cluster_file.cluster_groups.first, annotation_name: 'disease',
-      annotation_scope: 'cluster'
+      annotation_scope: 'cluster', matrix_file_id: @raw_matrix.id
     )
   end
 
@@ -68,7 +73,7 @@ class DifferentialExpressionResultTest  < ActiveSupport::TestCase
 
     library_result = DifferentialExpressionResult.new(
       study: @study, cluster_group: @cluster_group, annotation_name: 'library_preparation_protocol',
-      annotation_scope: 'study'
+      annotation_scope: 'study', matrix_file_id: @raw_matrix.id
     )
 
     assert_not library_result.valid?
@@ -111,5 +116,27 @@ class DifferentialExpressionResultTest  < ActiveSupport::TestCase
 
     assert_equal species_opts.to_a, @species_result.select_options
     assert_equal disease_opts.to_a, @disease_result.select_options
+  end
+
+  test 'should return associated files' do
+    assert_equal @raw_matrix, @species_result.matrix_file
+    assert_equal @metadata_file, @species_result.metadata_file
+    assert_equal @cluster_file, @species_result.cluster_file
+  end
+
+  test 'should clean up files on delete' do
+    sub_cluster = DifferentialExpressionResult.create(
+      study: @study, cluster_group: @cluster_file.cluster_groups.first, annotation_name: 'sub-cluster',
+      annotation_scope: 'cluster', matrix_file_id: @raw_matrix.id
+    )
+    assert sub_cluster.present?
+    mock = Minitest::Mock.new
+    sub_cluster.bucket_files.each do |file|
+      mock.expect :delete_workspace_file, true, [@study.bucket_id, file]
+    end
+    ApplicationController.stub :firecloud_client, mock do
+      sub_cluster.destroy
+      mock.verify
+    end
   end
 end

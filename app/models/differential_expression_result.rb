@@ -13,12 +13,15 @@ class DifferentialExpressionResult
   field :observed_values, type: Array, default: []
   field :annotation_name, type: String
   field :annotation_scope, type: String
+  field :matrix_file_id, type: BSON::ObjectId # associated raw count matrix study file
 
   validates :annotation_scope, inclusion: { in: %w[study cluster] }
-  validates :annotation_name, :cluster_name, presence: true
+  validates :annotation_name, :cluster_name, :matrix_file_id, presence: true
   validate :has_observed_values?
+  validate :matrix_file_exists?
 
   before_validation :set_observed_values, :set_cluster_name
+  before_destroy :remove_output_files
 
   # pointer to source annotation object, either CellMetadatum of ClusterGroup#cell_annotation
   def annotation_object
@@ -39,6 +42,27 @@ class DifferentialExpressionResult
       annotation_object.annotation_select_value
     when 'cluster'
       cluster_group.annotation_select_value(annotation_object)
+    end
+  end
+
+  ## STUDY FILE GETTERS
+  # associated raw count matrix
+  def matrix_file
+    StudyFile.find(matrix_file_id)
+  end
+
+  # associated clustering file
+  def cluster_file
+    cluster_group&.study_file
+  end
+
+  # associated annotation file
+  def annotation_file
+    case annotation_scope
+    when 'study'
+      study.metadata_file
+    when 'cluster'
+      cluster_file
     end
   end
 
@@ -66,6 +90,11 @@ class DifferentialExpressionResult
     Hash[observed_values.zip(files)]
   end
 
+  # array of result file paths relative to associated bucket root
+  def bucket_files
+    observed_values.map { |label| bucket_path_for(label) }
+  end
+
   # nested array of arrays representation of :result_files (for select menu options)
   def select_options
     result_files.to_a
@@ -90,6 +119,20 @@ class DifferentialExpressionResult
   def has_observed_values?
     if observed_values.count < MIN_OBSERVED_VALUES
       errors.add(:observed_values, "must have at least #{MIN_OBSERVED_VALUES} values")
+    end
+  end
+
+  def matrix_file_exists?
+    StudyFile.find(matrix_file_id).present?
+  end
+
+  # delete all associated output files on destroy
+  # error handling/reporting is taken care of in FireCloudClient#delete_workspace_file
+  def remove_output_files
+    client = ApplicationController.firecloud_client
+    bucket_files.each do |filepath|
+      Rails.logger.info "Removing DE output #{study.accession}:#{annotation_identifier} at #{filepath}"
+      client.delete_workspace_file(study.bucket_id, filepath)
     end
   end
 end
