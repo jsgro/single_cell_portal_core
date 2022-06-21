@@ -57,15 +57,23 @@ function annotHasDe(exploreInfo, exploreParams) {
 
   let annotHasDe = false
   const annotList = exploreInfo.annotationList
+  let selectedCluster
   let selectedAnnot
   if (exploreParams?.cluster) {
+    selectedCluster = exploreParams.cluster
     selectedAnnot = exploreParams.annotation
   } else {
+    selectedCluster = annotList.default_cluster
     selectedAnnot = annotList.default_annotation
   }
 
-  const matchingAnnot = getMatchedAnnotation(selectedAnnot, annotList)
-  annotHasDe = matchingAnnot?.is_differential_expression_enabled
+  annotHasDe = exploreInfo.differentialExpression.some(deItem => {
+    return (
+      deItem.cluster_name === selectedCluster &&
+      deItem.annotation_name === selectedAnnot.name &&
+      deItem.annotation_scope === selectedAnnot.scope
+    )
+  })
 
   return annotHasDe
 }
