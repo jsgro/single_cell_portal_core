@@ -243,6 +243,8 @@ class Study
   has_one :reviewer_access, dependent: :delete_all
   accepts_nested_attributes_for :reviewer_access, allow_destroy: true
 
+  has_many :differential_expression_results, dependent: :delete_all
+
   # field definitions
   field :name, type: String
   field :embargo, type: Date
