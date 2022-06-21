@@ -37,6 +37,7 @@ class DeleteQueueJob < Struct.new(:object)
         cluster = ClusterGroup.find_by(study_file_id: object.id, study_id: study.id)
         delete_parsed_data(object.id, study.id, ClusterGroup)
         delete_parsed_data(object.id, study.id, DataArray)
+        delete_differential_expression_results(study: study, study_file: object)
         if cluster.present?
           user_annotations = UserAnnotation.where(study_id: study.id, cluster_group_id: cluster.id )
           user_annotations.each do |annot|
@@ -50,9 +51,11 @@ class DeleteQueueJob < Struct.new(:object)
         remove_file_from_bundle
       when 'Expression Matrix'
         delete_parsed_data(object.id, study.id, Gene, DataArray)
+        delete_differential_expression_results(study: study, study_file: object)
         study.set_gene_count
       when 'MM Coordinate Matrix'
         delete_parsed_data(object.id, study.id, Gene, DataArray)
+        delete_differential_expression_results(study: study, study_file: object)
         study.set_gene_count
       when /10X/
         bundle = object.study_file_bundle
@@ -78,6 +81,7 @@ class DeleteQueueJob < Struct.new(:object)
         end
 
         delete_parsed_data(object.id, study.id, CellMetadatum, DataArray)
+        delete_differential_expression_results(study: study, study_file: object)
         study.update(cell_count: 0)
         # unset default annotation if it was study-based
         if study.default_options[:annotation].present? &&
@@ -171,5 +175,19 @@ class DeleteQueueJob < Struct.new(:object)
       bq_dataset.query "DELETE FROM #{CellMetadatum::BIGQUERY_TABLE} WHERE study_accession = '#{study.accession}' AND file_id = '#{metadata_file.id}'"
       SearchFacet.delay.update_all_facet_filters
     end
+  end
+
+  def delete_differential_expression_results(study:, study_file:)
+    case study_file.file_type
+    when 'Metadata'
+      # extract results to Array to prevent open DB cursor from hanging and timing out as files are deleted in bucket
+      results = DifferentialExpressionResult.where(study: study, annotation_scope: 'study').to_a
+    when 'Cluster'
+      cluster = ClusterGroup.find_by(study: study, study_file: study_file)
+      results = DifferentialExpressionResult.where(study: study, cluster_group: cluster).to_a
+    when 'Expression Matrix', 'MM Coordinate Matrix'
+      results = DifferentialExpressionResult.where(study: study, matrix_file_id: study_file.id).to_a
+    end
+    results.map(&:destroy)
   end
 end

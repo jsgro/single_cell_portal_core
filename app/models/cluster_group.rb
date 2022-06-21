@@ -46,6 +46,8 @@ class ClusterGroup
     end
   end
 
+  has_many :differential_expression_results, dependent: :destroy
+
   index({ name: 1, study_id: 1 }, { unique: true, background: true })
   index({ study_id: 1 }, { unique: false, background: true })
   index({ study_id: 1, study_file_id: 1}, { unique: false, background: true })
