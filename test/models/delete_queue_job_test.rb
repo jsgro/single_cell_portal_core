@@ -24,6 +24,10 @@ class DeleteQueueJobTest < ActiveSupport::TestCase
     @basic_study_exp_file.save!
   end
 
+  after(:all) do
+    DifferentialExpressionResult.delete_all
+  end
+
   # test to ensure expression matrix files with "invalid" expression_file_info documents can still be deleted
   # this happens when attributes on nested documents have new constraints placed after creation, like additional
   # validations or fields
@@ -64,5 +68,107 @@ class DeleteQueueJobTest < ActiveSupport::TestCase
     new_matrix = FactoryBot.create(:study_file, name: filename, file_type: 'Expression Matrix', study: @basic_study)
     assert new_matrix.persisted?
     assert new_matrix.valid?
+  end
+
+  test 'should destroy differential expression results on file deletion' do
+    cells = %w[A B C D E F G]
+    coordinates = 1.upto(7).to_a
+    species = %w[dog cat dog dog cat cat cat]
+    diseases = %w[measles measles measles none none measles measles]
+    categories = %w[foo foo bar bar bar bar bar foo]
+    organs = %w[brain brain heart brain heart heart brain]
+    raw_matrix = FactoryBot.create(:expression_file,
+                                   name: 'raw.txt',
+                                   study: @basic_study,
+                                   cell_input: cells,
+                                   expression_file_info: {
+                                     is_raw_counts: true,
+                                     units: 'raw counts',
+                                     library_preparation_protocol: 'Drop-seq',
+                                     biosample_input_type: 'Whole cell',
+                                     modality: 'Proteomic'
+                                   })
+    cluster_file_1 = FactoryBot.create(:cluster_file,
+                                       name: 'cluster_diffexp_1.txt',
+                                       study: @basic_study,
+                                       cell_input: {
+                                         x: coordinates,
+                                         y: coordinates,
+                                         cells: cells
+                                       },
+                                       annotation_input: [
+                                         { name: 'species', type: 'group', values: species }
+                                       ])
+
+    cluster_file_2 = FactoryBot.create(:cluster_file,
+                                       name: 'cluster_diffexp_2.txt',
+                                       study: @basic_study,
+                                       cell_input: {
+                                         x: coordinates,
+                                         y: coordinates,
+                                         cells: cells
+                                       },
+                                       annotation_input: [
+                                         { name: 'disease', type: 'group', values: diseases }
+                                       ])
+
+    cluster_1 = ClusterGroup.find_by(study: @basic_study, study_file: cluster_file_1)
+    cluster_2 = ClusterGroup.find_by(study: @basic_study, study_file: cluster_file_2)
+
+    metadata_file = FactoryBot.create(:metadata_file,
+                                      name: 'metadata.txt',
+                                      cell_input: cells,
+                                      study: @basic_study,
+                                      annotation_input: [
+                                        { name: 'category', type: 'group', values: categories },
+                                        { name: 'organ', type: 'group', values: organs }
+                                      ])
+
+    DifferentialExpressionResult.create(
+      study: @basic_study, cluster_group: cluster_1, annotation_name: 'species',
+      annotation_scope: 'cluster', matrix_file_id: raw_matrix.id
+    )
+    DifferentialExpressionResult.create(
+      study: @basic_study, cluster_group: cluster_2, annotation_name: 'disease',
+      annotation_scope: 'cluster', matrix_file_id: raw_matrix.id
+    )
+    DifferentialExpressionResult.create(
+      study: @basic_study, cluster_group: cluster_1, annotation_name: 'category',
+      annotation_scope: 'study', matrix_file_id: raw_matrix.id
+    )
+    DifferentialExpressionResult.create(
+      study: @basic_study, cluster_group: cluster_2, annotation_name: 'organ',
+      annotation_scope: 'study', matrix_file_id: raw_matrix.id
+    )
+
+    # use mock to suppress spurious errors when trying to delete files in non-existent bucket
+    # should be 8 calls
+    mock = Minitest::Mock.new
+    mock.expect :delete_workspace_file, true, [@basic_study.bucket_id, String]
+    mock.expect :delete_workspace_file, true, [@basic_study.bucket_id, String]
+    mock.expect :delete_workspace_file, true, [@basic_study.bucket_id, String]
+    mock.expect :delete_workspace_file, true, [@basic_study.bucket_id, String]
+    mock.expect :delete_workspace_file, true, [@basic_study.bucket_id, String]
+    mock.expect :delete_workspace_file, true, [@basic_study.bucket_id, String]
+    mock.expect :delete_workspace_file, true, [@basic_study.bucket_id, String]
+    mock.expect :delete_workspace_file, true, [@basic_study.bucket_id, String]
+
+    ApplicationController.stub :firecloud_client, mock do
+      # test deletion of cluster file
+      DeleteQueueJob.new(cluster_file_1).perform
+      assert_not DifferentialExpressionResult.where(study: @basic_study, cluster_group: cluster_1).any?
+      assert DifferentialExpressionResult.where(study: @basic_study, cluster_group: cluster_2).any?
+
+      # test deletion of metadata file
+      DeleteQueueJob.new(metadata_file).perform
+      assert_not DifferentialExpressionResult.where(study: @basic_study, annotation_scope: 'study').any?
+
+      # test deletion of matrix file
+      DeleteQueueJob.new(raw_matrix).perform
+      assert_not DifferentialExpressionResult.where(study: @basic_study).any?
+
+      # assert all delete calls have been made
+      mock.verify
+    end
   end
 end
