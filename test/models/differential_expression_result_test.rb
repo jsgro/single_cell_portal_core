@@ -120,7 +120,7 @@ class DifferentialExpressionResultTest  < ActiveSupport::TestCase
 
   test 'should return associated files' do
     assert_equal @raw_matrix, @species_result.matrix_file
-    assert_equal @metadata_file, @species_result.metadata_file
+    assert_equal @metadata_file, @species_result.annotation_file
     assert_equal @cluster_file, @species_result.cluster_file
   end
 
