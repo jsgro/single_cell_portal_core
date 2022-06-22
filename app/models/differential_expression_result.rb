@@ -131,7 +131,7 @@ class DifferentialExpressionResult
   end
 
   def matrix_file_exists?
-    StudyFile.find(matrix_file_id).present?
+    matrix_file.present?
   end
 
   # delete all associated output files on destroy
