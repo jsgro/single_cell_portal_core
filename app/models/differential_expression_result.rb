@@ -62,7 +62,7 @@ class DifferentialExpressionResult
 
   # associated clustering file
   def cluster_file
-    cluster_group&.study_file
+    cluster_group.study_file
   end
 
   # associated annotation file
