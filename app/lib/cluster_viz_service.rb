@@ -283,12 +283,11 @@ class ClusterVizService
   # * *params*
   #   - +cluster+    (ClusterGroup) => Clustering object being used as control cell list
   #   - +annotation_name+  (String) => Name of requested annotation
-  #   - +annotation_type+  (String) => Type of requested annotation (should be 'group')
   #   - +annotation_scope+ (String) => Scope of requested annotation ('study' or 'cluster')
-  def self.cells_by_annotation_label(cluster, annotation_name, annotation_type, annotation_scope)
+  def self.cells_by_annotation_label(cluster, annotation_name, annotation_scope)
     study = cluster.study
     cells = cluster.concatenate_data_arrays('text', 'cells')
-    annotation = { name: annotation_name, scope: annotation_scope, type: annotation_type }
+    annotation = { name: annotation_name, scope: annotation_scope, type: 'group' } # only valid for group-based
     labels = get_annotation_values_array(study, cluster, annotation, cells, nil, nil)
     cells_by_label = {}
     labels.each_with_index do |label, index|

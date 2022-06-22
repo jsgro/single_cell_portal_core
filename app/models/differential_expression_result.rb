@@ -6,6 +6,13 @@ class DifferentialExpressionResult
   # minimum number of observed_values, or cells per observed_value
   MIN_OBSERVED_VALUES = 2
 
+  # supported computational methods for differential expression results in Scanpy
+  # from https://scanpy.readthedocs.io/en/stable/generated/scanpy.tl.rank_genes_groups.html
+  DEFAULT_COMP_METHOD = 'wilcoxon'.freeze
+  SUPPORTED_COMP_METHODS = [
+    DEFAULT_COMP_METHOD, 'logreg', 't-test', 't-test_overestim_var'
+  ].freeze
+
   belongs_to :study
   belongs_to :cluster_group
 
@@ -13,10 +20,12 @@ class DifferentialExpressionResult
   field :observed_values, type: Array, default: []
   field :annotation_name, type: String
   field :annotation_scope, type: String
+  field :computational_method, type: String, default: DEFAULT_COMP_METHOD
   field :matrix_file_id, type: BSON::ObjectId # associated raw count matrix study file
 
   validates :annotation_scope, inclusion: { in: %w[study cluster] }
   validates :annotation_name, :cluster_name, :matrix_file_id, presence: true
+  validates :computational_method, inclusion: { in: SUPPORTED_COMP_METHODS }
   validate :has_observed_values?
   validate :matrix_file_exists?
 
@@ -78,7 +87,7 @@ class DifferentialExpressionResult
       annotation_name,
       label,
       annotation_scope,
-      'wilcoxon'
+      computational_method
     ].map { |val| val.gsub(/\W/, '_') }.join('--')
     "#{basename}.tsv"
   end
@@ -106,7 +115,6 @@ class DifferentialExpressionResult
   def set_observed_values
     cells_by_label = ClusterVizService.cells_by_annotation_label(cluster_group,
                                                                  annotation_name,
-                                                                 'group',
                                                                  annotation_scope)
     observed = cells_by_label.keys.reject { |label| cells_by_label[label].count < MIN_OBSERVED_VALUES }
     self.observed_values = observed

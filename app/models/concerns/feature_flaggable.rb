@@ -250,9 +250,14 @@ module FeatureFlaggable
   def self.flag_override_for_instances(flag_name, override_value, *instances)
     feature_flag = FeatureFlag.find_by(name: flag_name.to_s)
     # if feature flag doesn't exist, return true as it may have been retired (or this is a CI and it wasn't seeded)
-    # also, if override and default are same, return true, since this is used in a validation context and false will
-    # invoke a validation error
-    return true if feature_flag.nil? || override_value == feature_flag.default_value
+    # if we're using this for a validation context, it is wise to check for flag presence before this call
+    return true if feature_flag.nil?
+
+    # if override value and default value are the same, return false
+    # the logic for this is that we're asking if there are any overrides to the default, and if the two values are the
+    # same, there cannot be an override
+    # take care in using this value as the results may not be intuitive in a validation context
+    return false if override_value == feature_flag.default_value
 
     class_names = []
     ids = []

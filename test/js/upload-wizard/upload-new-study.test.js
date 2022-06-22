@@ -149,9 +149,10 @@ async function testProcessedUpload({ createFileSpy }) {
   expect(screen.getByRole('tooltip')).not.toHaveTextContent('You must specify species')
 
   await selectEvent.select(getSelectByLabelText(screen, 'Library preparation protocol *'), 'Drop-seq')
-  expect(saveButton()).not.toBeDisabled()
+  expect(saveButton()).toBeDisabled()
 
   await selectEvent.select(getSelectByLabelText(screen, 'Associated raw counts files'), rawCountsFileName)
+  expect(saveButton()).not.toBeDisabled()
 
   fireEvent.click(saveButton())
   await waitForElementToBeRemoved(() => screen.getByTestId('file-save-spinner'))

@@ -5,7 +5,6 @@ class DifferentialExpressionParametersTest < ActiveSupport::TestCase
   before(:all) do
     @dense_options = {
       annotation_name: 'Category',
-      annotation_type: 'group',
       annotation_scope: 'cluster',
       annotation_file: 'gs://test_bucket/metadata.tsv',
       cluster_file: 'gs://test_bucket/cluster.tsv',
@@ -16,7 +15,6 @@ class DifferentialExpressionParametersTest < ActiveSupport::TestCase
 
     @sparse_options = {
       annotation_name: 'Category',
-      annotation_type: 'group',
       annotation_scope: 'cluster',
       annotation_file: 'gs://test_bucket/metadata.tsv',
       cluster_file: 'gs://test_bucket/cluster.tsv',
@@ -36,11 +34,10 @@ class DifferentialExpressionParametersTest < ActiveSupport::TestCase
 
     # test conditional validations
     dense_params.annotation_file = ''
-    dense_params.annotation_type = 'numeric'
     dense_params.annotation_scope = 'foo'
     dense_params.matrix_file_type = 'bar'
     assert_not dense_params.valid?
-    assert_equal %i[annotation_file annotation_scope annotation_type matrix_file_type],
+    assert_equal %i[annotation_file annotation_scope matrix_file_type],
                  dense_params.errors.attribute_names.sort
     sparse_params.gene_file = 'foo'
     assert_not sparse_params.valid?

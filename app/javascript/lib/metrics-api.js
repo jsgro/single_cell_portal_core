@@ -12,7 +12,7 @@ import { logJSFetchExceptionToSentry, logJSFetchErrorToSentry } from '~/lib/sent
 
 import { getAccessToken } from '~/providers/UserProvider'
 import { getBrandingGroup } from '~/lib/scp-api'
-import getSCPContext from '~/providers/SCPContextProvider'
+import { getSCPContext } from '~/providers/SCPContextProvider'
 import { setupWebVitalsLog, addPerfMetrics } from './metrics-perf'
 
 let metricsApiMock = false
@@ -407,11 +407,11 @@ export function log(name, props = {}) {
     fetch(`${bardDomain}/api/event/`, init).then(response => {
       // log failed attempts to connect with Bard to Sentry
       if (!response.ok) {
-        logJSFetchExceptionToSentry(response, 'Error in fetch response when logging event to Bard')
+        logJSFetchExceptionToSentry(response, 'Error in fetch response when logging event to Bard', true)
       }
     // log errored attempts to connect with Bard to Sentry
     }).catch(error => {
-      logJSFetchErrorToSentry(error, 'Error in JavaScript when logging event to Bard')
+      logJSFetchErrorToSentry(error, 'Error in JavaScript when logging event to Bard', true)
     })
   }
 }

@@ -23,6 +23,7 @@ export const RAW_COUNTS_FILE = {
   'human_data': false,
   'human_fastq_url': 'null',
   'is_spatial': false,
+  'is_complete': true,
   'name': 'example_raw_counts.txt',
   'options': {},
   'parse_status': 'parsed',

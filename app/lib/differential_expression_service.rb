@@ -21,9 +21,10 @@ class DifferentialExpressionService
     raise ArgumentError, "#{study.accession} has no default annotation" if study.default_annotation.blank?
 
     annotation_name, annotation_type, annotation_scope = study.default_annotation.split('--')
+    raise ArgumentError, "#{study.accession} default annotation is not group-based" if annotation_type != 'group'
+
     annotation = {
       annotation_name: annotation_name,
-      annotation_type: annotation_type,
       annotation_scope: annotation_scope
     }
     cluster_file = study.default_cluster.study_file
@@ -52,7 +53,7 @@ class DifferentialExpressionService
 
     metadata = study.cell_metadata.where(annotation_type: 'group').select(&:can_visualize?)
     eligible_annotations += metadata.map do |meta|
-      { annotation_name: meta.name, annotation_type: meta.annotation_type, annotation_scope: 'study' }
+      { annotation_name: meta.name, annotation_scope: 'study' }
     end
 
     cell_annotations = []
@@ -73,7 +74,6 @@ class DifferentialExpressionService
     eligible_annotations += cell_annotations.map do |annot|
       {
         annotation_name: annot[:name],
-        annotation_type: annot[:type],
         annotation_scope: 'cluster',
         cluster_file_id: annot[:cluster_file_id]
       }
@@ -92,7 +92,10 @@ class DifferentialExpressionService
 
           annotation_params = annotation.deep_dup # make a copy so we don't lose the association next time we check
           annotation_params.delete(:cluster_file_id)
-          job_identifier = "#{study_accession}: #{cluster_file.name} (#{annotation_params.values.join('--')})"
+          annotation_identifier = [annotation_params['annotation_name'],
+                                   'group',
+                                   annotation_params['annotation_scope']].join('--')
+          job_identifier = "#{study_accession}: #{cluster_file.name} (#{annotation_identifier})"
           log_message "Checking DE job for #{job_identifier}"
           DifferentialExpressionService.run_differential_expression_job(
             cluster_file, study, requested_user, **annotation_params
@@ -115,7 +118,6 @@ class DifferentialExpressionService
   #   - +study+            (Study) => Study to which StudyFile belongs
   #   - +user+             (User) => User initiating parse action (for email delivery)
   #   - +annotation_name+  (String) => Name of requested annotation
-  #   - +annotation_type+  (String) => Type of requested annotation (should be 'group')
   #   - +annotation_scope+ (String) => Scope of requested annotation ('study' or 'cluster')
   #
   # * *yields*
@@ -126,14 +128,13 @@ class DifferentialExpressionService
   #
   # * *raises*
   #   - (ArgumentError) => if requested parameters do not validate
-  def self.run_differential_expression_job(cluster_file, study, user, annotation_name:, annotation_type:, annotation_scope:)
+  def self.run_differential_expression_job(cluster_file, study, user, annotation_name:, annotation_scope:)
     validate_study(study)
-    validate_annotation(cluster_file, study, annotation_name, annotation_type, annotation_scope)
+    validate_annotation(cluster_file, study, annotation_name, annotation_scope)
 
     # begin assembling parameters
     de_params = {
       annotation_name: annotation_name,
-      annotation_type: annotation_type,
       annotation_scope: annotation_scope,
       annotation_file: annotation_scope == 'cluster' ? cluster_file.gs_url : study.metadata_file.gs_url,
       cluster_file: cluster_file.gs_url,
@@ -174,33 +175,32 @@ class DifferentialExpressionService
   #   - +cluster_file+      (StudyFile) => Clustering file being used as control cell list
   #   - +study+            (Study) => Study to which StudyFile belongs
   #   - +annotation_name+  (String) => Name of requested annotation
-  #   - +annotation_type+  (String) => Type of requested annotation (should be 'group')
   #   - +annotation_scope+ (String) => Scope of requested annotation ('study' or 'cluster')
   #
   # * *raises*
   #   - (ArgumentError) => if requested parameters do not validate
-  def self.validate_annotation(cluster_file, study, annotation_name, annotation_type, annotation_scope)
+  def self.validate_annotation(cluster_file, study, annotation_name, annotation_scope)
     cluster = study.cluster_groups.by_name(cluster_file.name)
     raise ArgumentError, "cannot find cluster for #{cluster_file.name}" if cluster.nil?
 
     can_visualize = false
     if annotation_scope == 'cluster'
       annotation = cluster.cell_annotations&.detect do |annot|
-        annot[:name] == annotation_name && annot[:type] == annotation_type
+        annot[:name] == annotation_name && annot[:type] == 'group'
       end
       can_visualize = annotation && cluster.can_visualize_cell_annotation?(annotation)
     else
-      annotation = study.cell_metadata.by_name_and_type(annotation_name, annotation_type)
+      annotation = study.cell_metadata.by_name_and_type(annotation_name, 'group')
       can_visualize = annotation&.can_visualize?
     end
 
-    identifier = "#{annotation_name}--#{annotation_type}--#{annotation_scope}"
-    raise ArgumentError, "#{identifier} is not present" if annotation.nil?
+    identifier = "#{annotation_name}--group--#{annotation_scope}"
+    raise ArgumentError, "#{identifier} is not present or is numeric-based" if annotation.nil?
     raise ArgumentError, "#{identifier} cannot be visualized" unless can_visualize
 
     # last, validate that the requested annotation & cluster will provide a valid intersection of annotation values
     # specifically, discard any annotation/cluster combos that only result in one distinct label
-    cells_by_label = ClusterVizService.cells_by_annotation_label(cluster, annotation_name, annotation_type, annotation_scope)
+    cells_by_label = ClusterVizService.cells_by_annotation_label(cluster, annotation_name, annotation_scope)
     if cells_by_label.keys.count < 2
       raise ArgumentError, "#{identifier} does not have enough labels represented in #{cluster.name}"
     end
