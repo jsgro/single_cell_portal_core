@@ -135,12 +135,20 @@ class DifferentialExpressionResult
   end
 
   # delete all associated output files on destroy
-  # error handling/reporting is taken care of in FireCloudClient#delete_workspace_file
   def remove_output_files
     client = ApplicationController.firecloud_client
     bucket_files.each do |filepath|
-      Rails.logger.info "Removing DE output #{study.accession}:#{annotation_identifier} at #{filepath}"
-      client.delete_workspace_file(study.bucket_id, filepath)
+      # wrap in begin/rescue so that delete cascade will complete, regardless of whether files can actually be deleted
+      begin
+        # manually construct identifier as parent annotation may have already been deleted, and thus will raise an error
+        # when calling annotation_identifier
+        identifier = " #{study.accession}:#{annotation_name}--group--#{annotation_scope}"
+        Rails.logger.info "Removing DE output #{identifier} at #{filepath}"
+        client.delete_workspace_file(study.bucket_id, filepath)
+      rescue => e
+        # error is already tracked in FireCloudClient#delete_workspace_file
+        Rails.logger.error "Error removing DE output #{identifier} at #{filepath} -- #{e.class.name}:#{e.message}"
+      end
     end
   end
 end
