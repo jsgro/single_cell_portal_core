@@ -68,11 +68,24 @@ async function fetchDeGenes(bucketId, deFilePath, numGenes=15) {
 }
 
 /** Pick groups of cells for differential expression (DE) */
-export default function DeGroupPicker({
+export default function DifferentialExpressionGroupPicker({
   bucketId, clusterName, annotation, deGenes, deGroup, setDeGroup, setDeGenes, setDeFileUrl,
-  countsByLabel
+  countsByLabel, deObjects
 }) {
-  const groups = getLegendSortedLabels(countsByLabel)
+  let groups = getLegendSortedLabels(countsByLabel)
+  let deObject = null
+  groups = groups.filter(group => {
+    deObject = deObjects.find(deObj => {
+      return (
+        deObj.cluster_name === clusterName &&
+        deObj.annotation_name === annotation.name &&
+        deObj.annotation_scope === annotation.scope
+      )
+    })
+    return deObject.select_options.some(option => {
+      return option[0] === group
+    })
+  })
 
   /** Update group in differential expression picker */
   async function updateDeGroup(newGroup) {

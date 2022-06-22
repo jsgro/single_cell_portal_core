@@ -576,7 +576,6 @@ export default function ExploreDisplayTabs({
               exploreParamsWithDefaults={exploreParamsWithDefaults}
               exploreInfo={exploreInfo}
               clusterName={exploreParamsWithDefaults.cluster}
-              bucketId={exploreInfo?.bucketId}
               annotation={exploreParamsWithDefaults.annotation}
               setShowDeGroupPicker={setShowDeGroupPicker}
               setDeGenes={setDeGenes}
