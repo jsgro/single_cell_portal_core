@@ -37,6 +37,7 @@ export default function DifferentialExpressionPanel({
   const clusterName = exploreParamsWithDefaults?.cluster
   const bucketId = exploreInfo?.bucketId
   const annotation = getAnnotationObject(exploreParamsWithDefaults, exploreInfo)
+  const deObjects = exploreInfo?.differentialExpression
 
   const [checked, setChecked] = useState(initChecked(deGenes))
   const [deFileUrl, setDeFileUrl] = useState(null)
@@ -60,6 +61,7 @@ export default function DifferentialExpressionPanel({
         setDeGroup={setDeGroup}
         setDeFileUrl={setDeFileUrl}
         countsByLabel={countsByLabel}
+        deObjects={deObjects}
       />
 
       {deGenes &&
