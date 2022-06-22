@@ -1,3 +1,21 @@
+
+ <div class="form-group row">
+  <div class="col-sm-4" >
+    <%= f.label :is_spatial, 'Coordinate data type: ' %><br/>
+    <%= f.label :is_spatial_false, {for: "is_spatial_false_#{study_file._id}"} do %>
+      <%= f.radio_button :is_spatial, false, {id: "is_spatial_false_#{study_file._id}", class: "is_spatial_false"}  %>
+      Clustering
+    <% end %>
+    &nbsp;
+    <%= f.label :is_spatial_true, {for: "is_spatial_true_#{study_file._id}"} do %>
+      <%= f.radio_button :is_spatial, true, {id: "is_spatial_true_#{study_file._id}", class: "is_spatial_true"} %>
+      Spatial transcriptomics positions
+    <% end %>
+    <i class='fas fa-question-circle' data-toggle="tooltip"
+        title="To associate a spatial transcriptomics file with specific cluster files, use the 'Upload/Edit files' page after all files are synced.">
+    </i>
+  </div>
+</div>
 <div class="form-group row">
   <div class="col-sm-4">
     <%= f.label :x_axis_label, 'X Axis Label' %><br />

@@ -119,9 +119,9 @@ export default function SearchQueryDisplay({ terms, facets }) {
   }
   if (hasTerms) {
     termsDisplay = (
-      <span>Text contains (
+      <span>Text contains:&nbsp;
         { formattedJoinedList(terms, 'search-term', ' OR ') }
-      )</span>)
+      </span>)
     if (hasFacets) {
       termsDisplay = <span>({termsDisplay})</span>
     }

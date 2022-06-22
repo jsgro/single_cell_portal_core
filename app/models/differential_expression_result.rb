@@ -64,7 +64,7 @@ class DifferentialExpressionResult
       label,
       annotation_scope,
       computational_method
-    ].map { |val| val.gsub(/\W+/, '_') }.join('--')
+    ].map { |val| val.gsub(/\W/, '_') }.join('--')
     "#{basename}.tsv"
   end
 

@@ -814,6 +814,11 @@ class StudyFile
     self.study_file_bundle.present?
   end
 
+  # determine if study file should have a bundle (i.e. is not valid without completed bundle)
+  def should_bundle?
+    StudyFileBundle::REQUIRE_BUNDLE.include?(file_type)
+  end
+
   # gracefully check if study_file_bundle is both present and completed
   def has_completed_bundle?
     self.study_file_bundle.try(:completed?)
@@ -1327,6 +1332,9 @@ class StudyFile
   # ensure that metadata file adheres to convention acceptance criteria, if turned on
   # will check for exemption from any users associated with given study
   def ensure_metadata_convention
+    convention_required = FeatureFlag.find_by(name: 'convention_required')
+    return true if convention_required.nil? || convention_required.default_value == false
+
     # check for exemption across all associated users & study object
     user_accounts = study.associated_users(permission: 'Edit')
     unless FeatureFlaggable.flag_override_for_instances(
