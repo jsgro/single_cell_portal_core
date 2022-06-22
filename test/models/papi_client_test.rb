@@ -90,7 +90,6 @@ class PapiClientTest < ActiveSupport::TestCase
       client = PapiClient.new
       de_opts = {
         annotation_name: 'Category',
-        annotation_type: 'group',
         annotation_scope: 'cluster',
         annotation_file: @cluster_file.gs_url,
         cluster_file: @cluster_file.gs_url,
