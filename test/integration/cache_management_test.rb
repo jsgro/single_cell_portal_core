@@ -15,29 +15,28 @@ class CacheManagementTest < ActionDispatch::IntegrationTest
                                               x: [1, 4, 6],
                                               y: [7, 5, 3],
                                               z: [2, 8, 9],
-                                              cells: %w[A B C]
+                                              cells: ['A', 'B', 'C']
                                             },
                                             x_axis_label: 'PCA 1',
                                             y_axis_label: 'PCA 2',
                                             z_axis_label: 'PCA 3',
                                             cluster_type: '3d',
                                             annotation_input: [
-                                              { name: 'Category', type: 'group', values: %w[bar bar baz] },
+                                              { name: 'Category', type: 'group', values: ['bar', 'bar', 'baz'] },
                                               { name: 'Intensity', type: 'numeric', values: [1.1, 2.2, 3.3] }
                                             ])
 
-    @study_exp_file = FactoryBot.create(:expression_file,
+    @study_exp_file = FactoryBot.create(:study_file,
                                         name: 'dense.txt',
-                                        cell_input: %w[A B C],
                                         file_type: 'Expression Matrix',
                                         study: @study)
 
     @study_metadata_file = FactoryBot.create(:metadata_file,
                                              name: 'metadata.txt', study: @study,
-                                             cell_input: %w[A B C],
+                                             cell_input: ['A', 'B', 'C'],
                                              annotation_input: [
-                                               { name: 'species', type: 'group', values: %w[dog cat dog] },
-                                               { name: 'disease', type: 'group', values: %w[none none measles] }
+                                               { name: 'species', type: 'group', values: ['dog', 'cat', 'dog'] },
+                                               { name: 'disease', type: 'group', values: ['none', 'none', 'measles'] }
                                              ])
 
     @pten_gene = FactoryBot.create(:gene_with_expression,

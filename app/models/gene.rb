@@ -23,27 +23,31 @@ class Gene
 
   # concatenate all the necessary data_array objects and construct a hash of cell names => expression values
   def scores
-    cells = concatenate_data_arrays(cell_key, 'cells')
-    exp_values = concatenate_data_arrays(score_key, 'expression')
+    cells = self.concatenate_data_arrays(self.cell_key, 'cells')
+    exp_values = self.concatenate_data_arrays(self.score_key, 'expression')
     Hash[cells.zip(exp_values)]
   end
 
   # key to retrieve data arrays of cell names for this gene
   def cell_key
-    "#{name} Cells"
+    "#{self.name} Cells"
   end
 
   # key to retrieve data arrays of expression values for this gene
   def score_key
-    "#{name} Expression"
+    "#{self.name} Expression"
   end
 
   # concatenate data arrays of a given name/type in order
   def concatenate_data_arrays(array_name, array_type)
     query = {
-      name: array_name, array_type: array_type, linear_data_type: 'Gene', linear_data_id: id
+      name: array_name, array_type: array_type, linear_data_type: 'Gene', linear_data_id: self.id
     }
     DataArray.concatenate_arrays(query)
+  end
+
+  def autocomplete_label
+    self.gene_id.blank? ? self.name : "#{self.name} (#{self.gene_id})"
   end
 
   def taxon
@@ -57,6 +61,11 @@ class Gene
   ##
   # CLASS INSTANCE METHODS
   ##
+
+  # find if a study has a given gene quickly for search gating
+  def self.study_has_gene?(study_id:, expr_matrix_ids:, gene_name:)
+    Gene.where(study_id: study_id, :study_file_id.in => expr_matrix_ids).any_of({name: gene_name},{searchable_name: gene_name.downcase}).exists?
+  end
 
   # calculate a mean value for a given gene based on merged expression scores hash
   def self.mean(scores, cells)
