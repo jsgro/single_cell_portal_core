@@ -49,23 +49,23 @@ export default function SubsampleSelector({
 
   return (
     <div className="form-group">
-      <label className="labeled-select">
+      <label className="labeled-select"> Subsampling&nbsp;
         <OverlayTrigger trigger="click" rootClose placement="top" overlay={subsamplingPopover}>
-          <span>Subsampling <FontAwesomeIcon data-analytics-name="subsampling-help-icon"
+          <FontAwesomeIcon data-analytics-name="subsampling-help-icon"
             className="action log-click help-icon" icon={faInfoCircle}/>
-          </span>
         </OverlayTrigger>
-        <Select options={subsampleOptions}
-          data-analytics-name="subsample-select"
-          value={{
-            label: subsample == 'all' ? 'All Cells' : `${subsample}`,
-            value: `${subsample}`
-          }}
-          onChange={newSubsample => updateClusterParams({
-            subsample: newSubsample.value
-          })}
-          styles={clusterSelectStyle}/>
       </label>
+      <Select options={subsampleOptions}
+        data-analytics-name="subsample-select"
+        value={{
+          label: subsample == 'all' ? 'All Cells' : `${subsample}`,
+          value: `${subsample}`
+        }}
+        onChange={newSubsample => updateClusterParams({
+          subsample: newSubsample.value
+        })}
+        styles={clusterSelectStyle}/>
+
     </div>
   )
 }

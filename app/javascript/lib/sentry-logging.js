@@ -2,9 +2,9 @@
  * @fileoverview Functions for logging JS errors to Sentry
  *
  */
- import * as Sentry from '@sentry/react'
- import { BrowserTracing } from '@sentry/tracing'
- import getSCPContext from '~/providers/SCPContextProvider'
+import * as Sentry from '@sentry/react'
+import { BrowserTracing } from '@sentry/tracing'
+import { getSCPContext } from '~/providers/SCPContextProvider'
 
 /**
  * Log an exception to Sentry for bad response JS fetch executions
@@ -12,8 +12,9 @@
  *
  * @param {Object} response - the response object from a failed JS fetch call
  * @param {String} titleInfo - extra info for the title of the Sentry event
+ * @param {Boolean} useThrottle - whether to apply clientside rate limit throttling
  */
-export function logJSFetchExceptionToSentry(response, titleInfo = '') {
+export function logJSFetchExceptionToSentry(response, titleInfo = '', useThrottle = false) {
   // add details from the response to the 'response info' object that will be logged in Sentry
   Sentry.setContext('response info', {
     status: response.status,
@@ -21,7 +22,9 @@ export function logJSFetchExceptionToSentry(response, titleInfo = '') {
     url: response.url
   })
 
-  shouldLog() && Sentry.captureException(new Error(`${response.status}: ${titleInfo}`))
+  const errorObj = new Error(`${response.status}: ${titleInfo}`)
+
+  logToSentry(errorObj, useThrottle)
 }
 
 /**
@@ -30,24 +33,55 @@ export function logJSFetchExceptionToSentry(response, titleInfo = '') {
  *
  * @param {Object} response - the response object from a failed JS fetch call
  * @param {String} titleInfo - extra info for the title of the Sentry event
+ * @param {Boolean} useThrottle - whether to apply clientside rate limit throttling
  */
-export function logJSFetchErrorToSentry(error, titleInfo = '') {
-  shouldLog() && Sentry.captureException(new Error(`${error}: ${titleInfo}`))
+export function logJSFetchErrorToSentry(error, titleInfo = '', useThrottle = false) {
+  const errorObj = new Error(`${error}: ${titleInfo}`)
+  logToSentry(errorObj, useThrottle)
+}
+
+/** Print suppression warning message to the console */
+function printSuppression(errorObj, reason) {
+  const reasonMap = {
+    environment: 'in an unlogged environment',
+    throttle: 'this event is throttled by client'
+  }
+
+  const message = `Suppressing error report to Sentry: ${reasonMap[reason]}`
+  console.log(errorObj.url ? `${message }  Error:` : message)
+
+  // Error objects are printed via console.error already, so only surface Sentry-suppressed responses
+  if (errorObj.url) {
+    console.log(errorObj)
+  }
+}
+
+/** Determine if current environment should suppress logging to Sentry */
+function getIsSuppressedEnv() {
+  const env = getSCPContext().environment
+  // Return `false` if manually locally testing Sentry logging
+  return ['development', 'test'].includes(env)
 }
 
 /**
- * Determine if logging should occur based on environment
+ * Log to Sentry, except if in unlogged environment or throttled away
+ * @param {Object} error - Error object to log to Sentry
+ * @param {Boolean} useThrottle - whether to apply clientside rate limit throttling. Default false.
+ * @param {Number} sampleRate - % of events to log, only applied if `useThrottle = true`
+ *  1 = log all events, 0 = log no events, default = 0.05 (i.e. log 5% of events)
+ *
+ * @return {Array} two-element array: [whether logging should occur, why if not]
  */
-function shouldLog() {
-  const env = getSCPContext().environment
+export function logToSentry(error, useThrottle = false, sampleRate = 0.05) {
+  const isThrottled = useThrottle && Math.random() >= sampleRate
 
-  // do not log for development or test environments
-  // to test locally comment out lines 45-47
-  if (['development', 'test'].includes(env)) {
-    return false
+  if (getIsSuppressedEnv() || isThrottled) {
+    const reason = isThrottled ? 'throttle' : 'environment'
+    printSuppression(error, reason)
+    return
   }
 
-  return true
+  Sentry.captureException(error)
 }
 
 /**
@@ -58,9 +92,15 @@ export function setupSentry() {
     dsn: 'https://a713dcf8bbce4a26aa1fe3bf19008d26@o54426.ingest.sentry.io/1424198',
     integrations: [new BrowserTracing()],
 
-    // send 100% of the transactions to Sentry since they will only occur on errors
-    // TODO: SCP-4335 to limit transactions appropriately
-    tracesSampleRate: 1.0
+    // Sampling rate for transactions, which enrich Sentry events with traces
+    tracesSampleRate: getIsSuppressedEnv() ? 0 : 1.0,
+    beforeSend: event => {
+      if (getIsSuppressedEnv()) {
+        return null
+      }
+
+      return event
+    }
   })
 
   // set the logger tag to reflect that the errors are from the frontend

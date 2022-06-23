@@ -81,8 +81,8 @@ class FeatureFlagTest < ActiveSupport::TestCase
     FeatureFlag.create(name: flag_name.to_s, default_value: false)
     assert_not FeatureFlaggable.flag_override_for_instances(flag_name, true, @user)
     assert_not FeatureFlaggable.flag_override_for_instances(flag_name, true, @user, @branding_group)
-    # assert that override same as default value always returns true
-    assert FeatureFlaggable.flag_override_for_instances(flag_name, false, @user)
+    # assert that override same as default value always returns false, since there's no override in effect
+    assert_not FeatureFlaggable.flag_override_for_instances(flag_name, false, @user)
     @user.set_flag_option(flag_name, true)
     assert FeatureFlaggable.flag_override_for_instances(flag_name, true, @user)
     assert FeatureFlaggable.flag_override_for_instances(flag_name, true, @user, @branding_group)

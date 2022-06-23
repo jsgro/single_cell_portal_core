@@ -24,7 +24,7 @@
   </div>
   <div id="study-file-<%= study_file._id %>-extra-info">
     <% if study_file.file_type == 'Cluster'  %>
-      <%= render partial: 'cluster_axis_fields', locals: {f: f.dup} %>
+      <%= render partial: 'cluster_axis_fields', locals: {study_file: study_file, f: f.dup} %>
     <% elsif study_file.file_type == 'Expression Matrix' || study_file.file_type == 'MM Coordinate Matrix' %>
       <%= render partial: 'expression_file_fields', locals: {study_file: study_file, f: f.dup} %>
     <% end %>

@@ -67,26 +67,38 @@ async function fetchDeGenes(bucketId, deFilePath, numGenes=15) {
   return deGenes.slice(0, numGenes)
 }
 
+/** Gets matching deObject for the given group and cluster + annot combo */
+function getMatchingDeOption(deObjects, group, clusterName, annotation) {
+  const deObject = deObjects.find(deObj => {
+    return (
+      deObj.cluster_name === clusterName &&
+      deObj.annotation_name === annotation.name &&
+      deObj.annotation_scope === annotation.scope
+    )
+  })
+
+  return deObject.select_options.find(option => {
+    return option[0] === group
+  })
+}
+
 /** Pick groups of cells for differential expression (DE) */
-export default function DeGroupPicker({
+export default function DifferentialExpressionGroupPicker({
   bucketId, clusterName, annotation, deGenes, deGroup, setDeGroup, setDeGenes, setDeFileUrl,
-  countsByLabel
+  countsByLabel, deObjects
 }) {
-  const groups = getLegendSortedLabels(countsByLabel)
+  let groups = getLegendSortedLabels(countsByLabel)
+  groups = groups.filter(group => {
+    const deOption = getMatchingDeOption(deObjects, group, clusterName, annotation)
+    return deOption !== undefined
+  })
 
   /** Update group in differential expression picker */
   async function updateDeGroup(newGroup) {
     setDeGroup(newGroup)
 
-    const deFileName = `${[
-      clusterName,
-      annotation.name,
-      newGroup,
-      annotation.scope,
-      'wilcoxon'
-    ]
-      .map(s => s.replaceAll(nonAlphaNumericRegex, '_'))
-      .join('--') }.tsv`
+    const deOption = getMatchingDeOption(deObjects, newGroup, clusterName, annotation)
+    const deFileName = deOption[1]
 
     const basePath = '_scp_internal/differential_expression/'
     const deFilePath = `${basePath}${deFileName}`.replaceAll('/', '%2F')

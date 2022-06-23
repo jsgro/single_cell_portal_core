@@ -195,4 +195,16 @@ class AnnotationVizService
     return values if annotation_type == 'numeric'
     values.map {|value| value.blank? ? MISSING_VALUE_LABEL : value }
   end
+
+  # create a menu configuration for differential expression results for a given study
+  def self.differential_expression_menu_opts(study)
+    study.differential_expression_results.map do |diff_exp_result|
+      {
+        cluster_name: diff_exp_result.cluster_group.name, # use current name, not cached name
+        annotation_name: diff_exp_result.annotation_name,
+        annotation_scope: diff_exp_result.annotation_scope,
+        select_options: diff_exp_result.select_options # to_a turns Hash into nested array of arrays for select opts
+      }
+    end
+  end
 end

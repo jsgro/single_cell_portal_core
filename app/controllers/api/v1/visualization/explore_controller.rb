@@ -153,6 +153,7 @@ module Api
             annotationList: AnnotationVizService.get_study_annotation_options(study, user),
             clusterGroupNames: ClusterVizService.load_cluster_group_options(study),
             spatialGroups: spatial_group_options,
+            differentialExpression: AnnotationVizService.differential_expression_menu_opts(study),
             imageFiles: image_options,
             clusterPointAlpha: study.default_cluster_point_alpha,
             colorProfile: study.default_color_profile,
