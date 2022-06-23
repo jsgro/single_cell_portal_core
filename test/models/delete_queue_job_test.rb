@@ -24,10 +24,6 @@ class DeleteQueueJobTest < ActiveSupport::TestCase
     @basic_study_exp_file.save!
   end
 
-  after(:all) do
-    DifferentialExpressionResult.delete_all
-  end
-
   # test to ensure expression matrix files with "invalid" expression_file_info documents can still be deleted
   # this happens when attributes on nested documents have new constraints placed after creation, like additional
   # validations or fields
@@ -141,17 +137,13 @@ class DeleteQueueJobTest < ActiveSupport::TestCase
       annotation_scope: 'study', matrix_file_id: raw_matrix.id
     )
 
-    # use mock to suppress spurious errors when trying to delete files in non-existent bucket
-    # should be 8 calls
     mock = Minitest::Mock.new
-    mock.expect :delete_workspace_file, true, [@basic_study.bucket_id, String]
-    mock.expect :delete_workspace_file, true, [@basic_study.bucket_id, String]
-    mock.expect :delete_workspace_file, true, [@basic_study.bucket_id, String]
-    mock.expect :delete_workspace_file, true, [@basic_study.bucket_id, String]
-    mock.expect :delete_workspace_file, true, [@basic_study.bucket_id, String]
-    mock.expect :delete_workspace_file, true, [@basic_study.bucket_id, String]
-    mock.expect :delete_workspace_file, true, [@basic_study.bucket_id, String]
-    mock.expect :delete_workspace_file, true, [@basic_study.bucket_id, String]
+    8.times do
+      file_mock = Minitest::Mock.new
+      file_mock.expect :present?, true
+      file_mock.expect :delete, true
+      mock.expect :get_workspace_file, file_mock, [@basic_study.bucket_id, String]
+    end
 
     ApplicationController.stub :firecloud_client, mock do
       # test deletion of cluster file
@@ -167,7 +159,7 @@ class DeleteQueueJobTest < ActiveSupport::TestCase
       DeleteQueueJob.new(raw_matrix).perform
       assert_not DifferentialExpressionResult.where(study: @basic_study).any?
 
-      # assert all delete calls have been made
+      # assert all delete calls have been made, should be 8 total
       mock.verify
     end
   end

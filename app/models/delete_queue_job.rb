@@ -176,6 +176,8 @@ class DeleteQueueJob < Struct.new(:object)
     end
   end
 
+  # remove DE outputs when deleting study files
+  # will remove corresponding outputs depending on file type
   def delete_differential_expression_results(study:, study_file:)
     case study_file.file_type
     when 'Metadata'

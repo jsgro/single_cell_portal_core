@@ -124,7 +124,7 @@ class DifferentialExpressionResultTest  < ActiveSupport::TestCase
     assert_equal @cluster_file, @species_result.cluster_file
   end
 
-  test 'should clean up files on delete' do
+  test 'should clean up files on destroy' do
     sub_cluster = DifferentialExpressionResult.create(
       study: @study, cluster_group: @cluster_file.cluster_groups.first, annotation_name: 'sub-cluster',
       annotation_scope: 'cluster', matrix_file_id: @raw_matrix.id
@@ -132,7 +132,10 @@ class DifferentialExpressionResultTest  < ActiveSupport::TestCase
     assert sub_cluster.present?
     mock = Minitest::Mock.new
     sub_cluster.bucket_files.each do |file|
-      mock.expect :delete_workspace_file, true, [@study.bucket_id, file]
+      file_mock = Minitest::Mock.new
+      file_mock.expect :present?, true
+      file_mock.expect :delete, true
+      mock.expect :get_workspace_file, file_mock, [@study.bucket_id, file]
     end
     ApplicationController.stub :firecloud_client, mock do
       sub_cluster.destroy
