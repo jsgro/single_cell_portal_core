@@ -57,15 +57,23 @@ function annotHasDe(exploreInfo, exploreParams) {
 
   let annotHasDe = false
   const annotList = exploreInfo.annotationList
+  let selectedCluster
   let selectedAnnot
   if (exploreParams?.cluster) {
+    selectedCluster = exploreParams.cluster
     selectedAnnot = exploreParams.annotation
   } else {
+    selectedCluster = annotList.default_cluster
     selectedAnnot = annotList.default_annotation
   }
 
-  const matchingAnnot = getMatchedAnnotation(selectedAnnot, annotList)
-  annotHasDe = matchingAnnot?.is_differential_expression_enabled
+  annotHasDe = exploreInfo.differentialExpression.some(deItem => {
+    return (
+      deItem.cluster_name === selectedCluster &&
+      deItem.annotation_name === selectedAnnot.name &&
+      deItem.annotation_scope === selectedAnnot.scope
+    )
+  })
 
   return annotHasDe
 }
@@ -255,6 +263,7 @@ export default function ExploreDisplayTabs({
             <StudyGeneField genes={exploreParams.genes}
               searchGenes={searchGenes}
               allGenes={exploreInfo ? exploreInfo.uniqueGenes : []}
+              isLoading={!exploreInfo}
               speciesList={exploreInfo ? exploreInfo.taxonNames : []}/>
             { (isGene || isGeneList || hasIdeogramOutputs) && // show if this is gene search || gene list
               <button className="action fa-lg"
@@ -567,7 +576,6 @@ export default function ExploreDisplayTabs({
               exploreParamsWithDefaults={exploreParamsWithDefaults}
               exploreInfo={exploreInfo}
               clusterName={exploreParamsWithDefaults.cluster}
-              bucketId={exploreInfo?.bucketId}
               annotation={exploreParamsWithDefaults.annotation}
               setShowDeGroupPicker={setShowDeGroupPicker}
               setDeGenes={setDeGenes}

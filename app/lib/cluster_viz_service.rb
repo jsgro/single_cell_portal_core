@@ -275,4 +275,26 @@ class ClusterVizService
 
     raw_matrix
   end
+
+  # find what annotation values are represented for this combination of cluster & annotation
+  # primarily important as a validation for differential expression, as DE cannot be run on single-value annotations,
+  # or on labels that have only one cell
+  #
+  # * *params*
+  #   - +cluster+    (ClusterGroup) => Clustering object being used as control cell list
+  #   - +annotation_name+  (String) => Name of requested annotation
+  #   - +annotation_type+  (String) => Type of requested annotation (should be 'group')
+  #   - +annotation_scope+ (String) => Scope of requested annotation ('study' or 'cluster')
+  def self.cells_by_annotation_label(cluster, annotation_name, annotation_type, annotation_scope)
+    study = cluster.study
+    cells = cluster.concatenate_data_arrays('text', 'cells')
+    annotation = { name: annotation_name, scope: annotation_scope, type: annotation_type }
+    labels = get_annotation_values_array(study, cluster, annotation, cells, nil, nil)
+    cells_by_label = {}
+    labels.each_with_index do |label, index|
+      cells_by_label[label] ||= []
+      cells_by_label[label] << cells[index]
+    end
+    cells_by_label
+  end
 end

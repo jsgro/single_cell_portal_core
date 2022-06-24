@@ -11,7 +11,7 @@ import _compact from 'lodash/compact'
 import * as queryString from 'query-string'
 
 import { logJSFetchExceptionToSentry, logJSFetchErrorToSentry } from '~/lib/sentry-logging'
-import getSCPContext from '~/providers/SCPContextProvider'
+import { getSCPContext } from '~/providers/SCPContextProvider'
 import { getAccessToken } from '~/providers/UserProvider'
 import {
   logDownloadAuthorization, logCreateUserAnnotation

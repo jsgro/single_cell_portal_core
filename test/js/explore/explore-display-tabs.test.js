@@ -18,16 +18,7 @@ jest.mock('components/visualization/InferCNVIdeogram', () => {
 })
 
 import { getEnabledTabs } from 'components/explore/ExploreDisplayTabs'
-import React from 'react'
-import { render, screen, waitForElementToBeRemoved } from '@testing-library/react'
 import '@testing-library/jest-dom/extend-expect'
-import * as Reach from '@reach/router'
-import jquery from 'jquery'
-
-import MockRouter from '../lib/MockRouter'
-import * as ScpApi from 'lib/scp-api'
-import ExploreView from 'components/explore/ExploreView'
-import { mockPerformance } from '../mock-performance'
 
 // mock explore info from a study
 const defaultExploreInfo = {

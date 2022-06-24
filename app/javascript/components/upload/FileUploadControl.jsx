@@ -31,7 +31,7 @@ export default function FileUploadControl({
 
     let newName = selectedFile.name
 
-    // for cluster files, don't change an existing specified name
+    // for cluster and other named files, don't change an existing customized name
     if (FILE_TYPES_ALLOWING_SET_NAME.includes(file.file_type) && file.name && file.name !== file.upload_file_name) {
       newName = file.name
     }
@@ -41,7 +41,7 @@ export default function FileUploadControl({
     if (issues.errors.length === 0) {
       updateFile(file._id, {
         uploadSelection: selectedFile,
-        upload_file_name: newName,
+        upload_file_name: selectedFile.name,
         name: newName
       })
     }

@@ -14,13 +14,13 @@ import { logStudyGeneSearch } from '~/lib/search-metrics'
 /** renders the gene text input
   * This shares a lot of logic with search/genes/GeneKeyword, but is kept as a separate component for
   * now, as the need for autocomplete raises additional complexity
-  * 
+  *
   * @param genes Array of genes currently inputted
   * @param searchGenes Function to call to execute the API search
   * @param allGenes String array of valid genes in the study
   * @param speciesList String array of species scientific names
   */
-export default function StudyGeneField({ genes, searchGenes, allGenes, speciesList }) {
+export default function StudyGeneField({ genes, searchGenes, allGenes, speciesList, isLoading=false }) {
   const [inputText, setInputText] = useState('')
 
   const rawSuggestions = getAutocompleteSuggestions(inputText, allGenes)
@@ -44,11 +44,12 @@ export default function StudyGeneField({ genes, searchGenes, allGenes, speciesLi
   function handleSearch(event) {
     event.preventDefault()
     const newGeneArray = syncGeneArrayToInputText()
-    let newNotPresentGenes = new Set([]) 
+    const newNotPresentGenes = new Set([])
     if (newGeneArray) {
       newGeneArray.forEach(gene => {
         // if an entered gene is not in the valid gene options for the study
-        if (geneOptions.length > 0 && !geneOptions.find(geneOpt => geneOpt.label.toLowerCase() === gene.label.toLowerCase())) {
+        const geneLowercase = gene.label.toLowerCase()
+        if (allGenes.length > 0 && !allGenes.find(geneOpt => geneOpt.toLowerCase() === geneLowercase)) {
           newNotPresentGenes.add(gene.label)
         }
       })
@@ -146,7 +147,7 @@ export default function StudyGeneField({ genes, searchGenes, allGenes, speciesLi
     }
   }, [genes.join(',')])
 
-  const searchDisabled = !allGenes?.length
+  const searchDisabled = !isLoading && !allGenes?.length
 
   return (
     <form className="gene-keyword-search gene-study-keyword-search form-horizontal" onSubmit={handleSearch}>

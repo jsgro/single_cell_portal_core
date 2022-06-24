@@ -1,4 +1,4 @@
-import getSCPContext from '~/providers/SCPContextProvider'
+import { getSCPContext } from '~/providers/SCPContextProvider'
 import { log } from '~/lib/metrics-api'
 
 /** determine trigger for file-validation event (e.g. upload vs. sync) **/

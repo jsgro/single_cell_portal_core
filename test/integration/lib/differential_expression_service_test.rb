@@ -9,7 +9,7 @@ class DifferentialExpressionServiceTest < ActiveSupport::TestCase
                                      user: @user,
                                      test_array: @@studies_to_clean)
 
-    @cells = %w[A B C]
+    @cells = %w[A B C D E]
     @raw_matrix = FactoryBot.create(:expression_file,
                                    name: 'raw.txt',
                                    study: @basic_study,
@@ -24,13 +24,13 @@ class DifferentialExpressionServiceTest < ActiveSupport::TestCase
                                      name: 'cluster_diffexp.txt',
                                      study: @basic_study,
                                      cell_input: {
-                                       x: [1, 4, 6],
-                                       y: [7, 5, 3],
+                                       x: [1, 4, 6, 8, 9],
+                                       y: [7, 5, 3, 2, 1],
                                        cells: @cells
                                      },
                                      annotation_input: [
                                        {
-                                         name: 'foo', type: 'group', values: %w[bar bar baz],
+                                         name: 'foo', type: 'group', values: %w[bar bar baz baz baz],
                                          is_differential_expression_enabled: false
                                        }
                                      ])
@@ -39,8 +39,8 @@ class DifferentialExpressionServiceTest < ActiveSupport::TestCase
                       study: @basic_study,
                       cell_input: @cells,
                       annotation_input: [
-                        { name: 'species', type: 'group', values: %w[dog cat dog] },
-                        { name: 'disease', type: 'group', values: %w[none none measles] }
+                        { name: 'species', type: 'group', values: %w[dog cat dog dog cat] },
+                        { name: 'disease', type: 'group', values: %w[none none measles measles measles] }
                       ])
     @job_params = {
       annotation_name: 'species',
@@ -97,7 +97,7 @@ class DifferentialExpressionServiceTest < ActiveSupport::TestCase
                               user: @user,
                               test_array: @@studies_to_clean)
 
-    cells = %w[Cell_A Cell_B Cell_C]
+    cells = %w[Cell_A Cell_B Cell_C Cell_D Cell_E]
     matrix = FactoryBot.create(:study_file,
                                name: 'raw.txt',
                                study: study,
@@ -131,8 +131,8 @@ class DifferentialExpressionServiceTest < ActiveSupport::TestCase
                                     name: 'cluster_diffexp.txt',
                                     study: study,
                                     cell_input: {
-                                      x: [1, 4, 6],
-                                      y: [7, 5, 3],
+                                      x: [1, 4, 6, 7, 9],
+                                      y: [7, 5, 3, 4, 5],
                                       cells: cells
                                     })
     FactoryBot.create(:metadata_file,
@@ -140,8 +140,8 @@ class DifferentialExpressionServiceTest < ActiveSupport::TestCase
                       study: study,
                       cell_input: cells,
                       annotation_input: [
-                        { name: 'species', type: 'group', values: %w[dog cat dog] },
-                        { name: 'disease', type: 'group', values: %w[none none measles] }
+                        { name: 'species', type: 'group', values: %w[dog cat dog dog cat] },
+                        { name: 'disease', type: 'group', values: %w[none none measles measles measles] }
                       ])
     annotation = {
       annotation_name: 'species',

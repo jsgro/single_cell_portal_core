@@ -153,7 +153,7 @@ module Api
             genes = RequestUtils.get_genes_from_param(@study, params[:genes])
 
             expression_data = ExpressionVizService.get_morpheus_text_data(
-              study: @study, genes: genes, cluster: cluster, collapse_by: collapse_by, file_type: :gct
+              genes: genes, cluster: cluster, collapse_by: collapse_by, file_type: :gct
             )
           end
 
