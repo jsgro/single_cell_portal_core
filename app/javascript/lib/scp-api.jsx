@@ -19,8 +19,14 @@ import {
 import { logSearch, mapFiltersForLogging } from './search-metrics'
 import { showMessage } from '~/lib/MessageModal'
 
+const scpContext = getSCPContext()
+const env = scpContext.environment
+const version = scpContext.version
 
-const env = getSCPContext().environment
+let useServiceWorkerCache = false
+if (typeof process !== 'undefined' && typeof process.env.FRONTEND_SERVICE_WORKER_CACHE !== 'undefined') {
+  useServiceWorkerCache = process.env.FRONTEND_SERVICE_WORKER_CACHE
+}
 
 // If true, returns mock data for all API responses.  Only for dev.
 let globalMock = false
@@ -777,20 +783,20 @@ export function getFullUrl(path, mock=false) {
   return fullPath
 }
 
-/** Fetch, leveraging web cache if available */
-async function fetchWithWebCache(url, init) {
-  const webCache = await caches.open(`scp-${env}-1.6.0`)
-  let response = await webCache.match(url)
+/** Fetch, leveraging service worker cache if enabled and available */
+async function fetchServiceWorkerCache(url, init) {
+  const swCache = await caches.open(`scp-${env}-${version}`)
+  let response = await swCache.match(url)
   let hitOrMiss = 'hit'
   if (typeof response === 'undefined') {
-    console.log(`Cache miss for SCP API fetch of URL: ${url}`)
+    console.debug(`Service worker cache miss for SCP API fetch of URL: ${url}`)
     response = await fetch(url, init).catch(error => error)
-    await webCache.put(url, response)
+    await swCache.put(url, response)
     hitOrMiss = 'miss'
-    return await webCache.match(url)
+    return await swCache.match(url)
   }
-  console.log(`Cache ${hitOrMiss} for SCP API fetch of URL: ${url}`)
-  return await webCache.match(url)
+  console.debug(`Service worker cache ${hitOrMiss} for SCP API fetch of URL: ${url}`)
+  return await swCache.match(url)
 }
 
 /**
@@ -807,8 +813,12 @@ export default async function scpApi(
 
   const perfTimeStart = performance.now()
 
-  // const response = await fetch(url, init).catch(error => error)
-  const response = await fetchWithWebCache(url, init)
+  let response
+  if (useServiceWorkerCache) {
+    response = await fetchServiceWorkerCache(url, init)
+  } else {
+    response = await fetch(url, init).catch(error => error)
+  }
 
   // Milliseconds taken to fetch data from API
   // Suboptimal, but retained until at least Q4 2021 for continuity.

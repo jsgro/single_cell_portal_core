@@ -37,7 +37,9 @@ const bardDomainsByEnv = {
 let pendingEvents = [] // eslint-disable-line
 
 let bardDomain = ''
-const env = getSCPContext().environment
+const scpContext = getSCPContext()
+const env = scpContext.environment
+const version = scpContext.version
 let userId = ''
 let registeredForTerra = false
 
@@ -348,7 +350,8 @@ export function log(name, props = {}) {
     appPath: getAnalyticsPageName(),
     appFullPath: getAppFullPath(),
     env,
-    logger: 'app-frontend'
+    logger: 'app-frontend',
+    scpVersion: version
   }, getDefaultProperties())
 
   const tab = getTabProperty()
