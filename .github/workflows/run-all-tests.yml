@@ -29,8 +29,9 @@ jobs:
           CI: true
         run: |
           export VAULT_TOKEN=$( vault write -field=token auth/approle/login role_id=$VAULT_ROLE_ID secret_id=$VAULT_SECRET_ID )
-          bin/load_env_secrets.sh -p secret/kdux/scp/staging/scp_config.json \
-                                  -s secret/kdux/scp/staging/scp_service_account.json \
-                                  -r secret/kdux/scp/staging/read_only_service_account.json \
-                                  -e test \
-                                  -n single-cell-portal-test
+          docker images
+#          bin/load_env_secrets.sh -p secret/kdux/scp/staging/scp_config.json \
+#                                  -s secret/kdux/scp/staging/scp_service_account.json \
+#                                  -r secret/kdux/scp/staging/read_only_service_account.json \
+#                                  -e test \
+#                                  -n single-cell-portal-test

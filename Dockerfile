@@ -14,9 +14,15 @@ COPY Gemfile /home/app/webapp/Gemfile
 COPY Gemfile.lock /home/app/webapp/Gemfile.lock
 WORKDIR /home/app/webapp
 RUN bundle install
+COPY package.json /home/app/webapp/package.json
+COPY yarn.lock /home/app/webapp/yarn.lock
+RUN chmod a+w /home/app/webapp/yarn.lock
 COPY set_user_permissions.bash /etc/my_init.d/01_set_user_permissions.bash
 COPY generate_dh_parameters.bash /etc/my_init.d/02_generate_dh_parameters.bash
 COPY rails_startup.bash /etc/my_init.d/03_rails_startup.bash
+
+# install JS dependencies and move to safe location
+RUN sudo -E -u app -H yarn install --force
 
 # Configure NGINX
 RUN rm /etc/nginx/sites-enabled/default
@@ -24,5 +30,5 @@ COPY webapp.conf /etc/nginx/sites-enabled/webapp.conf
 COPY nginx.conf /etc/nginx/nginx.conf
 RUN rm -f /etc/service/nginx/down
 
-# Compile native support for passenger for Ruby 2.5
+# Compile native support for passenger for Ruby
 RUN passenger-config build-native-support

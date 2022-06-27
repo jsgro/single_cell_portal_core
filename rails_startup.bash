@@ -25,20 +25,8 @@ then
     echo "*** PRECOMPILING ASSETS ***"
     export NODE_OPTIONS="--max-old-space-size=4096"
     sudo -E -u app -H bundle exec rake NODE_ENV=production RAILS_ENV=$PASSENGER_APP_ENV SECRET_KEY_BASE=$SECRET_KEY_BASE assets:clean
-    sudo -E -u app -H NODE_ENV=production RAILS_ENV=$PASSENGER_APP_ENV yarn install
-    if [ $? -ne 0 ]; then
-        sudo -E -u app -H NODE_ENV=production RAILS_ENV=$PASSENGER_APP_ENV yarn install --force
-    fi
     sudo -E -u app -H bundle exec rake NODE_ENV=production RAILS_ENV=$PASSENGER_APP_ENV SECRET_KEY_BASE=$SECRET_KEY_BASE assets:precompile
     echo "*** COMPLETED ***"
-elif [[ $PASSENGER_APP_ENV = "development" ]]; then
-    echo "*** UPGRADING/COMPILING NODE MODULES ***"
-    # force upgrade in local development to ensure yarn.lock is continually updated
-    sudo -E -u app -H mkdir -p /home/app/.cache/yarn
-    sudo -E -u app -H yarn install
-    if [ $? -ne 0 ]; then
-       sudo -E -u app -H yarn install --force
-    fi
 fi
 
 echo "*** CREATING CRON ENV FILES ***"
