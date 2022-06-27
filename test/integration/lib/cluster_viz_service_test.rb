@@ -227,4 +227,19 @@ class ClusterVizServiceTest < ActiveSupport::TestCase
     assert_empty ClusterVizService.subsampling_options(new_cluster)
     assert_nil ClusterVizService.default_subsampling(new_cluster)
   end
+
+  test 'should return map of annotation labels to cells for a cluster' do
+    cluster = ClusterGroup.find_by(study: @study, study_file: @study_cluster_file_1)
+    study_map = {
+      dog: %w[A C],
+      cat: %w[B]
+    }.with_indifferent_access
+    assert_equal study_map, ClusterVizService.cells_by_annotation_label(cluster, 'species', 'study')
+
+    cluster_map = {
+      bar: %w[A B],
+      baz: %w[C]
+    }.with_indifferent_access
+    assert_equal cluster_map, ClusterVizService.cells_by_annotation_label(cluster, 'Category', 'cluster')
+  end
 end

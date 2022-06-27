@@ -629,7 +629,7 @@ class IngestJob
       annotation_params = {
         cluster: cluster,
         annot_name: params_object.annotation_name,
-        annot_type: params_object.annotation_type,
+        annot_type: 'group',
         annot_scope: params_object.annotation_scope
       }
       annotation = AnnotationVizService.get_selected_annotation(study, **annotation_params)
