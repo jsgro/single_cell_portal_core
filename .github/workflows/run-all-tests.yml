@@ -29,6 +29,7 @@ jobs:
           CI: true
         run: |
           export VAULT_TOKEN=$( vault write -field=token auth/approle/login role_id=$VAULT_ROLE_ID secret_id=$VAULT_SECRET_ID )
+          echo "DOCKER_IMAGE_TAG: $GITHUB_REF_NAME-$GITHUB_SHA"
           docker images
 #          bin/load_env_secrets.sh -p secret/kdux/scp/staging/scp_config.json \
 #                                  -s secret/kdux/scp/staging/scp_service_account.json \
