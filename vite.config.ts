@@ -7,7 +7,9 @@ const version = readFileSync('version.txt', { encoding: 'utf8' })
 
 export default defineConfig({
   'define': {
-    '__SCP_VERSION__': version
+    '__SCP_VERSION__': version,
+    '__FOO__': 'import.meta.env.FOO',
+    '__MOO__': 'import.meta.env.MOO'
   },
   'plugins': [
     // inject plugin needs to be first

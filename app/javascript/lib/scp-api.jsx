@@ -27,6 +27,15 @@ let useServiceWorkerCache = false
 if (typeof process !== 'undefined' && typeof process.env.FRONTEND_SERVICE_WORKER_CACHE !== 'undefined') {
   useServiceWorkerCache = process.env.FRONTEND_SERVICE_WORKER_CACHE
 }
+console.log(import.meta.env.MOO)
+console.log('__FOO__')
+console.log(__FOO__)
+console.log(process.env.NODE_ENV)
+console.log(process.env.MOO)
+// console.log(typeof process !== 'undefined')
+// console.log(typeof process.env.FRONTEND_SERVICE_WORKER_CACHE !== 'undefined')
+console.log('useServiceWorkerCache')
+console.log(useServiceWorkerCache)
 
 // If true, returns mock data for all API responses.  Only for dev.
 let globalMock = false
