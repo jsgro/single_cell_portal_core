@@ -40,10 +40,12 @@ function main {
   docker build -t $IMAGE_NAME:$VERSION_TAG . || exit_with_error_message "could not build docker image"
   echo "*** BUILD COMPLETE ***"
   # check if we need to remove an existing image so that we don't have orphaned images hanging around
+  # since locally-built images will not have a value for DIGEST, we cannot compare changes against GCR
+  # therefore untagging/deleting/pushing is the safest option
   EXISTING_DIGEST=$(gcloud container images list-tags $IMAGE_NAME --filter="tags:$VERSION_TAG" --format="csv(digest)[no-heading]")
   if [[ -n "$EXISTING_DIGEST" ]]; then
     echo "*** REMOVING EXISTING IMAGE DIGEST $EXISTING_DIGEST FOR $IMAGE_NAME:$VERSION_TAG ***"
-    gcloud container images delete "$IMAGE_NAME@sha256:$EXISTING_DIGEST" --quiet
+    gcloud container images delete "$IMAGE_NAME@sha256:$EXISTING_DIGEST" --force-delete-tags --quiet
     echo "*** IMAGE REMOVAL COMPLETE ***"
   fi
   echo "*** PUSHING $IMAGE_NAME:$VERSION_TAG ***"
