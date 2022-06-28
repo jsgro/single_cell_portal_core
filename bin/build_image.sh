@@ -43,7 +43,7 @@ function main {
   EXISTING_DIGEST=$(gcloud container images list-tags $IMAGE_NAME --filter="tags:$VERSION_TAG" --format="csv(digest)[no-heading]")
   if [[ -n "$EXISTING_DIGEST" ]]; then
     echo "*** REMOVING EXISTING IMAGE DIGEST $EXISTING_DIGEST FOR $IMAGE_NAME:$VERSION_TAG ***"
-    gcloud container images delete "$IMAGE_NAME@$EXISTING_DIGEST"
+    gcloud container images delete "$IMAGE_NAME@sha256:$EXISTING_DIGEST" --quiet
     echo "*** IMAGE REMOVAL COMPLETE ***"
   fi
   echo "*** PUSHING $IMAGE_NAME:$VERSION_TAG ***"
