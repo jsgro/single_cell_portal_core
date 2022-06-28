@@ -185,10 +185,9 @@ function getDenseMatrixDelimiter(rawHeader, rawNextTwoLines) {
  *
  * The "cap" for an expression matrix file is the first row also called the "header"
  *
- * A dense matrix header must start with the value 'GENE' or if the file is R-formatted it can:
- *  - Not have GENE in the header and:
- *    - Have one less entry in the header than each successive row OR
- *    - Have "" as the last value in header.
+ * A dense matrix header must start with the value 'GENE' or if the file is R-formatted it can
+ * start with a blank "" value as the first value.
+ *
  */
 function validateDenseHeader(header, nextTwoLines) {
   const issues = []
@@ -198,16 +197,16 @@ function validateDenseHeader(header, nextTwoLines) {
   const secondLine = nextTwoLines[0]
   let isValid = true
   let specificMsg = ''
+  const firstValue = header[0]
 
-  if (header[0].toUpperCase() !== 'GENE') {
+  if (firstValue.toUpperCase() !== 'GENE' && firstValue !== '') {
     specificMsg = 'Try updating the first value of the header row to be "GENE". '
-    if (header.length === secondLine.length && header.slice(-1) !== '') {
-      specificMsg += 'Or try updating the final value of the header row to be a single space.'
-      isValid = false
-    } else if ((secondLine.length - 1) !== header.length) {
-      specificMsg += 'Or try updating the header row to have one less entry than each successive row.'
-      isValid = false
-    }
+    isValid = false
+  }
+
+  if (secondLine.length !== header.length) {
+    specificMsg += 'Ensure the header row contains the same number of columns as the following rows.'
+    isValid = false
   }
 
   if (!isValid) {

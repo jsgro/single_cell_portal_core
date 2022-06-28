@@ -157,6 +157,25 @@ describe('Client-side file validation', () => {
     expect(errors[0][1]).toEqual('format:cap:missing-gene-column')
   })
 
+  it('allows R-formatted header in expression matrix file', async () => {
+    const file = createMockFile({
+      fileName: 'foo4.txt',
+      content: '\tX\tY\nItm2a\t0\t5\nEif2b2\t3\t0\nPf2b2\t1\t9'
+    })
+    const { errors } = await validateLocalFile(file, { file_type: 'Expression Matrix' })
+    expect(errors).toHaveLength(0)
+  })
+
+  it('catches wrong length R-formatted header in expression matrix file', async () => {
+    const file = createMockFile({
+      fileName: 'foo4.txt',
+      content: ',X\nItm2a,0,5\nEif2b2,3,0\nPf2b2,1,9'
+    })
+    const { errors } = await validateLocalFile(file, { file_type: 'Expression Matrix' })
+    expect(errors).toHaveLength(1)
+    expect(errors[0][1]).toEqual('format:cap:missing-gene-column')
+  })
+
   it('catches non-numeric entry in expression matrix file', async () => {
     const file = createMockFile({
       fileName: 'foo5.csv',
