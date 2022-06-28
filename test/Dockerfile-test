@@ -1,0 +1,13 @@
+# use SCP base Rails image, configure only project-specific items here
+FROM gcr.io/broad-singlecellportal-staging/single-cell-portal:development
+
+# run any gem/package updates that may have been introduced by this PR
+WORKDIR /home/app/webapp
+COPY Gemfile /home/app/webapp/Gemfile
+COPY Gemfile.lock /home/app/webapp/Gemfile.lock
+COPY package.json /home/app/webapp/package.json
+COPY yarn.lock /home/app/webapp/yarn.lock
+RUN chmod a+w /home/app/webapp/yarn.lock
+
+RUN bundle install
+RUN sudo -E -u app -H yarn install

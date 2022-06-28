@@ -22,7 +22,7 @@ function main {
   while getopts "v:h" OPTION; do
     case $OPTION in
       v)
-        VERSION_TAG="$OPTION"
+        VERSION_TAG="$OPTARG"
         ;;
       h)
         echo "$usage"
@@ -37,9 +37,10 @@ function main {
   done
 
   echo "*** BUILDING IMAGE REF $IMAGE_NAME:$VERSION_TAG ***"
-  docker build --no-cache $IMAGE_NAME:$VERSION_TAG . || exit_with_error_message "could not build docker image"
+  docker build --no-cache -t $IMAGE_NAME:$VERSION_TAG . || exit_with_error_message "could not build docker image"
   echo "*** BUILD COMPLETE, PUSHING $IMAGE_NAME:$VERSION_TAG ***"
   docker push $IMAGE_NAME:$VERSION_TAG || exit_with_error_message "could not push docker image $IMAGE_NAME:$VERSION_TAG"
+  echo "*** PUSH COMPLETE ***"
 }
 
 main "$@"

@@ -1,4 +1,4 @@
-# use KDUX base Rails image, configure only project-specific items here
+# use SCP base Rails image, configure only project-specific items here
 FROM gcr.io/broad-singlecellportal-staging/rails-baseimage:2.1.0
 
 # Set ruby version
@@ -21,7 +21,7 @@ COPY set_user_permissions.bash /etc/my_init.d/01_set_user_permissions.bash
 COPY generate_dh_parameters.bash /etc/my_init.d/02_generate_dh_parameters.bash
 COPY rails_startup.bash /etc/my_init.d/03_rails_startup.bash
 
-# install JS dependencies and move to safe location
+# install JS dependencies
 RUN sudo -E -u app -H yarn install --force
 
 # Configure NGINX
