@@ -76,7 +76,6 @@ gem 'carrierwave', '~> 2.0'
 gem 'carrierwave-mongoid', :require => 'carrierwave/mongoid'
 gem 'uuid'
 gem 'vite_rails'
-gem 'recaptcha'
 
 group :development, :test do
   # Access an IRB console on exception pages or by using <%= console %> in views

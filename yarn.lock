@@ -10696,11 +10696,6 @@ realpath-native@^1.1.0:
   dependencies:
     util.promisify "^1.0.0"
 
-recaptcha@^1.2.1:
-  version "1.2.1"
-  resolved "https://registry.yarnpkg.com/recaptcha/-/recaptcha-1.2.1.tgz#3d7a576a525aa19270d8b0ac90820ee7ca9eb8ae"
-  integrity sha512-wtNL31O2Fvpeawq0qvlT9lruoyWDYjv18Cek6RTcNPktHregJDeJxLBlbTUWzW62AKRP9kFZKbDVZKj/3YxcGw==
-
 recursive-readdir@^2.2.2:
   version "2.2.2"
   resolved "https://registry.yarnpkg.com/recursive-readdir/-/recursive-readdir-2.2.2.tgz#9946fb3274e1628de6e36b2f6714953b4845094f"
