@@ -185,7 +185,7 @@ function getDenseMatrixDelimiter(rawHeader, rawNextTwoLines) {
  *
  * The "cap" for an expression matrix file is the first row also called the "header"
  *
- * A dense matrix header must start with the value 'GENE' or if the file is R-formatted it can
+ * A dense matrix header must start with the value "GENE" or if the file is R-formatted it can
  * start with a blank "" value as the first value.
  *
  */
