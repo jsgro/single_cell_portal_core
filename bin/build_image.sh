@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # build the portal Docker image and tag accordingly, then push to GCR
-
+# cleans up untagged images after push when overwriting tags
 THIS_DIR="$(cd "$(dirname "$0")"; pwd)"
 
 # common libraries
@@ -38,17 +38,16 @@ function main {
 
   echo "*** BUILDING IMAGE REF $IMAGE_NAME:$VERSION_TAG ***"
   docker build -t $IMAGE_NAME:$VERSION_TAG . || exit_with_error_message "could not build docker image"
-  echo "*** BUILD COMPLETE ***"
-  # check if we need to remove an existing image so that we don't have orphaned images hanging around
-  # since locally-built images will not have a value for DIGEST, we cannot compare changes against GCR
-  EXISTING_DIGEST=$(gcloud container images list-tags $IMAGE_NAME --filter="tags:$VERSION_TAG" --format="csv(digest)[no-heading]")
-  echo "*** PUSHING $IMAGE_NAME:$VERSION_TAG ***"
+  echo "*** BUILD COMPLETE, PUSHING $IMAGE_NAME:$VERSION_TAG ***"
   docker push $IMAGE_NAME:$VERSION_TAG || exit_with_error_message "could not push docker image $IMAGE_NAME:$VERSION_TAG"
   echo "*** PUSH COMPLETE ***"
-  if [[ -n "$EXISTING_DIGEST" ]]; then
-    echo "*** REMOVING EXISTING IMAGE DIGEST $EXISTING_DIGEST FOR $IMAGE_NAME:$VERSION_TAG ***"
-    gcloud container images delete "$IMAGE_NAME@sha256:$EXISTING_DIGEST" --quiet
-    echo "*** EXISTING IMAGE REMOVAL COMPLETE ***"
+  # pushing an image with the same tag as an existing one (which will happen each time with 'development') can leave
+  # behind an untagged image that needs to be deleted - these can be found with --filter='-tags:*'
+  UNTAGGED=$(gcloud container images list-tags $IMAGE_NAME --filter='-tags:*' --format='get(digest)')
+  if [[ -n "$UNTAGGED" ]]; then
+    echo "*** DELETING UNTAGGED IMAGE DIGEST $UNTAGGED ***"
+    gcloud container images delete $IMAGE_NAME@$UNTAGGED --quiet || exit_with_error_message "could not delete image $UNTAGGED"
+    echo "*** UNTAGGED IMAGE $UNTAGGED SUCCESSFULLY DELETED ***"
   fi
 }
 
