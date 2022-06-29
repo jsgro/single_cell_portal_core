@@ -204,7 +204,7 @@ function validateDenseHeader(header, nextTwoLines) {
     isValid = false
   }
 
-  if (secondLine.length !== header.length) {
+  if (secondLine.length !== header.length || header.lastIndexOf('') !== 0) {
     specificMsg += 'Ensure the header row contains the same number of columns as the following rows.'
     isValid = false
   }
