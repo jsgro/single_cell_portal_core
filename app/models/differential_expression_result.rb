@@ -136,6 +136,8 @@ class DifferentialExpressionResult
 
   # delete all associated output files on destroy
   def remove_output_files
+    return true if study.detached # prevent failures when bucket doesn't exist, mostly needed for CI runs
+
     bucket_files.each do |filepath|
       identifier = " #{study.accession}:#{annotation_name}--group--#{annotation_scope}"
       remote = ApplicationController.firecloud_client.get_workspace_file(study.bucket_id, filepath)
