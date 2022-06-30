@@ -51,6 +51,11 @@ GOOGLE_PRIVATE_KEY=$GOOGLE_PRIVATE_KEY
 GOOGLE_CLIENT_EMAIL=$GOOGLE_CLIENT_EMAIL
 GOOGLE_CLIENT_ID=$GOOGLE_CLIENT_ID
 GOOGLE_CLOUD_PROJECT=$GOOGLE_CLOUD_PROJECT
+# The "broad-singlecellportal-staging" GCR repository is used in production.
+# The "development" tag is used in non-production deployment.  For production deployment, tag is version number for
+# upcoming release, e.g. 1.20.0.
+# More context: https://github.com/broadinstitute/single_cell_portal_core/pull/1552#discussion_r910424433
+# TODO: (SCP-4496): Move production-related GCR images out of staging project
 DOCKER_IMAGE_NAME='gcr.io/broad-singlecellportal-staging/single-cell-portal'
 DOCKER_IMAGE_VERSION='development'
 

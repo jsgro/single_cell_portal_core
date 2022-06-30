@@ -2,6 +2,8 @@
 
 # build the portal Docker image and tag accordingly, then push to GCR
 # cleans up untagged images after push when overwriting tags
+# meant to be run as part of Jenkins deployment, but can be used as standalone to build/push specified image
+# TODO (SCP-4494): Add this script to corresponding Jenkins jobs
 THIS_DIR="$(cd "$(dirname "$0")"; pwd)"
 
 # common libraries
@@ -17,6 +19,11 @@ EOF
 )
 
 function main {
+  # The "broad-singlecellportal-staging" GCR repository is used in production.
+  # The "development" tag is used in non-production deployment.  For production deployment, tag is version number for
+  # upcoming release, e.g. 1.20.0.
+  # More context: https://github.com/broadinstitute/single_cell_portal_core/pull/1552#discussion_r910424433
+  # TODO: (SCP-4496): Move production-related GCR images out of staging project
   VERSION_TAG=$(extract_release_tag "0")
   IMAGE_NAME='gcr.io/broad-singlecellportal-staging/single-cell-portal'
   while getopts "v:h" OPTION; do
