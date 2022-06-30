@@ -24,6 +24,31 @@ const env = scpContext.environment
 const version = scpContext.version
 const useServiceWorkerCache = scpContext.useServiceWorkerCache
 
+const serviceWorkerCacheKeyStem = `scp-${env}`
+const serviceWorkerCacheKey = `${serviceWorkerCacheKeyStem}-${version}`
+
+/**
+ * Delete service worker (SW) caches for prior versions of SCP.
+ *
+ * This prevents old, unused data from living forever in user's web browsers,
+ * which might otherwise occupy a substantial fraction of the user's
+ * total space available for SW cache.
+ */
+async function clearOldServiceWorkerCaches() {
+  const swCacheKeys = await caches.keys()
+  swCacheKeys.forEach(thisKey => {
+    if (
+      thisKey.startsWith(serviceWorkerCacheKeyStem) &&
+      thisKey !== serviceWorkerCacheKey
+    ) {
+      caches.delete(thisKey) // Delete old SCP service worker cache
+    }
+  })
+}
+
+// On each page load, check for old SCP caches, delete any found
+clearOldServiceWorkerCaches()
+
 // If true, returns mock data for all API responses.  Only for dev.
 let globalMock = false
 
@@ -781,7 +806,7 @@ export function getFullUrl(path, mock=false) {
 
 /** Fetch, leveraging service worker cache if enabled and available */
 async function fetchServiceWorkerCache(url, init) {
-  const swCache = await caches.open(`scp-${env}-${version}`)
+  const swCache = await caches.open(serviceWorkerCacheKey)
   let response = await swCache.match(url)
   let hitOrMiss = 'hit'
   if (typeof response === 'undefined') {
