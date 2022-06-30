@@ -67,6 +67,10 @@ class DeleteQueueJobTest < ActiveSupport::TestCase
   end
 
   test 'should destroy differential expression results on file deletion' do
+    study = FactoryBot.create(:study,
+                              name_prefix: 'DiffExp DeleteQueueJon Test',
+                              user: @user,
+                              test_array: @@studies_to_clean)
     cells = %w[A B C D E F G]
     coordinates = 1.upto(7).to_a
     species = %w[dog cat dog dog cat cat cat]
@@ -75,8 +79,7 @@ class DeleteQueueJobTest < ActiveSupport::TestCase
     organs = %w[brain brain heart brain heart heart brain]
     raw_matrix = FactoryBot.create(:expression_file,
                                    name: 'raw.txt',
-                                   study: @basic_study,
-                                   cell_input: cells,
+                                   study: study,
                                    expression_file_info: {
                                      is_raw_counts: true,
                                      units: 'raw counts',
@@ -84,9 +87,17 @@ class DeleteQueueJobTest < ActiveSupport::TestCase
                                      biosample_input_type: 'Whole cell',
                                      modality: 'Proteomic'
                                    })
+
+    data_array_params = {
+      name: 'raw.txt Cells', array_type: 'cells', linear_data_type: 'Study', study_id: study.id,
+      cluster_name: 'raw.txt', array_index: 0, linear_data_id: study.id, study_file_id: raw_matrix.id,
+      cluster_group_id: nil, subsample_annotation: nil, subsample_threshold: nil, values: cells
+    }
+    DataArray.create(data_array_params)
+
     cluster_file_1 = FactoryBot.create(:cluster_file,
                                        name: 'cluster_diffexp_1.txt',
-                                       study: @basic_study,
+                                       study: study,
                                        cell_input: {
                                          x: coordinates,
                                          y: coordinates,
@@ -98,7 +109,7 @@ class DeleteQueueJobTest < ActiveSupport::TestCase
 
     cluster_file_2 = FactoryBot.create(:cluster_file,
                                        name: 'cluster_diffexp_2.txt',
-                                       study: @basic_study,
+                                       study: study,
                                        cell_input: {
                                          x: coordinates,
                                          y: coordinates,
@@ -108,32 +119,32 @@ class DeleteQueueJobTest < ActiveSupport::TestCase
                                          { name: 'disease', type: 'group', values: diseases }
                                        ])
 
-    cluster_1 = ClusterGroup.find_by(study: @basic_study, study_file: cluster_file_1)
-    cluster_2 = ClusterGroup.find_by(study: @basic_study, study_file: cluster_file_2)
+    cluster_1 = ClusterGroup.find_by(study: study, study_file: cluster_file_1)
+    cluster_2 = ClusterGroup.find_by(study: study, study_file: cluster_file_2)
 
     metadata_file = FactoryBot.create(:metadata_file,
                                       name: 'metadata.txt',
                                       cell_input: cells,
-                                      study: @basic_study,
+                                      study: study,
                                       annotation_input: [
                                         { name: 'category', type: 'group', values: categories },
                                         { name: 'organ', type: 'group', values: organs }
                                       ])
 
     DifferentialExpressionResult.create(
-      study: @basic_study, cluster_group: cluster_1, annotation_name: 'species',
+      study: study, cluster_group: cluster_1, annotation_name: 'species',
       annotation_scope: 'cluster', matrix_file_id: raw_matrix.id
     )
     DifferentialExpressionResult.create(
-      study: @basic_study, cluster_group: cluster_2, annotation_name: 'disease',
+      study: study, cluster_group: cluster_2, annotation_name: 'disease',
       annotation_scope: 'cluster', matrix_file_id: raw_matrix.id
     )
     DifferentialExpressionResult.create(
-      study: @basic_study, cluster_group: cluster_1, annotation_name: 'category',
+      study: study, cluster_group: cluster_1, annotation_name: 'category',
       annotation_scope: 'study', matrix_file_id: raw_matrix.id
     )
     DifferentialExpressionResult.create(
-      study: @basic_study, cluster_group: cluster_2, annotation_name: 'organ',
+      study: study, cluster_group: cluster_2, annotation_name: 'organ',
       annotation_scope: 'study', matrix_file_id: raw_matrix.id
     )
 
@@ -142,22 +153,22 @@ class DeleteQueueJobTest < ActiveSupport::TestCase
       file_mock = Minitest::Mock.new
       file_mock.expect :present?, true
       file_mock.expect :delete, true
-      mock.expect :get_workspace_file, file_mock, [@basic_study.bucket_id, String]
+      mock.expect :get_workspace_file, file_mock, [study.bucket_id, String]
     end
 
     ApplicationController.stub :firecloud_client, mock do
       # test deletion of cluster file
       DeleteQueueJob.new(cluster_file_1).perform
-      assert_not DifferentialExpressionResult.where(study: @basic_study, cluster_group: cluster_1).any?
-      assert DifferentialExpressionResult.where(study: @basic_study, cluster_group: cluster_2).any?
+      assert_not DifferentialExpressionResult.where(study: study, cluster_group: cluster_1).any?
+      assert DifferentialExpressionResult.where(study: study, cluster_group: cluster_2).any?
 
       # test deletion of metadata file
       DeleteQueueJob.new(metadata_file).perform
-      assert_not DifferentialExpressionResult.where(study: @basic_study, annotation_scope: 'study').any?
+      assert_not DifferentialExpressionResult.where(study: study, annotation_scope: 'study').any?
 
       # test deletion of matrix file
       DeleteQueueJob.new(raw_matrix).perform
-      assert_not DifferentialExpressionResult.where(study: @basic_study).any?
+      assert_not DifferentialExpressionResult.where(study: study).any?
 
       # assert all delete calls have been made, should be 8 total
       mock.verify

@@ -4,10 +4,10 @@ class DifferentialExpressionResultTest  < ActiveSupport::TestCase
 
   before(:all) do
     @user = FactoryBot.create(:user, test_array: @@users_to_clean)
-    @study = FactoryBot.create(:detached_study,
-                                     name_prefix: 'DifferentialExpressionResult Test',
-                                     user: @user,
-                                     test_array: @@studies_to_clean)
+    @study = FactoryBot.create(:study,
+                               name_prefix: 'DifferentialExpressionResult Test',
+                               user: @user,
+                               test_array: @@studies_to_clean)
 
     @cells = %w[A B C D E F G]
     @coordinates = 1.upto(7).to_a
@@ -30,7 +30,7 @@ class DifferentialExpressionResultTest  < ActiveSupport::TestCase
                                       cell_input: {
                                         x: @coordinates,
                                         y: @coordinates,
-                                        cells: @cells,
+                                        cells: @cells
                                       },
                                       annotation_input: [
                                         { name: 'disease', type: 'group', values: @diseases },
