@@ -83,24 +83,6 @@ class AnnotationVizService
     annotation
   end
 
-  # create a hash of cell names => annotations for use in visualization
-  # this is required for all expression-based scenarios to allow filtering of data by observed cells in matrices
-  # without the annotation map, array index position becomes unreliable and annotation assignments will drift
-  # uses previously retrieved list of cell names to optimize for performance
-  def self.get_annotation_as_hash(cluster, annotation, cells, subsample_threshold = nil)
-    study = cluster.study
-    subsample_annotation = "#{annotation[:name]}--#{annotation[:type]}--#{annotation[:scope]}"
-    case annotation[:scope]
-    when 'study'
-      study.cell_metadata.by_name_and_type(annotation[:name], annotation[:type])&.cell_annotations || {}
-    else
-      annotation_array = ClusterVizService.get_annotation_values_array(
-        study, cluster, annotation, cells, subsample_annotation, subsample_threshold
-      )
-      Hash[cells.zip(annotation_array)]
-    end
-  end
-
   def self.get_study_annotation_options(study, user)
     subsample_thresholds = Hash[
       study.cluster_groups.map {|cluster| [cluster.name, ClusterVizService.subsampling_options(cluster)] }
