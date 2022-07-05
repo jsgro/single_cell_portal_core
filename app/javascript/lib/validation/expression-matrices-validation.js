@@ -204,7 +204,10 @@ function validateDenseHeader(header, nextTwoLines) {
     isValid = false
   }
 
-  if (secondLine.length !== header.length || header.lastIndexOf('') !== 0) {
+  // check that there are no blank header columns, with the exception of the first column for R-formatted files
+  const noMissingCols = header.lastIndexOf('') !== 0 || header.lastIndexOf('') !== -1
+
+  if (secondLine.length !== header.length || !noMissingCols) {
     specificMsg += 'Ensure the header row contains the same number of columns as the following rows.'
     isValid = false
   }
