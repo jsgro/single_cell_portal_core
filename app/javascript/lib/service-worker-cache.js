@@ -5,10 +5,11 @@ const env = scpContext.environment
 const version = scpContext.version
 
 /** Whether to fetch data from service worker cache */
-export const useServiceWorkerCache = scpContext.useServiceWorkerCache
+export const isServiceWorkerCacheEnabled = scpContext.isServiceWorkerCacheEnabled
 
 // Cache keys are like a mix of database server and collection/table names:
-// they identify a cache store for individual cache entries
+// they identify a cache store for individual cache entries.  Here we set up
+// cache keys specific to each SCP environment and version.
 const serviceWorkerCacheKeyStem = `scp-${env}`
 const serviceWorkerCacheKey = `${serviceWorkerCacheKeyStem}-${version}`
 
@@ -18,14 +19,13 @@ export async function fetchServiceWorkerCache(url, init) {
   let response = await swCache.match(url)
   let hitOrMiss = 'hit'
   if (typeof response === 'undefined') {
-    console.debug(`Service worker cache miss for SCP API fetch of URL: ${url}`)
     response = await fetch(url, init).catch(error => error)
     await swCache.put(url, response)
     hitOrMiss = 'miss'
-    return await swCache.match(url)
   }
   console.debug(`Service worker cache ${hitOrMiss} for SCP API fetch of URL: ${url}`)
-  return await swCache.match(url)
+  const isHit = (hitOrMiss === 'hit')
+  return [response, isHit]
 }
 
 /**

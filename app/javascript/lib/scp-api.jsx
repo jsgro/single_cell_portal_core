@@ -18,8 +18,9 @@ import {
 import { logSearch, mapFiltersForLogging } from './search-metrics'
 import { showMessage } from '~/lib/MessageModal'
 import {
-  useServiceWorkerCache, clearOldServiceWorkerCaches, fetchServiceWorkerCache
+  isServiceWorkerCacheEnabled, clearOldServiceWorkerCaches, fetchServiceWorkerCache
 } from './service-worker-cache'
+import { STEP_NOT_NEEDED } from './metrics-perf'
 
 
 // On each page load, check for old SCP caches, delete any found
@@ -794,22 +795,33 @@ export default async function scpApi(
 
   const perfTimeStart = performance.now()
 
-  let response
-  if (useServiceWorkerCache) {
-    response = await fetchServiceWorkerCache(url, init)
-  } else {
-    response = await fetch(url, init).catch(error => error)
-  }
-
-  // Milliseconds taken to fetch data from API
-  // Suboptimal, but retained until at least Q4 2021 for continuity.
-  // Use `perfTime:full` for closest measure of user-perceived duration.
-  const legacyBackendTime = performance.now() - perfTimeStart
-
   const perfTimes = {
     url,
-    legacyBackend: legacyBackendTime
+    serviceWorkerCacheEnabled: isServiceWorkerCacheEnabled
   }
+
+  let response
+  let isServiceWorkerCacheHit = false
+  let legacyBackendTime
+  if (isServiceWorkerCacheEnabled) {
+    perfTimes.requestStart = perfTimeStart
+    const fetchSWCacheResult = await fetchServiceWorkerCache(url, init)
+    response = fetchSWCacheResult[0]
+    isServiceWorkerCacheHit = fetchSWCacheResult[1]
+    legacyBackendTime = STEP_NOT_NEEDED
+  } else {
+    response = await fetch(url, init).catch(error => error)
+
+    // Milliseconds taken to fetch data from API
+    // Suboptimal, but retained until at least Q4 2021 for continuity.
+    // Use `perfTime:full` for closest measure of user-perceived duration.
+    legacyBackendTime = performance.now() - perfTimeStart
+  }
+
+  perfTimes.legacyBackend = legacyBackendTime
+  perfTimes.serviceWorkerCacheHit = isServiceWorkerCacheHit
+  console.log('perfTimes')
+  console.log(perfTimes)
 
   if (response.ok) {
     if (toJson && response.status !== 204) {

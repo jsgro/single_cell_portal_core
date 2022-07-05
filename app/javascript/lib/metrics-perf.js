@@ -153,7 +153,12 @@ function roundValues(props) {
 export function calculatePerfTimes(perfTimes) {
   const now = performance.now()
 
+  console.log('in calculatePerfTimes, perfTimes:')
+  console.log(perfTimes)
+
   if (perfTimes.isClientCache) {
+    // Processing SCP's custom client-side plot caching
+
     const rawPerfProps = {
       'perfTime:full': now - perfTimes.requestStart,
       'perfTime': now - perfTimes.requestStart,
@@ -171,11 +176,50 @@ export function calculatePerfTimes(perfTimes) {
       // so, e.g. the cluster plot will wait until after the expression data is fetched, and then render itself
       // based on a subset of that data
       'perfTime:frontend:other': now - perfTimes.requestStart - perfTimes.plot,
-      'perfTime:frontend:plot': perfTimes.plot,
-      'cache': 'client'
+      'perfTime:frontend:plot': perfTimes.plot
     }
     const perfProps = roundValues(Object.assign({}, rawPerfProps))
     perfProps['perfTime:url'] = perfTimes.url
+
+    perfProps['perfTime:cache'] = 'client-plot-data'
+    return perfProps
+  } else if (perfTimes.serviceWorkerCacheHit) {
+    // Processing SCP's generic frontend service worker caching
+
+
+    let rawPerfProps = {
+      'perfTime:full': now - perfTimes.requestStart,
+      'perfTime': now - perfTimes.requestStart,
+      'perfTime:legacy': now - perfTimes.requestStart,
+
+      // Server timing
+      'perfTime:backend': STEP_NOT_NEEDED,
+
+      // Client timing
+      'perfTime:frontend': now - perfTimes.requestStart, // Time from API call response start to effect (e.g. plot) end
+      'perfTime:frontend:transfer': STEP_NOT_NEEDED,
+      'perfTime:frontend:parse': perfTimes.parse
+    }
+
+    if ('plot' in perfTimes) {
+      rawPerfProps = Object.assign({
+      // note that 'other' here is very likely to include the rendering of a different plot.
+      // if a plot is fully cached, that usually means two plots were requested, one of which is a subset of the other
+      // so, e.g. the cluster plot will wait until after the expression data is fetched, and then render itself
+      // based on a subset of that data
+        'perfTime:frontend:other': now - perfTimes.requestStart - perfTimes.plot,
+        'perfTime:frontend:plot': perfTimes.plot
+      }, rawPerfProps)
+    }
+
+    let perfProps = roundValues(Object.assign({}, rawPerfProps))
+
+    perfProps = Object.assign({
+      'perfTime:cache': 'service-worker',
+      'perfTime:serviceWorkerCacheHit': true,
+      'perfTime:serviceWorkerCacheEnabled': perfTimes.serviceWorkerCacheEnabled,
+      'perfTime:url': perfTimes.url
+    }, perfProps)
     return perfProps
   }
 
@@ -253,6 +297,9 @@ export function calculatePerfTimes(perfTimes) {
   compressionRatio = Math.round((compressionRatio + Number.EPSILON) * 100) / 100
   perfProps['perfTime:data:compression-ratio'] = compressionRatio // Relative amount compressed
 
+
+  perfProps['perfTime:serviceWorkerCacheEnabled'] = perfTimes?.serviceWorkerCacheEnabled
+
   perfProps['perfTime:url'] = perfTimes.url
 
   return perfProps
@@ -262,5 +309,7 @@ export function calculatePerfTimes(perfTimes) {
 export function addPerfMetrics(props) {
   const perfTimes = calculatePerfTimes(props.perfTimes)
   props = Object.assign(props, hardwareStats, perfTimes)
+  console.log('props')
+  console.log(props)
   return props
 }
