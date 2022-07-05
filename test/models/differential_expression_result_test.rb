@@ -62,7 +62,9 @@ class DifferentialExpressionResultTest  < ActiveSupport::TestCase
   end
 
   after(:all) do
+    # prevent issues in CI re: Google::Cloud::PermissionDeniedError when study bucket is removed before DB cleanup
     DifferentialExpressionResult.delete_all
+    @study.reload
   end
 
   test 'should validate DE results and set observed values' do
