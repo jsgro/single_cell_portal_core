@@ -99,6 +99,14 @@ class HcaAzulClientTest < ActiveSupport::TestCase
     end
   end
 
+  # smoke test for issue with 502 when requesting all human projects
+  test 'should get all projects without error' do
+    query = { genusSpecies: { is: ['Homo sapiens'] } }.with_indifferent_access
+    raw_projects = @hca_azul_client.projects(query: query)
+    projects = get_entries_from_response(raw_projects, :projects)
+    assert projects.size == HcaAzulClient::MAX_RESULTS
+  end
+
   test 'should query projects using facets' do
     skip_if_api_down
     raw_projects = @hca_azul_client.projects(query: @query_json, size: 1)
