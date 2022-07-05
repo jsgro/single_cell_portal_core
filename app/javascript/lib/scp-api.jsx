@@ -11,40 +11,16 @@ import _compact from 'lodash/compact'
 import * as queryString from 'query-string'
 
 import { logJSFetchExceptionToSentry, logJSFetchErrorToSentry } from '~/lib/sentry-logging'
-import { getSCPContext } from '~/providers/SCPContextProvider'
 import { getAccessToken } from '~/providers/UserProvider'
 import {
   logDownloadAuthorization, logCreateUserAnnotation
 } from './scp-api-metrics'
 import { logSearch, mapFiltersForLogging } from './search-metrics'
 import { showMessage } from '~/lib/MessageModal'
+import {
+  useServiceWorkerCache, clearOldServiceWorkerCaches, fetchServiceWorkerCache
+} from './service-worker-cache'
 
-const scpContext = getSCPContext()
-const env = scpContext.environment
-const version = scpContext.version
-const useServiceWorkerCache = scpContext.useServiceWorkerCache
-
-const serviceWorkerCacheKeyStem = `scp-${env}`
-const serviceWorkerCacheKey = `${serviceWorkerCacheKeyStem}-${version}`
-
-/**
- * Delete service worker (SW) caches for prior versions of SCP.
- *
- * This prevents old, unused data from living forever in user's web browsers,
- * which might otherwise occupy a substantial fraction of the user's
- * total space available for SW cache.
- */
-async function clearOldServiceWorkerCaches() {
-  const swCacheKeys = await caches.keys()
-  swCacheKeys.forEach(thisKey => {
-    if (
-      thisKey.startsWith(serviceWorkerCacheKeyStem) &&
-      thisKey !== serviceWorkerCacheKey
-    ) {
-      caches.delete(thisKey) // Delete old SCP service worker cache
-    }
-  })
-}
 
 // On each page load, check for old SCP caches, delete any found
 clearOldServiceWorkerCaches()
@@ -802,22 +778,6 @@ export function getFullUrl(path, mock=false) {
     fullPath = `${location.origin}${fullPath}`
   }
   return fullPath
-}
-
-/** Fetch, leveraging service worker cache if enabled and available */
-async function fetchServiceWorkerCache(url, init) {
-  const swCache = await caches.open(serviceWorkerCacheKey)
-  let response = await swCache.match(url)
-  let hitOrMiss = 'hit'
-  if (typeof response === 'undefined') {
-    console.debug(`Service worker cache miss for SCP API fetch of URL: ${url}`)
-    response = await fetch(url, init).catch(error => error)
-    await swCache.put(url, response)
-    hitOrMiss = 'miss'
-    return await swCache.match(url)
-  }
-  console.debug(`Service worker cache ${hitOrMiss} for SCP API fetch of URL: ${url}`)
-  return await swCache.match(url)
 }
 
 /**
