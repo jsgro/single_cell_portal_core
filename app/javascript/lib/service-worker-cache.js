@@ -20,7 +20,7 @@ export async function fetchServiceWorkerCache(url, init) {
   let hitOrMiss = 'hit'
   if (typeof response === 'undefined') {
     response = await fetch(url, init).catch(error => error)
-    await swCache.put(url, response)
+    await swCache.put(url, response.clone())
     hitOrMiss = 'miss'
   }
   console.debug(`Service worker cache ${hitOrMiss} for SCP API fetch of URL: ${url}`)
