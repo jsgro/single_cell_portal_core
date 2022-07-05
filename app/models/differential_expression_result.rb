@@ -136,7 +136,8 @@ class DifferentialExpressionResult
 
   # delete all associated output files on destroy
   def remove_output_files
-    return true if study.detached # prevent failures when bucket doesn't exist, mostly needed for CI runs
+    # prevent failures when bucket doesn't exist, or if this is running in a cleanup job after a study is destroyed
+    return true if study.nil? || study.detached
 
     bucket_files.each do |filepath|
       identifier = " #{study.accession}:#{annotation_name}--group--#{annotation_scope}"

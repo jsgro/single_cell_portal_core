@@ -8,7 +8,6 @@ class DifferentialExpressionResultTest  < ActiveSupport::TestCase
                                name_prefix: 'DifferentialExpressionResult Test',
                                user: @user,
                                test_array: @@studies_to_clean)
-
     @cells = %w[A B C D E F G]
     @coordinates = 1.upto(7).to_a
     @species = %w[dog cat dog dog cat cat cat]
@@ -60,6 +59,10 @@ class DifferentialExpressionResultTest  < ActiveSupport::TestCase
       study: @study, cluster_group: @cluster_file.cluster_groups.first, annotation_name: 'disease',
       annotation_scope: 'cluster', matrix_file_id: @raw_matrix.id
     )
+  end
+
+  after(:all) do
+    DifferentialExpressionResult.delete_all
   end
 
   test 'should validate DE results and set observed values' do
@@ -140,6 +143,9 @@ class DifferentialExpressionResultTest  < ActiveSupport::TestCase
     ApplicationController.stub :firecloud_client, mock do
       sub_cluster.destroy
       mock.verify
+      assert_not DifferentialExpressionResult.where(study: @study, cluster_group: @cluster_file.cluster_groups.first,
+                                                    annotation_name: 'sub-cluster', annotation_scope: 'cluster',
+                                                    matrix_file_id: @raw_matrix.id).exists?
     end
   end
 end
