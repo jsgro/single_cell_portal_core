@@ -13,7 +13,11 @@ export const isServiceWorkerCacheEnabled = scpContext.isServiceWorkerCacheEnable
 const serviceWorkerCacheKeyStem = `scp-${env}`
 const serviceWorkerCacheKey = `${serviceWorkerCacheKeyStem}-${version}`
 
-/** Fetch, leveraging service worker cache if enabled and available */
+/**
+ * Fetch, leveraging service worker cache if enabled and available
+ *
+ * TODO (SCP-4508): Account for same URL, different sign-in state in service worker cache
+ */
 export async function fetchServiceWorkerCache(url, init) {
   const swCache = await caches.open(serviceWorkerCacheKey)
   let response = await swCache.match(url)
