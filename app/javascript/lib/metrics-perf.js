@@ -153,9 +153,6 @@ function roundValues(props) {
 export function calculatePerfTimes(perfTimes) {
   const now = performance.now()
 
-  console.log('in calculatePerfTimes, perfTimes:')
-  console.log(perfTimes)
-
   if (perfTimes.isClientCache) {
     // Processing SCP's custom client-side plot caching
 
@@ -309,7 +306,5 @@ export function calculatePerfTimes(perfTimes) {
 export function addPerfMetrics(props) {
   const perfTimes = calculatePerfTimes(props.perfTimes)
   props = Object.assign(props, hardwareStats, perfTimes)
-  console.log('props')
-  console.log(props)
   return props
 }

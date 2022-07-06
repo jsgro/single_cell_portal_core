@@ -803,7 +803,7 @@ export default async function scpApi(
   let response
   let isServiceWorkerCacheHit = false
   let legacyBackendTime
-  if (isServiceWorkerCacheEnabled) {
+  if (isServiceWorkerCacheEnabled && init.method === 'GET') {
     perfTimes.requestStart = perfTimeStart
     const fetchSWCacheResult = await fetchServiceWorkerCache(url, init)
     response = fetchSWCacheResult[0]
@@ -820,8 +820,6 @@ export default async function scpApi(
 
   perfTimes.legacyBackend = legacyBackendTime
   perfTimes.serviceWorkerCacheHit = isServiceWorkerCacheHit
-  console.log('perfTimes')
-  console.log(perfTimes)
 
   if (response.ok) {
     if (toJson && response.status !== 204) {
