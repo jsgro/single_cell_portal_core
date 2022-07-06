@@ -49,7 +49,7 @@ module Api
 
       # GET /single_cell/api/v1/studies
       def index
-        @studies = Study.editable(current_api_user)
+        @studies = Study.accessible(current_api_user)
         study_owner_ids = @studies.pluck(:id, :user_id)
         user_info = User.where(:id.in => study_owner_ids.map{ |plucked_arr| plucked_arr[1] }).pluck(:id, :email)
         # create a hash of study_id => owner email
