@@ -214,7 +214,6 @@ export function calculatePerfTimes(perfTimes) {
     perfProps = Object.assign({
       'perfTime:cache': 'service-worker',
       'perfTime:serviceWorkerCacheHit': true,
-      'perfTime:serviceWorkerCacheEnabled': perfTimes.serviceWorkerCacheEnabled,
       'perfTime:url': perfTimes.url
     }, perfProps)
     return perfProps

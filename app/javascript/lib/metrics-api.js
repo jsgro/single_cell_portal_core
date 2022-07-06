@@ -40,6 +40,7 @@ let bardDomain = ''
 const scpContext = getSCPContext()
 const env = scpContext.environment
 const version = scpContext.version
+const isServiceWorkerCacheEnabled = scpContext.isServiceWorkerCacheEnabled
 let userId = ''
 let registeredForTerra = false
 
@@ -351,7 +352,8 @@ export function log(name, props = {}) {
     appFullPath: getAppFullPath(),
     env,
     logger: 'app-frontend',
-    scpVersion: version
+    scpVersion: version,
+    isServiceWorkerCacheEnabled
   }, getDefaultProperties())
 
   const tab = getTabProperty()
