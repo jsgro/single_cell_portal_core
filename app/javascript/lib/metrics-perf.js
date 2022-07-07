@@ -10,7 +10,9 @@ import { log } from './metrics-api'
 // entries can be low enough by default to cause some entries to be
 // dropped and thus unavailable for measurement for the various `perfTime`
 // analytics properties used to assess optimization impact.
-performance.setResourceTimingBufferSize(500)
+if (performance.setResourceTimingBufferSize) {
+  performance.setResourceTimingBufferSize(500)
+}
 
 /** Client device memory, # CPUs, and Internet connection speed. */
 export const hardwareStats = getHardwareStats()
