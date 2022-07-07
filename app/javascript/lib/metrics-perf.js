@@ -7,9 +7,9 @@ import { getTTFB, getFCP, getLCP, getFID, getCLS } from 'web-vitals'
 import { log } from './metrics-api'
 
 // Ensure we get perfTime metrics.  The number of `performance` browser API
-// entries is rather low, but default (e.g. ~45), which causes some to be
-// dropped and thus unavailable for measurement via the various `perfTime`
-// entries.
+// entries can be low enough by default to cause some entries to be
+// dropped and thus unavailable for measurement for the various `perfTime`
+// analytics properties used to assess optimization impact.
 performance.setResourceTimingBufferSize(500)
 
 /** Client device memory, # CPUs, and Internet connection speed. */
