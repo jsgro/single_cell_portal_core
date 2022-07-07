@@ -35,6 +35,7 @@ class DeleteQueueJob < Struct.new(:object)
           study.save
         end
         cluster = ClusterGroup.find_by(study_file_id: object.id, study_id: study.id)
+        delete_differential_expression_results(study: study, study_file: object)
         delete_parsed_data(object.id, study.id, ClusterGroup)
         delete_parsed_data(object.id, study.id, DataArray)
         if cluster.present?
@@ -50,8 +51,10 @@ class DeleteQueueJob < Struct.new(:object)
         remove_file_from_bundle
       when 'Expression Matrix'
         delete_parsed_data(object.id, study.id, Gene, DataArray)
+        delete_differential_expression_results(study: study, study_file: object)
         study.set_gene_count
       when 'MM Coordinate Matrix'
+        delete_differential_expression_results(study: study, study_file: object)
         delete_parsed_data(object.id, study.id, Gene, DataArray)
         study.set_gene_count
       when /10X/
@@ -76,7 +79,7 @@ class DeleteQueueJob < Struct.new(:object)
         ClusterGroup.where(study_id: study.id).each do |cluster_group|
           delete_subsampled_data(cluster_group)
         end
-
+        delete_differential_expression_results(study: study, study_file: object)
         delete_parsed_data(object.id, study.id, CellMetadatum, DataArray)
         study.update(cell_count: 0)
         # unset default annotation if it was study-based
@@ -171,5 +174,21 @@ class DeleteQueueJob < Struct.new(:object)
       bq_dataset.query "DELETE FROM #{CellMetadatum::BIGQUERY_TABLE} WHERE study_accession = '#{study.accession}' AND file_id = '#{metadata_file.id}'"
       SearchFacet.delay.update_all_facet_filters
     end
+  end
+
+  # remove DE outputs when deleting study files
+  # will remove corresponding outputs depending on file type
+  def delete_differential_expression_results(study:, study_file:)
+    case study_file.file_type
+    when 'Metadata'
+      results = DifferentialExpressionResult.where(study: study, annotation_scope: 'study')
+    when 'Cluster'
+      cluster = ClusterGroup.find_by(study: study, study_file: study_file)
+      results = DifferentialExpressionResult.where(study: study, cluster_group: cluster)
+    when 'Expression Matrix', 'MM Coordinate Matrix'
+      results = DifferentialExpressionResult.where(study: study, matrix_file_id: study_file.id)
+    end
+    # extract results to Array to prevent open DB cursor from hanging and timing out as files are deleted in bucket
+    results.to_a.each(&:destroy)
   end
 end
