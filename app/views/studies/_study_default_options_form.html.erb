@@ -81,8 +81,8 @@
     <% if @study.has_gene_lists? %>
       <div class="form-group row">
         <div class="col-sm-12">
-          <%= opts.label :precomputed_heatmap_label, 'Precomputed heatmap menu label' %>&nbsp;<span class="fas fa-question-circle" data-toggle="tooltip" data-placement="right" title='This is displayed above the list of uploaded precomputed heatmaps.'></span> <br />
-          <%= opts.text_field :precomputed_heatmap_label, value: @study.default_options[:precomputed_heatmap_label], placeholder: 'Precomputed heatmaps', class: 'form-control' %>
+          <%= f.label :precomputed_heatmap_label, 'Precomputed heatmap menu label' %>&nbsp;<span class="fas fa-question-circle" data-toggle="tooltip" data-placement="right" title='This is displayed above the list of uploaded precomputed heatmaps.'></span> <br />
+          <%= f.text_field :precomputed_heatmap_label, value: @study.default_options[:precomputed_heatmap_label], placeholder: 'Precomputed heatmaps', class: 'form-control' %>
         </div>
       </div>
     <% end %>

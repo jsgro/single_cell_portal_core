@@ -492,9 +492,15 @@ class IngestJob
     annotation_identifier = "#{params_object.annotation_name}--group--#{params_object.annotation_scope}"
     Rails.logger.info "Creating differential expression results objects for annotation: #{annotation_identifier}"
     cluster = ClusterGroup.find_by(study_id: study.id, study_file_id: study_file.id)
+    matrix_url = params_object.matrix_file_path
+    matrix_filename = matrix_url.split("gs://#{study.bucket_id}/").last
+    matrix_file = StudyFile.where(study: study, 'expression_file_info.is_raw_counts' => true).any_of(
+      { upload_file_name: matrix_filename }, { remote_location: matrix_filename }
+    ).first
     de_result = DifferentialExpressionResult.new(
       study: study, cluster_group: cluster, cluster_name: cluster.name,
-      annotation_name: params_object.annotation_name, annotation_scope: params_object.annotation_scope
+      annotation_name: params_object.annotation_name, annotation_scope: params_object.annotation_scope,
+      matrix_file_id: matrix_file.id
     )
     de_result.save
   end
@@ -629,7 +635,7 @@ class IngestJob
       annotation_params = {
         cluster: cluster,
         annot_name: params_object.annotation_name,
-        annot_type: params_object.annotation_type,
+        annot_type: 'group',
         annot_scope: params_object.annotation_scope
       }
       annotation = AnnotationVizService.get_selected_annotation(study, **annotation_params)

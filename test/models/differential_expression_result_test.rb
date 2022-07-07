@@ -4,11 +4,10 @@ class DifferentialExpressionResultTest  < ActiveSupport::TestCase
 
   before(:all) do
     @user = FactoryBot.create(:user, test_array: @@users_to_clean)
-    @study = FactoryBot.create(:detached_study,
-                                     name_prefix: 'DifferentialExpressionResult Test',
-                                     user: @user,
-                                     test_array: @@studies_to_clean)
-
+    @study = FactoryBot.create(:study,
+                               name_prefix: 'DifferentialExpressionResult Test',
+                               user: @user,
+                               test_array: @@studies_to_clean)
     @cells = %w[A B C D E F G]
     @coordinates = 1.upto(7).to_a
     @species = %w[dog cat dog dog cat cat cat]
@@ -30,31 +29,42 @@ class DifferentialExpressionResultTest  < ActiveSupport::TestCase
                                       cell_input: {
                                         x: @coordinates,
                                         y: @coordinates,
-                                        cells: @cells,
+                                        cells: @cells
                                       },
                                       annotation_input: [
-                                        { name: 'disease', type: 'group', values: @diseases }
+                                        { name: 'disease', type: 'group', values: @diseases },
+                                        { name: 'sub-cluster', type: 'group', values: %w[1 1 1 2 2 2 2] }
                                       ])
     @cluster_group = ClusterGroup.find_by(study: @study, study_file: @cluster_file)
 
-    FactoryBot.create(:metadata_file,
-                      name: 'metadata.txt',
-                      study: @study,
-                      cell_input: @cells,
-                      annotation_input: [
-                        { name: 'species', type: 'group', values: @species },
-                        { name: 'library_preparation_protocol', type: 'group', values: @library_preparation_protocol }
-                      ])
+    @metadata_file = FactoryBot.create(:metadata_file,
+                                       name: 'metadata.txt',
+                                       study: @study,
+                                       cell_input: @cells,
+                                       annotation_input: [
+                                         { name: 'species', type: 'group', values: @species },
+                                         {
+                                           name: 'library_preparation_protocol',
+                                           type: 'group',
+                                           values: @library_preparation_protocol
+                                         }
+                                       ])
 
     @species_result = DifferentialExpressionResult.create(
       study: @study, cluster_group: @cluster_file.cluster_groups.first, annotation_name: 'species',
-      annotation_scope: 'study'
+      annotation_scope: 'study', matrix_file_id: @raw_matrix.id
     )
 
     @disease_result = DifferentialExpressionResult.create(
       study: @study, cluster_group: @cluster_file.cluster_groups.first, annotation_name: 'disease',
-      annotation_scope: 'cluster'
+      annotation_scope: 'cluster', matrix_file_id: @raw_matrix.id
     )
+  end
+
+  after(:all) do
+    # prevent issues in CI re: Google::Cloud::PermissionDeniedError when study bucket is removed before DB cleanup
+    DifferentialExpressionResult.delete_all
+    @study.reload
   end
 
   test 'should validate DE results and set observed values' do
@@ -68,7 +78,7 @@ class DifferentialExpressionResultTest  < ActiveSupport::TestCase
 
     library_result = DifferentialExpressionResult.new(
       study: @study, cluster_group: @cluster_group, annotation_name: 'library_preparation_protocol',
-      annotation_scope: 'study'
+      annotation_scope: 'study', matrix_file_id: @raw_matrix.id
     )
 
     assert_not library_result.valid?
@@ -111,5 +121,33 @@ class DifferentialExpressionResultTest  < ActiveSupport::TestCase
 
     assert_equal species_opts.to_a, @species_result.select_options
     assert_equal disease_opts.to_a, @disease_result.select_options
+  end
+
+  test 'should return associated files' do
+    assert_equal @raw_matrix, @species_result.matrix_file
+    assert_equal @metadata_file, @species_result.annotation_file
+    assert_equal @cluster_file, @species_result.cluster_file
+  end
+
+  test 'should clean up files on destroy' do
+    sub_cluster = DifferentialExpressionResult.create(
+      study: @study, cluster_group: @cluster_file.cluster_groups.first, annotation_name: 'sub-cluster',
+      annotation_scope: 'cluster', matrix_file_id: @raw_matrix.id
+    )
+    assert sub_cluster.present?
+    mock = Minitest::Mock.new
+    sub_cluster.bucket_files.each do |file|
+      file_mock = Minitest::Mock.new
+      file_mock.expect :present?, true
+      file_mock.expect :delete, true
+      mock.expect :get_workspace_file, file_mock, [@study.bucket_id, file]
+    end
+    ApplicationController.stub :firecloud_client, mock do
+      sub_cluster.destroy
+      mock.verify
+      assert_not DifferentialExpressionResult.where(study: @study, cluster_group: @cluster_file.cluster_groups.first,
+                                                    annotation_name: 'sub-cluster', annotation_scope: 'cluster',
+                                                    matrix_file_id: @raw_matrix.id).exists?
+    end
   end
 end

@@ -44,7 +44,6 @@ class DifferentialExpressionServiceTest < ActiveSupport::TestCase
                       ])
     @job_params = {
       annotation_name: 'species',
-      annotation_type: 'group',
       annotation_scope: 'study'
     }
     @basic_study.update(initialized: true)
@@ -65,7 +64,7 @@ class DifferentialExpressionServiceTest < ActiveSupport::TestCase
     # should fail on annotation missing
     assert_raise ArgumentError do
       DifferentialExpressionService.run_differential_expression_job(
-        @cluster_file, @basic_study, @user, annotation_name: 'NA', annotation_type: 'group', annotation_scope: 'study'
+        @cluster_file, @basic_study, @user, annotation_name: 'NA', annotation_scope: 'study'
       )
     end
 
@@ -145,7 +144,6 @@ class DifferentialExpressionServiceTest < ActiveSupport::TestCase
                       ])
     annotation = {
       annotation_name: 'species',
-      annotation_type: 'group',
       annotation_scope: 'study'
     }
 
