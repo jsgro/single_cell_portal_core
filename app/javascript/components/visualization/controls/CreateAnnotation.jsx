@@ -57,6 +57,7 @@ function CreateAnnotation({
   function handleCancel() {
     setUserLabels([])
     setAnnotationName('')
+    handlePanelToggle()
   }
 
   /** renders an appropriate modal and updates the cluster params with the response from the server */
@@ -173,23 +174,12 @@ function CreateAnnotation({
     setPlotlyTarget(target)
   }, [currentPointsSelected])
 
-  let createButton = (<button className="action"
-    data-analytics-name="toggle-create-annotation"
-    onClick={handlePanelToggle}>
-    <FontAwesomeIcon icon={showControl ? faMinus : faPlus}/> &nbsp;
-  </button>)
-  if (!isUserLoggedIn()) {
-    createButton = <button className="action"
-      data-analytics-name="toggle-create-annotation-signedout"
-      data-toggle="tooltip"
-      title="You must sign in to create custom annotations">
-      <FontAwesomeIcon icon={faPlus}/> &nbsp;
-    </button>
-  }
 
   return (
     <div className="create-annotation-control">
-      {createButton }
+      {!isLoading && !isUserLoggedIn() && <CreateAnnotationButton/>}
+      {!isLoading && isUserLoggedIn() && <CreateAnnotationButton expanded={showControl} onClick={handlePanelToggle} />}
+
       <Panel className="create-annotation" expanded={showControl} onToggle={handlePanelToggle}>
         <Panel.Collapse>
           <Panel.Body>
@@ -351,4 +341,30 @@ function validationMessages(userLabels, annotationName, annotations) {
     msgs.push(`${annotationName} already exists. Select a different name.`)
   }
   return msgs
+}
+
+/** Component for the button for creating an annotiation  */
+function CreateAnnotationButton({ expanded = false, ...props }) {
+  const iconShape = expanded ? faMinus :faPlus
+  const buttonClass = expanded ? 'action-minus' : 'action-plus'
+
+  const toolTipchoice = () => {
+    if (!isUserLoggedIn()) {
+      return 'You must sign in to create custom annotations'
+    } else {
+      if (expanded) {
+        return 'Explore existing annotations'
+      } else {
+        return 'Create custom annotations'
+      }
+    }
+  }
+
+  return <button className = {buttonClass}
+    data-analytics-name = {!isUserLoggedIn() ? 'toggle-create-annotation-signedout' :'toggle-create-annotation'}
+    data-toggle="tooltip"
+    data-original-title = {toolTipchoice()} // necessary to dynamically update the tooltip text
+    {...props}>
+    <FontAwesomeIcon icon={iconShape}/> &nbsp;
+  </button>
 }

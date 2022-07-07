@@ -493,23 +493,25 @@ export default function ExploreDisplayTabs({
                   spatialGroups={exploreParamsWithDefaults.spatialGroups}
                   updateSpatialGroups={spatialGroups => updateClusterParams({ spatialGroups })}/>
                 }
-                <AnnotationSelector
-                  annotationList={annotationList}
-                  cluster={exploreParamsWithDefaults.cluster}
-                  annotation={exploreParamsWithDefaults.annotation}
-                  updateClusterParams={updateClusterParams}/>
-                { shownTab === 'scatter' && <CreateAnnotation
-                  isSelecting={isCellSelecting}
-                  setIsSelecting={setIsCellSelecting}
-                  annotationList={exploreInfo ? exploreInfo.annotationList : null}
-                  currentPointsSelected={currentPointsSelected}
-                  cluster={exploreParamsWithDefaults.cluster}
-                  annotation={exploreParamsWithDefaults.annotation}
-                  subsample={exploreParamsWithDefaults.subsample}
-                  updateClusterParams={updateClusterParams}
-                  setAnnotationList={setAnnotationList}
-                  studyAccession={studyAccession}/>
-                }
+                {/* <div > */}
+                  <AnnotationSelector
+                    annotationList={annotationList}
+                    cluster={exploreParamsWithDefaults.cluster}
+                    annotation={exploreParamsWithDefaults.annotation}
+                    updateClusterParams={updateClusterParams}/>
+                  { shownTab === 'scatter' && <CreateAnnotation
+                    isSelecting={isCellSelecting}
+                    setIsSelecting={setIsCellSelecting}
+                    annotationList={exploreInfo ? exploreInfo.annotationList : null}
+                    currentPointsSelected={currentPointsSelected}
+                    cluster={exploreParamsWithDefaults.cluster}
+                    annotation={exploreParamsWithDefaults.annotation}
+                    subsample={exploreParamsWithDefaults.subsample}
+                    updateClusterParams={updateClusterParams}
+                    setAnnotationList={setAnnotationList}
+                    studyAccession={studyAccession}/>
+                  }
+                {/* </div> */}
                 {isDifferentialExpressionEnabled &&
                 <>
                   <button
