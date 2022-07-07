@@ -6,6 +6,12 @@ import { getTTFB, getFCP, getLCP, getFID, getCLS } from 'web-vitals'
 
 import { log } from './metrics-api'
 
+// Ensure we get perfTime metrics.  The number of `performance` browser API
+// entries is rather low, but default (e.g. ~45), which causes some to be
+// dropped and thus unavailable for measurement via the various `perfTime`
+// entries.
+performance.setResourceTimingBufferSize(500)
+
 /** Client device memory, # CPUs, and Internet connection speed. */
 export const hardwareStats = getHardwareStats()
 /** we record the time taken by unexecuted steps as a very small negative number to make cumulative
@@ -183,7 +189,6 @@ export function calculatePerfTimes(perfTimes) {
   } else if (perfTimes.serviceWorkerCacheHit) {
     // Processing SCP's generic frontend service worker caching
 
-
     let rawPerfProps = {
       'perfTime:full': now - perfTimes.requestStart,
       'perfTime': now - perfTimes.requestStart,
@@ -221,9 +226,16 @@ export function calculatePerfTimes(perfTimes) {
 
   const plot = perfTimes.plot ? perfTimes.plot : 0
 
-  const perfEntry =
-    performance.getEntriesByType('resource')
-      .filter(entry => entry.name === perfTimes.url)[0]
+  let perfEntry = null
+  const resourcePerfEntries = performance.getEntriesByType('resource')
+  for (let i = 0; i < resourcePerfEntries.length; i++) {
+    const entry = resourcePerfEntries[i]
+    if (entry.name === perfTimes.url) {
+      perfEntry = entry
+      break
+    }
+  }
+
   if (!perfEntry) {
     return {}
   }
