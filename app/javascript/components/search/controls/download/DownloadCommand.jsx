@@ -10,7 +10,7 @@ const isWindows = clientOS.match(/Win/)
 
 /** component for rendering a copyable bulk download command for an array of file ids.
     Queries the server to retrieve the appropriate auth code. */
-export default function DownloadCommand({ fileIds=[], azulFiles }) {
+export default function DownloadCommand({ fileIds=[], azulFiles, totalSizeDisplay }) {
   const [isLoading, setIsLoading] = useState(true)
   const [authInfo, setAuthInfo] = useState({ authCode: null, timeInterval: 3000 })
   const [refreshNum, setRefreshNum] = useState(0)
@@ -79,6 +79,17 @@ export default function DownloadCommand({ fileIds=[], azulFiles }) {
         </div>
       </div>
     }
+    {totalSizeDisplay}
+
+    <div class="col-md-12 detail">
+      <br/><br/><br/>
+      <p> <b>Troubleshooting:</b> If the above command results in a curl error relating to certificates (common in hosted machines),
+         this may be caused by your machine not having a trust chain that includes the certificate from https://singlecell.broadinstitute.org.
+        <br/>You can solve the problem either by installing that certifcate onto the machine, or adding the "-k" option to the curl command, which skips certificate
+        validation.  e.g. `curl -k "https://singlecell...."`
+      </p>
+    
+    </div>
   </div>
 }
 

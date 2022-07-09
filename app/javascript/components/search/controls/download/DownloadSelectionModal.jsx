@@ -78,6 +78,11 @@ export default function DownloadSelectionModal({ studyAccessions, show, setShow 
     </button>
   }
 
+  const totalSizeDisplay = <div className="download-size-message">
+    <label htmlFor="download-size-amount">Total size</label>
+    <span data-testid="download-size-amount" id="download-size-amount">{prettyBytes}</span>
+  </div>
+
   return <Modal
     id='bulk-download-modal'
     className="full-height-modal"
@@ -129,18 +134,14 @@ export default function DownloadSelectionModal({ studyAccessions, show, setShow 
                   columnTypes={AZUL_COLUMNS}/>
               </div>
             }
+            {totalSizeDisplay}
           </div>
         }
         { stepNum === 2 && <DownloadCommand
           closeParent={() => setShow(false)}
           fileIds={selectedFileIds}
-          azulFiles={selectedAzulFiles}/> }
-        { !isLoading &&
-          <div className="download-size-message">
-            <label htmlFor="download-size-amount">Total size</label>
-            <span data-testid="download-size-amount" id="download-size-amount">{prettyBytes}</span>
-          </div>
-        }
+          azulFiles={selectedAzulFiles}
+          totalSizeDisplay={totalSizeDisplay}/> }
       </div>
     </Modal.Body>
     <Modal.Footer>
