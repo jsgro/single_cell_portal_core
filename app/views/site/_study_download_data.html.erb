@@ -15,7 +15,7 @@
             <h2 class="text-center">Bulk Download</h2>
           </div>
           <div class="modal-body">
-            <% if !@study.has_bucket_access?(current_user) %>
+            <% if @study.has_bucket_access?(current_user) %>
             <p class="lead">To download all files using <code>gsutil</code>, run the following command:</p>
             <pre>gsutil -m cp -r gs://<%= @study.bucket_id %> [target path]</pre>
               <% if @directories.any? %>
@@ -71,13 +71,6 @@
                   </thead>
                 </table>
               <% end %>
-             <br/><br/><br/>
-             <p class="detail">
-              <b>Troubleshooting:</b> If the above command results in a curl error relating to certificates (common in hosted machines),
-         this may be caused by your machine not having a trust chain that includes the certificate from https://singlecell.broadinstitute.org.
-        <br/>You can solve the problem either by installing that certifcate onto the machine, or adding the "-k" option to the curl command, which skips certificate
-        validation.  e.g. `curl -k "https://singlecell...."`
-              </p>
             <% else %>
               <%# The user is trying to download a public study that is currently embargoed. %>
               <p class="lead">No downloads are available to you for this study yet</p>
@@ -179,7 +172,8 @@
                   '</button>' +
                   '</span>' +
                   '</div>' +
-                  '<div style="font-size: 12px">Valid for one use within ' + countdownValue + ' minutes.  Paste into Mac/Linux/Unix terminal and execute to download.</div>'
+                  '<div style="font-size: 16px">Valid for one use within ' + countdownValue + ' minutes.  Paste into Mac/Linux/Unix terminal and execute to download.<br/><br/>' + 
+                  'If a certificate validation error occurs, adding the "-k" option will skip certificate validation.<br/>  e.g. `curl -k "https://singlecell...."`</div>'
               );
             }
           );
