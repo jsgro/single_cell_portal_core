@@ -18,10 +18,10 @@ import {
 import { logSearch, mapFiltersForLogging } from './search-metrics'
 import { showMessage } from '~/lib/MessageModal'
 import {
-  isServiceWorkerCacheEnabled, clearOldServiceWorkerCaches, fetchServiceWorkerCache
+  clearOldServiceWorkerCaches, fetchServiceWorkerCache
 } from './service-worker-cache'
+import { getSCPContext } from '~/providers/SCPContextProvider'
 import { STEP_NOT_NEEDED } from './metrics-perf'
-
 
 // On each page load, check for old SCP caches, delete any found
 clearOldServiceWorkerCaches()
@@ -795,11 +795,19 @@ export default async function scpApi(
 
   const perfTimeStart = performance.now()
 
+  const isServiceWorkerCacheEnabled = getSCPContext().isServiceWorkerCacheEnabled
+
+  console.log('isServiceWorkerCacheEnabled')
+  console.log(isServiceWorkerCacheEnabled)
+
   const perfTimes = {
     url,
     serviceWorkerCacheEnabled: isServiceWorkerCacheEnabled
   }
 
+
+  console.log('isServiceWorkerCacheEnabled')
+  console.log(isServiceWorkerCacheEnabled)
   let response
   let isServiceWorkerCacheHit = false
   let legacyBackendTime
@@ -821,7 +829,8 @@ export default async function scpApi(
   perfTimes.legacyBackend = legacyBackendTime
   perfTimes.serviceWorkerCacheHit = isServiceWorkerCacheHit
 
-  if (response.ok) {
+  // response = { ok: true }
+  if (response.ok && 1 == 1) {
     if (toJson && response.status !== 204) {
       const jsonPerfTimeStart = performance.now()
       const json = await response.json()
