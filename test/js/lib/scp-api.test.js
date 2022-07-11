@@ -1,8 +1,5 @@
 // Without disabling eslint code, Promises are auto inserted
 /* eslint-disable*/
-
-// const fetch = require('node-fetch')
-
 import CacheMock from 'browser-cache-mock';
 import 'isomorphic-fetch';
 
@@ -28,13 +25,6 @@ describe('JavaScript client for SCP REST API', () => {
         },
       },
     )
-
-    const cacheMock = new CacheMock();
-
-    window.caches =  {
-      open: async () => cacheMock,
-      ...cacheMock
-    };
 
     window.performance = Object.defineProperties(performance, {
       setResourceTimingBufferSize: {
@@ -107,6 +97,14 @@ describe('JavaScript client for SCP REST API', () => {
   })
 
   it('leverages service worker cache on fetch, if cache is enabled', async done => {
+
+    const cacheMock = new CacheMock()
+
+    window.caches = {
+      open: async () => cacheMock,
+      ...cacheMock
+    }
+
 
     console.debug = jest.fn();
 

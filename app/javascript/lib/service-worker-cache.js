@@ -40,7 +40,8 @@ export async function fetchServiceWorkerCache(url, init) {
  * total space available for SW cache.
  */
 export async function clearOldServiceWorkerCaches() {
-  if (typeof caches === 'undefined') {return} // Omit if SW cache unsupported, e.g. in tests
+  // Omit if SW cache unsupported, e.g. in tests.  Various mock attempts failed.
+  if (typeof caches === 'undefined') {return}
 
   const swCacheKeys = await caches.keys()
   swCacheKeys.forEach(thisKey => {
