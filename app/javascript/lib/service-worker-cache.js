@@ -19,13 +19,6 @@ const serviceWorkerCacheKey = `${serviceWorkerCacheKeyStem}-${version}`
  * TODO (SCP-4508): Account for same URL, different sign-in state in service worker cache
  */
 export async function fetchServiceWorkerCache(url, init) {
-  // if (typeof caches === 'undefined') return [{ok: true}, {}] // Omit if SW cache unsupported, e.g. in tests
-
-  console.log('url')
-  console.log(url)
-  console.log('init')
-  console.log(init)
-
   const swCache = await caches.open(serviceWorkerCacheKey)
   let response = await swCache.match(url)
   let hitOrMiss = 'hit'

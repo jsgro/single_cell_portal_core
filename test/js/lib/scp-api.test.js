@@ -17,23 +17,6 @@ describe('JavaScript client for SCP REST API', () => {
   delete window.location
 
   beforeAll(() => {
-//     console.log('ok')
-//     // mock the global fetch API
-// window.fetchResponseFactory = (url) => '<empty></empty>';
-// window.originalFetch = window.fetch;
-// window.mockFetch = jest.fn((url) =>
-//   Promise.resolve({
-//     text: () => Promise.resolve(globalThis.fetchResponseFactory(url)),
-//     arrayBuffer: () =>
-//       Promise.resolve(
-//         Buffer.from(globalThis.fetchResponseFactory(url), 'utf-8')
-//       ),
-//     status: 200,
-//     ok: true,
-//     headers: { get: () => null },
-//   })
-// );
-// window.fetch = window.mockFetch;
 
     window.location = Object.defineProperties(
       {},
@@ -54,63 +37,7 @@ describe('JavaScript client for SCP REST API', () => {
     };
 
     window.performance = Object.defineProperties(performance, {
-      timing: {
-          value: {
-              connectStart: now + 1,
-              connectEnd: now + 1,
-              domComplete: now + 100,
-              domContentLoadedEventEnd: now + 50,
-              domContentLoadedEventStart: now + 40,
-              domInteractive: now + 39,
-              domLoading: now + 10,
-              domainLookupStart: now + 1,
-              domainLookupEnd: now + 1,
-              fetchStart: now + 1,
-              loadEventEnd: now + 1000,
-              loadEventStart: now + 1000,
-              navigationStart: now,
-              redirectEnd: 0,
-              redirectStart: 0,
-              requestStart: now + 1,
-              responseStart: now + 2,
-              responseEnd: now + 30,
-              secureConnectionStart: 0,
-              unloadEventEnd: 0,
-              unloadEventStart: 0
-          },
-          writable: true
-      },
-      navigation: {
-          value: {
-              type: 0
-          },
-          writable: true
-      },
-      getEntries: {
-          value: () => {
-              return [];
-          },
-          writable: true
-      },
-      getEntriesByType: {
-          value: (type) => {
-              return performanceObj.filter(perf => {
-                  return perf.entryType === type;
-              });
-          },
-          writable: true
-      },
-      getEntriesByName: {
-          value: () => {
-              return [];
-          },
-          writable: true
-      },
       setResourceTimingBufferSize: {
-          value: jest.fn(),
-          writable: true
-      },
-      clearResourceTimings: {
           value: jest.fn(),
           writable: true
       }
@@ -179,17 +106,23 @@ describe('JavaScript client for SCP REST API', () => {
       })
   })
 
-  it('leverages service worker cache on fetch, if cache is enabled', () => {
+  it('leverages service worker cache on fetch, if cache is enabled', async done => {
 
+    console.debug = jest.fn();
+
+    // Spy on `fetch()` and its contingent methods like `json()`,
+    // because we want to intercept the outgoing request
     const mockSuccessResponse = {}
     const mockJsonPromise = Promise.resolve(mockSuccessResponse)
     const mockFetchPromise = Promise.resolve({
       ok: true,
       json: () => {
         mockJsonPromise
-      }
+      },
+      clone: () => {}
     })
     jest.spyOn(global, 'fetch').mockImplementation(() => mockFetchPromise)
+
 
     jest
       .spyOn(SCPContextProvider, 'getSCPContext')
@@ -198,15 +131,16 @@ describe('JavaScript client for SCP REST API', () => {
         version: '1.21.0'
       })
 
+    jest.spyOn(global, 'fetch').mockImplementation(() => mockFetchPromise)
+
     jest
       .spyOn(ServiceWorkerCache, 'fetchServiceWorkerCache')
-      // .mockReturnValue({})
 
     const type =  'study'
     const searchParams = {page: 1, terms: "", facets: {}}
-    fetchSearch(type, searchParams)
+    await fetchSearch(type, searchParams)
 
-    const url = 'https://localhost:3000/single_cell/api/v1/search?type=study&page=1'
+    const url = 'https://localhost:3000/mock_data/search?type=study&page=1.json'
     const init = {
       method: 'GET',
       headers: {
@@ -226,6 +160,7 @@ describe('JavaScript client for SCP REST API', () => {
       })
     )
 
+    done()
 })
 
 })

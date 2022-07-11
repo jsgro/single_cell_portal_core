@@ -797,17 +797,11 @@ export default async function scpApi(
 
   const isServiceWorkerCacheEnabled = getSCPContext().isServiceWorkerCacheEnabled
 
-  console.log('isServiceWorkerCacheEnabled')
-  console.log(isServiceWorkerCacheEnabled)
-
   const perfTimes = {
     url,
     serviceWorkerCacheEnabled: isServiceWorkerCacheEnabled
   }
 
-
-  console.log('isServiceWorkerCacheEnabled')
-  console.log(isServiceWorkerCacheEnabled)
   let response
   let isServiceWorkerCacheHit = false
   let legacyBackendTime
