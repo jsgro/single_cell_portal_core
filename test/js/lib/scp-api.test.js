@@ -28,14 +28,12 @@ describe('JavaScript client for SCP REST API', () => {
 
     window.performance = Object.defineProperties(performance, {
       setResourceTimingBufferSize: {
-          value: jest.fn(),
-          writable: true
+        value: jest.fn(),
+        writable: true
       }
     })
 
   })
-
-
 
   // Note: tests that mock global.fetch must be cleared after every test
   afterEach(() => {
@@ -99,12 +97,10 @@ describe('JavaScript client for SCP REST API', () => {
   it('leverages service worker cache on fetch, if cache is enabled', async done => {
 
     const cacheMock = new CacheMock()
-
     window.caches = {
       open: async () => cacheMock,
       ...cacheMock
     }
-
 
     console.debug = jest.fn();
 
@@ -120,7 +116,6 @@ describe('JavaScript client for SCP REST API', () => {
       clone: () => {}
     })
     jest.spyOn(global, 'fetch').mockImplementation(() => mockFetchPromise)
-
 
     jest
       .spyOn(SCPContextProvider, 'getSCPContext')
@@ -139,13 +134,6 @@ describe('JavaScript client for SCP REST API', () => {
     await fetchSearch(type, searchParams)
 
     const url = 'https://localhost:3000/mock_data/search?type=study&page=1.json'
-    const init = {
-      method: 'GET',
-      headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-      }
-    }
     expect(ServiceWorkerCache.fetchServiceWorkerCache).toHaveBeenCalledWith(
       url,
       expect.objectContaining({

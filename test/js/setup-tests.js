@@ -13,8 +13,6 @@ setMockOrigin('https://localhost:3000')
 // convert scrolls to no-ops as otherwise they will error
 global.scrollTo = jest.fn()
 
-global.performance = require('perf_hooks').performance
-
 // Needed for tests that import Plotly
 window.URL.createObjectURL = function() {}
 window.HTMLCanvasElement.prototype.getContext = () => {}
