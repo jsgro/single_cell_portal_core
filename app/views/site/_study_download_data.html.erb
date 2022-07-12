@@ -71,7 +71,6 @@
                   </thead>
                 </table>
               <% end %>
-
             <% else %>
               <%# The user is trying to download a public study that is currently embargoed. %>
               <p class="lead">No downloads are available to you for this study yet</p>
@@ -173,7 +172,8 @@
                   '</button>' +
                   '</span>' +
                   '</div>' +
-                  '<div style="font-size: 12px">Valid for one use within ' + countdownValue + ' minutes.  Paste into Mac/Linux/Unix terminal and execute to download.</div>'
+                  '<div style="font-size: 16px">Valid for one use within ' + countdownValue + ' minutes.  Paste into Mac/Linux/Unix terminal and execute to download.<br/><br/>' + 
+                  'If a certificate validation error occurs, adding the "-k" option will skip certificate validation.<br/>  e.g. `curl -k "https://singlecell...."`</div>'
               );
             }
           );
