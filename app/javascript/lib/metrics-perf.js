@@ -307,9 +307,6 @@ export function calculatePerfTimes(perfTimes) {
   compressionRatio = Math.round((compressionRatio + Number.EPSILON) * 100) / 100
   perfProps['perfTime:data:compression-ratio'] = compressionRatio // Relative amount compressed
 
-
-  perfProps['perfTime:serviceWorkerCacheEnabled'] = perfTimes?.serviceWorkerCacheEnabled
-
   perfProps['perfTime:url'] = perfTimes.url
 
   return perfProps

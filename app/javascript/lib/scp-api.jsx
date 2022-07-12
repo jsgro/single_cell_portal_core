@@ -823,8 +823,7 @@ export default async function scpApi(
   perfTimes.legacyBackend = legacyBackendTime
   perfTimes.serviceWorkerCacheHit = isServiceWorkerCacheHit
 
-  // response = { ok: true }
-  if (response.ok && 1 == 1) {
+  if (response.ok) {
     if (toJson && response.status !== 204) {
       const jsonPerfTimeStart = performance.now()
       const json = await response.json()
