@@ -17,10 +17,10 @@ describe('it allows uploading of expression matrices', () => {
     jest.setTimeout(10000)
 
     jest
-    .spyOn(UserProvider, 'getFeatureFlagsWithDefaults')
-    .mockReturnValue({
-      clientside_validation: true
-    })
+      .spyOn(UserProvider, 'getFeatureFlagsWithDefaults')
+      .mockReturnValue({
+        clientside_validation: true
+      })
   })
 
   it('uploads a raw counts mtx file', async () => {
