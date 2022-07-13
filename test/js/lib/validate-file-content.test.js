@@ -7,17 +7,23 @@ import { REQUIRED_CONVENTION_COLUMNS } from 'lib/validation/validate-file-conten
 import { getLogProps } from 'lib/validation/log-validation'
 import ValidationMessage from 'components/validation/ValidationMessage'
 import * as MetricsApi from 'lib/metrics-api'
+import * as UserProvider from '~/providers/UserProvider'
 
 import { createMockFile } from './file-mock-utils'
 
 const validateLocalFile = ValidateFile.validateLocalFile
 
 describe('Client-side file validation', () => {
+  jest
+    .spyOn(UserProvider, 'getFeatureFlagsWithDefaults')
+    .mockReturnValue({
+      clientside_validation: true
+    })
+
   it('catches and logs errors in files', async () => {
     const file = createMockFile({ fileName: 'metadata_bad_type_header.txt' })
 
     const fileType = 'Metadata'
-
     const fakeLog = jest.spyOn(MetricsApi, 'log')
     fakeLog.mockImplementation(() => { })
 

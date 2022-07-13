@@ -9,7 +9,10 @@ import {
   RAW_COUNTS_FILE, PROCESSED_MATRIX_FILE, METADATA_FILE,
   CLUSTER_FILE, COORDINATE_LABEL_FILE, FASTQ_FILE
 } from './file-info-responses'
-import { renderWizardWithStudy, getSelectByLabelText, saveButton, mockCreateStudyFile } from './upload-wizard-test-utils'
+import {
+  renderWizardWithStudy, getSelectByLabelText, saveButton, mockCreateStudyFile
+} from './upload-wizard-test-utils'
+import * as UserProvider from '~/providers/UserProvider'
 
 const processedFileName = 'example_processed_dense.txt'
 const rawCountsFileName = 'example_raw_counts.txt'
@@ -29,8 +32,12 @@ describe('creation of study files', () => {
 
   it('allows upload of all common file types in sequence', async () => {
     const createFileSpy = jest.spyOn(ScpApi, 'createStudyFile')
-
-    await renderWizardWithStudy({ featureFlags: { raw_counts_required_frontend: true } })
+    jest
+      .spyOn(UserProvider, 'getFeatureFlagsWithDefaults')
+      .mockReturnValue({
+        clientside_validation: true
+      })
+    await renderWizardWithStudy({ featureFlags: { raw_counts_required_frontend: true, clientside_validation: true } })
     expect(screen.getByText('View study')).toHaveProperty('href', 'http://localhost/single_cell/study/SCP1')
 
     await testRawCountsUpload({ createFileSpy })
