@@ -159,71 +159,43 @@ function roundValues(props) {
 
 /** Account for frontend caches, e.g. plot data cache, service worker cache */
 function accountForCache(perfTimes, now) {
-  let perfProps = null
+  if (!perfTimes.isClientCache && !perfTimes.serviceWorkerCacheHit) {
+    return null
+  }
 
-  if (perfTimes.isClientCache) {
-    // Processing SCP's custom client-side plot caching
+  const isPlotDataCache = perfTimes.isClientCache
 
-    const rawPerfProps = {
-      'perfTime:full': now - perfTimes.requestStart,
-      'perfTime': now - perfTimes.requestStart,
-      'perfTime:legacy': now - perfTimes.requestStart,
+  let rawPerfProps = {
+    'perfTime:full': now - perfTimes.requestStart,
+    'perfTime': now - perfTimes.requestStart,
+    'perfTime:legacy': now - perfTimes.requestStart,
 
-      // Server timing
-      'perfTime:backend': STEP_NOT_NEEDED,
+    // Server timing
+    'perfTime:backend': STEP_NOT_NEEDED,
 
-      // Client timing
-      'perfTime:frontend': now - perfTimes.requestStart, // Time from API call response start to effect (e.g. plot) end
-      'perfTime:frontend:transfer': STEP_NOT_NEEDED,
-      'perfTime:frontend:parse': STEP_NOT_NEEDED,
-      // note that 'other' here is very likely to include the rendering of a different plot.
-      // if a plot is fully cached, that usually means two plots were requested, one of which is a subset of the other
-      // so, e.g. the cluster plot will wait until after the expression data is fetched, and then render itself
-      // based on a subset of that data
+    // Client timing
+    'perfTime:frontend': now - perfTimes.requestStart, // Time from API call response start to effect (e.g. plot) end
+    'perfTime:frontend:transfer': STEP_NOT_NEEDED
+  }
+
+  if ('plot' in perfTimes) {
+    rawPerfProps = Object.assign({
+    // note that 'other' here is very likely to include the rendering of a different plot.
+    // if a plot is fully cached, that usually means two plots were requested, one of which is a subset of the other
+    // so, e.g. the cluster plot will wait until after the expression data is fetched, and then render itself
+    // based on a subset of that data
       'perfTime:frontend:other': now - perfTimes.requestStart - perfTimes.plot,
       'perfTime:frontend:plot': perfTimes.plot
-    }
-    perfProps = roundValues(Object.assign({}, rawPerfProps))
-    perfProps['perfTime:url'] = perfTimes.url
+    }, rawPerfProps)
+  }
 
-    perfProps['perfTime:cache'] = 'client-plot-data'
-    return perfProps
-  } else if (perfTimes.serviceWorkerCacheHit) {
-    // Processing SCP's generic frontend service worker caching
+  const perfProps = roundValues(Object.assign({}, rawPerfProps))
 
-    let rawPerfProps = {
-      'perfTime:full': now - perfTimes.requestStart,
-      'perfTime': now - perfTimes.requestStart,
-      'perfTime:legacy': now - perfTimes.requestStart,
-
-      // Server timing
-      'perfTime:backend': STEP_NOT_NEEDED,
-
-      // Client timing
-      'perfTime:frontend': now - perfTimes.requestStart, // Time from API call response start to effect (e.g. plot) end
-      'perfTime:frontend:transfer': STEP_NOT_NEEDED,
-      'perfTime:frontend:parse': perfTimes.parse
-    }
-
-    if ('plot' in perfTimes) {
-      rawPerfProps = Object.assign({
-      // note that 'other' here is very likely to include the rendering of a different plot.
-      // if a plot is fully cached, that usually means two plots were requested, one of which is a subset of the other
-      // so, e.g. the cluster plot will wait until after the expression data is fetched, and then render itself
-      // based on a subset of that data
-        'perfTime:frontend:other': now - perfTimes.requestStart - perfTimes.plot,
-        'perfTime:frontend:plot': perfTimes.plot
-      }, rawPerfProps)
-    }
-
-    let perfProps = roundValues(Object.assign({}, rawPerfProps))
-
-    perfProps = Object.assign({
-      'perfTime:cache': 'service-worker',
-      'perfTime:serviceWorkerCacheHit': true,
-      'perfTime:url': perfTimes.url
-    }, perfProps)
-    return perfProps
+  const cacheType = isPlotDataCache ? 'client-plot-data' : 'service-worker'
+  perfProps['perfTime:cache'] = cacheType
+  perfProps['perfTime:url'] = perfTimes.url
+  if (perfTimes.serviceWorkerCacheHit) {
+    perfProps['perfTime:serviceWorkerCacheHit'] = true
   }
 
   return perfProps
