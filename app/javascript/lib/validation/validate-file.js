@@ -53,7 +53,7 @@ async function validateLocalFile(file, studyFile, allStudyFiles=[], allowedFileE
 
   // if clientside file validation feature flag is false skip validation
   const flags = getFeatureFlagsWithDefaults()
-  if (clientside_validation in flags && !flags.clientside_validation) {
+  if (flags && flags.clientside_validation === false ) {
     const issues = formatIssues([])
     return issues
   }

@@ -5,7 +5,6 @@ import '@testing-library/jest-dom/extend-expect'
 import { StudyContext } from 'components/upload/upload-utils'
 import FileUploadControl from 'components/upload/FileUploadControl'
 import { fireFileSelectionEvent } from '../lib/file-mock-utils'
-import * as UserProvider from '~/providers/UserProvider'
 
 describe('file upload control defaults the name of the file', () => {
   afterEach(() => {
@@ -13,13 +12,6 @@ describe('file upload control defaults the name of the file', () => {
     jest.restoreAllMocks()
   })
 
-  beforeEach(
-    jest
-      .spyOn(UserProvider, 'getFeatureFlagsWithDefaults')
-      .mockReturnValue({
-        clientside_validation: true
-      })
-  )
 
   it('updates the name of the selected file', async () => {
     const file = {
@@ -67,11 +59,7 @@ it('updates the file upload name but preserves custom name', async () => {
   }
   const updateFileHolder = { updateFile: () => {} }
   const updateFileSpy = jest.spyOn(updateFileHolder, 'updateFile')
-  jest
-    .spyOn(UserProvider, 'getFeatureFlagsWithDefaults')
-    .mockReturnValue({
-      clientside_validation: true
-    })
+
   render(
     <StudyContext.Provider value={{ accession: 'SCP123' }}>
       <FileUploadControl
@@ -99,15 +87,6 @@ it('updates the file upload name but preserves custom name', async () => {
 })
 
 describe('file upload control validates the selected file', () => {
-  beforeEach(
-    jest
-      .spyOn(UserProvider, 'getFeatureFlagsWithDefaults')
-      .mockReturnValue({
-        clientside_validation: true
-      })
-  )
-
-
   it('validates the extension', async () => {
     const file = {
       _id: '123',

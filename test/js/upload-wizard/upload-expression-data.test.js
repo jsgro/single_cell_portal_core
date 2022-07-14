@@ -9,18 +9,11 @@ import {
 import { fireFileSelectionEvent } from '../lib/file-mock-utils'
 
 import { renderWizardWithStudy, getSelectByLabelText, mockCreateStudyFile } from './upload-wizard-test-utils'
-import * as UserProvider from '~/providers/UserProvider'
 
 describe('it allows uploading of expression matrices', () => {
   beforeAll(() => {
     jest.restoreAllMocks()
     jest.setTimeout(10000)
-
-    jest
-      .spyOn(UserProvider, 'getFeatureFlagsWithDefaults')
-      .mockReturnValue({
-        clientside_validation: true
-      })
   })
 
   it('uploads a raw counts mtx file', async () => {
