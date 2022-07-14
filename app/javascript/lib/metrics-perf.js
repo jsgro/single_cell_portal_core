@@ -157,9 +157,9 @@ function roundValues(props) {
   return props
 }
 
-/** Calculates generic performance timing metrics for API calls */
-export function calculatePerfTimes(perfTimes) {
-  const now = performance.now()
+/** Account for frontend caches, e.g. plot data cache, service worker cache */
+function accountForCache(perfTimes, now) {
+  let perfProps = null
 
   if (perfTimes.isClientCache) {
     // Processing SCP's custom client-side plot caching
@@ -183,7 +183,7 @@ export function calculatePerfTimes(perfTimes) {
       'perfTime:frontend:other': now - perfTimes.requestStart - perfTimes.plot,
       'perfTime:frontend:plot': perfTimes.plot
     }
-    const perfProps = roundValues(Object.assign({}, rawPerfProps))
+    perfProps = roundValues(Object.assign({}, rawPerfProps))
     perfProps['perfTime:url'] = perfTimes.url
 
     perfProps['perfTime:cache'] = 'client-plot-data'
@@ -224,6 +224,18 @@ export function calculatePerfTimes(perfTimes) {
       'perfTime:url': perfTimes.url
     }, perfProps)
     return perfProps
+  }
+
+  return perfProps
+}
+
+/** Calculates generic performance timing metrics for API calls */
+export function calculatePerfTimes(perfTimes) {
+  const now = performance.now()
+
+  const cachedPerfTimes = accountForCache(perfTimes, now)
+  if (cachedPerfTimes !== null) {
+    return cachedPerfTimes
   }
 
   const plot = perfTimes.plot ? perfTimes.plot : 0
