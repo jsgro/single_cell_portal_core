@@ -21,14 +21,14 @@ const serviceWorkerCacheKey = `${serviceWorkerCacheKeyStem}-${version}`
 export async function fetchServiceWorkerCache(url, init) {
   const swCache = await caches.open(serviceWorkerCacheKey)
   let response = await swCache.match(url)
-  let hitOrMiss = 'hit'
+  let isHit = true
   if (typeof response === 'undefined') {
     response = await fetch(url, init).catch(error => error)
     await swCache.put(url, response.clone())
-    hitOrMiss = 'miss'
+    isHit = false
   }
+  const hitOrMiss = isHit ? 'hit' : 'miss'
   console.debug(`Service worker cache ${hitOrMiss} for SCP API fetch of URL: ${url}`)
-  const isHit = (hitOrMiss === 'hit')
   return [response, isHit]
 }
 
