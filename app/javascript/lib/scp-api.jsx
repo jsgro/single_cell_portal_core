@@ -17,14 +17,9 @@ import {
 } from './scp-api-metrics'
 import { logSearch, mapFiltersForLogging } from './search-metrics'
 import { showMessage } from '~/lib/MessageModal'
-import {
-  clearOldServiceWorkerCaches, fetchServiceWorkerCache
-} from './service-worker-cache'
+import { fetchServiceWorkerCache } from './service-worker-cache'
 import { getSCPContext } from '~/providers/SCPContextProvider'
 import { STEP_NOT_NEEDED } from './metrics-perf'
-
-// On each page load, check for old SCP caches, delete any found
-clearOldServiceWorkerCaches()
 
 // If true, returns mock data for all API responses.  Only for dev.
 let globalMock = false
@@ -758,7 +753,6 @@ export async function fetchStudyUsage(studyAccession, mock=false) {
   const [usageInfo] = await scpApi(`/studies/${studyAccession}/usage_stats`, defaultInit(), mock)
   return usageInfo
 }
-
 
 /** returns the current branding group as specified by the url  */
 export function getBrandingGroup() {
