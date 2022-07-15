@@ -7,17 +7,23 @@ import { REQUIRED_CONVENTION_COLUMNS } from 'lib/validation/validate-file-conten
 import { getLogProps } from 'lib/validation/log-validation'
 import ValidationMessage from 'components/validation/ValidationMessage'
 import * as MetricsApi from 'lib/metrics-api'
+import * as UserProvider from '~/providers/UserProvider'
 
 import { createMockFile } from './file-mock-utils'
 
 const validateLocalFile = ValidateFile.validateLocalFile
 
 describe('Client-side file validation', () => {
+  jest
+    .spyOn(UserProvider, 'getFeatureFlagsWithDefaults')
+    .mockReturnValue({
+      clientside_validation: true
+    })
+
   it('catches and logs errors in files', async () => {
     const file = createMockFile({ fileName: 'metadata_bad_type_header.txt' })
 
     const fileType = 'Metadata'
-
     const fakeLog = jest.spyOn(MetricsApi, 'log')
     fakeLog.mockImplementation(() => { })
 
@@ -415,3 +421,60 @@ describe('Client-side file validation', () => {
     expect(displayedWarning).toHaveTextContent(issues.warnings[0][2])
   })
 })
+
+// With the client side file validation feature flag set to false expect invalid files to pass
+describe('Client-side file validation feature flag is false', () => {
+  beforeEach(() => {
+    jest
+      .spyOn(UserProvider, 'getFeatureFlagsWithDefaults')
+      .mockReturnValue({
+        clientside_validation: false
+      })
+  })
+
+  it('Does not catch missing headers in metadata file', async () => {
+    const file = createMockFile({
+      fileName: 'foo2.txt',
+      content: 'NAME,biosample_id,CellID\nTYPE,numeric,numeric\nCELL_0001,id1,cell1'
+    })
+    const { errors } = await validateLocalFile(file, { file_type: 'Metadata', use_metadata_convention: true })
+    expect(errors).toHaveLength(0)
+  })
+
+  it('Does not catch missing GENE header in expression matrix file', async () => {
+    const file = createMockFile({
+      fileName: 'foo4.txt',
+      content: 'IS_NOT_GENE,X,Y\nItm2a,0,5\nEif2b2,3,0\nPf2b2,1,9'
+    })
+    const { errors } = await validateLocalFile(file, { file_type: 'Expression Matrix' })
+    expect(errors).toHaveLength(0)
+  })
+
+  it('Does not catch row with wrong number of columns in sparse matrix file', async () => {
+    const file = createMockFile({
+      fileName: 'foo6.mtx',
+      content: '%%MatrixMarket matrix coordinate integer general\n%\n4 8 9\n4 3 0\n4 1'
+    })
+    const { errors } = await validateLocalFile(file, { file_type: 'MM Coordinate Matrix' })
+    expect(errors).toHaveLength(0)
+  })
+
+  it('Does not catch duplicate row values in barcodes file', async () => {
+    const file = createMockFile({
+      fileName: 'foo6.tsv',
+      content: 'fake000\nfake001\nfake002\nfake000'
+    })
+    const { errors } = await validateLocalFile(file, { file_type: '10X Barcodes File' })
+    expect(errors).toHaveLength(0)
+  })
+
+  it('Does not catch  duplicate cell names in cluster file', async () => {
+    const file = createMockFile({
+      fileName: 'foo.txt',
+      content: 'NAME,X,Y\nTYPE,numeric,numeric\nCELL_0001,34.472,32.211\nCELL_0001,15.975,10.043'
+    })
+    const { errors } = await validateLocalFile(file, { file_type: 'Cluster' })
+    expect(errors).toHaveLength(0)
+  })
+}
+)
