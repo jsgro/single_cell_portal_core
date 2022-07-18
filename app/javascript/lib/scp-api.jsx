@@ -804,7 +804,11 @@ export default async function scpApi(
     const fetchSWCacheResult = await fetchServiceWorkerCache(url, init)
     response = fetchSWCacheResult[0]
     isServiceWorkerCacheHit = fetchSWCacheResult[1]
-    legacyBackendTime = STEP_NOT_NEEDED
+    if (isServiceWorkerCacheHit) {
+      legacyBackendTime = STEP_NOT_NEEDED
+    } else {
+      legacyBackendTime = performance.now() - perfTimeStart
+    }
   } else {
     response = await fetch(url, init).catch(error => error)
 
