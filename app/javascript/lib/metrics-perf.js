@@ -212,15 +212,9 @@ export function calculatePerfTimes(perfTimes) {
 
   const plot = perfTimes.plot ? perfTimes.plot : 0
 
-  let perfEntry = null
-  const resourcePerfEntries = performance.getEntriesByType('resource')
-  for (let i = 0; i < resourcePerfEntries.length; i++) {
-    const entry = resourcePerfEntries[i]
-    if (entry.name === perfTimes.url) {
-      perfEntry = entry
-      break
-    }
-  }
+  const perfEntry =
+    performance.getEntriesByType('resource')
+      .find(entry => entry.name === perfTimes.url)
 
   if (!perfEntry) {
     return {}
