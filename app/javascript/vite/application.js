@@ -17,6 +17,7 @@ import { getFeatureFlagsWithDefaults } from '~/providers/UserProvider'
 import checkMissingAuthToken from '~/lib/user-auth-tokens'
 import ValidateFile from '~/lib/validation/validate-file'
 import { setupSentry } from '~/lib/sentry-logging'
+import { clearOldServiceWorkerCaches } from '~/lib/service-worker-cache'
 
 const { validateRemoteFile } = ValidateFile
 
@@ -29,6 +30,9 @@ window.SCP = window.SCP ? window.SCP : {}
 
 // Set up the context for Sentry to log front-end errors
 setupSentry()
+
+// On each page load, check for old SCP caches, delete any found
+clearOldServiceWorkerCaches()
 
 document.addEventListener('DOMContentLoaded', () => {
   // Logs only page views for faceted search UI
@@ -69,7 +73,6 @@ function renderComponent(target, componentName, props) {
 // SCP expects these variables to be global.
 //
 // If adding a new variable here, also add it to .eslintrc.js
-
 
 /** put the function globally accessible, replacing the pre-registration 'renderComponent'
  * setup in assets/application.js */

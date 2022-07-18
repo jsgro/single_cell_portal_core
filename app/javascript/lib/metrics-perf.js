@@ -6,6 +6,14 @@ import { getTTFB, getFCP, getLCP, getFID, getCLS } from 'web-vitals'
 
 import { log } from './metrics-api'
 
+// Ensure we get perfTime metrics.  The number of `performance` browser API
+// entries can be low enough by default to cause some entries to be
+// dropped and thus unavailable for measurement for the various `perfTime`
+// analytics properties used to assess optimization impact.
+if (performance.setResourceTimingBufferSize) {
+  performance.setResourceTimingBufferSize(500)
+}
+
 /** Client device memory, # CPUs, and Internet connection speed. */
 export const hardwareStats = getHardwareStats()
 /** we record the time taken by unexecuted steps as a very small negative number to make cumulative
@@ -149,41 +157,65 @@ function roundValues(props) {
   return props
 }
 
+/** Account for frontend caches, e.g. plot data cache, service worker cache */
+function accountForCache(perfTimes, now) {
+  if (!perfTimes.isClientCache && !perfTimes.serviceWorkerCacheHit) {
+    return null
+  }
+
+  const isPlotDataCache = perfTimes.isClientCache
+
+  let rawPerfProps = {
+    'perfTime:full': now - perfTimes.requestStart,
+    'perfTime': now - perfTimes.requestStart,
+    'perfTime:legacy': now - perfTimes.requestStart,
+
+    // Server timing
+    'perfTime:backend': STEP_NOT_NEEDED,
+
+    // Client timing
+    'perfTime:frontend': now - perfTimes.requestStart, // Time from API call response start to effect (e.g. plot) end
+    'perfTime:frontend:transfer': STEP_NOT_NEEDED
+  }
+
+  if ('plot' in perfTimes) {
+    rawPerfProps = Object.assign({
+    // note that 'other' here is very likely to include the rendering of a different plot.
+    // if a plot is fully cached, that usually means two plots were requested, one of which is a subset of the other
+    // so, e.g. the cluster plot will wait until after the expression data is fetched, and then render itself
+    // based on a subset of that data
+      'perfTime:frontend:other': now - perfTimes.requestStart - perfTimes.plot,
+      'perfTime:frontend:plot': perfTimes.plot
+    }, rawPerfProps)
+  }
+
+  const perfProps = roundValues(Object.assign({}, rawPerfProps))
+
+  const cacheType = isPlotDataCache ? 'client-plot-data' : 'service-worker'
+  perfProps['perfTime:cache'] = cacheType
+  perfProps['perfTime:url'] = perfTimes.url
+  if (perfTimes.serviceWorkerCacheHit) {
+    perfProps['perfTime:serviceWorkerCacheHit'] = true
+  }
+
+  return perfProps
+}
+
 /** Calculates generic performance timing metrics for API calls */
 export function calculatePerfTimes(perfTimes) {
   const now = performance.now()
 
-  if (perfTimes.isClientCache) {
-    const rawPerfProps = {
-      'perfTime:full': now - perfTimes.requestStart,
-      'perfTime': now - perfTimes.requestStart,
-      'perfTime:legacy': now - perfTimes.requestStart,
-
-      // Server timing
-      'perfTime:backend': STEP_NOT_NEEDED,
-
-      // Client timing
-      'perfTime:frontend': now - perfTimes.requestStart, // Time from API call response start to effect (e.g. plot) end
-      'perfTime:frontend:transfer': STEP_NOT_NEEDED,
-      'perfTime:frontend:parse': STEP_NOT_NEEDED,
-      // note that 'other' here is very likely to include the rendering of a different plot.
-      // if a plot is fully cached, that usually means two plots were requested, one of which is a subset of the other
-      // so, e.g. the cluster plot will wait until after the expression data is fetched, and then render itself
-      // based on a subset of that data
-      'perfTime:frontend:other': now - perfTimes.requestStart - perfTimes.plot,
-      'perfTime:frontend:plot': perfTimes.plot,
-      'cache': 'client'
-    }
-    const perfProps = roundValues(Object.assign({}, rawPerfProps))
-    perfProps['perfTime:url'] = perfTimes.url
-    return perfProps
+  const cachedPerfTimes = accountForCache(perfTimes, now)
+  if (cachedPerfTimes !== null) {
+    return cachedPerfTimes
   }
 
   const plot = perfTimes.plot ? perfTimes.plot : 0
 
   const perfEntry =
     performance.getEntriesByType('resource')
-      .filter(entry => entry.name === perfTimes.url)[0]
+      .find(entry => entry.name === perfTimes.url)
+
   if (!perfEntry) {
     return {}
   }

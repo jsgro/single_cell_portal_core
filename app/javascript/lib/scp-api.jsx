@@ -11,16 +11,15 @@ import _compact from 'lodash/compact'
 import * as queryString from 'query-string'
 
 import { logJSFetchExceptionToSentry, logJSFetchErrorToSentry } from '~/lib/sentry-logging'
-import { getSCPContext } from '~/providers/SCPContextProvider'
 import { getAccessToken } from '~/providers/UserProvider'
 import {
   logDownloadAuthorization, logCreateUserAnnotation
 } from './scp-api-metrics'
 import { logSearch, mapFiltersForLogging } from './search-metrics'
 import { showMessage } from '~/lib/MessageModal'
-
-
-const env = getSCPContext().environment
+import { fetchServiceWorkerCache } from './service-worker-cache'
+import { getSCPContext } from '~/providers/SCPContextProvider'
+import { STEP_NOT_NEEDED } from './metrics-perf'
 
 // If true, returns mock data for all API responses.  Only for dev.
 let globalMock = false
@@ -755,7 +754,6 @@ export async function fetchStudyUsage(studyAccession, mock=false) {
   return usageInfo
 }
 
-
 /** returns the current branding group as specified by the url  */
 export function getBrandingGroup() {
   const queryParams = queryString.parse(window.location.search)
@@ -791,17 +789,37 @@ export default async function scpApi(
 
   const perfTimeStart = performance.now()
 
-  const response = await fetch(url, init).catch(error => error)
-
-  // Milliseconds taken to fetch data from API
-  // Suboptimal, but retained until at least Q4 2021 for continuity.
-  // Use `perfTime:full` for closest measure of user-perceived duration.
-  const legacyBackendTime = performance.now() - perfTimeStart
+  const isServiceWorkerCacheEnabled = getSCPContext().isServiceWorkerCacheEnabled
 
   const perfTimes = {
     url,
-    legacyBackend: legacyBackendTime
+    serviceWorkerCacheEnabled: isServiceWorkerCacheEnabled
   }
+
+  let response
+  let isServiceWorkerCacheHit = false
+  let legacyBackendTime
+  if (isServiceWorkerCacheEnabled && init.method === 'GET') {
+    perfTimes.requestStart = perfTimeStart
+    const fetchSWCacheResult = await fetchServiceWorkerCache(url, init)
+    response = fetchSWCacheResult[0]
+    isServiceWorkerCacheHit = fetchSWCacheResult[1]
+    if (isServiceWorkerCacheHit) {
+      legacyBackendTime = STEP_NOT_NEEDED
+    } else {
+      legacyBackendTime = performance.now() - perfTimeStart
+    }
+  } else {
+    response = await fetch(url, init).catch(error => error)
+
+    // Milliseconds taken to fetch data from API
+    // Suboptimal, but retained until at least Q4 2021 for continuity.
+    // Use `perfTime:full` for closest measure of user-perceived duration.
+    legacyBackendTime = performance.now() - perfTimeStart
+  }
+
+  perfTimes.legacyBackend = legacyBackendTime
+  perfTimes.serviceWorkerCacheHit = isServiceWorkerCacheHit
 
   if (response.ok) {
     if (toJson && response.status !== 204) {

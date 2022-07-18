@@ -1,8 +1,12 @@
 // Without disabling eslint code, Promises are auto inserted
 /* eslint-disable*/
+import CacheMock from 'browser-cache-mock';
+import 'isomorphic-fetch';
 
-const fetch = require('node-fetch')
-import scpApi, { fetchAuthCode, fetchFacetFilters } from 'lib/scp-api'
+import scpApi, { fetchSearch, fetchFacetFilters } from 'lib/scp-api'
+import * as ServiceWorkerCache from 'lib/service-worker-cache'
+import * as SCPContextProvider from '~/providers/SCPContextProvider'
+
 const oldWindowLocation = window.location
 
 describe('JavaScript client for SCP REST API', () => {
@@ -10,7 +14,7 @@ describe('JavaScript client for SCP REST API', () => {
   delete window.location
 
   beforeAll(() => {
-    global.fetch = fetch
+
     window.location = Object.defineProperties(
       {},
       {
@@ -21,7 +25,16 @@ describe('JavaScript client for SCP REST API', () => {
         },
       },
     )
+
+    window.performance = Object.defineProperties(performance, {
+      setResourceTimingBufferSize: {
+        value: jest.fn(),
+        writable: true
+      }
+    })
+
   })
+
   // Note: tests that mock global.fetch must be cleared after every test
   afterEach(() => {
     // Restores all mocks back to their original value
@@ -80,4 +93,60 @@ describe('JavaScript client for SCP REST API', () => {
         expect(error.message).toEqual('Internal Server Error')
       })
   })
+
+  it('leverages service worker cache on fetch, if cache is enabled', async done => {
+
+    const cacheMock = new CacheMock()
+    window.caches = {
+      open: async () => cacheMock,
+      ...cacheMock
+    }
+
+    console.debug = jest.fn();
+
+    // Spy on `fetch()` and its contingent methods like `json()`,
+    // because we want to intercept the outgoing request
+    const mockSuccessResponse = {}
+    const mockJsonPromise = Promise.resolve(mockSuccessResponse)
+    const mockFetchPromise = Promise.resolve({
+      ok: true,
+      json: () => {
+        mockJsonPromise
+      },
+      clone: () => {}
+    })
+    jest.spyOn(global, 'fetch').mockImplementation(() => mockFetchPromise)
+
+    jest
+      .spyOn(SCPContextProvider, 'getSCPContext')
+      .mockReturnValue({
+        isServiceWorkerCacheEnabled: true,
+        version: '1.21.0'
+      })
+
+    jest.spyOn(global, 'fetch').mockImplementation(() => mockFetchPromise)
+
+    jest
+      .spyOn(ServiceWorkerCache, 'fetchServiceWorkerCache')
+
+    const type =  'study'
+    const searchParams = {page: 1, terms: "", facets: {}}
+    await fetchSearch(type, searchParams)
+
+    const url = 'https://localhost:3000/mock_data/search?type=study&page=1.json'
+    expect(ServiceWorkerCache.fetchServiceWorkerCache).toHaveBeenCalledWith(
+      url,
+      expect.objectContaining({
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+          Authorization: 'Bearer test'
+        }
+      })
+    )
+
+    done()
+})
+
 })
