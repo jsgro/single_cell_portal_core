@@ -18,6 +18,22 @@
 		border: none;
 	}
 
+	button.action-plus {
+		border: none;
+		float:right;
+		background: #fff;
+		color: #4d72aa;
+		margin-top: -0.5rem;
+	}
+
+	button.action-minus {
+		border: none;
+		float:right;
+		background: #fff;
+		color: #4d72aa;
+		margin-top: -2.5rem;
+	}
+
 	.plot {
 		position: relative;
 		background: #fff;
@@ -59,7 +75,6 @@
 
 .create-annotation-control {
   display: inline;
-  float: right;
   position: relative;
   top: -80px;
   margin-bottom: -20px;
@@ -67,6 +82,9 @@
 	.panel-collapse.in {
 		border: 1px solid #bbb;
 		border-radius: 5px;
+		margin-top: 4rem;
+		margin-bottom: -9rem;
+		
 	}
 	label {
 		font-weight: normal;
@@ -90,6 +108,8 @@
 	}
 	.gene-load-spinner {
 		position: relative;
+		left: 43%;
+		right: 50%;
 	}
 }
 

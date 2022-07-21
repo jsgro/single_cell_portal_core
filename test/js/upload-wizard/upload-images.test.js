@@ -1,8 +1,6 @@
 import { screen, fireEvent, waitForElementToBeRemoved } from '@testing-library/react'
 import '@testing-library/jest-dom/extend-expect'
-import _cloneDeep from 'lodash/cloneDeep'
 
-import * as ScpApi from 'lib/scp-api'
 import { IMAGE_FILE } from './file-info-responses'
 import { fireFileSelectionEvent } from '../lib/file-mock-utils'
 import { renderWizardWithStudy, saveButton, mockCreateStudyFile } from './upload-wizard-test-utils'
@@ -10,6 +8,7 @@ import { renderWizardWithStudy, saveButton, mockCreateStudyFile } from './upload
 describe('Upload wizard supports reference images', () => {
   it('validates bad file names, starts upload of JPEG file', async () => {
     const createFileSpy = mockCreateStudyFile(IMAGE_FILE)
+
     await renderWizardWithStudy({ featureFlags: { reference_image_upload: true } })
 
     const formData = new FormData()

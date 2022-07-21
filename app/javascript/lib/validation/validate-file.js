@@ -6,6 +6,7 @@ import { oneGiB, oneMiB } from '~/lib/validation/io'
 import ValidateFileContent from './validate-file-content'
 import { logFileValidation } from './log-validation'
 import { fetchBucketFile } from '~/lib/scp-api'
+import { getFeatureFlagsWithDefaults } from '~/providers/UserProvider'
 
 
 /** take an array of [category, type, msg] issues, and format it */
@@ -49,6 +50,13 @@ function validateFileName(file, studyFile, allStudyFiles, allowedFileExts=['*'])
  * @param allowedFileExts { String[] } array of allowable extensions, ['*'] for all
  */
 async function validateLocalFile(file, studyFile, allStudyFiles=[], allowedFileExts=['*']) {
+
+  // if clientside file validation feature flag is false skip validation
+  const flags = getFeatureFlagsWithDefaults()
+  if (flags && flags.clientside_validation === false ) {
+    const issues = formatIssues([])
+    return issues
+  }
   const nameIssues = validateFileName(file, studyFile, allStudyFiles, allowedFileExts)
 
   let issuesObj

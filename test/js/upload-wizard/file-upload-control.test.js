@@ -6,12 +6,12 @@ import { StudyContext } from 'components/upload/upload-utils'
 import FileUploadControl from 'components/upload/FileUploadControl'
 import { fireFileSelectionEvent } from '../lib/file-mock-utils'
 
-
 describe('file upload control defaults the name of the file', () => {
   afterEach(() => {
     // Restores all mocks back to their original value
     jest.restoreAllMocks()
   })
+
 
   it('updates the name of the selected file', async () => {
     const file = {

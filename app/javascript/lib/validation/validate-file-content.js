@@ -316,7 +316,6 @@ export async function parseClusterFile(chunker, mimeType) {
   return { issues, delimiter, numColumns: headers[0].length }
 }
 
-
 /** confirm that the presence/absence of a .gz suffix matches the lead byte of the file
  * Throws an exception if the gzip is conflicted, since we don't want to parse further in that case
 */

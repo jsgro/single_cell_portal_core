@@ -49,7 +49,8 @@ export default function DownloadCommand({ fileIds=[], azulFiles }) {
         <h4>Copy the command below and paste it into your {terminalDescription} terminal</h4>
         This command is valid for one use within <span className='countdown'>
           {Math.floor(authInfo.timeInterval / 60)}
-        </span> minutes.
+        </span> minutes.  If a certificate validation error occurs, adding the "-k" option will skip certificate validation.
+e.g. `curl -k "https://singlecell...."`
         <div className='input-group'>
           <input
             ref={textInputRef}
