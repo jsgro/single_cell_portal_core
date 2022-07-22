@@ -18,14 +18,13 @@ Ensure you have the prerequisites:
 
 Then:
 ```
-cd static-image-pipeline
+cd image-pipeline
 yarn install
 ```
 
 # Run
-Connect to Broad VPN, then:
+Connect to Broad VPN, ensure you're in `image-pipeline`, then:
 
 ```
-cd static-image-pipeline
 node expression-scatter-plots.js --accession="SCP303"
 ```

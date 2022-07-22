@@ -2,7 +2,7 @@
  * @fileoverview: Make static images of SCP gene expression scatter plots
  *
  * Usage:
- * cd static-image-pipeline
+ * cd image-pipeline
  * node expression-scatter-plots.js --accession="SCP303"
  */
 import { parseArgs } from 'node:util'
