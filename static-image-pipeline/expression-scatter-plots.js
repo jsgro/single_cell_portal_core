@@ -1,3 +1,12 @@
+/**
+ * @fileoverview: Make static images of SCP gene expression scatter plots
+ *
+ * Usage:
+ * cd static-image-pipeline
+ * mkdir images
+ * node expression-scatter-plots.js --accession="SCP303"
+ */
+
 import puppeteer from 'puppeteer'
 import { parseArgs } from 'node:util'
 
@@ -8,6 +17,7 @@ const options = {
 }
 const { values } = parseArgs({ args, options })
 
+/** In Explore view, search gene, await plot, save plot image locally */
 async function makeExpressionScatterPlotImage(gene, page) {
   // Trigger a gene search
   await page.type('.gene-keyword-search input', gene, { delay: 1 })
@@ -36,19 +46,6 @@ async function makeExpressionScatterPlotImage(gene, page) {
 }
 
 (async () => {
-  const concat = list => Array.prototype.concat.bind(list)
-  const promiseConcat = f => x => f().then(concat(x))
-  const promiseReduce = (acc, x) => acc.then(promiseConcat(x))
-  /*
-  * serial executes Promises sequentially.
-  * @param {funcs} An array of funcs that return promises.
-  * @example
-  * const urls = ['/url1', '/url2', '/url3']
-  * serial(urls.map(url => () => $.ajax(url)))
-  *     .then(console.log.bind(console))
-  */
-  const serial = funcs => funcs.reduce(promiseReduce, Promise.resolve([]))
-
   const accession = values.accession
   console.log(`Accession: ${accession}`)
 
@@ -68,19 +65,8 @@ async function makeExpressionScatterPlotImage(gene, page) {
   })
 
   const exploreViewUrl = `${origin}/single_cell/study/${accession}#study-visualize`
-  // const exploreApiUrl =  `${origin}/single_cell/api/v1/studies/${accession}/explore`
 
-  const [exploreApiResponse] = await Promise.all([
-    // page.waitForResponse(response => response.url() === exploreApiUrl),
-
-    page.goto(exploreViewUrl)
-  ])
-  // await page.waitForSelector('svg.gene-load-spinner', {hidden: true})
-
-  // const exploreJson = await exploreApiResponse.json();
-
-  // // All genes in this study
-  // const uniqueGenes = exploreJson.uniqueGenes
+  page.goto(exploreViewUrl)
 
   console.log(`Number of genes: ${uniqueGenes.length}`)
 
@@ -89,7 +75,6 @@ async function makeExpressionScatterPlotImage(gene, page) {
   // const gene = uniqueGenes[geneIndex]
 
   const genes = uniqueGenes.slice(4, 8)
-
   for (let i = 0; i < genes.length; i++) {
     const gene = genes[i]
     await makeExpressionScatterPlotImage(gene, page)
