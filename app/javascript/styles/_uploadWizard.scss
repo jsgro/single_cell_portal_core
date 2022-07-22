@@ -2,7 +2,7 @@
   .wizard-side-panel {
     width: 25%;
     min-width: 229px;
-    height: calc(100% - 50px); // leave room for footer and navbar
+    height: calc(100% + 20px); // leave room for footer and navbar
     overflow-y: auto;
     background: rgb(219, 225, 232);
   }

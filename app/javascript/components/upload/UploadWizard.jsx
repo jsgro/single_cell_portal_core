@@ -35,6 +35,7 @@ import MiscellaneousStep from './MiscellaneousStep'
 import SequenceFileStep from './SequenceFileStep'
 import GeneListStep from './GeneListStep'
 import LoadingSpinner from '~/lib/LoadingSpinner'
+import H5adStep from './H5adStep'
 
 const POLLING_INTERVAL = 10 * 1000 // 10 seconds between state updates
 const CHUNK_SIZE = 10000000 // 10 MB
@@ -47,7 +48,8 @@ const STEPS = [
   CoordinateLabelStep,
   SequenceFileStep,
   GeneListStep,
-  MiscellaneousStep
+  MiscellaneousStep,
+  H5adStep
 ]
 
 const MAIN_STEPS = STEPS.slice(0, 4)
@@ -231,6 +233,7 @@ export function RawUploadWizard({ studyAccession, name }) {
       }
 
       if (file.status === 'new') {
+        console.log('studyFileData', studyFileData)
         response = await createStudyFile({
           studyAccession, studyFileData, isChunked, chunkStart, chunkEnd, fileSize, requestCanceller,
           onProgress: e => handleSaveProgress(e, studyFileId, fileSize, chunkStart)
