@@ -37,7 +37,32 @@ async function makeExpressionScatterPlotImage(gene, page) {
   const expressionPlotStartTime = Date.now()
 
   // Wait for UI element signaling that expression plot has finished rendering
-  await page.waitForSelector('.cluster-title .badge')
+  // await page.waitForSelector('.cluster-title .badge')
+  const plotDoneRequest = await page.waitForRequest(request => {
+    console.log('request')
+    console.log(request)
+    console.log('request.headers()')
+    console.log(request.headers())
+    console.log('request.url()')
+    console.log(request.url())
+    console.log('request.method()')
+    console.log(request.method())
+    if (request.url().includes('bard') && request.method() === 'POST') {
+      const payload = JSON.parse(request.postData())
+      const props = payload.properties
+      if (payload.event === 'plot:scatter' && props.genes[0] === gene) {
+        return true
+      } else {
+        return false
+      }
+    }
+    return false
+  })
+  console.log('plotDoneRequest')
+  console.log(plotDoneRequest)
+  console.log('plotDoneRequest.postData().properties')
+  console.log(plotDoneRequest.postData().properties)
+
   const expressionPlotPerfTime = Date.now() - expressionPlotStartTime
   console.log(`Expression plot time: ${expressionPlotPerfTime} ms`)
 
@@ -75,8 +100,12 @@ async function makeExpressionScatterPlotImage(gene, page) {
     deviceScaleFactor: 1
   })
 
+  console.log('0')
+
   const exploreViewUrl = `${origin}/single_cell/study/${accession}#study-visualize`
   await page.goto(exploreViewUrl)
+
+  console.log('1')
 
   // Pick a random gene
   // const geneIndex = Math.floor(Math.random() * uniqueGenes.length)
