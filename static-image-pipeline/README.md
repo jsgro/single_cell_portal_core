@@ -9,7 +9,7 @@ The goal is to render expression plots > 1M cells in < 1s for all genes.  The un
 In this nascent phase, the pipeline uses Puppeteer to crawl staging SCP, and screenshots a series of plots as static images.  These images will be loaded to a GCP bucket and instantly fetched and displayed by the SCP frontend, while the traditional Plotly.js interactive plot is progressively loaded in the background.
 
 ## More details
-Further technical plans, motivations, etc. are described in a "[Batch cache visualization](https://docs.google.com/document/d/1-mhtoWrg3RHoDjWrHGv2h-KtlnnYGPg5-lxlgRyWaK0/edit)" technical design document.
+Further technical plans, motivations, etc. are described in the "[Batch cache visualization](https://docs.google.com/document/d/1-mhtoWrg3RHoDjWrHGv2h-KtlnnYGPg5-lxlgRyWaK0/edit)" technical design document.
 
 # Install
 Ensure you have the prerequisites:
@@ -27,6 +27,5 @@ Connect to Broad VPN, then:
 
 ```
 cd static-image-pipeline
-mkdir images
 node expression-scatter-plots.js --accession="SCP303"
 ```

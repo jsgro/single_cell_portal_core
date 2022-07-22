@@ -3,12 +3,14 @@
  *
  * Usage:
  * cd static-image-pipeline
- * mkdir images
  * node expression-scatter-plots.js --accession="SCP303"
  */
+import { parseArgs } from 'node:util'
+import { access } from 'node:fs'
+import { mkdir } from 'node:fs/promises'
 
 import puppeteer from 'puppeteer'
-import { parseArgs } from 'node:util'
+
 
 const args = process.argv.slice(2)
 
@@ -16,6 +18,14 @@ const options = {
   accession: { type: 'string' }
 }
 const { values } = parseArgs({ args, options })
+
+
+access('images', async err => {
+  if (err) {
+    await mkdir('images')
+  }
+})
+
 
 /** In Explore view, search gene, await plot, save plot image locally */
 async function makeExpressionScatterPlotImage(gene, page) {
@@ -49,6 +59,7 @@ async function makeExpressionScatterPlotImage(gene, page) {
   const accession = values.accession
   console.log(`Accession: ${accession}`)
 
+  // Get list of all genes in study
   const origin = 'https://singlecell-staging.broadinstitute.org'
   const exploreApiUrl = `${origin}/single_cell/api/v1/studies/${accession}/explore`
   const response = await fetch(exploreApiUrl)
@@ -65,15 +76,13 @@ async function makeExpressionScatterPlotImage(gene, page) {
   })
 
   const exploreViewUrl = `${origin}/single_cell/study/${accession}#study-visualize`
-
-  page.goto(exploreViewUrl)
-
-  console.log(`Number of genes: ${uniqueGenes.length}`)
+  await page.goto(exploreViewUrl)
 
   // Pick a random gene
   // const geneIndex = Math.floor(Math.random() * uniqueGenes.length)
   // const gene = uniqueGenes[geneIndex]
 
+  // Generate a series of plots, then save them locally
   const genes = uniqueGenes.slice(4, 8)
   for (let i = 0; i < genes.length; i++) {
     const gene = genes[i]
