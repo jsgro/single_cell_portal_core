@@ -13,7 +13,6 @@ import { mkdir } from 'node:fs/promises'
 
 import puppeteer from 'puppeteer'
 
-
 const args = process.argv.slice(2)
 
 const options = {
@@ -86,11 +85,10 @@ async function makeExpressionScatterPlotImage(gene, page) {
     deviceScaleFactor: 1
   })
 
-
+  // Go to Explore tab in Study Overview page
   const exploreViewUrl = `${origin}/single_cell/study/${accession}#study-visualize`
   console.log(`Navigating to Explore tab: ${exploreViewUrl}`)
   await page.goto(exploreViewUrl)
-
   console.log(`Completed loading Explore tab`)
 
   // Pick a random gene
