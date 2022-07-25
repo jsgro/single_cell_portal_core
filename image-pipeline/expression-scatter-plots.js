@@ -1,7 +1,9 @@
 /**
  * @fileoverview: Make static images of SCP gene expression scatter plots
  *
- * Usage:
+ * See adjacent README for installation, background
+ *
+ * To use, ensure you're on VPN, then:
  * cd image-pipeline
  * node expression-scatter-plots.js --accession="SCP303"
  */
@@ -19,7 +21,7 @@ const options = {
 }
 const { values } = parseArgs({ args, options })
 
-
+// Make `images` directory if absent
 access('images', async err => {
   if (err) {
     await mkdir('images')
@@ -33,35 +35,19 @@ async function makeExpressionScatterPlotImage(gene, page) {
   await page.type('.gene-keyword-search input', gene, { delay: 1 })
   await page.keyboard.press('Enter')
   await page.$eval('.gene-keyword-search button', el => el.click())
-  console.log(`Waiting for expression plot for gene: ${gene}`)
+  console.log(`Awaiting expression plot for gene: ${gene}`)
   const expressionPlotStartTime = Date.now()
 
-  // Wait for UI element signaling that expression plot has finished rendering
-  // await page.waitForSelector('.cluster-title .badge')
-  const plotDoneRequest = await page.waitForRequest(request => {
-    console.log('request')
-    console.log(request)
-    console.log('request.headers()')
-    console.log(request.headers())
-    console.log('request.url()')
-    console.log(request.url())
-    console.log('request.method()')
-    console.log(request.method())
+  // Wait for reliable signal that expression plot has finished rendering.
+  // A Mixpanel / Bard log request always fires immediately upon render.
+  await page.waitForRequest(request => {
     if (request.url().includes('bard') && request.method() === 'POST') {
       const payload = JSON.parse(request.postData())
       const props = payload.properties
-      if (payload.event === 'plot:scatter' && props.genes[0] === gene) {
-        return true
-      } else {
-        return false
-      }
+      return (payload.event === 'plot:scatter' && props.genes[0] === gene)
     }
     return false
   })
-  console.log('plotDoneRequest')
-  console.log(plotDoneRequest)
-  console.log('plotDoneRequest.postData().properties')
-  console.log(plotDoneRequest.postData().properties)
 
   const expressionPlotPerfTime = Date.now() - expressionPlotStartTime
   console.log(`Expression plot time: ${expressionPlotPerfTime} ms`)
@@ -100,12 +86,12 @@ async function makeExpressionScatterPlotImage(gene, page) {
     deviceScaleFactor: 1
   })
 
-  console.log('0')
 
   const exploreViewUrl = `${origin}/single_cell/study/${accession}#study-visualize`
+  console.log(`Navigating to Explore tab: ${exploreViewUrl}`)
   await page.goto(exploreViewUrl)
 
-  console.log('1')
+  console.log(`Completed loading Explore tab`)
 
   // Pick a random gene
   // const geneIndex = Math.floor(Math.random() * uniqueGenes.length)
