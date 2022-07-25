@@ -43,6 +43,13 @@ function main {
     esac
   done
 
+  # skip building a tagged release if it already exists, unless this is the development branch
+  EXISTING_DIGEST=$(gcloud container images list-tags $IMAGE_NAME --filter="tags:$VERSION_TAG" --format='get(digest)')
+  if [[ "$VERSION_TAG" != 'development' ]] && [[ -n "$EXISTING_DIGEST" ]]; then
+    exit_with_error_message "unable to build $VERSION_TAG as it already exists with digest $EXISTING_DIGEST"
+  fi
+
+  # build requested image
   echo "*** BUILDING IMAGE REF $IMAGE_NAME:$VERSION_TAG ***"
   docker build -t $IMAGE_NAME:$VERSION_TAG . || exit_with_error_message "could not build docker image"
   echo "*** BUILD COMPLETE, PUSHING $IMAGE_NAME:$VERSION_TAG ***"

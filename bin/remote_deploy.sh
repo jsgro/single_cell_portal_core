@@ -34,7 +34,7 @@ function main {
     # More context: https://github.com/broadinstitute/single_cell_portal_core/pull/1552#discussion_r910424433
     # TODO: (SCP-4496): Move production-related GCR images out of staging project
     DOCKER_IMAGE_NAME='gcr.io/broad-singlecellportal-staging/single-cell-portal'
-    docker pull $DOCKER_IMAGE_NAME:$VERSION_TAG
+    docker pull $DOCKER_IMAGE_NAME:$VERSION_TAG || exit_with_error_message "Cannot pull requested image $DOCKER_IMAGE_NAME:$VERSION_TAG"
 
     # stop docker container and remove it
     if [[ $(ensure_container_running $PORTAL_CONTAINER) = "0" ]]; then
