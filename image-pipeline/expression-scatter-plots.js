@@ -10,6 +10,7 @@
 import { parseArgs } from 'node:util'
 import { access } from 'node:fs'
 import { mkdir } from 'node:fs/promises'
+import os from 'node:os'
 
 import puppeteer from 'puppeteer'
 
@@ -20,6 +21,9 @@ const options = {
 }
 const { values } = parseArgs({ args, options })
 
+const numCPUs = os.cpus().length
+console.log(`Number of CPUs on this client: ${numCPUs}`)
+
 // Make `images` directory if absent
 access('images', async err => {
   if (err) {
@@ -27,14 +31,18 @@ access('images', async err => {
   }
 })
 
+function print(message, preamble) {
+  console.log(`${preamble} ${message}`)
+}
 
 /** In Explore view, search gene, await plot, save plot image locally */
-async function makeExpressionScatterPlotImage(gene, page) {
+async function makeExpressionScatterPlotImage(gene, page, preamble) {
+  print(`Inputting search for gene: ${gene}`, preamble)
   // Trigger a gene search
   await page.type('.gene-keyword-search input', gene, { delay: 1 })
   await page.keyboard.press('Enter')
   await page.$eval('.gene-keyword-search button', el => el.click())
-  console.log(`Awaiting expression plot for gene: ${gene}`)
+  print(`Awaiting expression plot for gene: ${gene}`, preamble)
   const expressionPlotStartTime = Date.now()
 
   // Wait for reliable signal that expression plot has finished rendering.
@@ -49,7 +57,7 @@ async function makeExpressionScatterPlotImage(gene, page) {
   })
 
   const expressionPlotPerfTime = Date.now() - expressionPlotStartTime
-  console.log(`Expression plot time: ${expressionPlotPerfTime} ms`)
+  print(`Expression plot time: ${expressionPlotPerfTime} ms`, preamble)
 
   // Height and width of plot, x- and y-offset from viewport origin
   const clipDimensions = { height: 595, width: 660, x: 5, y: 375 }
@@ -58,11 +66,47 @@ async function makeExpressionScatterPlotImage(gene, page) {
   const imagePath = `images/${gene}.webp`
   await page.screenshot({ path: imagePath, type: 'webp', clip: clipDimensions })
 
-  console.log(`Wrote ${imagePath}`)
+  print(`Wrote ${imagePath}`, preamble)
 
   await page.$eval('.gene-keyword-search-input svg', el => el.parentElement.click())
 
   return
+}
+
+/** CPU-level wrapper to make images for a sub-list of genes */
+async function processScatterPlotImages(genes, context) {
+  const { accession, preamble, origin } = context
+  const browser = await puppeteer.launch()
+  const page = await browser.newPage()
+  await page.setViewport({
+    width: 1680,
+    height: 1000,
+    deviceScaleFactor: 1
+  })
+
+  // Go to Explore tab in Study Overview page
+  const exploreViewUrl = `${origin}/single_cell/study/${accession}#study-visualize`
+  print(`Navigating to Explore tab: ${exploreViewUrl}`, preamble)
+  await page.goto(exploreViewUrl)
+  print(`Completed loading Explore tab`, preamble)
+
+  console.log('genes.length')
+  console.log(genes.length)
+
+  for (let i = 0; i < genes.length; i++) {
+    const gene = genes[i]
+    await makeExpressionScatterPlotImage(gene, page, preamble)
+  }
+
+  await browser.close()
+}
+
+/** Get a segment of the uniqueGenes array to process in given CPU */
+function sliceGenes(uniqueGenes, numCPUs, cpuIndex) {
+  const batchSize = uniqueGenes.length / numCPUs
+  const start = batchSize * cpuIndex
+  const end = batchSize * (cpuIndex + 1)
+  return uniqueGenes.slice(start, end)
 }
 
 (async () => {
@@ -77,30 +121,19 @@ async function makeExpressionScatterPlotImage(gene, page) {
   const uniqueGenes = json.uniqueGenes
   console.log(`Number of genes: ${uniqueGenes.length}`)
 
-  const browser = await puppeteer.launch()
-  const page = await browser.newPage()
-  await page.setViewport({
-    width: 1680,
-    height: 1000,
-    deviceScaleFactor: 1
-  })
+  for (let cpuIndex = 0; cpuIndex < (numCPUs / 2) - 1; cpuIndex++) {
+    /** Log prefix to distinguish messages for different browser instances */
+    const preamble = `Browser ${cpuIndex}:`
 
-  // Go to Explore tab in Study Overview page
-  const exploreViewUrl = `${origin}/single_cell/study/${accession}#study-visualize`
-  console.log(`Navigating to Explore tab: ${exploreViewUrl}`)
-  await page.goto(exploreViewUrl)
-  console.log(`Completed loading Explore tab`)
+    // Pick a random gene
+    // const geneIndex = Math.floor(Math.random() * uniqueGenes.length)
+    // const gene = uniqueGenes[geneIndex]
 
-  // Pick a random gene
-  // const geneIndex = Math.floor(Math.random() * uniqueGenes.length)
-  // const gene = uniqueGenes[geneIndex]
+    // Generate a series of plots, then save them locally
+    const genes = sliceGenes(uniqueGenes, numCPUs, cpuIndex)
 
-  // Generate a series of plots, then save them locally
-  const genes = uniqueGenes.slice(4, 8)
-  for (let i = 0; i < genes.length; i++) {
-    const gene = genes[i]
-    await makeExpressionScatterPlotImage(gene, page)
+    const context = { accession, preamble, origin }
+
+    processScatterPlotImages(genes, context)
   }
-
-  await browser.close()
 })()
