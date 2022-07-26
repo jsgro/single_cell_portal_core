@@ -185,6 +185,15 @@ class DifferentialExpressionService
     cluster = study.cluster_groups.by_name(cluster_file.name)
     raise ArgumentError, "cannot find cluster for #{cluster_file.name}" if cluster.nil?
 
+    if DifferentialExpressionResult.where(study: study,
+                                          cluster: cluster,
+                                          annotation_name: annotation_name,
+                                          annotation_scope: annotation_scope).exists?
+      raise ArgumentError,
+            "#{annotation_name} already exists for #{study.accession}:#{cluster_file.name}, " \
+            'please delete the existing results before retrying'
+    end
+
     can_visualize = false
     if annotation_scope == 'cluster'
       annotation = cluster.cell_annotations&.detect do |annot|
