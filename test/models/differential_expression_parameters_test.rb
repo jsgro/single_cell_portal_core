@@ -70,4 +70,9 @@ class DifferentialExpressionParametersTest < ActiveSupport::TestCase
     assert_equal '--annotation-name', DifferentialExpressionParameters.to_cli_opt(:annotation_name)
     assert_equal '--foo', DifferentialExpressionParameters.to_cli_opt('foo')
   end
+
+  test 'should provide default ram_in_mb for DE jobs' do
+    params = DifferentialExpressionParameters.new
+    assert_equal DifferentialExpressionParameters::CUSTOM_VM_RAM_MB, params.ram_in_mb
+  end
 end

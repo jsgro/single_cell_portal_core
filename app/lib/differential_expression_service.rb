@@ -1,11 +1,5 @@
 # handle launching differential expression ingest jobs
 class DifferentialExpressionService
-
-  # amount of RAM (in MB) to allocate for custom differential expression VMs
-  # to address exit code 137: Indicates failure as container received SIGKILL
-  # (Manual intervention or ‘oom-killer’ [OUT-OF-MEMORY])
-  CUSTOM_VM_RAM_MB = 53_248
-
   # run a differential expression job for a given study on the default cluster/annotation
   #
   # * *params*
@@ -125,6 +119,7 @@ class DifferentialExpressionService
   #   - +user+             (User) => User initiating parse action (for email delivery)
   #   - +annotation_name+  (String) => Name of requested annotation
   #   - +annotation_scope+ (String) => Scope of requested annotation ('study' or 'cluster')
+  #   - +vm_ram+           (Integer) => Override to set RAM for DE VM (will default to 52 GB)
   #
   # * *yields*
   #   - (IngestJob) => Differential expression job in PAPI
@@ -134,7 +129,7 @@ class DifferentialExpressionService
   #
   # * *raises*
   #   - (ArgumentError) => if requested parameters do not validate
-  def self.run_differential_expression_job(cluster_file, study, user, annotation_name:, annotation_scope:)
+  def self.run_differential_expression_job(cluster_file, study, user, annotation_name:, annotation_scope:, vm_ram: nil)
     validate_study(study)
     validate_annotation(cluster_file, study, annotation_name, annotation_scope)
 
@@ -163,6 +158,9 @@ class DifferentialExpressionService
       de_params[:matrix_file_type] = 'dense'
     end
     params_object = DifferentialExpressionParameters.new(de_params)
+    if vm_ram.present?
+      params_object.ram_in_mb = vm_ram
+    end
 
     if params_object.valid?
       # launch DE job
@@ -183,7 +181,7 @@ class DifferentialExpressionService
   #
   # * *returns*
   #   - (Google::Apis::GenomicsV2alpha1::VirtualMachine)
-  def self.create_custom_virtual_machine(ram_in_mb: CUSTOM_VM_RAM_MB)
+  def self.create_custom_virtual_machine(ram_in_mb:)
     # creating a custom machine type is controlled by the following convention: custom-{num_cpu}-{ram_in_mb}
     # e.g. custom-4-53248 has 4 cores and 53,248 MB of RAM (52 GB)
     machine_type = "custom-4-#{ram_in_mb}"

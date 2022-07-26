@@ -197,8 +197,9 @@ class DifferentialExpressionServiceTest < ActiveSupport::TestCase
   end
 
   test 'should create custom VM for DE jobs' do
-    vm = DifferentialExpressionService.create_custom_virtual_machine
-    assert_equal "custom-4-#{DifferentialExpressionService::CUSTOM_VM_RAM_MB}", vm.machine_type
+    params = DifferentialExpressionParameters.new
+    vm = DifferentialExpressionService.create_custom_virtual_machine(ram_in_mb: params.ram_in_mb)
+    assert_equal "custom-4-#{DifferentialExpressionParameters::CUSTOM_VM_RAM_MB}", vm.machine_type
 
     # test overriding memory
     custom_ram_vm = DifferentialExpressionService.create_custom_virtual_machine(ram_in_mb: 8192)

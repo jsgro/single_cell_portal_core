@@ -1,6 +1,12 @@
 # class to hold parameters specific to differential expression jobs in PAPI
 class DifferentialExpressionParameters
   include ActiveModel::Model
+  include ActiveModel::Attributes
+
+  # amount of RAM (in MB) to allocate for custom differential expression VMs
+  # to address exit code 137: Indicates failure as container received SIGKILL
+  # (Manual intervention or ‘oom-killer’ [OUT-OF-MEMORY])
+  CUSTOM_VM_RAM_MB = 53_248
 
   # regular expression to validate GS url format
   GS_URL_REGEXP = %r{\Ags://}.freeze
@@ -14,8 +20,17 @@ class DifferentialExpressionParameters
   # matrix_file_type: type of raw counts matrix (dense, sparse)
   # gene_file (optional): genes/features file for sparse matrix
   # barcode_file (optional): barcodes file for sparse matrix
-  attr_accessor :annotation_name, :annotation_scope, :annotation_file, :cluster_file,
-                :cluster_name, :matrix_file_path, :matrix_file_type, :gene_file, :barcode_file
+  # ram_in_mb (optional): override for setting amount of RAM on VM
+  attribute :annotation_name, type: String
+  attribute :annotation_scope, type: String
+  attribute :annotation_file, type: String
+  attribute :cluster_file,type: String
+  attribute :cluster_name, type: String
+  attribute :matrix_file_path, type: String
+  attribute :matrix_file_type, type: String
+  attribute :gene_file, type: String
+  attribute :barcode_file, type: String
+  attribute :ram_in_mb, default: CUSTOM_VM_RAM_MB
 
   validates :annotation_name, :annotation_scope, :annotation_file, :cluster_file,
             :cluster_name, :matrix_file_path, :matrix_file_type, presence: true
@@ -57,7 +72,6 @@ class DifferentialExpressionParameters
   def to_options_array
     options_array = []
     attributes.each do |attr_name, value|
-      # quote value to allow for non-word characters
       options_array += [self.class.to_cli_opt(attr_name), "#{value}"] if value.present?
     end
     options_array << '--differential-expression'
