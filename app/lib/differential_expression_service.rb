@@ -171,19 +171,6 @@ class DifferentialExpressionService
     end
   end
 
-  # create a GCE virtual machine for use in a DE job
-  # uses GCE N1 "high memory" machine types
-  # https://cloud.google.com/compute/docs/general-purpose-machines#n1-high-memory
-  #
-  # * *params*
-  #   - +machine_type+ (String) => Type of requested machine
-  #
-  # * *returns*
-  #   - (Google::Apis::GenomicsV2alpha1::VirtualMachine)
-  def self.create_custom_virtual_machine(machine_type:)
-    ApplicationController.papi_client.create_virtual_machine_object(machine_type: machine_type)
-  end
-
   # validate annotation exists and can be visualized for a DE job
   #
   # * *params*

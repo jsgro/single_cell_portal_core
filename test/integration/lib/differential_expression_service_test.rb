@@ -195,15 +195,4 @@ class DifferentialExpressionServiceTest < ActiveSupport::TestCase
     jobs_launched = DifferentialExpressionService.run_differential_expression_on_all(@basic_study.accession)
     assert_equal 3, jobs_launched
   end
-
-  test 'should create custom VM for DE jobs' do
-    params = DifferentialExpressionParameters.new
-    vm = DifferentialExpressionService.create_custom_virtual_machine(machine_type: params.machine_type)
-    assert_equal params.machine_type, vm.machine_type
-
-    # test overriding memory
-    random_machine = DifferentialExpressionParameters::GOOGLE_VM_MACHINE_TYPES.sample
-    custom_vm = DifferentialExpressionService.create_custom_virtual_machine(machine_type: random_machine)
-    assert_equal random_machine, custom_vm.machine_type
-  end
 end
