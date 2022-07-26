@@ -97,7 +97,7 @@ class PapiClient
 
     # override default VM if this is a differential expression job
     if action.to_sym == :differential_expression
-      custom_vm = DifferentialExpressionService.create_custom_virtual_machine(ram_in_mb: params_object.ram_in_mb)
+      custom_vm = DifferentialExpressionService.create_custom_virtual_machine(machine_type: params_object.machine_type)
       resources = create_resources_object(regions: ['us-central1'], vm: custom_vm)
     else
       resources = create_resources_object(regions: ['us-central1'])

@@ -119,7 +119,7 @@ class DifferentialExpressionService
   #   - +user+             (User) => User initiating parse action (for email delivery)
   #   - +annotation_name+  (String) => Name of requested annotation
   #   - +annotation_scope+ (String) => Scope of requested annotation ('study' or 'cluster')
-  #   - +vm_ram+           (Integer) => Override to set RAM for DE VM (will default to 52 GB)
+  #   - +machine_type+     (String) => Override default VM machine type
   #
   # * *yields*
   #   - (IngestJob) => Differential expression job in PAPI
@@ -129,7 +129,7 @@ class DifferentialExpressionService
   #
   # * *raises*
   #   - (ArgumentError) => if requested parameters do not validate
-  def self.run_differential_expression_job(cluster_file, study, user, annotation_name:, annotation_scope:, vm_ram: nil)
+  def self.run_differential_expression_job(cluster_file, study, user, annotation_name:, annotation_scope:, machine_type: nil)
     validate_study(study)
     validate_annotation(cluster_file, study, annotation_name, annotation_scope)
 
@@ -158,9 +158,7 @@ class DifferentialExpressionService
       de_params[:matrix_file_type] = 'dense'
     end
     params_object = DifferentialExpressionParameters.new(de_params)
-    if vm_ram.present?
-      params_object.ram_in_mb = vm_ram
-    end
+    params_object.machine_type = machine_type if machine_type.present? # override :machine_type if specified
 
     if params_object.valid?
       # launch DE job
@@ -174,17 +172,15 @@ class DifferentialExpressionService
   end
 
   # create a GCE virtual machine for use in a DE job
-  # custom VM with 4 cores, 52 GB of RAM (53248 MB)
+  # uses GCE N1 "high memory" machine types
+  # https://cloud.google.com/compute/docs/general-purpose-machines#n1-high-memory
   #
   # * *params*
-  #   - +ram_in_mb+ (Integer) => Amount of RAM (in MB) to allocate to VM
+  #   - +machine_type+ (String) => Type of requested machine
   #
   # * *returns*
   #   - (Google::Apis::GenomicsV2alpha1::VirtualMachine)
-  def self.create_custom_virtual_machine(ram_in_mb:)
-    # creating a custom machine type is controlled by the following convention: custom-{num_cpu}-{ram_in_mb}
-    # e.g. custom-4-53248 has 4 cores and 53,248 MB of RAM (52 GB)
-    machine_type = "custom-4-#{ram_in_mb}"
+  def self.create_custom_virtual_machine(machine_type:)
     ApplicationController.papi_client.create_virtual_machine_object(machine_type: machine_type)
   end
 

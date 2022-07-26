@@ -1,12 +1,10 @@
 # class to hold parameters specific to differential expression jobs in PAPI
 class DifferentialExpressionParameters
   include ActiveModel::Model
-  include ActiveModel::Attributes
 
-  # amount of RAM (in MB) to allocate for custom differential expression VMs
-  # to address exit code 137: Indicates failure as container received SIGKILL
-  # (Manual intervention or ‘oom-killer’ [OUT-OF-MEMORY])
-  CUSTOM_VM_RAM_MB = 53_248
+  # acceptable Google N1 machine times
+  # https://cloud.google.com/compute/docs/general-purpose-machines#n1-high-memory
+  GOOGLE_VM_MACHINE_TYPES = [2, 4, 8, 16, 32, 64, 96].map { |i| "n1-highmem-#{i}" }.freeze
 
   # regular expression to validate GS url format
   GS_URL_REGEXP = %r{\Ags://}.freeze
@@ -20,17 +18,9 @@ class DifferentialExpressionParameters
   # matrix_file_type: type of raw counts matrix (dense, sparse)
   # gene_file (optional): genes/features file for sparse matrix
   # barcode_file (optional): barcodes file for sparse matrix
-  # ram_in_mb (optional): override for setting amount of RAM on VM
-  attribute :annotation_name, type: String
-  attribute :annotation_scope, type: String
-  attribute :annotation_file, type: String
-  attribute :cluster_file,type: String
-  attribute :cluster_name, type: String
-  attribute :matrix_file_path, type: String
-  attribute :matrix_file_type, type: String
-  attribute :gene_file, type: String
-  attribute :barcode_file, type: String
-  attribute :ram_in_mb, default: CUSTOM_VM_RAM_MB
+  # machine_type (optional): override for default ingest machine type (uses 'n1-highmem-8')
+  attr_accessor :annotation_name, :annotation_scope, :annotation_file, :cluster_file, :cluster_name, :matrix_file_path,
+                :matrix_file_type, :gene_file, :barcode_file, :machine_type
 
   validates :annotation_name, :annotation_scope, :annotation_file, :cluster_file,
             :cluster_name, :matrix_file_path, :matrix_file_type, presence: true
@@ -38,6 +28,7 @@ class DifferentialExpressionParameters
             format: { with: GS_URL_REGEXP, message: 'is not a valid GS url' }
   validates :annotation_scope, inclusion: %w[cluster study]
   validates :matrix_file_type, inclusion: %w[dense mtx]
+  validates :machine_type, inclusion: GOOGLE_VM_MACHINE_TYPES
   validates :gene_file, :barcode_file,
             presence: true,
             format: {
@@ -45,6 +36,12 @@ class DifferentialExpressionParameters
               message: 'is not a valid GS url'
             },
             if: -> { matrix_file_type == 'mtx' }
+
+  # apply default value for :machine_type, unless overridden
+  def initialize(attributes = {})
+    super
+    @machine_type ||= 'n1-highmem-8'
+  end
 
   # convert attribute name into CLI-formatted option
   def self.to_cli_opt(param_name)
