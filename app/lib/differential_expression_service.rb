@@ -1,5 +1,11 @@
 # handle launching differential expression ingest jobs
 class DifferentialExpressionService
+
+  # amount of RAM (in MB) to allocate for custom differential expression VMs
+  # to address exit code 137: Indicates failure as container received SIGKILL
+  # (Manual intervention or ‘oom-killer’ [OUT-OF-MEMORY])
+  CUSTOM_VM_RAM_MB = 53_248
+
   # run a differential expression job for a given study on the default cluster/annotation
   #
   # * *params*
@@ -167,6 +173,21 @@ class DifferentialExpressionService
     else
       raise ArgumentError, "job parameters failed to validate: #{params_object.errors.full_messages}"
     end
+  end
+
+  # create a GCE virtual machine for use in a DE job
+  # custom VM with 4 cores, 52 GB of RAM (53248 MB)
+  #
+  # * *params*
+  #   - +ram_in_mb+ (Integer) => Amount of RAM (in MB) to allocate to VM
+  #
+  # * *returns*
+  #   - (Google::Apis::GenomicsV2alpha1::VirtualMachine)
+  def self.create_custom_virtual_machine(ram_in_mb: CUSTOM_VM_RAM_MB)
+    # creating a custom machine type is controlled by the following convention: custom-{num_cpu}-{ram_in_mb}
+    # e.g. custom-4-53248 has 4 cores and 53,248 MB of RAM (52 GB)
+    machine_type = "custom-4-#{ram_in_mb}"
+    ApplicationController.papi_client.create_virtual_machine_object(machine_type: machine_type)
   end
 
   # validate annotation exists and can be visualized for a DE job
