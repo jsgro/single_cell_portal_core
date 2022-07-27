@@ -21,8 +21,9 @@ const options = {
 }
 const { values } = parseArgs({ args, options })
 
-const numCPUs = os.cpus().length
-console.log(`Number of CPUs on this client: ${numCPUs}`)
+// const numCPUs = os.cpus().length / 2 // Count on Intel i7 is 1/2 of reported
+const numCPUs = 2
+console.log(`Number of CPUs to be used on this client: ${numCPUs}`)
 
 // Make `images` directory if absent
 access('images', async err => {
@@ -31,14 +32,30 @@ access('images', async err => {
   }
 })
 
+/** Print message with browser-tag preamble to local console */
 function print(message, preamble) {
   console.log(`${preamble} ${message}`)
+}
+
+function isBardPost(request) {
+  return request.url().includes('bard') && request.method() === 'POST'
+}
+
+/** Returns boolean for if request is relevant Bard / Mixpanel log */
+function isExpressionScatterPlotLog(request) {
+  if (isBardPost(request)) {
+    const payload = JSON.parse(request.postData())
+    const props = payload.properties
+    return (payload.event === 'plot:scatter' && props.genes.length === 1)
+  }
+  return false
 }
 
 /** In Explore view, search gene, await plot, save plot image locally */
 async function makeExpressionScatterPlotImage(gene, page, preamble) {
   print(`Inputting search for gene: ${gene}`, preamble)
   // Trigger a gene search
+  await page.waitForSelector('.gene-keyword-search input')
   await page.type('.gene-keyword-search input', gene, { delay: 1 })
   await page.keyboard.press('Enter')
   await page.$eval('.gene-keyword-search button', el => el.click())
@@ -48,16 +65,13 @@ async function makeExpressionScatterPlotImage(gene, page, preamble) {
   // Wait for reliable signal that expression plot has finished rendering.
   // A Mixpanel / Bard log request always fires immediately upon render.
   await page.waitForRequest(request => {
-    if (request.url().includes('bard') && request.method() === 'POST') {
-      const payload = JSON.parse(request.postData())
-      const props = payload.properties
-      return (payload.event === 'plot:scatter' && props.genes[0] === gene)
-    }
-    return false
+    print('request', preamble)
+    console.log(request)
+    return isExpressionScatterPlotLog(request, gene)
   })
 
   const expressionPlotPerfTime = Date.now() - expressionPlotStartTime
-  print(`Expression plot time: ${expressionPlotPerfTime} ms`, preamble)
+  print(`Expression plot time for gene ${gene}: ${expressionPlotPerfTime} ms`, preamble)
 
   // Height and width of plot, x- and y-offset from viewport origin
   const clipDimensions = { height: 595, width: 660, x: 5, y: 375 }
@@ -76,12 +90,27 @@ async function makeExpressionScatterPlotImage(gene, page, preamble) {
 /** CPU-level wrapper to make images for a sub-list of genes */
 async function processScatterPlotImages(genes, context) {
   const { accession, preamble, origin } = context
-  const browser = await puppeteer.launch()
+  const browser = await puppeteer.launch({ headless: false })
   const page = await browser.newPage()
   await page.setViewport({
     width: 1680,
     height: 1000,
     deviceScaleFactor: 1
+  })
+
+  const timeoutMinutes = 2
+  const timeoutMilliseconds = timeoutMinutes * 60 * 1000
+  // page.setDefaultTimeout(0) // No timeout
+  page.setDefaultTimeout(timeoutMilliseconds)
+
+  await page.setRequestInterception(true)
+
+  page.on('request', request => {
+    if (isBardPost(request) && !isExpressionScatterPlotLog(request)) {
+      request.abort()
+    } else {
+      request.continue()
+    }
   })
 
   // Go to Explore tab in Study Overview page
@@ -121,7 +150,7 @@ function sliceGenes(uniqueGenes, numCPUs, cpuIndex) {
   const uniqueGenes = json.uniqueGenes
   console.log(`Number of genes: ${uniqueGenes.length}`)
 
-  for (let cpuIndex = 0; cpuIndex < (numCPUs / 2) - 1; cpuIndex++) {
+  for (let cpuIndex = 0; cpuIndex < numCPUs - 1; cpuIndex++) {
     /** Log prefix to distinguish messages for different browser instances */
     const preamble = `Browser ${cpuIndex}:`
 
