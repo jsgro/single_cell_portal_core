@@ -94,7 +94,8 @@ async function makeExpressionScatterPlotImage(gene, page, preamble) {
 /** CPU-level wrapper to make images for a sub-list of genes */
 async function processScatterPlotImages(genes, context) {
   const { accession, preamble, origin } = context
-  const browser = await puppeteer.launch({ headless: false })
+  const browser = await puppeteer.launch()
+  // const browser = await puppeteer.launch({ headless: false, devtools: true })
   const page = await browser.newPage()
   await page.setViewport({
     width: 1680,
@@ -120,24 +121,30 @@ async function processScatterPlotImages(genes, context) {
     if (isIgnorableLog || isViolinPlot || isIdeogram) {
       request.abort()
     } else {
-      request.continue()
+      const headers = Object.assign({}, request.headers(), {
+        'sec-ch-ua': undefined // remove "sec-ch-ua" header
+      })
+      request.continue({ headers })
     }
   })
 
-  page.on('response', response => {
-    const url = response.url()
-    if (url.includes('expression&gene=')) {
-      print('response.status()', preamble)
-      console.log(response.status())
-    }
-  })
+  // page.on('response', response => {
+  //   const url = response.url()
+  //   if (url.includes('expression&gene=')) {
+  //     print('response.status()', preamble)
+  //     console.log(response.status())
+  //   }
+  // })
 
   page.on('requestfailed', request => {
     const url = request.url()
     if (url.includes('expression&gene=')) {
       print('request.url()', preamble)
       console.log(request.url())
+      console.log(request.headers())
       console.log(request.failure())
+      const failedGene = url.split('gene=')[1]
+      console.log('failedGene', failedGene)
     }
   })
 
