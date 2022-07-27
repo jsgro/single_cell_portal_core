@@ -2,7 +2,7 @@
 class DifferentialExpressionParameters
   include ActiveModel::Model
 
-  # acceptable Google N1 machine times
+  # acceptable Google N1 machine types
   # https://cloud.google.com/compute/docs/general-purpose-machines#n1-high-memory
   GOOGLE_VM_MACHINE_TYPES = [2, 4, 8, 16, 32, 64, 96].map { |i| "n1-highmem-#{i}" }.freeze
 

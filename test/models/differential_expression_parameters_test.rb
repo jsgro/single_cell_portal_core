@@ -72,7 +72,7 @@ class DifferentialExpressionParametersTest < ActiveSupport::TestCase
     assert_equal '--foo', DifferentialExpressionParameters.to_cli_opt('foo')
   end
 
-  test 'should provide default ram_in_mb for DE jobs' do
+  test 'should set default machine type for DE jobs' do
     params = DifferentialExpressionParameters.new
     assert_equal 'n1-highmem-8', params.machine_type
   end

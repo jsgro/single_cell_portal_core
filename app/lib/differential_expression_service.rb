@@ -186,7 +186,7 @@ class DifferentialExpressionService
     raise ArgumentError, "cannot find cluster for #{cluster_file.name}" if cluster.nil?
 
     if DifferentialExpressionResult.where(study: study,
-                                          cluster: cluster,
+                                          cluster_group: cluster,
                                           annotation_name: annotation_name,
                                           annotation_scope: annotation_scope).exists?
       raise ArgumentError,
