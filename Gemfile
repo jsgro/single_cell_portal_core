@@ -66,7 +66,6 @@ gem 'sentry-raven'
 gem 'rubyzip'
 gem 'rack-brotli'
 gem 'time_difference'
-gem 'tcell_agent'
 gem 'sys-filesystem', require: 'sys/filesystem'
 gem 'browser'
 gem 'ruby-prof'
@@ -75,6 +74,11 @@ gem 'carrierwave', '~> 2.0'
 gem 'carrierwave-mongoid', :require => 'carrierwave/mongoid'
 gem 'uuid'
 gem 'vite_rails'
+
+# only enable TCell in deployed environments due to Chrome sec-ch-ua header issue
+group :production, :staging do
+  gem 'tcell_agent'
+end
 
 group :development, :test do
   # Access an IRB console on exception pages or by using <%= console %> in views
