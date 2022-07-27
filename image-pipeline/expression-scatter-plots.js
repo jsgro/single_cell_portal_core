@@ -58,6 +58,7 @@ async function makeExpressionScatterPlotImage(gene, page, preamble) {
   await page.waitForSelector('.gene-keyword-search input')
   await page.type('.gene-keyword-search input', gene, { delay: 1 })
   await page.keyboard.press('Enter')
+  await page.waitForTimeout(1000)
   await page.$eval('.gene-keyword-search button', el => el.click())
   print(`Awaiting expression plot for gene: ${gene}`, preamble)
   const expressionPlotStartTime = Date.now()
@@ -65,8 +66,8 @@ async function makeExpressionScatterPlotImage(gene, page, preamble) {
   // Wait for reliable signal that expression plot has finished rendering.
   // A Mixpanel / Bard log request always fires immediately upon render.
   await page.waitForRequest(request => {
-    print('request', preamble)
-    console.log(request)
+    // print('request', preamble)
+    // console.log(request)
     return isExpressionScatterPlotLog(request, gene)
   })
 
@@ -82,7 +83,10 @@ async function makeExpressionScatterPlotImage(gene, page, preamble) {
 
   print(`Wrote ${imagePath}`, preamble)
 
+  // Clear search input to avoid wrong plot type
   await page.$eval('.gene-keyword-search-input svg', el => el.parentElement.click())
+
+  await page.waitForTimeout(1000)
 
   return
 }
@@ -104,14 +108,46 @@ async function processScatterPlotImages(genes, context) {
   page.setDefaultTimeout(timeoutMilliseconds)
 
   await page.setRequestInterception(true)
-
   page.on('request', request => {
-    if (isBardPost(request) && !isExpressionScatterPlotLog(request)) {
+    // Drop extraneous requests, to minimize undue  load
+    const url = request.url()
+    const isGA = url.includes('google-analytics')
+    const isSentry = url.includes('ingest.sentry.io')
+    const isNonExpPlotBardPost = isBardPost(request) && !isExpressionScatterPlotLog(request)
+    const isIgnorableLog = isGA || isSentry || isNonExpPlotBardPost
+    const isViolinPlot = url.includes('/expression/violin')
+    const isIdeogram = url.includes('/ideogram@')
+    if (isIgnorableLog || isViolinPlot || isIdeogram) {
       request.abort()
     } else {
       request.continue()
     }
   })
+
+  page.on('response', response => {
+    const url = response.url()
+    if (url.includes('expression&gene=')) {
+      print('response.status()', preamble)
+      console.log(response.status())
+    }
+  })
+
+  page.on('requestfailed', request => {
+    const url = request.url()
+    if (url.includes('expression&gene=')) {
+      print('request.url()', preamble)
+      console.log(request.url())
+      console.log(request.failure())
+    }
+  })
+
+  // page.on('error', err => {
+  //   print(`Error: ${err.toString()}`, preamble)
+  // })
+
+  // page.on('pageerror', err => {
+  //   console.log(`Page error: ${err.toString()}`)
+  // })
 
   // Go to Explore tab in Study Overview page
   const exploreViewUrl = `${origin}/single_cell/study/${accession}#study-visualize`
