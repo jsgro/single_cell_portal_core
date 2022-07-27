@@ -12,7 +12,7 @@ const miscFileTypes = ['Other', 'Documentation']
 const miscFileFilter = file => miscFileTypes.includes(file.file_type)
 
 export default {
-  title: 'Miscellaneous / Other',
+  title: 'Miscellaneous',
   header: 'Documentation & other files',
   name: 'misc',
   component: MiscellaneousForm,
@@ -39,7 +39,7 @@ function MiscellaneousForm({
     <div className="row">
       <div className="col-md-12">
         <p className="form-terra">
-          Any documentation or other support files. These will not be displayed directly, but will be avaialble for users to download.
+          Any documentation or other support files. These files will not be used in visualizations, but will be available for users to download.
         </p>
       </div>
     </div>

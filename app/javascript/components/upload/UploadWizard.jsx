@@ -36,6 +36,8 @@ import SequenceFileStep from './SequenceFileStep'
 import GeneListStep from './GeneListStep'
 import LoadingSpinner from '~/lib/LoadingSpinner'
 import H5adStep from './H5adStep'
+import SeuratStep from './SeuratStep'
+
 
 const POLLING_INTERVAL = 10 * 1000 // 10 seconds between state updates
 const CHUNK_SIZE = 10000000 // 10 MB
@@ -48,12 +50,14 @@ const STEPS = [
   CoordinateLabelStep,
   SequenceFileStep,
   GeneListStep,
-  MiscellaneousStep,
-  H5adStep
+  H5adStep,
+  SeuratStep,
+  MiscellaneousStep
 ]
 
 const MAIN_STEPS = STEPS.slice(0, 4)
-const SUPPLEMENTAL_STEPS = STEPS.slice(4)
+const SUPPLEMENTAL_STEPS = STEPS.slice(4, 8)
+const NON_VISUALIZABLE_STEPS = STEPS.slice(8)
 
 /** shows the upload wizard */
 export function RawUploadWizard({ studyAccession, name }) {
@@ -353,7 +357,7 @@ export function RawUploadWizard({ studyAccession, name }) {
           <div>
             <WizardNavPanel {...{
               formState, serverState, currentStep, setCurrentStep, studyAccession, mainSteps: MAIN_STEPS,
-              supplementalSteps: SUPPLEMENTAL_STEPS, studyName: name
+              supplementalSteps: SUPPLEMENTAL_STEPS, nonVizSteps: NON_VISUALIZABLE_STEPS, studyName: name
             }} />
           </div>
           <div id="overflow-x-scroll">

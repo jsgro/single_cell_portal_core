@@ -14,10 +14,12 @@ import LoadingSpinner from '~/lib/LoadingSpinner'
 /** renders a list of the steps and summary study information */
 function RawWizardNavPanel({
   formState, serverState, currentStep, setCurrentStep, studyAccession, steps, studyName,
-  mainSteps, supplementalSteps
+  mainSteps, supplementalSteps, nonVizSteps
 }) {
   const [othersExpanded, setOthersExpanded] = useState(true)
+  const [supplimentalExpanded, setSupplimentalExpanded] = useState(false)
   const expansionIcon = othersExpanded ? faChevronUp : faChevronDown
+  const expansionIcon2 = supplimentalExpanded ? faChevronUp : faChevronDown
 
   return <div className="wizard-side-panel">
     <ul className="upload-wizard-steps" role="tablist" data-analytics-name="upload-wizard-primary-steps">
@@ -54,8 +56,55 @@ function RawWizardNavPanel({
           currentStep={currentStep}
           setCurrentStep={setCurrentStep}/>) }
     </ul>
+    <ul className="upload-wizard-steps" role="tablist" data-analytics-name="upload-wizard-tertiary-steps">
+      <li className="other-header" role="tab" >
+        <button className="list-link" onClick={() => setSupplimentalExpanded(!supplimentalExpanded)} >
+          <span className="step-number">
+            <span className="badge highlight">+</span>
+          </span>
+          <span>
+            <a className="action link" role="link">
+            <Erer/> <FontAwesomeIcon icon={expansionIcon2}/>
+            </a>
+          </span>
+        </button>
+      </li>
+      { supplimentalExpanded && nonVizSteps.map((step, index) =>
+        <StepTabHeader key={index}
+          step={step}
+          index={index}
+          showIndex={false}
+          formState={formState}
+          serverState={serverState}
+          currentStep={currentStep}
+          setCurrentStep={setCurrentStep}/>) }
+    </ul>
   </div>
 }
+
+/** */
+function Erer() {
+  const clusterVizIndicator = <div>
+    <OverlayTrigger
+      trigger={['hover', 'focus']}
+      rootClose placement="top"
+      overlay={nonVizHelpContent()}>
+      <span> Non-visualized files <FontAwesomeIcon icon={faQuestionCircle}/></span>
+    </OverlayTrigger>
+  </div>
+
+
+  return <div className="viz-info">
+    {clusterVizIndicator}
+  </div>
+}
+/** gets the popup message based on whether there are files parsing */
+function nonVizHelpContent() {
+  return <Popover id="cluster-viz-upload-info" className="tooltip-wide">
+    <div>These files will not be part of the visualization in the Explore tab. They should only be added as supplemental items that would be useful for download.</div>
+  </Popover>
+}
+
 
 /** shows current expression and clustering visualization status */
 function VisualizationStatuses({ serverState }) {

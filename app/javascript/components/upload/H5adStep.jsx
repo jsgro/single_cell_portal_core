@@ -11,8 +11,8 @@ const DEFAULT_NEW_H5AD_FILE = {
 const H5adFileFilter = file => ['H5ad'].includes(file.file_type)
 
 export default {
-  title: 'H5ad',
-  header: 'H5ad formatted file',
+  title: 'Anndata (.h5ad)',
+  header: 'Anndata files',
   name: 'H5ad',
   component: H5adForm,
   fileFilter: H5adFileFilter
@@ -27,7 +27,6 @@ function H5adForm({
   deleteFile
 }) {
   const H5adFiles = formState.files.filter(H5adFileFilter)
-console.log('H5adFiles:', H5adFiles)
   useEffect(() => {
     if (H5adFiles.length === 0) {
       addNewFile(DEFAULT_NEW_H5AD_FILE)
@@ -38,7 +37,11 @@ console.log('H5adFiles:', H5adFiles)
     <div className="row">
       <div className="col-md-12">
         <p className="form-terra">
-          H5ad formatted files. These will not be displayed directly, but will be avaialble for users to download.
+          Anndata fpppp, typically formatted with the file extension .h5ad.
+          <br></br>
+          These files will not be used to power visualizations, but will be avaialble for users to download.
+          <br></br>
+          <a href="https://anndata.readthedocs.io" target="_blank" rel="noreferrer"> See h5ad reference documentation.</a>
         </p>
       </div>
     </div>
