@@ -12,7 +12,7 @@ const SeuratFileFilter = file => ['Seurat'].includes(file.file_type)
 
 export default {
   title: 'Seurat data',
-  header: 'Files formatted for Seurat data',
+  header: 'Seurat data files',
   name: 'Seurat',
   component: SeuratForm,
   fileFilter: SeuratFileFilter
@@ -38,11 +38,16 @@ function SeuratForm({
       <div className="col-md-12">
         <p className="form-terra">
           Files that could be utilized for Seurat powered analsis.
-          <br></br>
-          This could include SeuratData (packaging datasets for use in R as reference Seurat datasets)
-          and SeuratDisk (h5Seurat file format to ease interconversion between Seurat and AnnData).
-          <br></br>
           These files will not be used to power visualizations, but will be avaialble for users to download.
+          <br></br>
+          See reference documentation&nbsp;
+          <a href="https://mojaveazure.github.io/seurat-disk/articles/h5Seurat-load.html" target="_blank" rel="noreferrer">
+           here
+          </a>
+          &nbsp;and&nbsp;
+          <a href="https://mojaveazure.github.io/seurat-disk/articles/h5Seurat-spec.html" target="_blank" rel="noreferrer">
+            here
+          </a>.
         </p>
       </div>
     </div>

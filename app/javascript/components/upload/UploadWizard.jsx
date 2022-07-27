@@ -50,8 +50,6 @@ const STEPS = [
   CoordinateLabelStep,
   SequenceFileStep,
   GeneListStep,
-  H5adStep,
-  SeuratStep,
   MiscellaneousStep
 ]
 
@@ -70,6 +68,19 @@ export function RawUploadWizard({ studyAccession, name }) {
   const studyObj = serverState?.study
 
   const allowReferenceImageUpload = serverState?.feature_flags?.reference_image_upload
+
+  const allowH5adAndSeuratFileUploads = serverState?.feature_flags?.h5ad_and_seurat_upload
+
+  if (allowH5adAndSeuratFileUploads && !STEPS.includes(H5adStep)) {
+    STEPS.splice(8, 0, H5adStep)
+    NON_VISUALIZABLE_STEPS.splice(0, 0, H5adStep)
+  }
+
+  if (allowH5adAndSeuratFileUploads && !STEPS.includes(SeuratStep)) {
+    STEPS.splice(9, 0, SeuratStep)
+    NON_VISUALIZABLE_STEPS.splice(1, 0, SeuratStep)
+  }
+
 
   if (allowReferenceImageUpload && !STEPS.includes(ImageStep)) {
     STEPS.splice(5, 0, ImageStep)

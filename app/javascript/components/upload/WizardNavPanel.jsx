@@ -64,7 +64,7 @@ function RawWizardNavPanel({
           </span>
           <span>
             <a className="action link" role="link">
-            <Erer/> <FontAwesomeIcon icon={expansionIcon2}/>
+              <NotVizHelpMessage/> <FontAwesomeIcon icon={expansionIcon2}/>
             </a>
           </span>
         </button>
@@ -82,26 +82,28 @@ function RawWizardNavPanel({
   </div>
 }
 
-/** */
-function Erer() {
-  const clusterVizIndicator = <div>
+/** create the tooltip and message for the non-visualizable files section */
+function NotVizHelpMessage() {
+  const notVizToolTip = <span>
     <OverlayTrigger
       trigger={['hover', 'focus']}
       rootClose placement="top"
       overlay={nonVizHelpContent()}>
       <span> Non-visualized files <FontAwesomeIcon icon={faQuestionCircle}/></span>
     </OverlayTrigger>
-  </div>
+  </span>
 
-
-  return <div className="viz-info">
-    {clusterVizIndicator}
-  </div>
+  return <span >
+    {notVizToolTip}
+  </span>
 }
+
 /** gets the popup message based on whether there are files parsing */
 function nonVizHelpContent() {
   return <Popover id="cluster-viz-upload-info" className="tooltip-wide">
-    <div>These files will not be part of the visualization in the Explore tab. They should only be added as supplemental items that would be useful for download.</div>
+    <div>These files will not be part of the visualization in the Explore tab.
+      They should only be added as supplemental items that would be useful for download.
+    </div>
   </Popover>
 }
 

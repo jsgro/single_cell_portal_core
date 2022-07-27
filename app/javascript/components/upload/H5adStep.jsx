@@ -37,11 +37,12 @@ function H5adForm({
     <div className="row">
       <div className="col-md-12">
         <p className="form-terra">
-          Anndata fpppp, typically formatted with the file extension .h5ad.
+          Anndata files, typically formatted with the file extension .h5ad.&nbsp;
+          <a href="https://anndata.readthedocs.io" target="_blank" rel="noreferrer">
+            See h5ad reference documentation.
+          </a>
           <br></br>
           These files will not be used to power visualizations, but will be avaialble for users to download.
-          <br></br>
-          <a href="https://anndata.readthedocs.io" target="_blank" rel="noreferrer"> See h5ad reference documentation.</a>
         </p>
       </div>
     </div>

@@ -8,7 +8,7 @@ import { validateFile } from './upload-utils'
 
 const allowedFileExts = FileTypeExtensions.plainText
 
-/** renders a form for editing/uploading an coordinate label file */
+/** renders a form for editing/uploading a coordinate label file */
 export default function CoordinateLabelForm({
   file,
   allFiles,
