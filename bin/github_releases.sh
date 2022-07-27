@@ -9,7 +9,7 @@ REPO_URL='https://api.github.com/repos/broadinstitute/single_cell_portal_core/re
 
 # Get all GitHub published releases for $REPO_URL
 function get_all_releases {
-  echo $(curl -X GET --header 'application/json' --silent $REPO_URL)
+  echo $(curl -X GET --header 'Accept: application/vnd.github.v3+json' --silent $REPO_URL)
 }
 
 # extract a release tag name from a GitHub release JSON object
