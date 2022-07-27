@@ -112,8 +112,6 @@ if [[ "$TEST_FILEPATH" == "" ]]; then
     git config --global --add safe.directory $(pwd)
   fi
   git checkout .
-  RAILS_ENV=test NODE_ENV=test bin/bundle exec rake assets:clean
-  RAILS_ENV=test NODE_ENV=test yarn install --force --trace
   RAILS_ENV=test NODE_ENV=test bin/bundle exec rake assets:precompile
 fi
 

@@ -8,19 +8,26 @@ This application is built and deployed using [Docker](https://www.docker.com), s
 [Docker for Mac OSX](https://docs.docker.com/docker-for-mac/). Please refer to their online documentation for instructions
 on installing Docker.
 
-## BUILDING THE DOCKER IMAGE
+## PULLING/BUILDING THE DOCKER IMAGE
 
-Once all source files are checked out and Docker has been installed and your VM configured, open a terminal window and
-execute the following steps:
+To pull the Docker image that Single Cell Portal is built off of, run the following command:
+```
+docker pull gcr.io/broad-singlecellportal-staging/single-cell-portal:development
+```
 
-1. Navigate to the project directory
-1. Build the Single Cell Portal image: `docker build -t single_cell_docker -f Dockerfile .`
+This is not strictly necessary as a pre-flight step, but will make calling `bin/boot_docker` faster 
+(see [Running the Container](#running-the-container)) for more information.
+
+To build the Docker image locally, run the following command from the project root directory:
+```
+docker build -t gcr.io/broad-singlecellportal-staging/single-cell-portal:development .
+```
 
 This will start the automated process of building the Docker image for running the portal.  The image is based on the
 [Passenger-docker baseimage](https://github.com/phusion/passenger-docker) and comes with Ruby, Nginx, and Passenger by
 default, but built on a different base image and with additional packages added to the [Broad Institute SCP Rails baseimage](https://github.com/broadinstitute/scp-rails-baseimage/)
-which pulls from the original baseimage. The extended image contains ImageMagick, and self-signed SSL certificates & CA
-Authority for doing local development in https.
+which pulls from the original baseimage. The extended image contains other required libraries, and self-signed SSL 
+certificates & CA Authority for doing local development in https.
 
 *If this is your first time building the image, it may take several minutes to download and install everything.*
 
@@ -172,7 +179,7 @@ to start the container:
 
 This sets up several environment variables in your shell and then runs the following command:
 
-    docker run --rm -it --name $CONTAINER_NAME -p 80:80 -p 443:443 -p 587:587 --link mongodb:mongodb -h localhost -v $PROJECT_DIR:/home/app/webapp:rw -e PASSENGER_APP_ENV=$PASSENGER_APP_ENV -e MONGO_LOCALHOST=$MONGO_LOCALHOST -e MONGO_INTERNAL_IP=$MONGO_INTERNAL_IP -e SENDGRID_USERNAME=$SENDGRID_USERNAME -e SENDGRID_PASSWORD=$SENDGRID_PASSWORD -e SECRET_KEY_BASE=$SECRET_KEY_BASE -e PORTAL_NAMESPACE=$PORTAL_NAMESPACE -e SERVICE_ACCOUNT_KEY=$SERVICE_ACCOUNT_KEY -e OAUTH_CLIENT_ID=$OAUTH_CLIENT_ID -e OAUTH_CLIENT_SECRET=$OAUTH_CLIENT_SECRET -e SENTRY_DSN=$SENTRY_DSN -e GA_TRACKING_ID=$GA_TRACKING_ID -e TCELL_AGENT_APP_ID=$TCELL_AGENT_APP_ID -e T_CELL_SERVER_AGENT_API_KEY=$T_CELL_SERVER_AGENT_API_KEY -e TCELL_AGENT_API_KEY=$TCELL_AGENT_API_KEY single_cell_docker
+    docker run --rm -it --name $CONTAINER_NAME -p 80:80 -p 443:443 -p 587:587 -h localhost -v $PROJECT_DIR:/home/app/webapp:rw -e PASSENGER_APP_ENV=$PASSENGER_APP_ENV -e MONGO_LOCALHOST=$MONGO_LOCALHOST -e MONGO_INTERNAL_IP=$MONGO_INTERNAL_IP -e SENDGRID_USERNAME=$SENDGRID_USERNAME -e SENDGRID_PASSWORD=$SENDGRID_PASSWORD -e SECRET_KEY_BASE=$SECRET_KEY_BASE -e PORTAL_NAMESPACE=$PORTAL_NAMESPACE -e SERVICE_ACCOUNT_KEY=$SERVICE_ACCOUNT_KEY -e OAUTH_CLIENT_ID=$OAUTH_CLIENT_ID -e OAUTH_CLIENT_SECRET=$OAUTH_CLIENT_SECRET -e SENTRY_DSN=$SENTRY_DSN -e GA_TRACKING_ID=$GA_TRACKING_ID -e TCELL_AGENT_APP_ID=$TCELL_AGENT_APP_ID -e T_CELL_SERVER_AGENT_API_KEY=$T_CELL_SERVER_AGENT_API_KEY -e TCELL_AGENT_API_KEY=$TCELL_AGENT_API_KEY gcr.io/broad-singlecellportal-staging/single-cell-portal:development
 
 The container will then start running, and will execute its local startup scripts that will configure the application automatically.
 
@@ -187,12 +194,15 @@ Broad Institute project members can load all project secrets from Vault and boot
 
     bin/load_env_secrets.sh -p (path/to/service/account.json) -s (path/to/portal/config) -r (path/to/readonly/service/account.json) -e (environment)
 
-This script takes four parameters:
+This script takes up to 7 parameters:
 
-1.  **VAULT_SECRET_PATH** (passed with -p): Path to portal configuration JSON inside Vault.
-1.  **SERVICE_ACCOUNT_PATH** (passed with -c): Path to GCP main service account configuration JSON inside Vault.
-1.  **READ_ONLY_SERVICE_ACCOUNT_PATH** (passed with -c): Path to GCP read-only service account configuration JSON inside Vault.
-1.  **PASSENGER_APP_ENV** (passed with -e; optional): Environment to boot portal in.  Defaults to 'development'.
+1. **VAULT_SECRET_PATH** (passed with -p): Path to portal configuration JSON inside Vault.
+2. **SERVICE_ACCOUNT_PATH** (passed with -s): Path to GCP main service account configuration JSON inside Vault.
+3. **READ_ONLY_SERVICE_ACCOUNT_PATH** (passed with -r): Path to GCP read-only service account configuration JSON inside Vault.
+4. **COMMAND** (passed with -c): Command to execute after loading vault secrets.  Defaults to 'bin/boot_docker'
+5. **PASSENGER_APP_ENV** (passed with -e; optional): Environment to boot portal in.  Defaults to 'development'.
+6. **DOCKER VERSION TAG** (passed with -v): Sets the version tag of the portal Docker image to run.  Defaults to 'development'
+7. **PORTAL_NAMESPACE** (passed with -n): Sets the value for the default Terra billing project.  Defaults to single-cell-portal-development
 
 The script requires two command line utilities: [vault](https://www.vaultproject.io) and [jq](https://stedolan.github.io/jq/).
 Please refer to their respective sites for installation instructions.
@@ -246,9 +256,9 @@ corresponding ports inside the Docker container.
 the single_cell_docker container called mongodb.
 * **-v [PROJECT_DIR]/:/home/app/webapp:** This mounts your local working directory inside the running Docker container
 in the correct location for the portal to run.  This accomplishes two things:
-	* Enables hot deployment for local development
-	* Persists all project data past destruction of Docker container (since we're running with --rm), but not system-level
-	log or tmp files.
+    * Enables hot deployment for local development
+    * Persists all project data past destruction of Docker container (since we're running with --rm), but not system-level
+    log or tmp files.
 * **-e PASSENGER_APP_ENV=[RAILS_ENV]:** The Rails environment.  Will default to development, so if you're doing a
 production deployment, set this accordingly.
 * **-e MONGO_LOCALHOST= [MONGO_LOCALHOST]:** Hostname of your MongoDB server.  This can be a named host (if using a service)
@@ -276,8 +286,9 @@ OAUTH_CLIENT_SECRET variables are necessary for allowing Google user authenticat
 * **-e T_CELL_SERVER_AGENT_API_KEY=[T_CELL_SERVER_AGENT_API_KEY]:** Sets the T_CELL_SERVER_AGENT_API_KEY environment variable to enable the [TCell](https://tcell.io) web application firewall server-side (if enabled)
 * **-e GA_TRACKING_ID=[GA_TRACKING_ID]:** Sets the GA_TRACKING_ID environment variable for tracking usage via
 [Google Analytics](https://analytics.google.com)
-* **single_cell_docker**: This is the name of the image we created earlier. If you chose a different name, please use
-that here.
+* **DOCKER_IMAGE_NAME**: This is the name of the Docker image the portal runs on, which is gcr.io/broad-singlecellportal-staging/single-cell-portal
+* **DOCKER_IMAGE_VERSION** The version tag of the above Docker image.  Defaults to 'development', but can be overridden with `-D [tag]`
+* ****
 
 ### INGEST PIPELINE AND NETWORK ENVIRONMENT VARIABLES
 The Single Cell Portal handles ingesting data into MongoDB via an [ingest pipeline](https://github.com/broadinstitute/scp-ingest-pipeline)
@@ -355,84 +366,30 @@ running this command, simply retry until it succeeds, as it usually only takes o
 
 ## TESTS
 
-### UI REGRESSION SUITE
-
-#### TEST SETUP
-
-All user interface tests are handle through [Selenium Webdriver](http://www.seleniumhq.org/docs/03_webdriver.jsp) and
-[Chromedriver](https://sites.google.com/a/chromium.org/chromedriver/) and are run against a regular instance of the portal,
-usually in development mode. The test suite is run from the `test/ui_test_suite.rb` script.
-
-Due to the nature of Docker, the tests cannot be run from inside the container as the Docker container cannot connect back
-to Chromedriver and the display from inside the VM.  As a result, the UI test suite has no knowledge of the Rails environment
-or application stack. Therefore, you will need to have a minimal portal environment enabled outside of Docker. The minumum
-requirements are as follows:
-
-* Ruby 2.5.7, preferably mangaged through [RVM](https://rvm.io/) or [rbenv](https://github.com/rbenv/rbenv)
-* Gems: [rubygems](https://github.com/rubygems/rubygems), [test-unit](http://test-unit.github.io),
-[selenium-webdriver](https://github.com/SeleniumHQ/selenium/tree/master/rb) (see Gemfile.lock for version requirements)
-* Google Chrome along with 2 Google accounts, one of which needs to be a portal admin account (see
-[ADMIN USER ACCOUNTS](#admin-user-accounts) above)
-* [Chromedriver](http://chromedriver.chromium.org/)
-* Terra accounts for both Google accounts (see [TERRA INTEGRATION](#terra-integration) below)
-
-
-#### RUNNING UI TESTS
-
-To begin the test suite, launch an instance of the portal in development mode and run the following command in another
-shell in the portal root directory:
-
-    ruby test/ui_test_suite.rb -- -e=(email account #1) -s=(email account #2) -p='(email account #1 password)' -P='(email account #2 password)'
-
-Passwords are required as all portal accounts are actual Google accounts, so we pass in passwords at runtime to allow
-the script to authenticate as the specified user.  Passwords are only stored temporarily in-memory and are not persisted
-to disk at any point (other than your shell history, which you can clear with `history -c` if you so desire.)
-
-Paths to the chromedriver binary and your profile download directory can also be configured with the `-c` and `-d` flags,
-respectively.
-
-In addition to the above configuration options, it is possible to run the UI test suite against a deployed instance of the
-portal by passing in the base portal URL via the `-u` flag.  Note that all of the above user requirements must be met for
-whatever instance you test.
-
-There are 3 main groups of tests: admin (study creation & editing), front-end (study data searching & visualization), and
-cleanup (removing studies created during testing).  You can run groups discretely by passing `-n /pattern/` to the test
-suite as follows:
-
-To run all admin tests:
-
-    ruby test/ui_test_suite.rb -n /admin/ -- (rest of test parameters)
-
-To run all front-end tests:
-
-    ruby test/ui_test_suite.rb -n /front-end/ -- (rest of test parameters)
-
-This can also be used to run smaller groups by refining the regular expression to match only certain names of tests.  For
-example, to run all front-end tests that deal with file downloads:
-
-    ruby test/ui_test_suite.rb -n /front-end.*download/ -- (rest of test parameters)
-
-You can also run a single test by passing the entire test name as the name parameter:
-
-    ruby test/ui_test_suite.rb -n 'test: admin: create a study' -- (rest of test parameters)
-
-Similarly, you can pass `--ignore-name /pattern/` to run all tests that do not match the given pattern:
-
-    ruby test/ui_test_suite.rb --ignore-name /billing-accounts/ -- (rest of test parameters)
-
-More information on usage & test configuration can be found in the comments at the top of the test suite.
-
 ### UNIT & INTEGRATION TESTS
-There is a smaller unit & integration test framework for the Single Cell Portal that is run using the built-in test Rails
+There is a unit & integration test framework for the Single Cell Portal that is run using the built-in test Rails
 harness, which uses [Test::Unit](https://github.com/test-unit/test-unit) and [minitest-rails](https://github.com/blowmage/minitest-rails).
-These unit & integration tests only cover specific functionality that requires integration with portal models and methods,
-and therefore cannot be run from the UI test suite.
+These tests can be run natively in Ruby once all project secrets have been loaded.  Each 
+test handles its own setup/teardown, and no test data needs to be seeded in order to run tests.
 
-These tests are run automatically after setting up the application and seeding the test database.  This is
-handled via a shell script `bin/run_tests.sh` that will precompile any needed assets (for performance), seed the
-test database, run the tests, and then destroy all created records to clean up after running.
+To run all unit/integration tests:
+```
+bin/rails test
+```
 
-To run the unit & integration test suite, the `boot_docker` script can be used:
+To run a specific unit/integration test suite (like the search API integration suite):
+```
+bin/rails test test/api/search_controller_test.rb
+```
+
+To run individual tests in a give suite:
+```
+bin/rails test test/api/search_controller_test.rb -n /facet/ # run all tests with the word 'facet' in the name
+bin/rails test test/api/search_controller_test.rb -n 'test_should_search_facet_filters' # run exact match on name
+```
+
+Additionally, these tests can be run automatically in Docker.  To run the unit & integration test suite, the `boot_docker` 
+script can be used:
 
     bin/boot_docker -e test -k (service account key path) -K (read-only service account path)
 
@@ -460,6 +417,10 @@ It is also possible to pass a fully-qualified single-quoted name to run only a s
 run only the test called `'test_workspaces'` in `test/integration/fire_cloud_client_test.rb`
 
     bin/boot_docker -e test -t test/integration/fire_cloud_client_test.rb -R 'test_workspaces' (... rest of parameters)
+
+### UI REGRESSION SUITE
+#### DEPRECATED
+Do not use test/ui_test_suite.rb as it no longer corresponds to most active UI features.
 
 ## GOOGLE DEPLOYMENT
 
