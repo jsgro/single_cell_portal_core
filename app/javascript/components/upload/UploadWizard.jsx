@@ -248,7 +248,6 @@ export function RawUploadWizard({ studyAccession, name }) {
       }
 
       if (file.status === 'new') {
-        console.log('studyFileData', studyFileData)
         response = await createStudyFile({
           studyAccession, studyFileData, isChunked, chunkStart, chunkEnd, fileSize, requestCanceller,
           onProgress: e => handleSaveProgress(e, studyFileId, fileSize, chunkStart)
