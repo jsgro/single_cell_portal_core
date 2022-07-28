@@ -85,7 +85,7 @@
     font-size: 0.8em;
   }
 
-  span.success, span.warning, span.info {
+  span.success, span.warning {
     color: #fff;
     padding: 0.1em 0.5em;
     border-radius: 5px;
@@ -96,9 +96,6 @@
     }
     &.warning {
       background: $warning-icon-color;
-    }
-    &.info {
-      background: #fff
     }
   }
 }
