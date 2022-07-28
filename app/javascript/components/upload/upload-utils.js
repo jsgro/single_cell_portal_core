@@ -115,7 +115,6 @@ export function formatFileForApi(file, chunkStart, chunkEnd) {
     addObjectPropertyToForm(file, key, data)
   })
   if (file.uploadSelection) {
-    console.log('file.uploadSelection:', file.uploadSelection)
     if (chunkStart || chunkEnd) {
       data.append('study_file[upload]', file.uploadSelection.slice(chunkStart, chunkEnd), file.name)
     } else {
@@ -125,11 +124,9 @@ export function formatFileForApi(file, chunkStart, chunkEnd) {
   }
   if (file.options) {
     Object.keys(file.options).forEach(key => {
-      console.log(key)
       data.append(`study_file[options][${key}]`, file.options[key])
     })
   }
-  console.log('data', data)
   return data
 }
 
@@ -209,11 +206,9 @@ function validateNameUniqueness(file, allFiles, validationMessages) {
 export function addObjectPropertyToForm(obj, propertyName, formData, nested) {
   let propString = `study_file[${propertyName}]`
   if (nested) {
-    console.log('nested')
     propString = `study_file[${nested}_attributes][${propertyName}]`
   }
   if (Array.isArray(obj[propertyName])) {
-    console.log('array')
     if (obj[propertyName].length == 0) {
       // if the array is empty, send an empty string as an indication that it is cleared
       formData.append(`${propString}[]`, '')
@@ -224,7 +219,6 @@ export function addObjectPropertyToForm(obj, propertyName, formData, nested) {
       })
     }
   } else if (obj[propertyName] && typeof obj[propertyName] === 'object') {
-    console.log('obj')
     if (PROPERTIES_AS_JSON.includes(propertyName)) {
       // serialize the object as json
       formData.append(propString, JSON.stringify(obj[propertyName]))
@@ -235,7 +229,6 @@ export function addObjectPropertyToForm(obj, propertyName, formData, nested) {
       })
     }
   } else {
-    console.log('nuone')
     // don't set null properties -- those are ones that haven't changed
     // and having them be sent as 'null' or '' can throw off validations
     if (obj[propertyName] != null && typeof obj[propertyName] != 'undefined') {

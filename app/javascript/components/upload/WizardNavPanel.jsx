@@ -17,7 +17,7 @@ function RawWizardNavPanel({
   mainSteps, supplementalSteps, nonVizSteps
 }) {
   const [othersExpanded, setOthersExpanded] = useState(true)
-  const [supplimentalExpanded, setSupplimentalExpanded] = useState(false)
+  const [supplimentalExpanded, setSupplimentalExpanded] = useState(true)
   const expansionIcon = othersExpanded ? faChevronUp : faChevronDown
   const expansionIcon2 = supplimentalExpanded ? faChevronUp : faChevronDown
 

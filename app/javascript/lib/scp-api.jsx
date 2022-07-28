@@ -233,7 +233,6 @@ export async function createStudyFile({
   mock=false,
   requestCanceller
 }) {
-  console.log('studyFileData:', studyFileData)
   const apiUrl = `/studies/${studyAccession}/study_files`
   const init = Object.assign({}, defaultInit(), {
     method: 'POST',
