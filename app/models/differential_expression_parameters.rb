@@ -2,6 +2,10 @@
 class DifferentialExpressionParameters
   include ActiveModel::Model
 
+  # acceptable Google N1 machine types
+  # https://cloud.google.com/compute/docs/general-purpose-machines#n1-high-memory
+  GOOGLE_VM_MACHINE_TYPES = [2, 4, 8, 16, 32, 64, 96].map { |i| "n1-highmem-#{i}" }.freeze
+
   # regular expression to validate GS url format
   GS_URL_REGEXP = %r{\Ags://}.freeze
 
@@ -14,8 +18,9 @@ class DifferentialExpressionParameters
   # matrix_file_type: type of raw counts matrix (dense, sparse)
   # gene_file (optional): genes/features file for sparse matrix
   # barcode_file (optional): barcodes file for sparse matrix
-  attr_accessor :annotation_name, :annotation_scope, :annotation_file, :cluster_file,
-                :cluster_name, :matrix_file_path, :matrix_file_type, :gene_file, :barcode_file
+  # machine_type (optional): override for default ingest machine type (uses 'n1-highmem-8')
+  attr_accessor :annotation_name, :annotation_scope, :annotation_file, :cluster_file, :cluster_name, :matrix_file_path,
+                :matrix_file_type, :gene_file, :barcode_file, :machine_type
 
   validates :annotation_name, :annotation_scope, :annotation_file, :cluster_file,
             :cluster_name, :matrix_file_path, :matrix_file_type, presence: true
@@ -23,6 +28,7 @@ class DifferentialExpressionParameters
             format: { with: GS_URL_REGEXP, message: 'is not a valid GS url' }
   validates :annotation_scope, inclusion: %w[cluster study]
   validates :matrix_file_type, inclusion: %w[dense mtx]
+  validates :machine_type, inclusion: GOOGLE_VM_MACHINE_TYPES
   validates :gene_file, :barcode_file,
             presence: true,
             format: {
@@ -30,6 +36,12 @@ class DifferentialExpressionParameters
               message: 'is not a valid GS url'
             },
             if: -> { matrix_file_type == 'mtx' }
+
+  # apply default value for :machine_type, unless overridden
+  def initialize(attributes = {})
+    super
+    @machine_type ||= 'n1-highmem-8'
+  end
 
   # convert attribute name into CLI-formatted option
   def self.to_cli_opt(param_name)
@@ -57,7 +69,6 @@ class DifferentialExpressionParameters
   def to_options_array
     options_array = []
     attributes.each do |attr_name, value|
-      # quote value to allow for non-word characters
       options_array += [self.class.to_cli_opt(attr_name), "#{value}"] if value.present?
     end
     options_array << '--differential-expression'

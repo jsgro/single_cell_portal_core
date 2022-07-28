@@ -119,6 +119,7 @@ class DifferentialExpressionService
   #   - +user+             (User) => User initiating parse action (for email delivery)
   #   - +annotation_name+  (String) => Name of requested annotation
   #   - +annotation_scope+ (String) => Scope of requested annotation ('study' or 'cluster')
+  #   - +machine_type+     (String) => Override default VM machine type
   #
   # * *yields*
   #   - (IngestJob) => Differential expression job in PAPI
@@ -128,7 +129,7 @@ class DifferentialExpressionService
   #
   # * *raises*
   #   - (ArgumentError) => if requested parameters do not validate
-  def self.run_differential_expression_job(cluster_file, study, user, annotation_name:, annotation_scope:)
+  def self.run_differential_expression_job(cluster_file, study, user, annotation_name:, annotation_scope:, machine_type: nil)
     validate_study(study)
     validate_annotation(cluster_file, study, annotation_name, annotation_scope)
 
@@ -157,6 +158,7 @@ class DifferentialExpressionService
       de_params[:matrix_file_type] = 'dense'
     end
     params_object = DifferentialExpressionParameters.new(de_params)
+    params_object.machine_type = machine_type if machine_type.present? # override :machine_type if specified
 
     if params_object.valid?
       # launch DE job
@@ -182,6 +184,15 @@ class DifferentialExpressionService
   def self.validate_annotation(cluster_file, study, annotation_name, annotation_scope)
     cluster = study.cluster_groups.by_name(cluster_file.name)
     raise ArgumentError, "cannot find cluster for #{cluster_file.name}" if cluster.nil?
+
+    if DifferentialExpressionResult.where(study: study,
+                                          cluster_group: cluster,
+                                          annotation_name: annotation_name,
+                                          annotation_scope: annotation_scope).exists?
+      raise ArgumentError,
+            "#{annotation_name} already exists for #{study.accession}:#{cluster_file.name}, " \
+            'please delete the existing results before retrying'
+    end
 
     can_visualize = false
     if annotation_scope == 'cluster'
