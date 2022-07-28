@@ -25,6 +25,9 @@ const { values } = parseArgs({ args, options })
 const numCPUs = 2
 console.log(`Number of CPUs to be used on this client: ${numCPUs}`)
 
+const origin = 'https://singlecell-staging.broadinstitute.org'
+// const origin = 'https://localhost:3000'
+
 // Make `images` directory if absent
 access('images', async err => {
   if (err) {
@@ -32,11 +35,17 @@ access('images', async err => {
   }
 })
 
+// Cache for X, Y, and possibly Z coordinates
+const coordinates = {}
+
+const timedOutGenes = {}
+
 /** Print message with browser-tag preamble to local console */
 function print(message, preamble) {
   console.log(`${preamble} ${message}`)
 }
 
+/** Is request a log post to Bard? */
 function isBardPost(request) {
   return request.url().includes('bard') && request.method() === 'POST'
 }
@@ -55,21 +64,29 @@ function isExpressionScatterPlotLog(request) {
 async function makeExpressionScatterPlotImage(gene, page, preamble) {
   print(`Inputting search for gene: ${gene}`, preamble)
   // Trigger a gene search
+  await page.waitForSelector('#study-visualize-nav')
+  await page.click('#study-visualize-nav')
+  await page.waitForSelector('.gene-keyword-search input')
   await page.waitForSelector('.gene-keyword-search input')
   await page.type('.gene-keyword-search input', gene, { delay: 1 })
   await page.keyboard.press('Enter')
-  await page.waitForTimeout(1000)
   await page.$eval('.gene-keyword-search button', el => el.click())
   print(`Awaiting expression plot for gene: ${gene}`, preamble)
   const expressionPlotStartTime = Date.now()
 
-  // Wait for reliable signal that expression plot has finished rendering.
-  // A Mixpanel / Bard log request always fires immediately upon render.
-  await page.waitForRequest(request => {
-    // print('request', preamble)
-    // console.log(request)
-    return isExpressionScatterPlotLog(request, gene)
-  })
+  try {
+    // Wait for reliable signal that expression plot has finished rendering.
+    // A Mixpanel / Bard log request always fires immediately upon render.
+    await page.waitForRequest(request => {
+      // print('request', preamble)
+      // console.log(request)
+      return isExpressionScatterPlotLog(request, gene)
+    }, { timeout: 45_000 })
+  } catch (error) {
+    timedOutGenes[gene] = 1
+    return
+  }
+  // expScatterPlotLogRequest.abort()
 
   const expressionPlotPerfTime = Date.now() - expressionPlotStartTime
   print(`Expression plot time for gene ${gene}: ${expressionPlotPerfTime} ms`, preamble)
@@ -83,19 +100,51 @@ async function makeExpressionScatterPlotImage(gene, page, preamble) {
 
   print(`Wrote ${imagePath}`, preamble)
 
-  // Clear search input to avoid wrong plot type
-  await page.$eval('.gene-keyword-search-input svg', el => el.parentElement.click())
-
-  await page.waitForTimeout(1000)
+  await page.waitForTimeout(500)
 
   return
+}
+
+/** Return if request is for key plot, and (if so) for which gene */
+function detectExpressionScatterPlot(request) {
+  const url = request.url()
+  if (url.includes('expression&gene=')) {
+    const gene = url.split('gene=')[1]
+    return [true, gene]
+  } else {
+    return [false, null]
+  }
+}
+
+/** Many requests are extraneous to render gene expression scatter plots */
+function isAlwaysIgnorable(request) {
+  const url = request.url()
+  const isGA = url.includes('google-analytics')
+  const isSentry = url.includes('ingest.sentry.io')
+  const isNonExpPlotBardPost = isBardPost(request) && !isExpressionScatterPlotLog(request)
+  const isIgnorableLog = isGA || isSentry || isNonExpPlotBardPost
+  const isViolinPlot = url.includes('/expression/violin')
+  const isIdeogram = url.includes('/ideogram@')
+  return (isIgnorableLog || isViolinPlot || isIdeogram)
+}
+
+/** Remove extraneous field parameters from SCP API call */
+function trimExpressionScatterPlotUrl(url) {
+  url = url.replace('cells%2Cannotation%2C', '')
+  if (Object.keys(coordinates).length > 0) {
+    // `coordinates` is only needed once, so don't ask for
+    // them if we have them already
+    url = url.replace('=coordinates%2C', '')
+  }
+  return url
 }
 
 /** CPU-level wrapper to make images for a sub-list of genes */
 async function processScatterPlotImages(genes, context) {
   const { accession, preamble, origin } = context
-  const browser = await puppeteer.launch()
-  // const browser = await puppeteer.launch({ headless: false, devtools: true })
+  // const browser = await puppeteer.launch()
+  // const browser = await puppeteer.launch({ headless: false, devtools: true, acceptInsecureCerts: true, args: ['--ignore-certificate-errors'] })
+  const browser = await puppeteer.launch({ acceptInsecureCerts: true, args: ['--ignore-certificate-errors'] })
   const page = await browser.newPage()
   await page.setViewport({
     width: 1680,
@@ -103,6 +152,7 @@ async function processScatterPlotImages(genes, context) {
     deviceScaleFactor: 1
   })
 
+  // const timeoutMinutes = 0.25
   const timeoutMinutes = 2
   const timeoutMilliseconds = timeoutMinutes * 60 * 1000
   // page.setDefaultTimeout(0) // No timeout
@@ -110,41 +160,64 @@ async function processScatterPlotImages(genes, context) {
 
   await page.setRequestInterception(true)
   page.on('request', request => {
-    // Drop extraneous requests, to minimize undue  load
-    const url = request.url()
-    const isGA = url.includes('google-analytics')
-    const isSentry = url.includes('ingest.sentry.io')
-    const isNonExpPlotBardPost = isBardPost(request) && !isExpressionScatterPlotLog(request)
-    const isIgnorableLog = isGA || isSentry || isNonExpPlotBardPost
-    const isViolinPlot = url.includes('/expression/violin')
-    const isIdeogram = url.includes('/ideogram@')
-    if (isIgnorableLog || isViolinPlot || isIdeogram) {
+    if (isAlwaysIgnorable(request)) {
+      // Drop extraneous requests, to minimize undue  load
       request.abort()
     } else {
       const headers = Object.assign({}, request.headers(), {
-        'sec-ch-ua': undefined // remove "sec-ch-ua" header
+        // 'sec-ch-ua': undefined, // remove "sec-ch-ua" header
+        'sec-ch-ua': '".Not/A)Brand";v="99", "Google Chrome";v="103", "Chromium";v="103"',
+        'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.0.0 Safari/537.36',
+        'sec-ch-ua-platform': '"macOS"'
       })
-      request.continue({ headers })
+      const isESPlot = detectExpressionScatterPlot(request)[0]
+      let url = request.url()
+      if (isESPlot) {
+        const trimmedUrl = trimExpressionScatterPlotUrl(url)
+        if (trimmedUrl !== url) {
+          url = trimmedUrl
+          fetch(trimmedUrl).then(response => {
+            const json = response.json()
+            const newJson = Object.assign(json, coordinates)
+            request.respond({ body: newJson })
+          })
+        } else {
+          request.continue({ url, headers })
+        }
+        // print('trimmed url')
+        // print(url)
+      }
+      // print('url', preamble)
+      // print(url, preamble)
     }
   })
 
-  // page.on('response', response => {
-  //   const url = response.url()
-  //   if (url.includes('expression&gene=')) {
-  //     print('response.status()', preamble)
-  //     console.log(response.status())
-  //   }
-  // })
+  page.on('response', async response => {
+    const isESPlot = detectExpressionScatterPlot(response)[0]
+    if (isESPlot) {
+      console.log('got ESPlot!')
+      const json = await response.json()
+      if (json?.data?.x) {
+        console.log('got ESPlot coordinates!')
+        coordinates.x = json.data.x
+        coordinates.y = json.data.y
+        if ('z' in json.data) {
+          coordinates.z = json.data.z
+        }
+        console.log('Object.keys(coordinates).length')
+        console.log(Object.keys(coordinates).length)
+      }
+    }
+  })
 
   page.on('requestfailed', request => {
-    const url = request.url()
-    if (url.includes('expression&gene=')) {
+    const [isESPlot, gene] = detectExpressionScatterPlot(request)
+    if (isESPlot) {
       print('request.url()', preamble)
       console.log(request.url())
       console.log(request.headers())
       console.log(request.failure())
-      const failedGene = url.split('gene=')[1]
-      console.log('failedGene', failedGene)
+      console.log('failedGene', gene)
     }
   })
 
@@ -168,6 +241,9 @@ async function processScatterPlotImages(genes, context) {
   for (let i = 0; i < genes.length; i++) {
     const gene = genes[i]
     await makeExpressionScatterPlotImage(gene, page, preamble)
+
+    // Clear search input to avoid wrong plot type
+    await page.$eval('.gene-keyword-search-input svg', el => el.parentElement.click())
   }
 
   await browser.close()
@@ -181,13 +257,16 @@ function sliceGenes(uniqueGenes, numCPUs, cpuIndex) {
   return uniqueGenes.slice(start, end)
 }
 
+let startTime
 (async () => {
   const accession = values.accession
   console.log(`Accession: ${accession}`)
 
+  startTime = Date.now()
+
   // Get list of all genes in study
-  const origin = 'https://singlecell-staging.broadinstitute.org'
   const exploreApiUrl = `${origin}/single_cell/api/v1/studies/${accession}/explore`
+  console.log(`Fetching ${exploreApiUrl}`)
   const response = await fetch(exploreApiUrl)
   const json = await response.json()
   const uniqueGenes = json.uniqueGenes
@@ -209,3 +288,10 @@ function sliceGenes(uniqueGenes, numCPUs, cpuIndex) {
     processScatterPlotImages(genes, context)
   }
 })()
+
+
+console.log(`Timed out genes: ${Object.keys(timedOutGenes).length}`)
+console.log(timedOutGenes)
+
+const perfTime = Date.now() - startTime
+console.log(`Completed image pipeline, time: ${perfTime} ms`)
