@@ -21,19 +21,16 @@ const options = {
 }
 const { values } = parseArgs({ args, options })
 
-// const numCPUs = os.cpus().length / 2 // Count on Intel i7 is 1/2 of reported
-const numCPUs = 2
+const numCPUs = os.cpus().length / 2 // Count on Intel i7 is 1/2 of reported
+// const numCPUs = 2
 console.log(`Number of CPUs to be used on this client: ${numCPUs}`)
 
 const origin = 'https://singlecell-staging.broadinstitute.org'
 // const origin = 'https://localhost:3000'
 
-// Make `images` directory if absent
-access('images', async err => {
-  if (err) {
-    await mkdir('images')
-  }
-})
+// Make `images` and `json` directories if absent
+access('images', async err => {if (err) {await mkdir('images')}})
+access('json', async err => {if (err) {await mkdir('json')}})
 
 // Cache for X, Y, and possibly Z coordinates
 const coordinates = {}
@@ -65,10 +62,6 @@ function isExpressionScatterPlotLog(request) {
 async function makeExpressionScatterPlotImage(gene, page, preamble) {
   print(`Inputting search for gene: ${gene}`, preamble)
   // Trigger a gene search
-  await page.waitForSelector('#study-visualize-nav')
-  await page.click('#study-visualize-nav')
-  await page.waitForSelector('.gene-keyword-search input')
-  await page.waitForSelector('.gene-keyword-search input')
   await page.type('.gene-keyword-search input', gene, { delay: 1 })
   await page.keyboard.press('Enter')
   await page.$eval('.gene-keyword-search button', el => el.click())
@@ -98,29 +91,6 @@ async function makeExpressionScatterPlotImage(gene, page, preamble) {
   print(`Wrote ${imagePath}`, preamble)
 
   return
-}
-
-/** Return if request is for key plot, and (if so) for which gene */
-function detectExpressionScatterPlot(request) {
-  const url = request.url()
-  if (url.includes('expression&gene=')) {
-    const gene = url.split('gene=')[1]
-    return [true, gene]
-  } else {
-    return [false, null]
-  }
-}
-
-/** Many requests are extraneous to render gene expression scatter plots */
-function isAlwaysIgnorable(request) {
-  const url = request.url()
-  const isGA = url.includes('google-analytics')
-  const isSentry = url.includes('ingest.sentry.io')
-  const isNonExpPlotBardPost = isBardPost(request) && !isExpressionScatterPlotLog(request)
-  const isIgnorableLog = isGA || isSentry || isNonExpPlotBardPost
-  const isViolinPlot = url.includes('/expression/violin')
-  const isIdeogram = url.includes('/ideogram@')
-  return (isIgnorableLog || isViolinPlot || isIdeogram)
 }
 
 /** Remove extraneous field parameters from SCP API call */
@@ -161,9 +131,63 @@ async function prefetchExpressionData(gene, context) {
     json.data = Object.assign(json.data, coordinates, { annotations })
   }
 
-  const filename =`${gene}.json`
-  await writeFile(filename, JSON.stringify(json))
-  print(`Wrote prefetched JSON: ${filename}`, preamble)
+  const jsonPath = `json/${gene}.json`
+  await writeFile(jsonPath, JSON.stringify(json))
+  print(`Wrote prefetched JSON: ${jsonPath}`, preamble)
+}
+
+/** Is this request on critical render path for expression scatter plots? */
+function isAlwaysIgnorable(request) {
+  const url = request.url()
+  const isGA = url.includes('google-analytics')
+  const isSentry = url.includes('ingest.sentry.io')
+  const isNonExpPlotBardPost = isBardPost(request) && !isExpressionScatterPlotLog(request)
+  const isIgnorableLog = isGA || isSentry || isNonExpPlotBardPost
+  const isViolinPlot = url.includes('/expression/violin')
+  const isIdeogram = url.includes('/ideogram@')
+  return (isIgnorableLog || isViolinPlot || isIdeogram)
+}
+
+/** Return if request is for expression plot, and (if so) for which gene */
+function detectExpressionScatterPlot(request) {
+  const url = request.url()
+  if (url.includes('expression&gene=')) {
+    const gene = url.split('gene=')[1]
+    return [true, gene]
+  } else {
+    return [false, null]
+  }
+}
+
+/** Drop extraneous requests, or replace requests that have pre-fetched data */
+async function configureIntercepts(page) {
+  await page.setRequestInterception(true)
+  page.on('request', async request => {
+    if (isAlwaysIgnorable(request)) {
+      // Cancel requests not on critical render path, to minimize undue load
+      request.abort()
+    } else {
+      const headers = Object.assign({}, request.headers())
+      const [isESPlot, gene] = detectExpressionScatterPlot(request)
+      if (isESPlot) {
+        // Replace SCP API request for expression data with prefetched data.
+        // Non-local app servers throttle real requests, breaking the pipeline.
+        //
+        // If these files could be made by Ingest Pipeline and put in a bucket,
+        // then Image Pipeline could run against production web app while
+        // incurring virtually no load for app server or DB server, and likely
+        // complete warming a study's image cache 5-10x faster.
+        const jsonString = await readFile(`json/${gene}.json`, { encoding: 'utf-8' })
+        request.respond({
+          status: 200,
+          contentType: 'application/json',
+          body: jsonString
+        })
+      } else {
+        request.continue({ headers })
+      }
+    }
+  })
 }
 
 /** CPU-level wrapper to make images for a sub-list of genes */
@@ -185,31 +209,7 @@ async function processScatterPlotImages(genes, context) {
   // page.setDefaultTimeout(0) // No timeout
   page.setDefaultTimeout(timeoutMilliseconds)
 
-  await page.setRequestInterception(true)
-  page.on('request', async request => {
-    if (isAlwaysIgnorable(request)) {
-      // Drop extraneous requests, to minimize undue  load
-      request.abort()
-    } else {
-      const headers = Object.assign({}, request.headers())
-      const [isESPlot, gene] = detectExpressionScatterPlot(request)
-      if (isESPlot) {
-        // Replace SCP API request for expression data with prefetched data.
-        // Staging somehow throttled these requests, causing persistent failures.
-        // If these files could be made by Ingest Pipeline and put in a bucket,
-        // then Image Pipeline could run against production web app while
-        // incurring virtually no load for app server or DB server.
-        const jsonString = await readFile(`${gene}.json`, { encoding: 'utf-8' })
-        request.respond({
-          status: 200,
-          contentType: 'application/json',
-          body: jsonString
-        })
-      } else {
-        request.continue({ headers })
-      }
-    }
-  })
+  configureIntercepts(page)
 
   // Go to Explore tab in Study Overview page
   const exploreViewUrl = `${origin}/single_cell/study/${accession}#study-visualize`
@@ -218,6 +218,10 @@ async function processScatterPlotImages(genes, context) {
   print(`Completed loading Explore tab`, preamble)
 
   print(`Number of genes to image: ${genes.length}`, preamble)
+
+  await page.waitForSelector('#study-visualize-nav')
+  await page.click('#study-visualize-nav')
+  await page.waitForSelector('.gene-keyword-search input')
 
   for (let i = 0; i < genes.length; i++) {
     const expressionPlotStartTime = Date.now()
