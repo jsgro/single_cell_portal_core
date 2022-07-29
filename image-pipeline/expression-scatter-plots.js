@@ -67,22 +67,15 @@ async function makeExpressionScatterPlotImage(gene, page, preamble) {
   await page.$eval('.gene-keyword-search button', el => el.click())
   print(`Awaiting expression plot for gene: ${gene}`, preamble)
 
-  try {
-    // Wait for reliable signal that expression plot has finished rendering.
-    // A Mixpanel / Bard log request always fires immediately upon render.
-    await page.waitForRequest(request => {
-      // print('request', preamble)
-      // console.log(request)
-      return isExpressionScatterPlotLog(request, gene)
-    }, { timeout: 2000 })
-  } catch (error) {
-    timedOutGenes[gene] = 1
-    return
-  }
-  // expScatterPlotLogRequest.abort()
+  // Wait for reliable signal that expression plot has finished rendering.
+  // A Mixpanel / Bard log request always fires immediately upon render.
+  await page.waitForRequest(request => {
+    return isExpressionScatterPlotLog(request, gene)
+  })
 
+  page.waitForTimeout(250)
   // Height and width of plot, x- and y-offset from viewport origin
-  const clipDimensions = { height: 595, width: 660, x: 5, y: 375 }
+  const clipDimensions = { height: 595, width: 660, x: 5, y: 230 }
 
   // Take a screenshot, save it locally.
   const imagePath = `images/${gene}.webp`
@@ -194,8 +187,8 @@ async function configureIntercepts(page) {
 async function processScatterPlotImages(genes, context) {
   const { accession, preamble, origin } = context
   // const browser = await puppeteer.launch()
-  const browser = await puppeteer.launch({ headless: false, devtools: true, acceptInsecureCerts: true, args: ['--ignore-certificate-errors'] })
-  // const browser = await puppeteer.launch({ acceptInsecureCerts: true, args: ['--ignore-certificate-errors'] })
+  // const browser = await puppeteer.launch({ headless: false, devtools: true, acceptInsecureCerts: true, args: ['--ignore-certificate-errors'] })
+  const browser = await puppeteer.launch({ acceptInsecureCerts: true, args: ['--ignore-certificate-errors'] })
   const page = await browser.newPage()
   await page.setViewport({
     width: 1680,
