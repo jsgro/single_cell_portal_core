@@ -9,7 +9,7 @@
  */
 import { parseArgs } from 'node:util'
 import { access } from 'node:fs'
-import { mkdir } from 'node:fs/promises'
+import { mkdir, writeFile, readFile } from 'node:fs/promises'
 import os from 'node:os'
 
 import puppeteer from 'puppeteer'
@@ -37,6 +37,7 @@ access('images', async err => {
 
 // Cache for X, Y, and possibly Z coordinates
 const coordinates = {}
+let annotations = []
 
 const timedOutGenes = {}
 
@@ -72,7 +73,6 @@ async function makeExpressionScatterPlotImage(gene, page, preamble) {
   await page.keyboard.press('Enter')
   await page.$eval('.gene-keyword-search button', el => el.click())
   print(`Awaiting expression plot for gene: ${gene}`, preamble)
-  const expressionPlotStartTime = Date.now()
 
   try {
     // Wait for reliable signal that expression plot has finished rendering.
@@ -81,15 +81,12 @@ async function makeExpressionScatterPlotImage(gene, page, preamble) {
       // print('request', preamble)
       // console.log(request)
       return isExpressionScatterPlotLog(request, gene)
-    }, { timeout: 45_000 })
+    }, { timeout: 2000 })
   } catch (error) {
     timedOutGenes[gene] = 1
     return
   }
   // expScatterPlotLogRequest.abort()
-
-  const expressionPlotPerfTime = Date.now() - expressionPlotStartTime
-  print(`Expression plot time for gene ${gene}: ${expressionPlotPerfTime} ms`, preamble)
 
   // Height and width of plot, x- and y-offset from viewport origin
   const clipDimensions = { height: 595, width: 660, x: 5, y: 375 }
@@ -99,8 +96,6 @@ async function makeExpressionScatterPlotImage(gene, page, preamble) {
   await page.screenshot({ path: imagePath, type: 'webp', clip: clipDimensions })
 
   print(`Wrote ${imagePath}`, preamble)
-
-  await page.waitForTimeout(500)
 
   return
 }
@@ -134,17 +129,49 @@ function trimExpressionScatterPlotUrl(url) {
   if (Object.keys(coordinates).length > 0) {
     // `coordinates` is only needed once, so don't ask for
     // them if we have them already
-    url = url.replace('=coordinates%2C', '')
+    url = url.replace('=coordinates%2C', '=')
   }
   return url
+}
+
+/** Fetch JSON data for gene expression scatter plot, before loading page */
+async function prefetchExpressionData(gene, context) {
+  const { accession, preamble, origin } = context
+  print(`Prefetching JSON for ${gene}`, preamble)
+
+  // Configure URLs
+  const apiStem = `${origin}/single_cell/api/v1`
+  const allFields = 'coordinates%2Ccells%2Cannotation%2Cexpression'
+  const url = `${apiStem}/studies/${accession}/clusters/_default?fields=${allFields}&gene=${gene}`
+  const trimmedUrl = trimExpressionScatterPlotUrl(url)
+
+  // Fetch data
+  const response = await fetch(trimmedUrl)
+  const json = await response.json()
+
+  if (url === trimmedUrl) {
+    coordinates.x = json.data.x
+    coordinates.y = json.data.y
+    if ('z' in json.data) {
+      coordinates.z = json.data.z
+    }
+
+    annotations = json.annotations
+  } else {
+    json.data = Object.assign(json.data, coordinates, { annotations })
+  }
+
+  const filename =`${gene}.json`
+  await writeFile(filename, JSON.stringify(json))
+  print(`Wrote prefetched JSON: ${filename}`, preamble)
 }
 
 /** CPU-level wrapper to make images for a sub-list of genes */
 async function processScatterPlotImages(genes, context) {
   const { accession, preamble, origin } = context
   // const browser = await puppeteer.launch()
-  // const browser = await puppeteer.launch({ headless: false, devtools: true, acceptInsecureCerts: true, args: ['--ignore-certificate-errors'] })
-  const browser = await puppeteer.launch({ acceptInsecureCerts: true, args: ['--ignore-certificate-errors'] })
+  const browser = await puppeteer.launch({ headless: false, devtools: true, acceptInsecureCerts: true, args: ['--ignore-certificate-errors'] })
+  // const browser = await puppeteer.launch({ acceptInsecureCerts: true, args: ['--ignore-certificate-errors'] })
   const page = await browser.newPage()
   await page.setViewport({
     width: 1680,
@@ -159,75 +186,30 @@ async function processScatterPlotImages(genes, context) {
   page.setDefaultTimeout(timeoutMilliseconds)
 
   await page.setRequestInterception(true)
-  page.on('request', request => {
+  page.on('request', async request => {
     if (isAlwaysIgnorable(request)) {
       // Drop extraneous requests, to minimize undue  load
       request.abort()
     } else {
-      const headers = Object.assign({}, request.headers(), {
-        // 'sec-ch-ua': undefined, // remove "sec-ch-ua" header
-        'sec-ch-ua': '".Not/A)Brand";v="99", "Google Chrome";v="103", "Chromium";v="103"',
-        'user-agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.0.0 Safari/537.36',
-        'sec-ch-ua-platform': '"macOS"'
-      })
-      const isESPlot = detectExpressionScatterPlot(request)[0]
-      let url = request.url()
+      const headers = Object.assign({}, request.headers())
+      const [isESPlot, gene] = detectExpressionScatterPlot(request)
       if (isESPlot) {
-        const trimmedUrl = trimExpressionScatterPlotUrl(url)
-        if (trimmedUrl !== url) {
-          url = trimmedUrl
-          fetch(trimmedUrl).then(response => {
-            const json = response.json()
-            const newJson = Object.assign(json, coordinates)
-            request.respond({ body: newJson })
-          })
-        } else {
-          request.continue({ url, headers })
-        }
-        // print('trimmed url')
-        // print(url)
-      }
-      // print('url', preamble)
-      // print(url, preamble)
-    }
-  })
-
-  page.on('response', async response => {
-    const isESPlot = detectExpressionScatterPlot(response)[0]
-    if (isESPlot) {
-      console.log('got ESPlot!')
-      const json = await response.json()
-      if (json?.data?.x) {
-        console.log('got ESPlot coordinates!')
-        coordinates.x = json.data.x
-        coordinates.y = json.data.y
-        if ('z' in json.data) {
-          coordinates.z = json.data.z
-        }
-        console.log('Object.keys(coordinates).length')
-        console.log(Object.keys(coordinates).length)
+        // Replace SCP API request for expression data with prefetched data.
+        // Staging somehow throttled these requests, causing persistent failures.
+        // If these files could be made by Ingest Pipeline and put in a bucket,
+        // then Image Pipeline could run against production web app while
+        // incurring virtually no load for app server or DB server.
+        const jsonString = await readFile(`${gene}.json`, { encoding: 'utf-8' })
+        request.respond({
+          status: 200,
+          contentType: 'application/json',
+          body: jsonString
+        })
+      } else {
+        request.continue({ headers })
       }
     }
   })
-
-  page.on('requestfailed', request => {
-    const [isESPlot, gene] = detectExpressionScatterPlot(request)
-    if (isESPlot) {
-      print('request.url()', preamble)
-      console.log(request.url())
-      console.log(request.headers())
-      console.log(request.failure())
-      console.log('failedGene', gene)
-    }
-  })
-
-  // page.on('error', err => {
-  //   print(`Error: ${err.toString()}`, preamble)
-  // })
-
-  // page.on('pageerror', err => {
-  //   console.log(`Page error: ${err.toString()}`)
-  // })
 
   // Go to Explore tab in Study Overview page
   const exploreViewUrl = `${origin}/single_cell/study/${accession}#study-visualize`
@@ -235,15 +217,20 @@ async function processScatterPlotImages(genes, context) {
   await page.goto(exploreViewUrl)
   print(`Completed loading Explore tab`, preamble)
 
-  console.log('genes.length')
-  console.log(genes.length)
+  print(`Number of genes to image: ${genes.length}`, preamble)
 
   for (let i = 0; i < genes.length; i++) {
+    const expressionPlotStartTime = Date.now()
+
     const gene = genes[i]
+    await prefetchExpressionData(gene, context)
     await makeExpressionScatterPlotImage(gene, page, preamble)
 
     // Clear search input to avoid wrong plot type
     await page.$eval('.gene-keyword-search-input svg', el => el.parentElement.click())
+
+    const expressionPlotPerfTime = Date.now() - expressionPlotStartTime
+    print(`Expression plot time for gene ${gene}: ${expressionPlotPerfTime} ms`, preamble)
   }
 
   await browser.close()
@@ -270,7 +257,7 @@ let startTime
   const response = await fetch(exploreApiUrl)
   const json = await response.json()
   const uniqueGenes = json.uniqueGenes
-  console.log(`Number of genes: ${uniqueGenes.length}`)
+  console.log(`Total number of genes: ${uniqueGenes.length}`)
 
   for (let cpuIndex = 0; cpuIndex < numCPUs - 1; cpuIndex++) {
     /** Log prefix to distinguish messages for different browser instances */
