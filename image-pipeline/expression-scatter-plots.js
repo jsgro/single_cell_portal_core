@@ -21,16 +21,23 @@ const options = {
 }
 const { values } = parseArgs({ args, options })
 
+// Candidates for CLI argument
 const numCPUs = os.cpus().length / 2 // Count on Intel i7 is 1/2 of reported
 // const numCPUs = 2
 console.log(`Number of CPUs to be used on this client: ${numCPUs}`)
-
 const origin = 'https://singlecell-staging.broadinstitute.org'
 // const origin = 'https://localhost:3000'
 
-// Make `images` and `json` directories if absent
-access('images', async err => {if (err) {await mkdir('images')}})
-access('json', async err => {if (err) {await mkdir('json')}})
+/** Make output directories if absent */
+function makeLocalOutputDir(leaf) {
+  const dir = `output/${values.accession}/${leaf}/`
+  const options = { recursive: true }
+  access(dir, async err => {if (err) {await mkdir(dir, options)}})
+  return dir
+}
+
+const imagesDir = makeLocalOutputDir('images')
+const jsonDir = makeLocalOutputDir('json')
 
 // Cache for X, Y, and possibly Z coordinates
 const coordinates = {}
@@ -78,7 +85,7 @@ async function makeExpressionScatterPlotImage(gene, page, preamble) {
   const clipDimensions = { height: 595, width: 660, x: 5, y: 230 }
 
   // Take a screenshot, save it locally.
-  const imagePath = `images/${gene}.webp`
+  const imagePath = `${imagesDir}${gene}.webp`
   await page.screenshot({ path: imagePath, type: 'webp', clip: clipDimensions })
 
   print(`Wrote ${imagePath}`, preamble)
@@ -124,7 +131,7 @@ async function prefetchExpressionData(gene, context) {
     json.data = Object.assign(json.data, coordinates, { annotations })
   }
 
-  const jsonPath = `json/${gene}.json`
+  const jsonPath = `${jsonDir}${gene}.json`
   await writeFile(jsonPath, JSON.stringify(json))
   print(`Wrote prefetched JSON: ${jsonPath}`, preamble)
 }
@@ -170,7 +177,7 @@ async function configureIntercepts(page) {
         // then Image Pipeline could run against production web app while
         // incurring virtually no load for app server or DB server, and likely
         // complete warming a study's image cache 5-10x faster.
-        const jsonString = await readFile(`json/${gene}.json`, { encoding: 'utf-8' })
+        const jsonString = await readFile(`${jsonDir}${gene}.json`, { encoding: 'utf-8' })
         request.respond({
           status: 200,
           contentType: 'application/json',
