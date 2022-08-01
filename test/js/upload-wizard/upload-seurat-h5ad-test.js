@@ -23,7 +23,7 @@ describe('Upload wizard supports uploading AnnData and Seurat Data files', () =>
     const badFileName = 'raw_counts.wrong'
     fireFileSelectionEvent(screen.getByTestId('file-input'), {
       fileName: badFileName,
-      content: 'crap\n'
+      content: 'stuff\n'
     })
     await waitForElementToBeRemoved(() => screen.getByTestId('file-validation-spinner'))
     expect(screen.getByTestId('validation-error')).toHaveTextContent(`after correcting ${badFileName}`)
@@ -31,7 +31,7 @@ describe('Upload wizard supports uploading AnnData and Seurat Data files', () =>
     const seuratDataFileName = 'seuratdata.rds'
     fireFileSelectionEvent(screen.getByTestId('file-input'), {
       fileName: seuratDataFileName,
-      content: 'binarystuff' // we'll want to update this if we ever add client-side image file format checks
+      content: 'binarystuff' 
     })
     await waitForElementToBeRemoved(() => screen.getByTestId('file-validation-spinner'))
 
@@ -68,19 +68,19 @@ describe('Upload wizard supports uploading AnnData and Seurat Data files', () =>
     const badFileName = 'raw_counts.wrong'
     fireFileSelectionEvent(screen.getByTestId('file-input'), {
       fileName: badFileName,
-      content: 'crap\n'
+      content: 'stuff\n'
     })
     await waitForElementToBeRemoved(() => screen.getByTestId('file-validation-spinner'))
     expect(screen.getByTestId('validation-error')).toHaveTextContent(`after correcting ${badFileName}`)
 
-    const imageFileName = 'anndata.h5ad'
+    const annDataFileName = 'anndata.h5ad'
     fireFileSelectionEvent(screen.getByTestId('file-input'), {
-      fileName: imageFileName,
-      content: 'binarystuff' // we'll want to update this if we ever add client-side image file format checks
+      fileName: annDataFileName,
+      content: 'binarystuff'
     })
     await waitForElementToBeRemoved(() => screen.getByTestId('file-validation-spinner'))
 
-    expect(screen.getByTestId('file-selection-name')).toHaveTextContent(imageFileName)
+    expect(screen.getByTestId('file-selection-name')).toHaveTextContent(annDataFileName)
     expect(saveButton()).not.toBeDisabled()
 
     fireEvent.click(saveButton())
