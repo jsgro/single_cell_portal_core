@@ -23,11 +23,13 @@ const { values } = parseArgs({ args, options })
 
 // Candidates for CLI argument
 // CPU count on Intel i7 is 1/2 of reported, due to hyperthreading
-const numCPUs = os.cpus().length / 2
+const numCPUs = os.cpus().length / 2 - 1
 // const numCPUs = 2
 console.log(`Number of CPUs to be used on this client: ${numCPUs}`)
-const origin = 'https://singlecell-staging.broadinstitute.org'
-// const origin = 'https://localhost:3000'
+
+// TODO (SCP-4564): Document how to adjust network rules to use staging
+// const origin = 'https://singlecell-staging.broadinstitute.org'
+const origin = 'https://localhost:3000'
 
 /** Make output directories if absent */
 function makeLocalOutputDir(leaf) {
@@ -248,7 +250,7 @@ async function processScatterPlotImages(genes, context) {
 
 /** Get a segment of the uniqueGenes array to process in given CPU */
 function sliceGenes(uniqueGenes, numCPUs, cpuIndex) {
-  const batchSize = uniqueGenes.length / numCPUs
+  const batchSize = Math.round(uniqueGenes.length / numCPUs)
   const start = batchSize * cpuIndex
   const end = batchSize * (cpuIndex + 1)
   return uniqueGenes.slice(start, end)
@@ -272,7 +274,7 @@ let startTime
   const uniqueGenes = json.uniqueGenes
   console.log(`Total number of genes: ${uniqueGenes.length}`)
 
-  for (let cpuIndex = 0; cpuIndex < numCPUs - 1; cpuIndex++) {
+  for (let cpuIndex = 0; cpuIndex < numCPUs; cpuIndex++) {
     /** Log prefix to distinguish messages for different browser instances */
     const preamble = `Browser ${cpuIndex}:`
 
