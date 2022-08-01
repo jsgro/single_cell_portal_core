@@ -22,7 +22,8 @@ const options = {
 const { values } = parseArgs({ args, options })
 
 // Candidates for CLI argument
-const numCPUs = os.cpus().length / 2 // Count on Intel i7 is 1/2 of reported
+// CPU count on Intel i7 is 1/2 of reported, due to hyperthreading
+const numCPUs = os.cpus().length / 2
 // const numCPUs = 2
 console.log(`Number of CPUs to be used on this client: ${numCPUs}`)
 const origin = 'https://singlecell-staging.broadinstitute.org'
@@ -42,8 +43,6 @@ const jsonDir = makeLocalOutputDir('json')
 // Cache for X, Y, and possibly Z coordinates
 const coordinates = {}
 let annotations = []
-
-const timedOutGenes = {}
 
 /** Print message with browser-tag preamble to local console */
 function print(message, preamble) {
@@ -67,8 +66,8 @@ function isExpressionScatterPlotLog(request) {
 
 /** In Explore view, search gene, await plot, save plot image locally */
 async function makeExpressionScatterPlotImage(gene, page, preamble) {
-  print(`Inputting search for gene: ${gene}`, preamble)
   // Trigger a gene search
+  print(`Inputting search for gene: ${gene}`, preamble)
   await page.type('.gene-keyword-search input', gene, { delay: 1 })
   await page.keyboard.press('Enter')
   await page.$eval('.gene-keyword-search button', el => el.click())
@@ -80,7 +79,8 @@ async function makeExpressionScatterPlotImage(gene, page, preamble) {
     return isExpressionScatterPlotLog(request, gene)
   })
 
-  page.waitForTimeout(250)
+  page.waitForTimeout(250) // Wait for janky layout to settle
+
   // Height and width of plot, x- and y-offset from viewport origin
   const clipDimensions = { height: 595, width: 660, x: 5, y: 230 }
 
@@ -121,14 +121,16 @@ async function prefetchExpressionData(gene, context) {
   const json = await response.json()
 
   if (url === trimmedUrl) {
+    // Cache `coordinates` and `annotations` fields; this is done only once
     coordinates.x = json.data.x
     coordinates.y = json.data.y
     if ('z' in json.data) {
       coordinates.z = json.data.z
     }
-
     annotations = json.annotations
   } else {
+    // Merge in previously cached `coordinates` and `annotations` fields
+    // Requesting only `expression` field dramatically accelerates Image Pipeline
     json.data = Object.assign(json.data, coordinates, { annotations })
   }
 
@@ -196,6 +198,8 @@ async function processScatterPlotImages(genes, context) {
   const { accession, preamble, origin } = context
   // const browser = await puppeteer.launch()
   // const browser = await puppeteer.launch({ headless: false, devtools: true, acceptInsecureCerts: true, args: ['--ignore-certificate-errors'] })
+
+  // Needed for localhost; doesn't hurt to use in other environments
   const browser = await puppeteer.launch({ acceptInsecureCerts: true, args: ['--ignore-certificate-errors'] })
   const page = await browser.newPage()
   await page.setViewport({
@@ -210,6 +214,7 @@ async function processScatterPlotImages(genes, context) {
   // page.setDefaultTimeout(0) // No timeout
   page.setDefaultTimeout(timeoutMilliseconds)
 
+  // Drop needless requests, re-route SCP API calls for expression data
   configureIntercepts(page)
 
   // Go to Explore tab in Study Overview page
@@ -249,7 +254,10 @@ function sliceGenes(uniqueGenes, numCPUs, cpuIndex) {
   return uniqueGenes.slice(start, end)
 }
 
+// For tracking total runtime, internally
 let startTime
+
+// Main  function
 (async () => {
   const accession = values.accession
   console.log(`Accession: ${accession}`)
@@ -281,9 +289,10 @@ let startTime
   }
 })()
 
+// // This executes immediately after calling main function.
+// // Perhaps refactor that to use Promise.all, then call this as a function.
+// console.log(`Timed out genes: ${Object.keys(timedOutGenes).length}`)
+// console.log(timedOutGenes)
 
-console.log(`Timed out genes: ${Object.keys(timedOutGenes).length}`)
-console.log(timedOutGenes)
-
-const perfTime = Date.now() - startTime
-console.log(`Completed image pipeline, time: ${perfTime} ms`)
+// const perfTime = Date.now() - startTime
+// console.log(`Completed image pipeline, time: ${perfTime} ms`)
