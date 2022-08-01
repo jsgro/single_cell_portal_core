@@ -162,7 +162,7 @@ class DifferentialExpressionResultTest  < ActiveSupport::TestCase
 
   test 'should handle plus sign in output file names' do
     label = 'CD4+'
-    expected_filename = '_scp_internal/differential_expression/cluster_diffexp_txt--species--CD4pos--study--wilcoxon.tsv'
+    expected_filename = 'cluster_diffexp_txt--species--CD4pos--study--wilcoxon.tsv'
     filename = @species_result.filename_for(label)
     assert_equal expected_filename, filename
   end
