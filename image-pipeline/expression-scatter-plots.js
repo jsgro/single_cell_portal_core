@@ -3,9 +3,9 @@
  *
  * See adjacent README for installation, background
  *
- * To use, ensure you're on VPN, then:
- * cd image-pipeline
- * node expression-scatter-plots.js --accession="SCP303"
+ * To use, ensure you're on VPN, `cd image-pipeline`, then:
+ *
+ * node expression-scatter-plots.js --accession="SCP24" # Staging, 1.3M cell study
  */
 import { parseArgs } from 'node:util'
 import { access } from 'node:fs'
@@ -112,7 +112,8 @@ async function prefetchExpressionData(gene, context) {
   // Configure URLs
   const apiStem = `${origin}/single_cell/api/v1`
   const allFields = 'coordinates%2Ccells%2Cannotation%2Cexpression'
-  const url = `${apiStem}/studies/${accession}/clusters/_default?fields=${allFields}&gene=${gene}`
+  const params = `fields=${allFields}&gene=${gene}&subsample=all`
+  const url = `${apiStem}/studies/${accession}/clusters/_default?${params}`
   const trimmedUrl = trimExpressionScatterPlotUrl(url)
 
   // Fetch data
@@ -212,7 +213,7 @@ async function processScatterPlotImages(genes, context) {
   configureIntercepts(page)
 
   // Go to Explore tab in Study Overview page
-  const exploreViewUrl = `${origin}/single_cell/study/${accession}#study-visualize`
+  const exploreViewUrl = `${origin}/single_cell/study/${accession}?subsample=all#study-visualize`
   print(`Navigating to Explore tab: ${exploreViewUrl}`, preamble)
   await page.goto(exploreViewUrl)
   print(`Completed loading Explore tab`, preamble)
