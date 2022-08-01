@@ -3,7 +3,7 @@ import React, { useEffect } from 'react'
 import SeuratFileForm from './SeuratFileForm'
 import { AddFileButton } from './form-components'
 
-const DEFAULT_NEW_H5AD_FILE = {
+const DEFAULT_NEW_SEURAT_DATA_FILE = {
   file_type: 'Seurat',
   options: {}
 }
@@ -29,7 +29,7 @@ function SeuratForm({
   const SeuratFiles = formState.files.filter(SeuratFileFilter)
   useEffect(() => {
     if (SeuratFiles.length === 0) {
-      addNewFile(DEFAULT_NEW_H5AD_FILE)
+      addNewFile(DEFAULT_NEW_SEURAT_DATA_FILE)
     }
   }, [SeuratFiles.length])
 
@@ -37,8 +37,8 @@ function SeuratForm({
     <div className="row">
       <div className="col-md-12">
         <p className="form-terra">
-          Files that could be utilized for Seurat powered analsis.
-          These files will not be used to power visualizations, but will be avaialble for users to download.
+          Files that could be utilized for Seurat-powered analysis.
+          These files will not be used to power visualizations, but will be available for users to download.
           <br></br>
           See reference documentation&nbsp;
           <a href="https://mojaveazure.github.io/seurat-disk/articles/h5Seurat-load.html" target="_blank" rel="noreferrer">
@@ -63,6 +63,6 @@ function SeuratForm({
         bucketName={formState.study.bucket_id}
         isInitiallyExpanded={SeuratFiles.length === 1}/>
     })}
-    <AddFileButton addNewFile={addNewFile} newFileTemplate={DEFAULT_NEW_H5AD_FILE}/>
+    <AddFileButton addNewFile={addNewFile} newFileTemplate={DEFAULT_NEW_SEURAT_DATA_FILE}/>
   </div>
 }

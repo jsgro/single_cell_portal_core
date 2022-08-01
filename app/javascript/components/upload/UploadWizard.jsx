@@ -35,7 +35,7 @@ import MiscellaneousStep from './MiscellaneousStep'
 import SequenceFileStep from './SequenceFileStep'
 import GeneListStep from './GeneListStep'
 import LoadingSpinner from '~/lib/LoadingSpinner'
-import H5adStep from './H5adStep'
+import AnnDataStep from './AnnDataStep'
 import SeuratStep from './SeuratStep'
 
 
@@ -69,14 +69,14 @@ export function RawUploadWizard({ studyAccession, name }) {
 
   const allowReferenceImageUpload = serverState?.feature_flags?.reference_image_upload
 
-  const allowH5adAndSeuratFileUploads = serverState?.feature_flags?.h5ad_and_seurat_upload
+  const allowAnnDataAndSeuratFileUploads = serverState?.feature_flags?.h5ad_and_seurat_upload
 
-  if (allowH5adAndSeuratFileUploads && !STEPS.includes(H5adStep)) {
-    STEPS.splice(8, 0, H5adStep)
-    NON_VISUALIZABLE_STEPS.splice(0, 0, H5adStep)
+  if (allowAnnDataAndSeuratFileUploads && !STEPS.includes(AnnDataStep)) {
+    STEPS.splice(8, 0, AnnDataStep)
+    NON_VISUALIZABLE_STEPS.splice(0, 0, AnnDataStep)
   }
 
-  if (allowH5adAndSeuratFileUploads && !STEPS.includes(SeuratStep)) {
+  if (allowAnnDataAndSeuratFileUploads && !STEPS.includes(SeuratStep)) {
     STEPS.splice(9, 0, SeuratStep)
     NON_VISUALIZABLE_STEPS.splice(1, 0, SeuratStep)
   }

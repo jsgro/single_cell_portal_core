@@ -1,11 +1,11 @@
 import { screen, fireEvent, waitForElementToBeRemoved } from '@testing-library/react'
 import '@testing-library/jest-dom/extend-expect'
 
-import { SEURAT_DATA_FILE, H5AD_FILE } from './file-info-responses'
+import { SEURAT_DATA_FILE, ANNDATA_FILE } from './file-info-responses'
 import { fireFileSelectionEvent } from '../lib/file-mock-utils'
 import { renderWizardWithStudy, saveButton, mockCreateStudyFile } from './upload-wizard-test-utils'
 
-describe('Upload wizard supports uploading H5ad and Seurat Data files', () => {
+describe('Upload wizard supports uploading AnnData and Seurat Data files', () => {
   it('validates bad file name then starts upload of Seurat Data file', async () => {
     const createFileSpy = mockCreateStudyFile(SEURAT_DATA_FILE)
 
@@ -51,15 +51,15 @@ describe('Upload wizard supports uploading H5ad and Seurat Data files', () => {
     }))
   })
 
-  it('validates bad file name, then starts upload of H5ad file', async () => {
-    const createFileSpy = mockCreateStudyFile(H5AD_FILE)
+  it('validates bad file name, then starts upload of AnnData file', async () => {
+    const createFileSpy = mockCreateStudyFile(ANNDATA_FILE)
 
     await renderWizardWithStudy({ featureFlags: { h5ad_and_seurat_upload: true } })
 
     const formData = new FormData()
-    fireEvent.click(screen.getByText('Anndata (.h5ad)'))
+    fireEvent.click(screen.getByText('AnnData (.h5ad)'))
 
-    expect(screen.getByRole('heading', { level: 4 })).toHaveTextContent('Anndata files')
+    expect(screen.getByRole('heading', { level: 4 })).toHaveTextContent('AnnData files')
 
     expect(saveButton()).toBeDisabled()
     fireEvent.mouseOver(saveButton())

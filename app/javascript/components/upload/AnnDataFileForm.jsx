@@ -5,10 +5,10 @@ import { FileTypeExtensions } from './upload-utils'
 import { TextFormField } from './form-components'
 import { validateFile } from './upload-utils'
 
-const allowedFileExts = FileTypeExtensions.h5ad
+const allowedFileExts = FileTypeExtensions.annData
 
-/** renders a form for editing/uploading an h5ad file */
-export default function H5adFileForm({
+/** Renders a form for editing/uploading an AnnData file */
+export default function AnnDataFileForm({
   file,
   allFiles,
   updateFile,

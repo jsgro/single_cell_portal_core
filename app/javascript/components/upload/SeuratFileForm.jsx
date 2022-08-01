@@ -7,7 +7,7 @@ import { validateFile } from './upload-utils'
 
 const allowedFileExts = FileTypeExtensions.seurat
 
-/** renders a form for editing/uploading an seurat file */
+/** Renders a form for editing/uploading a seurat file */
 export default function SeuratFileForm({
   file,
   allFiles,

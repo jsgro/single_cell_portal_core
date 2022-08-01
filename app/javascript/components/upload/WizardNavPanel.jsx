@@ -17,9 +17,9 @@ function RawWizardNavPanel({
   mainSteps, supplementalSteps, nonVizSteps
 }) {
   const [othersExpanded, setOthersExpanded] = useState(true)
-  const [supplimentalExpanded, setSupplimentalExpanded] = useState(true)
+  const [supplementalExpanded, setSupplementalExpanded] = useState(true)
   const expansionIcon = othersExpanded ? faChevronUp : faChevronDown
-  const expansionIcon2 = supplimentalExpanded ? faChevronUp : faChevronDown
+  const expansionIcon2 = supplementalExpanded ? faChevronUp : faChevronDown
 
   return <div className="wizard-side-panel">
     <ul className="upload-wizard-steps" role="tablist" data-analytics-name="upload-wizard-primary-steps">
@@ -58,18 +58,18 @@ function RawWizardNavPanel({
     </ul>
     <ul className="upload-wizard-steps" role="tablist" data-analytics-name="upload-wizard-tertiary-steps">
       <li className="other-header" role="tab" >
-        <button className="list-link" onClick={() => setSupplimentalExpanded(!supplimentalExpanded)} >
+        <button className="list-link" onClick={() => setSupplementalExpanded(!supplementalExpanded)} >
           <span className="step-number">
             <span className="badge highlight">+</span>
           </span>
           <span>
             <a className="action link" role="link">
-              <NotVizHelpMessage/> <FontAwesomeIcon icon={expansionIcon2}/>
+              <NonVizHelpMessage/> <FontAwesomeIcon icon={expansionIcon2}/>
             </a>
           </span>
         </button>
       </li>
-      { supplimentalExpanded && nonVizSteps.map((step, index) =>
+      { supplementalExpanded && nonVizSteps.map((step, index) =>
         <StepTabHeader key={index}
           step={step}
           index={index}
@@ -83,7 +83,7 @@ function RawWizardNavPanel({
 }
 
 /** create the tooltip and message for the non-visualizable files section */
-function NotVizHelpMessage() {
+function NonVizHelpMessage() {
   const notVizToolTip = <span>
     <OverlayTrigger
       trigger={['hover', 'focus']}
