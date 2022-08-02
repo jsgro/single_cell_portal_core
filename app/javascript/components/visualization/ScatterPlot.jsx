@@ -168,46 +168,66 @@ function RawScatterPlot({
 
   /** Process scatter plot data fetched from server */
   function processScatterPlot(clusterResponse=null) {
-    let [scatter, perfTimes] =
-      (clusterResponse ? clusterResponse : [scatterData, null])
+    console.log('clusterResponse')
+    console.log(clusterResponse)
 
-    scatter = updateScatterLayout(scatter)
-    const layout = scatter.layout
-
-    const plotlyTraces = updateCountsAndGetTraces(scatter)
-
-    const startTime = performance.now()
-    Plotly.react(graphElementId, plotlyTraces, layout)
-
-    if (perfTimes) {
-      perfTimes.plot = performance.now() - startTime
-      logScatterPlot({ scatter, genes }, perfTimes)
-    }
-
-    if (isCorrelatedScatter) {
-      const rhoStartTime = performance.now()
-
-      // Compute correlations asynchronously, to not block other rendering
-      computeCorrelations(scatter).then(correlations => {
-        const rhoTime = Math.round(performance.now() - rhoStartTime)
-        setBulkCorrelation(correlations.bulk)
-        const flags = getFeatureFlagsWithDefaults()
-        if (flags.correlation_refinements) {
-          setLabelCorrelations(correlations.byLabel)
-        }
-        if (perfTimes) {
-          log('plot:correlations', { perfTime: rhoTime })
-        }
-      })
-    }
-
-    scatter.hasArrayLabels =
-      scatter.annotParams.type === 'group' && scatter.data.annotations.some(annot => annot.includes('|'))
-
-    if (clusterResponse) {
-      setScatterData(scatter)
-      setShowError(false)
+    if (clusterResponse.isImage) {
+      const image = document.createElement('img')
+      const proof = document.getElementById('scatter-image-proof')
+      if (proof) {proof.remove()}
+      image.id = 'scatter-image-proof'
+      const aspectRatio = 1.1092437
+      const height = 625
+      const width = height * aspectRatio
+      image.width = width
+      image.height = height
+      const imageObjectURL = clusterResponse.imageObjectURL
+      image.src = imageObjectURL
+      const container = document.getElementById(graphElementId)
+      container.append(image)
       setIsLoading(false)
+    } else {
+      let [scatter, perfTimes] =
+        (clusterResponse ? clusterResponse : [scatterData, null])
+
+      scatter = updateScatterLayout(scatter)
+      const layout = scatter.layout
+
+      const plotlyTraces = updateCountsAndGetTraces(scatter)
+
+      const startTime = performance.now()
+      Plotly.react(graphElementId, plotlyTraces, layout)
+
+      if (perfTimes) {
+        perfTimes.plot = performance.now() - startTime
+        logScatterPlot({ scatter, genes }, perfTimes)
+      }
+
+      if (isCorrelatedScatter) {
+        const rhoStartTime = performance.now()
+
+        // Compute correlations asynchronously, to not block other rendering
+        computeCorrelations(scatter).then(correlations => {
+          const rhoTime = Math.round(performance.now() - rhoStartTime)
+          setBulkCorrelation(correlations.bulk)
+          const flags = getFeatureFlagsWithDefaults()
+          if (flags.correlation_refinements) {
+            setLabelCorrelations(correlations.byLabel)
+          }
+          if (perfTimes) {
+            log('plot:correlations', { perfTime: rhoTime })
+          }
+        })
+      }
+
+      scatter.hasArrayLabels =
+        scatter.annotParams.type === 'group' && scatter.data.annotations.some(annot => annot.includes('|'))
+
+      if (clusterResponse) {
+        setScatterData(scatter)
+        setShowError(false)
+        setIsLoading(false)
+      }
     }
   }
 
@@ -215,21 +235,30 @@ function RawScatterPlot({
   useEffect(() => {
     setIsLoading(true)
     // use a data cache if one has been provided, otherwise query scp-api directly
-    const fetchMethod = dataCache ? dataCache.fetchCluster : fetchCluster
-    fetchMethod({
-      studyAccession,
-      cluster,
-      annotation: annotation ? annotation : '',
-      subsample,
-      consensus,
-      genes,
-      isAnnotatedScatter,
-      isCorrelatedScatter
-    }).then(processScatterPlot).catch(err => {
-      setIsLoading(false)
-      setErrorContent([`${err}`])
-      setShowError(true)
-    })
+    if (studyAccession === 'SCP138' && genes[0] === 'A1BG-AS1') {
+      const url = 'https://localhost:3000/assets/A1BG-AS1-v2.webp'
+      fetch(url).then(async response => {
+        const imageBlob = await response.blob()
+        const imageObjectURL = URL.createObjectURL(imageBlob)
+        processScatterPlot({ isImage: true, imageObjectURL })
+      })
+    } else {
+      const fetchMethod = dataCache ? dataCache.fetchCluster : fetchCluster
+      fetchMethod({
+        studyAccession,
+        cluster,
+        annotation: annotation ? annotation : '',
+        subsample,
+        consensus,
+        genes,
+        isAnnotatedScatter,
+        isCorrelatedScatter
+      }).then(processScatterPlot).catch(err => {
+        setIsLoading(false)
+        setErrorContent([`${err}`])
+        setShowError(true)
+      })
+    }
   }, [cluster, annotation.name, subsample, consensus, genes.join(','), isAnnotatedScatter])
 
   // Handles custom scatter legend updates

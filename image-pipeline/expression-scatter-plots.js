@@ -23,8 +23,8 @@ const { values } = parseArgs({ args, options })
 
 // Candidates for CLI argument
 // CPU count on Intel i7 is 1/2 of reported, due to hyperthreading
-const numCPUs = os.cpus().length / 2 - 1
-// const numCPUs = 2
+// const numCPUs = os.cpus().length / 2 - 1
+const numCPUs = 1
 console.log(`Number of CPUs to be used on this client: ${numCPUs}`)
 
 // TODO (SCP-4564): Document how to adjust network rules to use staging
@@ -84,7 +84,7 @@ async function makeExpressionScatterPlotImage(gene, page, preamble) {
   page.waitForTimeout(250) // Wait for janky layout to settle
 
   // Height and width of plot, x- and y-offset from viewport origin
-  const clipDimensions = { height: 595, width: 660, x: 5, y: 230 }
+  const clipDimensions = { height: 625, width: 660, x: 5, y: 255 }
 
   // Take a screenshot, save it locally.
   const imagePath = `${imagesDir}${gene}.webp`
