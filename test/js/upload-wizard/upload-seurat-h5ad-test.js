@@ -9,7 +9,7 @@ describe('Upload wizard supports uploading AnnData and Seurat Data files', () =>
   it('validates bad file name then starts upload of Seurat Data file', async () => {
     const createFileSpy = mockCreateStudyFile(SEURAT_DATA_FILE)
 
-    await renderWizardWithStudy({ featureFlags: { h5ad_and_seurat_upload: true } })
+    await renderWizardWithStudy({ featureFlags: { anndata_and_seurat_upload: true } })
 
     const formData = new FormData()
     fireEvent.click(screen.getByText('Seurat data'))
@@ -31,7 +31,7 @@ describe('Upload wizard supports uploading AnnData and Seurat Data files', () =>
     const seuratDataFileName = 'seuratdata.rds'
     fireFileSelectionEvent(screen.getByTestId('file-input'), {
       fileName: seuratDataFileName,
-      content: 'binarystuff' 
+      content: 'binarystuff'
     })
     await waitForElementToBeRemoved(() => screen.getByTestId('file-validation-spinner'))
 
@@ -54,7 +54,7 @@ describe('Upload wizard supports uploading AnnData and Seurat Data files', () =>
   it('validates bad file name, then starts upload of AnnData file', async () => {
     const createFileSpy = mockCreateStudyFile(ANNDATA_FILE)
 
-    await renderWizardWithStudy({ featureFlags: { h5ad_and_seurat_upload: true } })
+    await renderWizardWithStudy({ featureFlags: { anndata_and_seurat_upload: true } })
 
     const formData = new FormData()
     fireEvent.click(screen.getByText('AnnData (.h5ad)'))

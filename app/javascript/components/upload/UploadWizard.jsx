@@ -69,7 +69,7 @@ export function RawUploadWizard({ studyAccession, name }) {
 
   const allowReferenceImageUpload = serverState?.feature_flags?.reference_image_upload
 
-  const allowAnnDataAndSeuratFileUploads = serverState?.feature_flags?.h5ad_and_seurat_upload
+  const allowAnnDataAndSeuratFileUploads = serverState?.feature_flags?.anndata_and_seurat_upload
 
   if (allowAnnDataAndSeuratFileUploads && !STEPS.includes(AnnDataStep)) {
     STEPS.splice(8, 0, AnnDataStep)
