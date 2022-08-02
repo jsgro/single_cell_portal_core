@@ -1,4 +1,4 @@
-class AddAnnDataAndSeuratFlag < Mongoid::Migration
+class AddFlagForSeuratAndAnndataUpload < Mongoid::Migration
     # mirror of FeatureFlag.rb, so this migration won't error if that class is renamed/altered
     class FeatureFlagMigrator
       include Mongoid::Document
@@ -9,12 +9,12 @@ class AddAnnDataAndSeuratFlag < Mongoid::Migration
     end
   
     def self.up
-      FeatureFlagMigrator.create!(name: 'anndata_and_seurat_upload',
+      FeatureFlagMigrator.create!(name: 'upload_seurat_and_anndata',
                                   default_value: false,
                                   description: 'allow AnnData and seurat file uploads in the upload wizard')
     end
   
     def self.down
-      FeatureFlagMigrator.find_by(name: 'anndata_and_seurat_upload').destroy
+      FeatureFlagMigrator.find_by(name: 'upload_seurat_and_anndata').destroy
     end
   end
