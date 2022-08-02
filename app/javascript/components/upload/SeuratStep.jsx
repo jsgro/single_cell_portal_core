@@ -40,13 +40,13 @@ function SeuratForm({
           Files that could be utilized for Seurat-powered analysis.
           These files will not be used to power visualizations, but will be available for users to download.
           <br></br>
-          See reference documentation&nbsp;
+          Learn about&nbsp;
           <a href="https://mojaveazure.github.io/seurat-disk/articles/h5Seurat-load.html" target="_blank" rel="noreferrer">
-           here
-          </a>
+          saving and loading
+          </a> these files, and see the
           &nbsp;and&nbsp;
           <a href="https://mojaveazure.github.io/seurat-disk/articles/h5Seurat-spec.html" target="_blank" rel="noreferrer">
-            here
+          format specification
           </a>.
         </p>
       </div>
