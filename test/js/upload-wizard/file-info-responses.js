@@ -458,6 +458,55 @@ export const IMAGE_FILE = {
   _id: { $oid: '6192a78dcc7ba06aada9badb' }
 }
 
+export const ANNDATA_FILE = {
+  created_at: '2021-11-15T18:31:41.598Z',
+  data_dir: '71e1a89e5c5d9300aabd0e757d1b569eb66644872b40bcbb720e2b39bc7e3822',
+  description: '',
+  file_type: 'H5ad',
+  human_data: false,
+  is_spatial: false,
+  name: 'anndata.h5ad',
+  options: {},
+  parse_status: 'unparsed',
+  queued_for_deletion: false,
+  remote_location: '',
+  status: 'uploaded',
+  study_id: { $oid: '61797543cc7ba05f3e3be552' },
+  upload: { 'url': 'fake/app/original/anndata.h5ad' },
+  updated_at: '2021-11-15T18:31:41.772Z',
+  upload_content_type: '',
+  upload_file_name: 'anndata.h5ad',
+  upload_file_size: 6644,
+  use_metadata_convention: false,
+  version: 1,
+  _id: { $oid: '6192a78dcc7ba06aada9bafb' }
+}
+
+export const SEURAT_DATA_FILE = {
+  created_at: '2021-11-15T18:31:41.598Z',
+  data_dir: '71e1a89e5c5d9300aabd0e757d1b569eb66644872b40bcbb720e2b39bc7e3822',
+  description: '',
+  file_type: 'Seurat',
+  human_data: false,
+  is_spatial: false,
+  name: 'seuratdata.rds',
+  options: {},
+  parse_status: 'unparsed',
+  queued_for_deletion: false,
+  remote_location: '',
+  status: 'uploaded',
+  study_id: { $oid: '61797543cc7ba05f3e3be552' },
+  upload: { 'url': 'fake/app/original/seuratdata.rds' },
+  updated_at: '2021-11-15T18:31:41.772Z',
+  upload_content_type: '',
+  upload_file_name: 'seuratdata.rds',
+  upload_file_size: 6644,
+  use_metadata_convention: false,
+  version: 1,
+  _id: { $oid: '6192a78dcc7ba06abda9bafb' }
+}
+
+
 export const BASIC_MENU_OPTIONS = {
   'fonts': ['Helvetica Neue', 'Arial'],
   'species': [{

@@ -60,11 +60,16 @@ async function validateLocalFile(file, studyFile, allStudyFiles=[], allowedFileE
   const nameIssues = validateFileName(file, studyFile, allStudyFiles, allowedFileExts)
 
   let issuesObj
-  if (nameIssues.length === 0) {
+
+  const noContentValidationFileTypes = ['Seurat', 'AnnData', 'Other', 'Documentation']
+
+  const studyFileType = studyFile.file_type
+
+  // Do not continue the validation if the file type is a non-viz type
+  if (nameIssues.length === 0 && !noContentValidationFileTypes.includes(studyFileType)) {
     const fileOptions = {
       use_metadata_convention: studyFile.use_metadata_convention
     }
-    const studyFileType = studyFile.file_type
     const { fileInfo, issues, perfTime } = await ValidateFileContent.parseFile(file, studyFileType, fileOptions)
 
     const allIssues = issues.concat(nameIssues)

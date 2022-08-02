@@ -253,6 +253,8 @@ const miscExtensions = ['.txt', '.text', '.tsv', '.csv', '.jpg', '.jpeg', '.png'
   '.ipynb', '.Rda', '.rda', '.Rds', '.rds']
 const sequenceExtensions = ['.fq', '.fastq', '.fq.tar.gz', '.fastq.tar.gz', '.fq.gz', '.fastq.gz', '.bam']
 const baiExtensions = ['.bai']
+const annDataExtensions = ['.h5', '.h5ad', 'h5ad1', '.hdf5']
+const seuratExtensions = ['.Rds', '.rds', '.seuratdata', '.h5seurat', '.seuratdisk']
 
 export const FileTypeExtensions = {
   plainText: plainTextExtensions.concat(plainTextExtensions.map(ext => `${ext}.gz`)),
@@ -260,5 +262,7 @@ export const FileTypeExtensions = {
   image: imageExtensions,
   misc: miscExtensions.concat(miscExtensions.map(ext => `${ext}.gz`)),
   sequence: sequenceExtensions,
-  bai: baiExtensions
+  bai: baiExtensions,
+  annData: annDataExtensions,
+  seurat: seuratExtensions
 }
