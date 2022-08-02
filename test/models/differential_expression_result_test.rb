@@ -159,4 +159,11 @@ class DifferentialExpressionResultTest  < ActiveSupport::TestCase
     assert_not duplicate_result.valid?
     assert_equal [:annotation_name], duplicate_result.errors.attribute_names
   end
+
+  test 'should handle plus sign in output file names' do
+    label = 'CD4+'
+    expected_filename = 'cluster_diffexp_txt--species--CD4pos--study--wilcoxon.tsv'
+    filename = @species_result.filename_for(label)
+    assert_equal expected_filename, filename
+  end
 end
