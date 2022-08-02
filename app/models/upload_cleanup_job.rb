@@ -82,8 +82,8 @@ class UploadCleanupJob < Struct.new(:study, :study_file, :retry_count)
   def self.find_and_remove_failed_uploads
     date_threshold = 1.day.ago.in_time_zone
     # make sure to exclude links to external sequence data with human_fastq_url: nil
-    failed_uploads = StudyFile.where(status: 'uploading', generation: nil, :created_at.lte => date_threshold,
-                                     human_fastq_url: nil, parse_status: 'unparsed')
+    failed_uploads = StudyFile.where(:status.in => ['uploading', nil], generation: nil, :created_at.lte => date_threshold,
+                                     human_fastq_url: nil, :parse_status.in => ['unparsed', nil])
     failed_uploads.each do |study_file|
       # final sanity check - see if there is a file in the bucket of the same size
       # this might happen if the post-upload action to update 'status' fails for some reason
