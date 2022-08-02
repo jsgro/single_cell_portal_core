@@ -39,8 +39,8 @@ function AnnDataForm({
         <p className="form-terra">
           AnnData files, typically formatted with the file extension .h5ad.&nbsp;
           <a href="https://anndata.readthedocs.io" target="_blank" rel="noreferrer">
-            See AnnData reference documentation.
-          </a>
+            See reference documentation
+          </a>.
           <br></br>
           These files will not be used to power visualizations, but will be available for users to download.
         </p>
