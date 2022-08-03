@@ -29,8 +29,17 @@ jobs:
           CI: true
         run: |
           export VAULT_TOKEN=$( vault write -field=token auth/approle/login role_id=$VAULT_ROLE_ID secret_id=$VAULT_SECRET_ID )
+          # The "broad-singlecellportal-staging" GCR repository is used in production.
+          # The "development" tag is used in non-production deployment.  For production deployment, tag is version number for
+          # upcoming release, e.g. 1.20.0.
+          # More context: https://github.com/broadinstitute/single_cell_portal_core/pull/1552#discussion_r910424433
+          # TODO: (SCP-4496): Move production-related GCR images out of staging project
+          DOCKER_IMAGE_NAME="gcr.io/broad-singlecellportal-staging/single-cell-portal"
+          # add ci- prefix to avoid post-merge build failing due to missing GITHUB_HEAD_REF
+          DOCKER_IMAGE_TAG="ci-$GITHUB_HEAD_REF-$GITHUB_SHA"
+          docker build -t $DOCKER_IMAGE_NAME:$DOCKER_IMAGE_TAG -f test/Dockerfile-test .
           bin/load_env_secrets.sh -p secret/kdux/scp/staging/scp_config.json \
                                   -s secret/kdux/scp/staging/scp_service_account.json \
                                   -r secret/kdux/scp/staging/read_only_service_account.json \
-                                  -e test \
+                                  -e test -v $DOCKER_IMAGE_TAG \
                                   -n single-cell-portal-test

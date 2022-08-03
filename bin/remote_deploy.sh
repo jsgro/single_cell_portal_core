@@ -11,18 +11,30 @@ THIS_DIR="$(cd "$(dirname "$0")"; pwd)"
 function main {
     # make sure that all necessary variables have been set
     PORTAL_CONTAINER="single_cell"
-    PORTAL_CONTAINER_VERSION="latest"
+    VERSION_TAG="development"
     echo "### USER: $(whoami) ###"
+
+    while getopts "v:h" OPTION; do
+      case $OPTION in
+        v)
+          VERSION_TAG="$OPTARG"
+          ;;
+      esac
+    done
 
     if [[ -z "$PORTAL_SECRETS_PATH" ]] || [[ -z "$DESTINATION_BASE_DIR" ]]; then
         exit_with_error_message "Not all necessary variables have been set: Git branch: $GIT_BRANCH; " \
             "secrets: $PORTAL_SECRETS_PATH; base directory: $DESTINATION_BASE_DIR"
     fi
 
-    # build a new docker container now to save time later
-    echo "### Building new docker image: $PORTAL_CONTAINER:$PORTAL_CONTAINER_VERSION ... ###"
-    build_docker_image $DESTINATION_BASE_DIR $PORTAL_CONTAINER $PORTAL_CONTAINER_VERSION || exit_with_error_message "Cannot build new docker image"
-    echo "### COMPLETED ###"
+    # pull docker image to reduce downtime
+    # The "broad-singlecellportal-staging" GCR repository is used in production.
+    # The "development" tag is used in non-production deployment.  For production deployment, tag is version number for
+    # upcoming release, e.g. 1.20.0.
+    # More context: https://github.com/broadinstitute/single_cell_portal_core/pull/1552#discussion_r910424433
+    # TODO: (SCP-4496): Move production-related GCR images out of staging project
+    DOCKER_IMAGE_NAME='gcr.io/broad-singlecellportal-staging/single-cell-portal'
+    docker pull $DOCKER_IMAGE_NAME:$VERSION_TAG || exit_with_error_message "Cannot pull requested image $DOCKER_IMAGE_NAME:$VERSION_TAG"
 
     # stop docker container and remove it
     if [[ $(ensure_container_running $PORTAL_CONTAINER) = "0" ]]; then
@@ -44,7 +56,8 @@ function main {
 
     # run boot command
     echo "### Booting $PORTAL_CONTAINER ###"
-    run_command_in_deployment "bin/boot_docker -e $PASSENGER_APP_ENV -d $DESTINATION_BASE_DIR -h $PROD_HOSTNAME -N $PORTAL_NAMESPACE -m $MONGO_LOCALHOST"
+    run_command_in_deployment "bin/boot_docker -e $PASSENGER_APP_ENV -d $DESTINATION_BASE_DIR -h $PROD_HOSTNAME " \
+                              "-N $PORTAL_NAMESPACE -D $VERSION_TAG -m $MONGO_LOCALHOST"
     echo "### COMPLETED ###"
 
     # ensure portal is running

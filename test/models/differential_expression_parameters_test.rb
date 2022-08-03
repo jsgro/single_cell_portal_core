@@ -40,8 +40,9 @@ class DifferentialExpressionParametersTest < ActiveSupport::TestCase
     assert_equal %i[annotation_file annotation_scope matrix_file_type],
                  dense_params.errors.attribute_names.sort
     sparse_params.gene_file = 'foo'
+    sparse_params.machine_type = 'foo'
     assert_not sparse_params.valid?
-    assert_equal [:gene_file], sparse_params.errors.attribute_names
+    assert_equal [:machine_type, :gene_file], sparse_params.errors.attribute_names
   end
 
   test 'should format differential expression parameters for python cli' do
@@ -69,5 +70,10 @@ class DifferentialExpressionParametersTest < ActiveSupport::TestCase
   test 'converts keys into cli options' do
     assert_equal '--annotation-name', DifferentialExpressionParameters.to_cli_opt(:annotation_name)
     assert_equal '--foo', DifferentialExpressionParameters.to_cli_opt('foo')
+  end
+
+  test 'should set default machine type for DE jobs' do
+    params = DifferentialExpressionParameters.new
+    assert_equal 'n1-highmem-8', params.machine_type
   end
 end

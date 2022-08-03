@@ -22,8 +22,9 @@ function main {
     SCP_REPO="https://github.com/broadinstitute/single_cell_portal_core.git"
     ROLLBACK="false"
     TAG_OFFSET=1
+    VERSION_TAG="development"
 
-    while getopts "p:s:r:e:b:d:h:S:u:H:t:R" OPTION; do
+    while getopts "p:s:r:e:b:d:h:S:u:H:t:R:v:" OPTION; do
         case $OPTION in
             p)
                 PORTAL_SECRETS_VAULT_PATH="$OPTARG"
@@ -57,6 +58,9 @@ function main {
                 ;;
             t)
                 TAG_OFFSET="$OPTARG"
+                ;;
+            v)
+                VERSION_TAG="$OPTARG"
                 ;;
             H)
                 echo "$usage"
@@ -120,6 +124,11 @@ function main {
     run_remote_command "git checkout $GIT_BRANCH && git pull" || exit_with_error_message "could not checkout $GIT_BRANCH"
     echo "### COMPLETED ###"
 
+    # if this is a production deployment, get the latest tag to pass to remote_deploy
+    if [[ $PASSENGER_APP_ENV == "production" ]]; then
+        VERSION_TAG=$(extract_release_tag 0)
+    fi
+
     if [[ $ROLLBACK == "true" ]]; then
         # checkout the requested tag (usually current release - 1)
         echo "### ROLLING BACK DEPLOYMENT BY $TAG_OFFSET RELEASE TAG ###"
@@ -127,8 +136,12 @@ function main {
         ROLLBACK_TAG=$(extract_release_tag $TAG_OFFSET) || exit_with_error_message "could not get rollback tag in $GIT_BRANCH"
         echo "### rolling back release to tag: $ROLLBACK_TAG on $GIT_BRANCH ###"
         run_remote_command "git checkout tags/$ROLLBACK_TAG" || exit_with_error_message "could not checkout tags/$ROLLBACK_TAG on $GIT_BRANCH"
+        VERSION_TAG="$ROLLBACK_TAG"
         echo "### COMPLETED ###"
     fi
+
+    # apply version tag to remote boot command
+    BOOT_COMMAND="$BOOT_COMMAND -v $VERSION_TAG"
 
     echo "### running remote deploy script ###"
     run_remote_command "$(set_remote_environment_vars) $BOOT_COMMAND" || exit_with_error_message "could not run $(set_remote_environment_vars) $BOOT_COMMAND on $DESTINATION_HOST:$DESTINATION_BASE_DIR"
@@ -155,6 +168,7 @@ USAGE:
 -h VALUE    set the DESTINATION_HOST (remote GCP VM to SSH into, no default)
 -R          set ROLLBACK to true to revert release to last known good release
 -t VALUE    set the TAG_OFFSET value for rolling back a release (defaults to 1, meaning release previous to the current)
+-v VALUE    set the VERSION_TAG value to control which Docker tag to pull (defaults to development)
 -H COMMAND  print this text
 EOF
 )
