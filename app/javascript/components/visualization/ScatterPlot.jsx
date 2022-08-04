@@ -59,6 +59,9 @@ function RawScatterPlot({
 
   const isRefGroup = getIsRefGroup(scatterData?.annotParams?.type, genes, isCorrelatedScatter)
 
+  const staticImageClassName = 'static-image'
+  const staticImageSelector = `#${ graphElementId } .${staticImageClassName}`
+
   /**
    * Handle user interaction with one or more labels in legend.
    *
@@ -175,13 +178,20 @@ function RawScatterPlot({
     setIsLoading(false)
   }
 
+  /** Remove old static image of gene expression scatter plot, if it exists */
+  function removeOldExpressionScatterImage() {
+    const oldImage = document.querySelector(staticImageSelector)
+    if (oldImage) {
+      oldImage.remove()
+    }
+  }
+
   /** Display static image of gene expression scatter plot */
-  function showScatterPlotImage(imageObjectUrl) {
+  function renderImage(imageObjectUrl) {
+    removeOldExpressionScatterImage()
     const image = document.createElement('img')
-    const proof = document.getElementById('scatter-image-proof')
-    if (proof) {proof.remove()}
     image.src = imageObjectUrl
-    image.id = 'scatter-image-proof'
+    image.className = staticImageClassName
     const aspectRatio = 1.1092437
     const height = 625
     const width = height * aspectRatio
@@ -195,11 +205,10 @@ function RawScatterPlot({
 
   /** Process scatter plot data fetched from server */
   function processScatterPlot(clusterResponse=null) {
-    const proof = document.getElementById('scatter-image-proof')
-    if (proof) {proof.remove()}
-
     let [scatter, perfTimes] =
       (clusterResponse ? clusterResponse : [scatterData, null])
+
+    removeOldExpressionScatterImage()
 
     scatter = updateScatterLayout(scatter)
     const layout = scatter.layout
@@ -248,7 +257,7 @@ function RawScatterPlot({
       fetch(url).then(async response => {
         const imageBlob = await response.blob()
         const imageObjectURL = URL.createObjectURL(imageBlob)
-        showScatterPlotImage(imageObjectURL)
+        renderImage(imageObjectURL)
       })
     }
     const fetchMethod = dataCache ? dataCache.fetchCluster : fetchCluster
