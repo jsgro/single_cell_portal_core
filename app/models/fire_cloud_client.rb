@@ -91,19 +91,19 @@ class FireCloudClient
       # instantiate Google Cloud Storage driver to work with files in workspace buckets
       # if no keyfile is present, use environment variables
       storage_attr = {
-          project: PORTAL_NAMESPACE,
-          timeout: 3600
+        project_id: PORTAL_NAMESPACE,
+        timeout: 3600
       }
 
       if !service_account.blank?
-        storage_attr.merge!(keyfile: service_account)
+        storage_attr.merge!(credentials: service_account)
         self.service_account_credentials = service_account
       end
 
       self.access_token = self.class.generate_access_token(service_account)
       self.project = PORTAL_NAMESPACE
 
-      self.storage = Google::Cloud::Storage.new(storage_attr)
+      self.storage = Google::Cloud::Storage.new(**storage_attr)
 
       # set expiration date of token
       self.expires_at = Time.zone.now + self.access_token['expires_in']
@@ -119,16 +119,16 @@ class FireCloudClient
       # use user-defined project instead of portal default
       # if no keyfile is present, use environment variables
       storage_attr = {
-          project: project,
+          project_id: project,
           timeout: 3600
       }
 
       if !service_account.blank?
-        storage_attr.merge!(keyfile: service_account)
+        storage_attr.merge!(credentials: service_account)
         self.service_account_credentials = service_account
       end
 
-      self.storage = Google::Cloud::Storage.new(storage_attr)
+      self.storage = Google::Cloud::Storage.new(**storage_attr)
     end
     # set FireCloud API base url
     self.api_root = BASE_URL
@@ -162,11 +162,11 @@ class FireCloudClient
   #   - +Google::Cloud::Storage+ instance
   def refresh_storage_driver(project_name=PORTAL_NAMESPACE)
     storage_attr = {
-        project: project_name,
+        project_id: project_name,
         timeout: 3600
     }
     if !ENV['SERVICE_ACCOUNT_KEY'].blank?
-      storage_attr.merge!(keyfile: self.class.get_primary_keyfile)
+      storage_attr.merge!(credentials: self.class.get_primary_keyfile)
     end
     new_storage = Google::Cloud::Storage.new(storage_attr)
     self.storage = new_storage

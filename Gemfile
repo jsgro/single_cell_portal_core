@@ -1,7 +1,7 @@
 source 'https://rubygems.org'
 git_source(:github) { |repo| "https://github.com/#{repo}.git" }
 
-ruby '2.6.10'
+ruby '3.1.2'
 
 # Bundle edge Rails instead: gem 'rails', github: 'rails/rails'
 gem 'rails', '6.1.6.1'
@@ -28,7 +28,7 @@ gem 'sdoc', group: :doc
 # Use Capistrano for deployment
 # gem 'capistrano-rails', group: :development
 
-gem 'bootsnap', '>= 1.4.4', require: false
+gem 'bootsnap', require: false
 gem 'minitest-rails'
 gem 'minitest-reporters'
 
@@ -74,6 +74,7 @@ gem 'carrierwave', '~> 2.0'
 gem 'carrierwave-mongoid', :require => 'carrierwave/mongoid'
 gem 'uuid'
 gem 'vite_rails'
+gem 'net-smtp'
 
 # only enable TCell in deployed environments due to Chrome sec-ch-ua header issue
 group :production, :staging do
@@ -82,7 +83,6 @@ end
 
 group :development, :test do
   # Access an IRB console on exception pages or by using <%= console %> in views
-  gem 'debase'
   gem 'test-unit'
   gem 'brakeman', :require => false
   gem 'factory_bot_rails'

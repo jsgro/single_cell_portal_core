@@ -24,7 +24,7 @@ class UserAssetService
   # * *yields*
   #   - +Google::Cloud::Storage+
   def self.storage_service
-    @@storage_service ||= Google::Cloud::Storage.new(keyfile: self.get_primary_keyfile)
+    @@storage_service ||= Google::Cloud::Storage.new(credentials: self.get_primary_keyfile)
   end
 
   # get storage driver access token

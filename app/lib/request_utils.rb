@@ -76,7 +76,7 @@ class RequestUtils
   # strips out unsafe characters that break rendering notices/modals
   def self.sanitize_search_terms(terms)
     inputs = terms.is_a?(Array) ? terms.join(',') : terms.to_s
-    SANITIZER.sanitize(inputs).encode!(Encoding.find('ASCII-8BIT'), invalid: :replace, undef: :replace)
+    SANITIZER.sanitize(inputs).encode(Encoding.find('ASCII-8BIT'), invalid: :replace, undef: :replace)
   end
 
   # takes a comma-delimited string of ids (e.g. StudyFile ids) and returns an array of ids

@@ -2,7 +2,7 @@
 FROM gcr.io/broad-singlecellportal-staging/rails-baseimage:2.1.0
 
 # Set ruby version
-RUN bash -lc 'rvm --default use ruby-2.6.10'
+RUN bash -lc 'rvm --default use ruby-3.1.2'
 RUN bash -lc 'rvm rvmrc warning ignore /home/app/webapp/Gemfile'
 
 # Set up project dir, install gems, set up script to migrate database and precompile static assets on run
