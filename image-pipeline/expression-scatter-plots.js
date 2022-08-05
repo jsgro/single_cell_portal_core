@@ -83,12 +83,30 @@ async function makeExpressionScatterPlotImage(gene, page, preamble) {
 
   page.waitForTimeout(250) // Wait for janky layout to settle
 
+  await page.evaluate(() => {
+    document.querySelector('.scatter-graph svg').style = null
+
+    // Remove grid lines on X, Y, and (if present) Z axes
+    document.querySelector('svg .cartesianlayer').remove()
+
+    // Remove color filling vertical bar at right
+    document.querySelector('svg defs .gradients').remove()
+
+    // Remove axis labels, colorbar label (`magnitude` in Plotly.js)
+    document.querySelector('svg .infolayer').remove()
+  })
+
   // Height and width of plot, x- and y-offset from viewport origin
   const clipDimensions = { height: 595, width: 660, x: 5, y: 280 }
 
-  // Take a screenshot, save it locally.
+  // Take a screenshot, save it locally
   const imagePath = `${imagesDir}${gene}.webp`
-  await page.screenshot({ path: imagePath, type: 'webp', clip: clipDimensions })
+  await page.screenshot({
+    path: imagePath,
+    type: 'webp',
+    clip: clipDimensions,
+    omitBackground: true
+  })
 
   print(`Wrote ${imagePath}`, preamble)
 
