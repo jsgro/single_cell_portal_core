@@ -128,7 +128,7 @@ export function getScatterParams(exploreParamsWithDefaults, isGene, isMultiGene)
   let isTwoColumn = true
   let isMultiRow = false
   let firstRowSingleCol = false
-  const isSpatial = exploreParamsWithDefaults.spatialGroups?.length > 0
+  const isSpatial = exploreParamsWithDefaults?.spatialGroups?.length > 0
 
   const scatterParams = []
   if (isMultiGene && !exploreParamsWithDefaults.consensus) {
@@ -217,5 +217,5 @@ export function getNewContextMap(scatterParams, oldContextMap) {
 
 /** returns a string from a params object, that uniquely identifies what was plotted */
 function getKeyFromScatterParams(params) {
-  return params.cluster + params.genes.join('-') + params.annotation.name
+  return params.cluster + params.genes?.join('-') + params.annotation.name
 }

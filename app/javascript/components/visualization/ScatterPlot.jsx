@@ -25,8 +25,6 @@ import { successNotification, failureNotification } from '~/lib/MessageModal'
 
 window.Plotly = Plotly
 
-const flags = getFeatureFlagsWithDefaults()
-
 /** Renders the appropriate scatter plot for the given study and params
   * @param studyAccession {string} e.g. 'SCP213'
   * @param cluster {string} the name of the cluster, or blank/null for the study's default
@@ -60,6 +58,8 @@ function RawScatterPlot({
   const [editedCustomColors, setEditedCustomColors] = useState({})
 
   const isRefGroup = getIsRefGroup(scatterData?.annotParams?.type, genes, isCorrelatedScatter)
+
+  const flags = getFeatureFlagsWithDefaults()
 
   const staticImageClassName = 'static-image'
   const staticImageSelector = `#${ graphElementId } .${staticImageClassName}`
@@ -210,7 +210,7 @@ function RawScatterPlot({
     let [scatter, perfTimes] =
       (clusterResponse ? clusterResponse : [scatterData, null])
 
-    if (flags.progressive_loading) {
+    if (flags?.progressive_loading) {
       removeOldExpressionScatterImage()
     }
 
@@ -257,7 +257,7 @@ function RawScatterPlot({
 
     // use an image and/or data cache if one has been provided, otherwise query scp-api directly
     if (
-      flags.progressive_loading && isGeneExpression(genes, isCorrelatedScatter) && !isAnnotatedScatter &&
+      flags?.progressive_loading && isGeneExpression(genes, isCorrelatedScatter) && !isAnnotatedScatter &&
       genes[0] === 'A1BG-AS1' // Placeholder; likely replace with setting like DE
     ) {
       const bucketName = 'broad-singlecellportal-public'
