@@ -25,6 +25,8 @@ import { successNotification, failureNotification } from '~/lib/MessageModal'
 
 window.Plotly = Plotly
 
+const flags = getFeatureFlagsWithDefaults()
+
 /** Renders the appropriate scatter plot for the given study and params
   * @param studyAccession {string} e.g. 'SCP213'
   * @param cluster {string} the name of the cluster, or blank/null for the study's default
@@ -61,8 +63,6 @@ function RawScatterPlot({
 
   const staticImageClassName = 'static-image'
   const staticImageSelector = `#${ graphElementId } .${staticImageClassName}`
-
-  const flags = getFeatureFlagsWithDefaults()
 
   /**
    * Handle user interaction with one or more labels in legend.
@@ -376,16 +376,14 @@ function RawScatterPlot({
   return (
     <div className="plot">
       { ErrorComponent }
-      { scatterData &&
-        <PlotTitle
-          cluster={scatterData.cluster}
-          annotation={scatterData.annotParams.name}
-          subsample={scatterData.subsample}
-          genes={scatterData.genes}
-          consensus={scatterData.consensus}
-          isCorrelatedScatter={isCorrelatedScatter}
-          correlation={bulkCorrelation}/>
-      }
+      <PlotTitle
+        cluster={cluster}
+        annotation={annotation.name}
+        subsample={subsample}
+        genes={genes}
+        consensus={consensus}
+        isCorrelatedScatter={isCorrelatedScatter}
+        correlation={bulkCorrelation}/>
       <div
         className="scatter-graph"
         id={graphElementId}
