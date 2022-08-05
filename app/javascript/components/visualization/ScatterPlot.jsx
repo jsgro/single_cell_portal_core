@@ -62,6 +62,8 @@ function RawScatterPlot({
   const staticImageClassName = 'static-image'
   const staticImageSelector = `#${ graphElementId } .${staticImageClassName}`
 
+  const flags = getFeatureFlagsWithDefaults()
+
   /**
    * Handle user interaction with one or more labels in legend.
    *
@@ -193,7 +195,7 @@ function RawScatterPlot({
     image.src = imageObjectUrl
     image.className = staticImageClassName
     const aspectRatio = 1.1092437
-    const height = 625
+    const height = 525
     const width = height * aspectRatio
     image.width = width
     image.height = height
@@ -208,7 +210,9 @@ function RawScatterPlot({
     let [scatter, perfTimes] =
       (clusterResponse ? clusterResponse : [scatterData, null])
 
-    removeOldExpressionScatterImage()
+    if (flags.progressive_loading) {
+      removeOldExpressionScatterImage()
+    }
 
     scatter = updateScatterLayout(scatter)
     const layout = scatter.layout
@@ -230,7 +234,6 @@ function RawScatterPlot({
       computeCorrelations(scatter).then(correlations => {
         const rhoTime = Math.round(performance.now() - rhoStartTime)
         setBulkCorrelation(correlations.bulk)
-        const flags = getFeatureFlagsWithDefaults()
         if (flags.correlation_refinements) {
           setLabelCorrelations(correlations.byLabel)
         }
@@ -251,8 +254,9 @@ function RawScatterPlot({
   // Fetches plot data then draws it, upon load or change of any data parameter
   useEffect(() => {
     setIsLoading(true)
+
     // use an image and/or data cache if one has been provided, otherwise query scp-api directly
-    if (studyAccession === 'SCP138' && genes[0] === 'A1BG-AS1') {
+    if (flags.progressive_loading && genes[0] === 'A1BG-AS1') {
       const url = 'https://localhost:3000/assets/A1BG-AS1-v2.webp'
       fetch(url).then(async response => {
         const imageBlob = await response.blob()
@@ -260,6 +264,7 @@ function RawScatterPlot({
         renderImage(imageObjectURL)
       })
     }
+
     const fetchMethod = dataCache ? dataCache.fetchCluster : fetchCluster
     fetchMethod({
       studyAccession,
