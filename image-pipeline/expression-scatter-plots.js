@@ -84,7 +84,7 @@ async function makeExpressionScatterPlotImage(gene, page, preamble) {
   page.waitForTimeout(250) // Wait for janky layout to settle
 
   // Height and width of plot, x- and y-offset from viewport origin
-  const clipDimensions = { height: 625, width: 660, x: 5, y: 255 }
+  const clipDimensions = { height: 595, width: 660, x: 5, y: 280 }
 
   // Take a screenshot, save it locally.
   const imagePath = `${imagesDir}${gene}.webp`
@@ -157,7 +157,7 @@ function isAlwaysIgnorable(request) {
 function detectExpressionScatterPlot(request) {
   const url = request.url()
   if (url.includes('expression&gene=')) {
-    const gene = url.split('gene=')[1]
+    const gene = url.split('gene=')[1].split('&')[0]
     return [true, gene]
   } else {
     return [false, null]
