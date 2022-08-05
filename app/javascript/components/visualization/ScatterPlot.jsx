@@ -4,7 +4,7 @@ import _remove from 'lodash/remove'
 import Plotly from 'plotly.js-dist'
 import { Store } from 'react-notifications-component'
 
-import { fetchCluster, updateStudyFile } from '~/lib/scp-api'
+import { fetchCluster, updateStudyFile, fetchBucketFile } from '~/lib/scp-api'
 import { logScatterPlot } from '~/lib/scp-api-metrics'
 import { log } from '~/lib/metrics-api'
 import { useUpdateEffect } from '~/hooks/useUpdate'
@@ -256,9 +256,13 @@ function RawScatterPlot({
     setIsLoading(true)
 
     // use an image and/or data cache if one has been provided, otherwise query scp-api directly
-    if (flags.progressive_loading && genes[0] === 'A1BG-AS1') {
-      const url = 'https://localhost:3000/assets/A1BG-AS1-v2.webp'
-      fetch(url).then(async response => {
+    if (
+      flags.progressive_loading && isGeneExpression(genes, isCorrelatedScatter) && !isAnnotatedScatter &&
+      genes[0] === 'A1BG-AS1' // Placeholder; likely replace with setting like DE
+    ) {
+      const bucketName = 'broad-singlecellportal-public'
+      const filePath = `test/scatter_image/${genes[0]}.webp`
+      fetchBucketFile(bucketName, filePath).then(async response => {
         const imageBlob = await response.blob()
         const imageObjectURL = URL.createObjectURL(imageBlob)
         renderImage(imageObjectURL)
@@ -424,6 +428,11 @@ function RawScatterPlot({
 const ScatterPlot = withErrorBoundary(RawScatterPlot)
 export default ScatterPlot
 
+/** Whether this is a gene expression scatter plot */
+function isGeneExpression(genes, isCorrelatedScatter) {
+  return genes.length && !isCorrelatedScatter
+}
+
 /**
  * Whether scatter plot should use custom legend
  *
@@ -432,9 +441,7 @@ export default ScatterPlot
  *   B) also shown at right in single-gene view
  */
 function getIsRefGroup(annotType, genes, isCorrelatedScatter) {
-  const isGeneExpressionForColor = genes.length && !isCorrelatedScatter
-
-  return annotType === 'group' && !isGeneExpressionForColor
+  return annotType === 'group' && !isGeneExpression(genes, isCorrelatedScatter)
 }
 
 /** Get width and height for scatter plot dimensions */
