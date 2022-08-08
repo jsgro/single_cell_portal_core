@@ -13,6 +13,7 @@ import { mkdir, writeFile, readFile } from 'node:fs/promises'
 import os from 'node:os'
 
 import puppeteer from 'puppeteer'
+import { exit } from 'node:process'
 
 const args = process.argv.slice(2)
 
@@ -84,6 +85,10 @@ async function makeExpressionScatterPlotImage(gene, page, preamble) {
   page.waitForTimeout(250) // Wait for janky layout to settle
 
   await page.evaluate(() => {
+    // Prepare background colors for later transparency via `omitBackground`
+    document.querySelector('body').style.backgroundColor = '#FFF0'
+    document.querySelector('.study-explore .plot').style.background = '#FFF0'
+    document.querySelector('.explore-tab-content').style.background = '#FFF0'
     document.querySelector('.scatter-graph svg').style = null
 
     // Remove grid lines on X, Y, and (if present) Z axes
@@ -109,6 +114,9 @@ async function makeExpressionScatterPlotImage(gene, page, preamble) {
   })
 
   print(`Wrote ${imagePath}`, preamble)
+  // if (imagePath === 'output/SCP138/images/A1BG-AS1.webp') {
+  //   exit()
+  // }
 
   return
 }
