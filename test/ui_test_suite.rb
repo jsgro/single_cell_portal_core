@@ -83,7 +83,7 @@ if !File.exists?($chromedriver_path)
   puts "No Chromedriver binary found at #{$chromedriver_path}"
   puts $usage
   exit(1)
-elsif !Dir.exists?($download_dir)
+elsif !Dir.exist?($download_dir)
   puts "No download directory found at #{$download_dir}"
   puts $usage
   exit(1)

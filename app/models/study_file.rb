@@ -1024,7 +1024,7 @@ class StudyFile
   def remove_local_copy
     Rails.logger.info "Removing local copy of #{self.upload_file_name}"
     Dir.chdir(self.study.data_store_path)
-    if Dir.exists?(self.id.to_s)
+    if Dir.exist?(self.id.to_s)
       Rails.logger.info "Removing upload directory for #{self.upload_file_name} at #{Dir.pwd}/#{self.id.to_s}"
       FileUtils.rm_rf(self.id.to_s)
     elsif File.exists?(self.bucket_location)

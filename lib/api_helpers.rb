@@ -116,6 +116,6 @@ module ApiHelpers
   # * *returns*
   #   - +String+ => URI-encoded parameter
   def uri_encode(parameter)
-    URI.escape(parameter)
+    CGI.escape(parameter)
   end
 end
