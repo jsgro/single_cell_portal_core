@@ -168,7 +168,7 @@ class FireCloudClient
     if !ENV['SERVICE_ACCOUNT_KEY'].blank?
       storage_attr.merge!(credentials: self.class.get_primary_keyfile)
     end
-    new_storage = Google::Cloud::Storage.new(storage_attr)
+    new_storage = Google::Cloud::Storage.new(**storage_attr)
     self.storage = new_storage
     new_storage
   end
@@ -1352,7 +1352,7 @@ class FireCloudClient
   #   - +Google::Cloud::Storage::File::List+
   def get_workspace_files(workspace_bucket_id, opts={})
     bucket = self.get_workspace_bucket(workspace_bucket_id)
-    bucket.files(opts)
+    bucket.files(**opts)
   end
 
   # retrieve single study_file in a GCP bucket of a workspace
@@ -1399,7 +1399,7 @@ class FireCloudClient
   #   - +Google::Cloud::Storage::File+
   def create_workspace_file(workspace_bucket_id, filepath, filename, opts={})
     bucket = self.get_workspace_bucket(workspace_bucket_id)
-    bucket.create_file filepath, filename, opts
+    bucket.create_file filepath, filename, **opts
   end
 
   # copy a file to a new location in a workspace bucket
@@ -1415,7 +1415,7 @@ class FireCloudClient
   #   - +Google::Cloud::Storage::File+
   def copy_workspace_file(workspace_bucket_id, filename, destination_name, opts={})
     file = self.get_workspace_file(workspace_bucket_id, filename)
-    file.copy destination_name, opts
+    file.copy destination_name, **opts
   end
 
   # delete a file to a workspace bucket
@@ -1490,7 +1490,7 @@ class FireCloudClient
       # return newly-opened file (will need to check content type before attempting to parse)
       local
     else
-      file.download end_path, opts
+      file.download end_path, **opts
     end
   end
 
@@ -1521,7 +1521,7 @@ class FireCloudClient
   #   - +String+ signed URL
   def generate_signed_url(workspace_bucket_id, filename, opts={})
     file = self.get_workspace_file(workspace_bucket_id, filename)
-    file.signed_url(opts)
+    file.signed_url(**opts)
   end
 
   # generate an api url to directly load a file from GCS via client-side JavaScript
@@ -1555,7 +1555,7 @@ class FireCloudClient
     # makes sure directory ends with '/', otherwise append to prevent spurious matches
     directory += '/' unless directory.last == '/'
     opts.merge!(prefix: directory)
-    self.get_workspace_files(workspace_bucket_id, opts)
+    self.get_workspace_files(workspace_bucket_id, **opts)
   end
 
   #######
