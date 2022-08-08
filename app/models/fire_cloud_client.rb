@@ -1399,7 +1399,7 @@ class FireCloudClient
   #   - +Google::Cloud::Storage::File+
   def create_workspace_file(workspace_bucket_id, filepath, filename, opts={})
     bucket = self.get_workspace_bucket(workspace_bucket_id)
-    bucket.create_file filepath, filename, **opts
+    bucket.create_file(filepath, filename, **opts)
   end
 
   # copy a file to a new location in a workspace bucket
@@ -1415,7 +1415,7 @@ class FireCloudClient
   #   - +Google::Cloud::Storage::File+
   def copy_workspace_file(workspace_bucket_id, filename, destination_name, opts={})
     file = self.get_workspace_file(workspace_bucket_id, filename)
-    file.copy destination_name, **opts
+    file.copy(destination_name, **opts)
   end
 
   # delete a file to a workspace bucket
