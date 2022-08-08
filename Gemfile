@@ -29,6 +29,7 @@ gem 'sdoc', group: :doc
 # gem 'capistrano-rails', group: :development
 
 gem 'bootsnap', require: false
+gem 'minitest', '5.15.0'
 gem 'minitest-rails'
 gem 'minitest-reporters'
 
