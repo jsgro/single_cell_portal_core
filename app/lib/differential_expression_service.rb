@@ -88,13 +88,13 @@ class DifferentialExpressionService
       eligible_annotations.each do |annotation|
         begin
           # skip if this is a cluster-based annotation and is not available on this cluster file
-          next if annotation[:scope] == 'cluster' && annotation[:cluster_file_id] != cluster_file.id
+          next if annotation[:annotation_scope] == 'cluster' && annotation[:cluster_file_id] != cluster_file.id
 
           annotation_params = annotation.deep_dup # make a copy so we don't lose the association next time we check
           annotation_params.delete(:cluster_file_id)
-          annotation_identifier = [annotation_params['annotation_name'],
+          annotation_identifier = [annotation_params[:annotation_name],
                                    'group',
-                                   annotation_params['annotation_scope']].join('--')
+                                   annotation_params[:annotation_scope]].join('--')
           job_identifier = "#{study_accession}: #{cluster_file.name} (#{annotation_identifier})"
           log_message "Checking DE job for #{job_identifier}"
           DifferentialExpressionService.run_differential_expression_job(
