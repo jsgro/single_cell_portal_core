@@ -194,16 +194,32 @@ function RawScatterPlot({
 
     // For gridlines and color bar
     // TODO: Get these from image metadata (e.g. EXIF) or scatter_data file
-    const xCoordinateRange = [-50.95664285714286, 47.13764285714286]
-    const yCoordinateRange = [-17.202928571428572, 12.78992857142857]
+    const coordinateRanges = {
+      x: [-50.95664285714286, 47.13764285714286],
+      y: [-17.202928571428572, 12.78992857142857],
+      z: []
+    }
     const expressionRange = [0, 2.433] // Math.max(...expressionNumberArray)
+
+    // TODO: Move this data from per-gene fetch to cluster fetch
+    const titles = {
+      x: 'X',
+      y: 'Y',
+      z: 'Z',
+      magnitude: 'Expression'
+    }
 
     const tmpScatterData = Object.assign({}, {
       genes,
       isCorrelatedScatter,
       isAnnotatedScatter,
-      axes: { titles: { x: 'X', y: 'Y', z: 'Z', magnitude: 'Expression' }, aspects: null },
-      data: { expression: expressionRange },
+      axes: {
+        titles,
+        aspects: null
+      },
+      data: {
+        expression: expressionRange // Only range needed here, not full array
+      },
       annotParams: {
         'name': 'General_Celltype',
         'type': 'group',
@@ -215,8 +231,8 @@ function RawScatterPlot({
 
     // For gridlines and color bar
     // TODO: Get these from image metadata (e.g. EXIF) or scatter_data file
-    layout.xaxis.range = xCoordinateRange
-    layout.yaxis.range = yCoordinateRange
+    layout.xaxis.range = coordinateRanges.x
+    layout.yaxis.range = coordinateRanges.y
     const color = expressionRange
 
     // TODO: Refactor getPlotlyTraces to return most of these; almost none
@@ -230,7 +246,7 @@ function RawScatterPlot({
           'colorscale': '',
           'reversescale': false,
           color,
-          'colorbar': { 'title': { 'text': 'Expression', 'side': 'right' } }
+          'colorbar': { 'title': { 'text': titles.magnitude, 'side': 'right' } }
         },
         'x': layout.xaxis.range,
         'y': layout.yaxis.range,
@@ -240,6 +256,9 @@ function RawScatterPlot({
     ]
     Plotly.react(graphElementId, plotlyTraces, layout)
 
+    // Replace old mostly-blank WebGL canvas with new "2d" (i.e., non-WebGL) canvas.
+    // Only "2d" contexts support the `drawImage` method:
+    // https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/drawImage
     const oldCtx = document.querySelector(`#${ graphElementId } .gl-canvas-context`)
     const oldWidth = oldCtx.width
     const oldHeight = oldCtx.height
