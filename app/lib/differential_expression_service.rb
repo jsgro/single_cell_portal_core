@@ -172,7 +172,7 @@ class DifferentialExpressionService
     params_object.machine_type = machine_type if machine_type.present? # override :machine_type if specified
 
     if dry_run
-      self.validate_annotation(cluster_file, study, annotation_name, annotation_scope)
+      validate_annotation(cluster_file, study, annotation_name, annotation_scope)
       true
     elsif params_object.valid?
       # launch DE job
@@ -198,17 +198,12 @@ class DifferentialExpressionService
   def self.validate_annotation(cluster_file, study, annotation_name, annotation_scope)
     cluster = study.cluster_groups.by_name(cluster_file.name)
     raise ArgumentError, "cannot find cluster for #{cluster_file.name}" if cluster.nil?
-    if DifferentialExpressionResult.where(study: study,
-                                          cluster_group: cluster,
-                                          annotation_name: annotation_name,
-                                          annotation_scope: annotation_scope).exists?
-      # Question: Does each study/cluster_group/annotation_name/annotation_scope combo
-      # map to a single DifferentialExpressionResult? If yes, find_by should be fine
-      # If no, please raise a PR comment to use .where instead
-      result = DifferentialExpressionResult.find_by(study: study,
-      cluster_group: cluster,
-      annotation_name: annotation_name,
-      annotation_scope: annotation_scope)
+    
+    result = DifferentialExpressionResult.find_by(study: study,
+    cluster_group: cluster,
+    annotation_name: annotation_name,
+    annotation_scope: annotation_scope)
+    if result.present?
       raise ArgumentError,
             "#{annotation_name} already exists for #{study.accession}:#{cluster_file.name}, " \
             "please delete result #{result.id} before retrying"
