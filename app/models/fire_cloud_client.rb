@@ -91,19 +91,19 @@ class FireCloudClient
       # instantiate Google Cloud Storage driver to work with files in workspace buckets
       # if no keyfile is present, use environment variables
       storage_attr = {
-          project: PORTAL_NAMESPACE,
-          timeout: 3600
+        project_id: PORTAL_NAMESPACE,
+        timeout: 3600
       }
 
       if !service_account.blank?
-        storage_attr.merge!(keyfile: service_account)
+        storage_attr.merge!(credentials: service_account)
         self.service_account_credentials = service_account
       end
 
       self.access_token = self.class.generate_access_token(service_account)
       self.project = PORTAL_NAMESPACE
 
-      self.storage = Google::Cloud::Storage.new(storage_attr)
+      self.storage = Google::Cloud::Storage.new(**storage_attr)
 
       # set expiration date of token
       self.expires_at = Time.zone.now + self.access_token['expires_in']
@@ -119,16 +119,16 @@ class FireCloudClient
       # use user-defined project instead of portal default
       # if no keyfile is present, use environment variables
       storage_attr = {
-          project: project,
+          project_id: project,
           timeout: 3600
       }
 
       if !service_account.blank?
-        storage_attr.merge!(keyfile: service_account)
+        storage_attr.merge!(credentials: service_account)
         self.service_account_credentials = service_account
       end
 
-      self.storage = Google::Cloud::Storage.new(storage_attr)
+      self.storage = Google::Cloud::Storage.new(**storage_attr)
     end
     # set FireCloud API base url
     self.api_root = BASE_URL
@@ -162,13 +162,13 @@ class FireCloudClient
   #   - +Google::Cloud::Storage+ instance
   def refresh_storage_driver(project_name=PORTAL_NAMESPACE)
     storage_attr = {
-        project: project_name,
+        project_id: project_name,
         timeout: 3600
     }
     if !ENV['SERVICE_ACCOUNT_KEY'].blank?
-      storage_attr.merge!(keyfile: self.class.get_primary_keyfile)
+      storage_attr.merge!(credentials: self.class.get_primary_keyfile)
     end
-    new_storage = Google::Cloud::Storage.new(storage_attr)
+    new_storage = Google::Cloud::Storage.new(**storage_attr)
     self.storage = new_storage
     new_storage
   end
@@ -1352,7 +1352,7 @@ class FireCloudClient
   #   - +Google::Cloud::Storage::File::List+
   def get_workspace_files(workspace_bucket_id, opts={})
     bucket = self.get_workspace_bucket(workspace_bucket_id)
-    bucket.files(opts)
+    bucket.files(**opts)
   end
 
   # retrieve single study_file in a GCP bucket of a workspace
@@ -1399,7 +1399,7 @@ class FireCloudClient
   #   - +Google::Cloud::Storage::File+
   def create_workspace_file(workspace_bucket_id, filepath, filename, opts={})
     bucket = self.get_workspace_bucket(workspace_bucket_id)
-    bucket.create_file filepath, filename, opts
+    bucket.create_file(filepath, filename, **opts)
   end
 
   # copy a file to a new location in a workspace bucket
@@ -1415,7 +1415,7 @@ class FireCloudClient
   #   - +Google::Cloud::Storage::File+
   def copy_workspace_file(workspace_bucket_id, filename, destination_name, opts={})
     file = self.get_workspace_file(workspace_bucket_id, filename)
-    file.copy destination_name, opts
+    file.copy(destination_name, **opts)
   end
 
   # delete a file to a workspace bucket
@@ -1490,7 +1490,7 @@ class FireCloudClient
       # return newly-opened file (will need to check content type before attempting to parse)
       local
     else
-      file.download end_path, opts
+      file.download end_path, **opts
     end
   end
 
@@ -1521,7 +1521,7 @@ class FireCloudClient
   #   - +String+ signed URL
   def generate_signed_url(workspace_bucket_id, filename, opts={})
     file = self.get_workspace_file(workspace_bucket_id, filename)
-    file.signed_url(opts)
+    file.signed_url(**opts)
   end
 
   # generate an api url to directly load a file from GCS via client-side JavaScript
@@ -1555,7 +1555,7 @@ class FireCloudClient
     # makes sure directory ends with '/', otherwise append to prevent spurious matches
     directory += '/' unless directory.last == '/'
     opts.merge!(prefix: directory)
-    self.get_workspace_files(workspace_bucket_id, opts)
+    self.get_workspace_files(workspace_bucket_id, **opts)
   end
 
   #######

@@ -55,7 +55,7 @@ module ApiHelpers
   #   - +String+ of concatenated query params
   def merge_query_options(opts={})
     return nil if opts.blank?
-    '?' + opts.reject {|k,v| v.blank?}.to_a.map {|k,v| uri_encode("#{k}=#{v}")}.join('&')
+    '?' + opts.reject {|k,v| k.blank? || v.blank?}.to_a.map {|k,v| "#{uri_encode(k)}=#{uri_encode(v)}"}.join('&')
   end
 
   # handle a RestClient::Response object
@@ -116,6 +116,6 @@ module ApiHelpers
   # * *returns*
   #   - +String+ => URI-encoded parameter
   def uri_encode(parameter)
-    URI.escape(parameter)
+    CGI.escape(parameter.to_s)
   end
 end
