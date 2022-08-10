@@ -76,6 +76,8 @@ gem 'carrierwave-mongoid', :require => 'carrierwave/mongoid'
 gem 'uuid'
 gem 'vite_rails'
 gem 'net-smtp'
+gem 'net-imap'
+gem 'net-pop'
 
 # only enable TCell in deployed environments due to Chrome sec-ch-ua header issue
 group :production, :staging do
