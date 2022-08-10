@@ -10,7 +10,7 @@ class UserAssetServiceTest < ActiveSupport::TestCase
   # only intended for use in a CI environment
   def populate_test_data
     UserAssetService::ASSET_PATHS_BY_TYPE.values.each do |asset_path|
-      unless Dir.exists?(asset_path)
+      unless Dir.exist?(asset_path)
         FileUtils.mkdir_p(asset_path)
       end
       entries = UserAssetService.get_directory_entries(asset_path)
@@ -52,7 +52,7 @@ class UserAssetServiceTest < ActiveSupport::TestCase
 
   # move a file and clean up src copy, creating directories as needed
   def move_file(source, new_folder, filename)
-    FileUtils.mkdir_p new_folder unless Dir.exists?(new_folder)
+    FileUtils.mkdir_p new_folder unless Dir.exist?(new_folder)
     destination = "#{new_folder}/#{filename}"
     FileUtils.mv source, destination
   end

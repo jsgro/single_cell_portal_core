@@ -37,14 +37,14 @@ class DataRepoClient
   def initialize(service_account = self.class.get_read_only_keyfile)
     # GCS storage driver attributes
     storage_attr = {
-      project: self.class.compute_project,
+      project_id: self.class.compute_project,
       timeout: 3600,
-      keyfile: service_account
+      credentials: service_account
     }
 
     self.service_account_credentials = service_account
     self.access_token = self.class.generate_access_token(service_account)
-    self.storage = Google::Cloud::Storage.new(storage_attr)
+    self.storage = Google::Cloud::Storage.new(**storage_attr)
     self.expires_at = Time.zone.now + self.access_token['expires_in']
     self.api_root = BASE_URL
   end
