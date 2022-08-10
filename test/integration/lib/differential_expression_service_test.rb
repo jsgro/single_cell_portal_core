@@ -191,17 +191,32 @@ class DifferentialExpressionServiceTest < ActiveSupport::TestCase
 
   test 'should not run differential expression job if dry run' do
     DataArray.create!(@all_cells_array_params)
-    @job_params[:dry_run] = true
+    params = {
+      annotation_name: 'species',
+      annotation_scope: 'study',
+      dry_run: true
+    }
 
-    job_requested = DifferentialExpressionService.run_differential_expression_job(@cluster_file, @basic_study, @user, **@job_params)
+    job_requested = DifferentialExpressionService.run_differential_expression_job(@cluster_file, @basic_study, @user, **params)
     assert job_requested
     assert_equal [], DelayedJobAccessor.find_jobs_by_handler_type(IngestJob, @cluster_file)
   end
 
   test 'should run differential expression job on all annotations' do
     DataArray.create!(@all_cells_array_params)
-
-    jobs_launched = DifferentialExpressionService.run_differential_expression_on_all(@basic_study.accession)
-    assert_equal 3, jobs_launched
+    job_mock = Minitest::Mock.new
+    job_mock.expect(:push_remote_and_launch_ingest, Delayed::Job.new, [Hash])
+    job_mock.expect(:push_remote_and_launch_ingest, Delayed::Job.new, [Hash])
+    job_mock.expect(:push_remote_and_launch_ingest, Delayed::Job.new, [Hash])
+    mock = Minitest::Mock.new
+    mock.expect(:delay, job_mock)
+    mock.expect(:delay, job_mock)
+    mock.expect(:delay, job_mock)
+    IngestJob.stub :new, mock do
+      jobs_launched = DifferentialExpressionService.run_differential_expression_on_all(@basic_study.accession)
+      assert_equal 3, jobs_launched
+      mock.verify
+      job_mock.verify
+    end
   end
 end
