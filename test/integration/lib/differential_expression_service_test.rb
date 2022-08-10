@@ -200,8 +200,7 @@ class DifferentialExpressionServiceTest < ActiveSupport::TestCase
 
   test 'should run differential expression job on all annotations' do
     DataArray.create!(@all_cells_array_params)
-    job_mock = Minitest::Mock.new
-    mock = Minitest::Mock.new
+
     jobs_launched = DifferentialExpressionService.run_differential_expression_on_all(@basic_study.accession)
     assert_equal 3, jobs_launched
   end
