@@ -93,7 +93,7 @@ export function logClick(event) {
     return
   }
 
-  window.Appcues.track('Click Event')
+  window.Appcues && window.Appcues.track('Click Event')
 
   // we use closest() so we don't lose clicks on, e.g. icons within a link/button
   // (and we have to use $.closest since IE still doesn't have built-in support for it)
