@@ -189,9 +189,19 @@ class DifferentialExpressionServiceTest < ActiveSupport::TestCase
     end
   end
 
+  test 'should not run differential expression job if dry run' do
+    DataArray.create!(@all_cells_array_params)
+    @job_params[:dry_run] = true
+
+    job_requested = DifferentialExpressionService.run_differential_expression_job(@cluster_file, @basic_study, @user, **@job_params)
+    assert job_requested
+    assert_equal [], DelayedJobAccessor.find_jobs_by_handler_type(IngestJob, @cluster_file)
+  end
+
   test 'should run differential expression job on all annotations' do
     DataArray.create!(@all_cells_array_params)
-
+    job_mock = Minitest::Mock.new
+    mock = Minitest::Mock.new
     jobs_launched = DifferentialExpressionService.run_differential_expression_on_all(@basic_study.accession)
     assert_equal 3, jobs_launched
   end
