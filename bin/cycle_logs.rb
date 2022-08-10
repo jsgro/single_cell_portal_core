@@ -13,7 +13,7 @@ all_logs = Dir.entries("log").keep_if {|l| !l.start_with?('.')}
 4.downto(1) do |i|
   if i == 4
     all_logs.select {|l| l =~ /#{i}/}.each do |log|
-      File.exists?("log/#{log}") ? File.delete("log/#{log}") : next
+      File.exist?("log/#{log}") ? File.delete("log/#{log}") : next
     end
   else
     all_logs.select {|l| l =~ /#{i}/}.each do |log|
@@ -24,7 +24,7 @@ all_logs = Dir.entries("log").keep_if {|l| !l.start_with?('.')}
       else
         basename = log_parts.first
       end
-      File.exists?("log/#{basename}.#{i}.log") ? File.rename("log/#{basename}.#{i}.log", "log/#{basename}.#{i + 1}.log") : next
+      File.exist?("log/#{basename}.#{i}.log") ? File.rename("log/#{basename}.#{i}.log", "log/#{basename}.#{i + 1}.log") : next
     end
   end
 end
@@ -37,14 +37,14 @@ all_logs.select {|l| l.split('.').last == 'log'}.each do |log|
   else
     basename = log_parts.first
   end
-  if File.exists?("log/#{basename}.log")
+  if File.exist?("log/#{basename}.log")
     FileUtils.cp("log/#{basename}.log", "log/#{basename}.1.log")
     File.delete("log/#{basename}.log")
   end
 end
 
 # blow away any nginx access & error logs
-if Dir.exists?('log/nginx')
+if Dir.exist?('log/nginx')
   Dir.chdir('log/nginx')
   nginx_logs = Dir.entries(".").keep_if {|l| !l.start_with?('.')}
   nginx_logs.each do |log|

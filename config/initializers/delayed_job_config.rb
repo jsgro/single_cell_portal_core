@@ -8,18 +8,3 @@ Delayed::Worker.default_queue_name = :default
 if Rails.env.test? || Rails.env.development? # save a little time in testing/dev
   Delayed::Worker.sleep_delay = 5 # seconds
 end
-
-# Fixing class loader issues with delayed_job, for Rails 5
-# from https://stackoverflow.com/questions/4705867/rails-doesnt-load-classes-on-deserializing-yaml-marshal-objects
-module Psych::Visitors
-  ToRuby.class_eval do
-    def resolve_class(klassname)
-      begin
-        class_loader.load klassname
-      rescue ArgumentError
-        require_dependency klassname.underscore
-        klassname.constantize
-      end
-    end
-  end
-end

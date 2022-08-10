@@ -78,7 +78,7 @@ class AnalysisMetadatum
   def definition_schema
     begin
       # check for local copy first
-      if File.exists?(self.definition_filepath)
+      if File.exist?(self.definition_filepath)
         existing_schema = File.read(self.definition_filepath)
         JSON.parse(existing_schema)
       else

@@ -57,7 +57,7 @@ class GenericProfilerTest < ActiveSupport::TestCase
     profile_results = GenericProfiler.profile(AnnotationVizService, :get_selected_annotation, SecureRandom.hex(4), @basic_study)
     assert profile_results.any?
     profile_results.each do |profile_path|
-      assert File.exists? profile_path
+      assert File.exist? profile_path
     end
   end
 
@@ -65,7 +65,7 @@ class GenericProfilerTest < ActiveSupport::TestCase
     profile_results = GenericProfiler.profile_clustering(@basic_study.accession)
     assert profile_results.any?
     profile_results.each do |profile_path|
-      assert File.exists? profile_path
+      assert File.exist? profile_path
     end
   end
 
@@ -75,7 +75,7 @@ class GenericProfilerTest < ActiveSupport::TestCase
     violin_results = GenericProfiler.profile_expression(@basic_study.accession, genes: gene_name)
     assert violin_results.any?
     violin_results.each do |profile_path|
-      assert File.exists? profile_path
+      assert File.exist? profile_path
     end
 
     # test heatmap
@@ -83,7 +83,7 @@ class GenericProfilerTest < ActiveSupport::TestCase
     heatmap_results = GenericProfiler.profile_expression(@basic_study.accession, genes: gene_names, plot_type: 'heatmap')
     assert heatmap_results.any?
     heatmap_results.each do |profile_path|
-      assert File.exists? profile_path
+      assert File.exist? profile_path
     end
   end
 
@@ -94,7 +94,7 @@ class GenericProfilerTest < ActiveSupport::TestCase
     GenericProfiler.write_args_list(test_dir, random_seed, *args)
     filename = "#{random_seed}_arguments.txt"
     args_filepath = Rails.root.join(GenericProfiler::PROFILE_BASEDIR, test_dir, filename)
-    assert File.exists?(args_filepath)
+    assert File.exist?(args_filepath)
     args_file = File.open(args_filepath).read
     assert args_file.include?(@basic_study.name)
     assert args_file.include?('"some value"')

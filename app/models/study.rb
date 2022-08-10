@@ -1673,7 +1673,7 @@ class Study
   # make data directory after study creation is successful
   # this is now a public method so that we can use it whenever remote files are downloaded to validate that the directory exists
   def make_data_dir
-    unless Dir.exists?(self.data_store_path)
+    unless Dir.exist?(self.data_store_path)
       FileUtils.mkdir_p(self.data_store_path)
     end
   end
@@ -2055,7 +2055,7 @@ class Study
 
   # remove data directory on delete
   def remove_data_dir
-    if Dir.exists?(self.data_store_path)
+    if Dir.exist?(self.data_store_path)
       FileUtils.rm_rf(self.data_store_path)
     end
   end
