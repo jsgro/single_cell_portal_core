@@ -10,6 +10,7 @@
 import { parseArgs } from 'node:util'
 import { access } from 'node:fs'
 import { mkdir, writeFile, readFile } from 'node:fs/promises'
+import sharp from 'sharp'
 import os from 'node:os'
 
 import puppeteer from 'puppeteer'
@@ -105,18 +106,39 @@ async function makeExpressionScatterPlotImage(gene, page, preamble) {
   const clipDimensions = { height: 595, width: 660, x: 5, y: 280 }
 
   // Take a screenshot, save it locally
+  const rawImagePath = `${imagesDir}${gene}-raw.webp`
   const imagePath = `${imagesDir}${gene}.webp`
   await page.screenshot({
-    path: imagePath,
+    path: rawImagePath,
     type: 'webp',
     clip: clipDimensions,
     omitBackground: true
   })
 
+  const imageDescription = JSON.stringify({
+    expression: [0, 2.433],
+    x: [-50.96, 47.14],
+    y: [-17.20, 12.79],
+    z: []
+  })
+  await sharp(rawImagePath)
+    .withMetadata({
+      exif: {
+        IFD0: {
+          ImageDescription: imageDescription
+        }
+      }
+    })
+    .toFile(imagePath)
+
+  // const metadata = await sharp(imagePath).metadata()
+  // console.log('metadata:')
+  // console.log(metadata)
+
   print(`Wrote ${imagePath}`, preamble)
-  // if (imagePath === 'output/SCP138/images/A1BG-AS1.webp') {
-  //   exit()
-  // }
+  if (imagePath === 'output/SCP138/images/A1BG-AS1.webp') {
+    exit()
+  }
 
   return
 }

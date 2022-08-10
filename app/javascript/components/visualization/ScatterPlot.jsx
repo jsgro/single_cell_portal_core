@@ -3,6 +3,7 @@ import _uniqueId from 'lodash/uniqueId'
 import _remove from 'lodash/remove'
 import Plotly from 'plotly.js-dist'
 import { Store } from 'react-notifications-component'
+import ExifReader from 'exifreader'
 
 import { fetchCluster, updateStudyFile, fetchBucketFile } from '~/lib/scp-api'
 import { logScatterPlot } from '~/lib/scp-api-metrics'
@@ -189,17 +190,24 @@ function RawScatterPlot({
   }
 
   /** Display static image of gene expression scatter plot */
-  function renderImage(imageObjectUrl) {
+  async function renderImage(response) {
+    const imageBuffer = await response.arrayBuffer()
+    const exifTags = ExifReader.load(imageBuffer)
+    const imageBlob = await new Blob([imageBuffer])
+    const imageObjectUrl = URL.createObjectURL(imageBlob)
+
     removeOldExpressionScatterImage()
 
-    // For gridlines and color bar
-    // TODO: Get these from image metadata (e.g. EXIF) or scatter_data file
+    // Parse gene-specific plot configuration from image Exif metadata
+    const ranges = JSON.parse(exifTags.ImageDescription.description)
+
+    // For colorbar labels, and gridlines
+    const expressionRange = ranges.expression
     const coordinateRanges = {
-      x: [-50.95664285714286, 47.13764285714286],
-      y: [-17.202928571428572, 12.78992857142857],
-      z: []
+      x: ranges.x,
+      y: ranges.y,
+      z: ranges.z
     }
-    const expressionRange = [0, 2.433] // Math.max(...expressionNumberArray)
 
     // TODO: Move this data from per-gene fetch to cluster fetch
     const titles = {
@@ -230,7 +238,7 @@ function RawScatterPlot({
     const layout = scatter.layout
 
     // For gridlines and color bar
-    // TODO: Get these from image metadata (e.g. EXIF) or scatter_data file
+    // TODO: Get these from image metadata (e.g. Exif) or scatter_data file
     layout.xaxis.range = coordinateRanges.x
     layout.yaxis.range = coordinateRanges.y
     const color = expressionRange
@@ -326,23 +334,6 @@ function RawScatterPlot({
     const plotlyTraces = updateCountsAndGetTraces(scatter)
 
     const startTime = performance.now()
-    console.log('plotlyTraces, layout, Math.max(...plotlyTraces[0].marker.color)')
-    console.log(plotlyTraces)
-    console.log(layout)
-    console.log(Math.max(...plotlyTraces[0].marker.color))
-    // // console.log(Math.max(JSON.parse(JSON.stringify(plotlyTraces[0])).x))
-    // const newMarker = JSON.parse(JSON.stringify(plotlyTraces[0])).marker
-    // newMarker.color = [0, 1]
-    // // Plotly.react(graphElementId, [], layout)
-    // plotlyTraces = [{
-    //   marker: newMarker,
-    //   x: [0, NaN],
-    //   y: [0, NaN],
-    //   mode: 'markers',
-    //   type: 'scattergl'
-    // }]
-    // console.log('new plotlyTraces')
-    // console.log(plotlyTraces)
     Plotly.react(graphElementId, plotlyTraces, layout)
 
     if (perfTimes) {
@@ -384,11 +375,9 @@ function RawScatterPlot({
       genes[0] === 'A1BG-AS1' // Placeholder; likely replace with setting like DE
     ) {
       const bucketName = 'broad-singlecellportal-public'
-      const filePath = `test/scatter_image/foo/${genes[0]}.webp`
+      const filePath = `test/scatter_image/${genes[0]}.webp`
       fetchBucketFile(bucketName, filePath).then(async response => {
-        const imageBlob = await response.blob()
-        const imageObjectURL = URL.createObjectURL(imageBlob)
-        renderImage(imageObjectURL)
+        renderImage(response)
       })
     }
 

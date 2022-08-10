@@ -19,7 +19,9 @@
     "prop-types": "^15.7.2",
     "puppeteer": "^15.4.0",
     "query-string": "^6.11.0",
-    "stylelint-config-sass-guidelines": "^7.0.0"
+    "stylelint-config-sass-guidelines": "^7.0.0",
+    "sharp": "0.30.7",
+    "exifreader": "4.5.1"
   },
   "devDependencies": {
     "@babel/plugin-proposal-private-property-in-object": "^7.16.0",
