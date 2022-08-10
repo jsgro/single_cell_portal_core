@@ -58,7 +58,8 @@ SecureHeaders::Configuration.default do |config|
                              'https://us.input.tcell.insight.rapid7.com', 'https://api.tcell.io', 'https://us.browser.tcell.insight.rapid7.com',
                              'https://us.agent.tcell.insight.rapid7.com', 'https://us.jsagent.tcell.insight.rapid7.com', 'https://accounts.google.com',
                              'https://terra-bard-dev.appspot.com', 'https://terra-bard-alpha.appspot.com', 'https://terra-bard-prod.appspot.com',
-                             'https://rest.ensembl.org', 'https://eutils.ncbi.nlm.nih.gov', 'https://mygene.info', 'https://webservice.wikipathways.org', 'https://o54426.ingest.sentry.io']
+                             'https://rest.ensembl.org', 'https://eutils.ncbi.nlm.nih.gov', 'https://mygene.info', 'https://webservice.wikipathways.org', 'https://o54426.ingest.sentry.io', 'https://fast.appcues.com/119641.js'
+                            ]
   if ENV['NOT_DOCKERIZED']
     # enable connections to live reload server
     allowed_connect_sources.push('https://localhost:3035')
@@ -68,6 +69,11 @@ SecureHeaders::Configuration.default do |config|
     allowed_connect_sources.push('ws://localhost:3036')
     allowed_connect_sources.push('ws://127.0.0.1:3036')
   end
+  # For appcues
+  allowed_connect_sources.push('https://*.appcues.com')
+  allowed_connect_sources.push('https://*.appcues.net')
+  allowed_connect_sources.push('wss://*.appcues.net')
+  allowed_connect_sources.push('wss://*.appcues.com')
   config.csp = {
     # "meta" values. these will shape the header, but the values are not included in the header.
     preserve_schemes: true, # default: false. Schemes are removed from host sources to save bytes and discourage mixed content.
@@ -76,20 +82,21 @@ SecureHeaders::Configuration.default do |config|
     # directive values: these values will directly translate into source directives
     default_src: %w('self'),
     block_all_mixed_content: true, # see http://www.w3.org/TR/mixed-content/
-    frame_src: %w('self' https://us.input.tcell.insight.rapid7.com https://us.browser.tcell.insight.rapid7.com
+    frame_src: %w('self' https://us.input.tcell.insight.rapid7.com https://us.browser.tcell.insight.rapid7.com https://*.appcues.com
                      https://us.agent.tcell.insight.rapid7.com), # if child-src isn't supported, the value for frame-src will be set.
-    font_src: %w('self' data:),
+    font_src: %w('self' data: https://fonts.googleapis.com https://fonts.google.com https://fonts.gstatic.com ),
     form_action: %w('self' https://accounts.google.com),
     connect_src: allowed_connect_sources,
-    img_src: %w('self' data: blob: https://www.google-analytics.com https://online.swagger.io),
+    img_src: %w('self' data: blob: https://www.google-analytics.com https://online.swagger.io res.cloudinary.com twemoji.maxcdn.com),
     manifest_src: %w('self'),
     object_src: %w('none'),
     script_src: %w('self' blob: 'unsafe-eval' 'unsafe-inline' 'strict-dynamic' https://cdn.plot.ly https://cdn.datatables.net
                      https://www.google-analytics.com https://cdnjs.cloudflare.com https://maxcdn.bootstrapcdn.com
                      https://use.fontawesome.com https://api.tcell.io https://us.browser.tcell.insight.rapid7.com
                      https://us.jsagent.tcell.insight.rapid7.com https://us.agent.tcell.insight.rapid7.com https://js-agent.newrelic.com
-                     https://bam.nr-data.net),
-    style_src: %w('self' blob: https://maxcdn.bootstrapcdn.com 'unsafe-inline'),
+                     https://bam.nr-data.net https://*.appcues.com https://*.appcues.net),
+    style_src: %w('self' blob: https://maxcdn.bootstrapcdn.com 
+                      https://*.appcues.com https://*.appcues.net https://fonts.googleapis.com https://fonts.google.com 'unsafe-inline'),
     upgrade_insecure_requests: true, # see https://www.w3.org/TR/upgrade-insecure-requests/
   }
 

@@ -93,6 +93,8 @@ export function logClick(event) {
     return
   }
 
+  window.Appcues.track('Click Event')
+
   // we use closest() so we don't lose clicks on, e.g. icons within a link/button
   // (and we have to use $.closest since IE still doesn't have built-in support for it)
   if (target.closest('a').length) {
@@ -407,6 +409,7 @@ export function log(name, props = {}) {
   }
 
   init = Object.assign(init, body)
+
 
   if ('SCP' in window || metricsApiMock) {
     const url = `${bardDomain}/api/event/`
