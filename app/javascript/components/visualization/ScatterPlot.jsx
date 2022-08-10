@@ -191,16 +191,82 @@ function RawScatterPlot({
   /** Display static image of gene expression scatter plot */
   function renderImage(imageObjectUrl) {
     removeOldExpressionScatterImage()
-    const image = document.createElement('img')
-    image.src = imageObjectUrl
+
+    // For gridlines and color bar
+    // TODO: Get these from image metadata (e.g. EXIF) or scatter_data file
+    const xCoordinateRange = [-50.95664285714286, 47.13764285714286]
+    const yCoordinateRange = [-17.202928571428572, 12.78992857142857]
+    const expressionRange = [0, 2.433] // Math.max(...expressionNumberArray)
+
+    const tmpScatterData = Object.assign({}, {
+      genes,
+      isCorrelatedScatter,
+      isAnnotatedScatter,
+      axes: { titles: { x: 'X', y: 'Y', z: 'Z', magnitude: 'Expression' }, aspects: null },
+      data: { expression: expressionRange },
+      annotParams: {
+        'name': 'General_Celltype',
+        'type': 'group',
+        'scope': 'study'
+      }
+    })
+    const scatter = updateScatterLayout(tmpScatterData)
+    const layout = scatter.layout
+
+    // For gridlines and color bar
+    // TODO: Get these from image metadata (e.g. EXIF) or scatter_data file
+    layout.xaxis.range = xCoordinateRange
+    layout.yaxis.range = yCoordinateRange
+    const color = expressionRange
+
+    // TODO: Refactor getPlotlyTraces to return most of these; almost none
+    // should need to rely on data fetched per-gene.
+    const plotlyTraces = [
+      {
+        'marker': {
+          'line': { 'color': 'rgb(40,40,40)', 'width': 0 },
+          'size': 3,
+          'showscale': true,
+          'colorscale': '',
+          'reversescale': false,
+          color,
+          'colorbar': { 'title': { 'text': 'Expression', 'side': 'right' } }
+        },
+        'x': layout.xaxis.range,
+        'y': layout.yaxis.range,
+        'mode': 'markers',
+        'type': 'scattergl'
+      }
+    ]
+    Plotly.react(graphElementId, plotlyTraces, layout)
+
+    const oldCtx = document.querySelector(`#${ graphElementId } .gl-canvas-context`)
+    const oldWidth = oldCtx.width
+    const oldHeight = oldCtx.height
+    oldCtx.remove()
+    const canvas = document.createElement('canvas')
+    canvas.setAttribute('class', 'gl-canvas gl-canvas-context scp-image-canvas')
+    const style = 'position: absolute; top: 0px; left: 0px; overflow: visible; pointer-events: none;'
+    canvas.setAttribute('style', style)
+    canvas.setAttribute('width', oldWidth)
+    canvas.setAttribute('height', oldHeight)
+    document.querySelector(`#${ graphElementId } .gl-container`).append(canvas)
+    const ctx = document.querySelector(`#${ graphElementId } .gl-canvas-context`).getContext('2d')
+
+    // Load static image of plot, and render it in the canvas element
+    const image = new Image()
     image.className = staticImageClassName
-    const aspectRatio = 1.1092437
-    const height = 525
-    const width = height * aspectRatio
-    image.width = width
-    image.height = height
-    const container = document.getElementById(graphElementId)
-    container.append(image)
+    image.addEventListener('load', renderToCanvas)
+    image.width = oldWidth
+    image.height = oldHeight
+    image.src = imageObjectUrl
+
+    /** Image onload handler.  (Drawing before load renders no image.) */
+    function renderToCanvas() {
+      // TODO: Calculate scale and xy-offset given viewport and plot dimensions
+      ctx.scale(0.73, 0.73)
+      ctx.drawImage(image, 92, 9)
+    }
 
     concludeRender()
   }
@@ -210,16 +276,54 @@ function RawScatterPlot({
     let [scatter, perfTimes] =
       (clusterResponse ? clusterResponse : [scatterData, null])
 
-    if (flags?.progressive_loading) {
-      removeOldExpressionScatterImage()
-    }
-
     scatter = updateScatterLayout(scatter)
     const layout = scatter.layout
+
+    if (flags?.progressive_loading && !clusterResponse) {
+      console.log('in processScatterPlot, removing old image')
+      // const oldCtx = document.querySelector(`#${ graphElementId } .gl-canvas-context`)
+      // console.log('oldCtx')
+      // console.log(oldCtx)
+      const container = document.querySelector(`#${ graphElementId } .gl-container`)
+      if (container) {
+        const oldWidth = layout.width
+        const oldHeight = layout.height
+        const canvas = document.createElement('canvas')
+        canvas.setAttribute('class', 'gl-canvas gl-canvas-context')
+        canvas.setAttribute('style', 'position: absolute; top: 0px; left: 0px; overflow: visible; pointer-events: none;')
+        canvas.setAttribute('width', oldWidth)
+        canvas.setAttribute('height', oldHeight)
+        document.querySelector(`#${ graphElementId } .gl-container`).prepend(canvas)
+      };
+
+      const imageCanvas = document.querySelector('.scp-image-canvas')
+      if (imageCanvas) {
+        imageCanvas.remove()
+      }
+
+      // removeOldExpressionScatterImage()
+    }
 
     const plotlyTraces = updateCountsAndGetTraces(scatter)
 
     const startTime = performance.now()
+    console.log('plotlyTraces, layout, Math.max(...plotlyTraces[0].marker.color)')
+    console.log(plotlyTraces)
+    console.log(layout)
+    console.log(Math.max(...plotlyTraces[0].marker.color))
+    // // console.log(Math.max(JSON.parse(JSON.stringify(plotlyTraces[0])).x))
+    // const newMarker = JSON.parse(JSON.stringify(plotlyTraces[0])).marker
+    // newMarker.color = [0, 1]
+    // // Plotly.react(graphElementId, [], layout)
+    // plotlyTraces = [{
+    //   marker: newMarker,
+    //   x: [0, NaN],
+    //   y: [0, NaN],
+    //   mode: 'markers',
+    //   type: 'scattergl'
+    // }]
+    // console.log('new plotlyTraces')
+    // console.log(plotlyTraces)
     Plotly.react(graphElementId, plotlyTraces, layout)
 
     if (perfTimes) {
@@ -261,7 +365,7 @@ function RawScatterPlot({
       genes[0] === 'A1BG-AS1' // Placeholder; likely replace with setting like DE
     ) {
       const bucketName = 'broad-singlecellportal-public'
-      const filePath = `test/scatter_image/${genes[0]}.webp`
+      const filePath = `test/scatter_image/foo/${genes[0]}.webp`
       fetchBucketFile(bucketName, filePath).then(async response => {
         const imageBlob = await response.blob()
         const imageObjectURL = URL.createObjectURL(imageBlob)
