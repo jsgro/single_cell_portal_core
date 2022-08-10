@@ -14,7 +14,7 @@ class DifferentialExpressionService
   #
   # * *raises*
   #   - (ArgumentError) => if requested parameters do not validate
-  def self.run_differential_expression_on_default(study_accession, user: nil)
+  def self.run_differential_expression_on_default(study_accession, user: nil, machine_type: nil, dry_run: nil)
     study = Study.find_by(accession: study_accession)
     validate_study(study)
     raise ArgumentError, "#{study.accession} has no default cluster" if study.default_cluster.blank?
@@ -46,14 +46,14 @@ class DifferentialExpressionService
   #
   # * *raises*
   #   - (ArgumentError) => if requested study cannot run any DE jobs
-  def self.run_differential_expression_on_all(study_accession, user: nil)
+  def self.run_differential_expression_on_all(study_accession, user: nil, machine_type: nil, dry_run: nil)
     study = Study.find_by(accession: study_accession)
     validate_study(study)
     eligible_annotations = []
 
     metadata = study.cell_metadata.where(annotation_type: 'group').select(&:can_visualize?)
     eligible_annotations += metadata.map do |meta|
-      { annotation_name: meta.name, annotation_scope: 'study' }
+      { annotation_name: meta.name, annotation_scope: 'study', machine_type: machine_type, dry_run: dry_run }
     end
 
     cell_annotations = []
@@ -75,7 +75,9 @@ class DifferentialExpressionService
       {
         annotation_name: annot[:name],
         annotation_scope: 'cluster',
-        cluster_file_id: annot[:cluster_file_id]
+        cluster_file_id: annot[:cluster_file_id],
+        machine_type: machine_type,
+        dry_run: dry_run
       }
     end
     raise ArgumentError, "#{study_accession} does not have any eligible annotations" if eligible_annotations.empty?
@@ -84,6 +86,7 @@ class DifferentialExpressionService
     requested_user = user || study.user
 
     job_count = 0
+    skip_count = 0
     study.cluster_ordinations_files.each do |cluster_file|
       eligible_annotations.each do |annotation|
         begin
@@ -96,18 +99,26 @@ class DifferentialExpressionService
                                    'group',
                                    annotation_params[:annotation_scope]].join('--')
           job_identifier = "#{study_accession}: #{cluster_file.name} (#{annotation_identifier})"
+          if annotation_params[:machine_type]
+            job_identifier += "[#{machine_type}]"
+          end
           log_message "Checking DE job for #{job_identifier}"
           DifferentialExpressionService.run_differential_expression_job(
             cluster_file, study, requested_user, **annotation_params
           )
-          log_message "DE job for #{job_identifier} successfully launched"
+          if annotation_params[:dry_run]
+            log_message "==> Dry run found job #{job_identifier}"
+          else
+            log_message "==> DE job for #{job_identifier} successfully launched"
+          end
           job_count += 1
         rescue ArgumentError => e
-          log_message "Skipping DE job for #{job_identifier} due to: #{e.message}"
+          log_message "  Skipping DE job for #{job_identifier} due to: #{e.message}"
+          skip_count += 1
         end
       end
     end
-    log_message "#{study_accession} yielded #{job_count} differential expression jobs"
+    log_message "#{study_accession} yielded #{job_count} differential expression jobs; #{skip_count} skipped"
     job_count
   end
 
@@ -129,7 +140,7 @@ class DifferentialExpressionService
   #
   # * *raises*
   #   - (ArgumentError) => if requested parameters do not validate
-  def self.run_differential_expression_job(cluster_file, study, user, annotation_name:, annotation_scope:, machine_type: nil)
+  def self.run_differential_expression_job(cluster_file, study, user, annotation_name:, annotation_scope:, machine_type: nil, dry_run: nil)
     validate_study(study)
     validate_annotation(cluster_file, study, annotation_name, annotation_scope)
 
@@ -160,7 +171,10 @@ class DifferentialExpressionService
     params_object = DifferentialExpressionParameters.new(de_params)
     params_object.machine_type = machine_type if machine_type.present? # override :machine_type if specified
 
-    if params_object.valid?
+    if dry_run
+      self.validate_annotation(cluster_file, study, annotation_name, annotation_scope)
+      true
+    elsif params_object.valid?
       # launch DE job
       job = IngestJob.new(study: study, study_file: cluster_file, user: user, action: :differential_expression,
                           params_object: params_object)
@@ -184,14 +198,20 @@ class DifferentialExpressionService
   def self.validate_annotation(cluster_file, study, annotation_name, annotation_scope)
     cluster = study.cluster_groups.by_name(cluster_file.name)
     raise ArgumentError, "cannot find cluster for #{cluster_file.name}" if cluster.nil?
-
     if DifferentialExpressionResult.where(study: study,
                                           cluster_group: cluster,
                                           annotation_name: annotation_name,
                                           annotation_scope: annotation_scope).exists?
+      # Question: Does each study/cluster_group/annotation_name/annotation_scope combo
+      # map to a single DifferentialExpressionResult? If yes, find_by should be fine
+      # If no, please raise a PR comment to use .where instead
+      result = DifferentialExpressionResult.find_by(study: study,
+      cluster_group: cluster,
+      annotation_name: annotation_name,
+      annotation_scope: annotation_scope)
       raise ArgumentError,
             "#{annotation_name} already exists for #{study.accession}:#{cluster_file.name}, " \
-            'please delete the existing results before retrying'
+            "please delete result #{result.id} before retrying"
     end
 
     can_visualize = false
