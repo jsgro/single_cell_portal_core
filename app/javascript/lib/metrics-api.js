@@ -410,6 +410,7 @@ export function log(name, props = {}) {
 
   init = Object.assign(init, body)
 
+  window.Appcues && window.Appcues.identify(window.SCP.userId)
 
   if ('SCP' in window || metricsApiMock) {
     const url = `${bardDomain}/api/event/`
