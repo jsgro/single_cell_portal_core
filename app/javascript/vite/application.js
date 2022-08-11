@@ -94,7 +94,3 @@ window.SCP.API = ScpApi
 
 window.Spinner = Spinner
 window.morpheus = morpheus
-
-window.AppcuesSettings = {
-  enableURLDetection: true
-}
