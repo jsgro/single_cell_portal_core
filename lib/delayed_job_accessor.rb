@@ -8,9 +8,10 @@ module DelayedJobAccessor
 
   # Classes allowed to dump handlers from using YAML.safe_load
   # This covers all recursive data structures inside IngestJob and UploadCleanupJob
-  SAFE_CLASS_LOADERS = [IngestJob, UploadCleanupJob, Symbol, BSON::ObjectId, 
-    BSON::Document, Time, Delayed::PerformableMethod, ActiveSupport::TimeWithZone, 
-    DifferentialExpressionParameters, ActiveModel::Errors].freeze
+
+  SAFE_CLASS_LOADERS = [IngestJob, UploadCleanupJob, Symbol, BSON::ObjectId, BSON::Document, Time, 
+                        Delayed::PerformableMethod, ActiveSupport::TimeWithZone, DifferentialExpressionParameters, 
+                        ActiveModel::Errors, SearchFacet, ActiveSupport::TimeZone].freeze
 
   # find a Delayed::Job instance of a particular class, and refine by an associated object
   #
