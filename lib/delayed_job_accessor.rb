@@ -10,7 +10,7 @@ module DelayedJobAccessor
   # This covers all recursive data structures inside IngestJob and UploadCleanupJob
   SAFE_CLASS_LOADERS = [IngestJob, UploadCleanupJob, Symbol, BSON::ObjectId,
                         BSON::Document, Time, Delayed::PerformableMethod, ActiveSupport::TimeWithZone,
-                        DifferentialExpressionParameters, ActiveModel::Errors].freeze
+                        DifferentialExpressionParameters, ActiveModel::Errors, SearchFacet].freeze
 
   # find a Delayed::Job instance of a particular class, and refine by an associated object
   #
