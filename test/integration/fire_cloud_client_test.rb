@@ -458,6 +458,12 @@ class FireCloudClientTest < ActiveSupport::TestCase
     assert !final_emails.include?(@test_email), "Did not successfully remove #{@test_email} from list of billing project members: #{emails.join(', ')}"
   end
 
+  def test_should_retry_error_codes
+    ApiHelpers::RETRY_STATUS_CODES.each do |code|
+      assert @fire_cloud_client.should_retry?(code)
+    end
+  end
+
   ##
   #
   # GCS TESTS
