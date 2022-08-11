@@ -106,6 +106,11 @@ class HcaAzulClient
     handle_response(response)
   end
 
+  # FROM SCP-4592: Temporarily disable automatic retries while we investigate the rise in 503 errors from Azul
+  def should_retry?(code)
+    false
+  end
+
   ##
   # API endpoint bindings
   ##

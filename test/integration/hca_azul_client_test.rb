@@ -272,4 +272,10 @@ class HcaAzulClientTest < ActiveSupport::TestCase
     assert @hca_azul_client.query_too_large?(query)
     assert_not @hca_azul_client.query_too_large?({ project: { is: accession_list.take(10) } })
   end
+
+  test 'should not retry any error status code' do
+    ApiHelpers::RETRY_STATUS_CODES.each do |code|
+      assert_not @hca_azul_client.should_retry?(code)
+    end
+  end
 end
