@@ -62,8 +62,8 @@ function RawScatterPlot({
 
   const flags = getFeatureFlagsWithDefaults()
 
-  const staticImageClassName = 'static-image'
-  const staticImageSelector = `#${ graphElementId } .${staticImageClassName}`
+  const imageClassName = 'scp-canvas-image'
+  const imageSelector = `#${ graphElementId } .${imageClassName}`
 
   /**
    * Handle user interaction with one or more labels in legend.
@@ -181,22 +181,12 @@ function RawScatterPlot({
     setIsLoading(false)
   }
 
-  /** Remove old static image of gene expression scatter plot, if it exists */
-  function removeOldExpressionScatterImage() {
-    const oldImage = document.querySelector(staticImageSelector)
-    if (oldImage) {
-      oldImage.remove()
-    }
-  }
-
   /** Display static image of gene expression scatter plot */
   async function renderImage(response) {
     const imageBuffer = await response.arrayBuffer()
     const exifTags = ExifReader.load(imageBuffer)
-    const imageBlob = await new Blob([imageBuffer])
+    const imageBlob = new Blob([imageBuffer])
     const imageObjectUrl = URL.createObjectURL(imageBlob)
-
-    removeOldExpressionScatterImage()
 
     // Parse gene-specific plot configuration from image Exif metadata
     const ranges = JSON.parse(exifTags.ImageDescription.description)
@@ -272,7 +262,7 @@ function RawScatterPlot({
     const oldHeight = oldCtx.height
     oldCtx.remove()
     const canvas = document.createElement('canvas')
-    canvas.setAttribute('class', 'gl-canvas gl-canvas-context scp-image-canvas')
+    canvas.setAttribute('class', 'gl-canvas gl-canvas-context scp-canvas-image')
     const style = 'position: absolute; top: 0px; left: 0px; overflow: visible; pointer-events: none;'
     canvas.setAttribute('style', style)
     canvas.setAttribute('width', oldWidth)
@@ -282,7 +272,7 @@ function RawScatterPlot({
 
     // Load static image of plot, and render it in the canvas element
     const image = new Image()
-    image.className = staticImageClassName
+    image.className = imageClassName
     image.addEventListener('load', renderToCanvas)
     image.width = oldWidth
     image.height = oldHeight
@@ -306,35 +296,16 @@ function RawScatterPlot({
     scatter = updateScatterLayout(scatter)
     const layout = scatter.layout
 
-    if (flags?.progressive_loading && !clusterResponse) {
-      console.log('in processScatterPlot, removing old image')
-      // const oldCtx = document.querySelector(`#${ graphElementId } .gl-canvas-context`)
-      // console.log('oldCtx')
-      // console.log(oldCtx)
-      const container = document.querySelector(`#${ graphElementId } .gl-container`)
-      if (container) {
-        const oldWidth = layout.width
-        const oldHeight = layout.height
-        const canvas = document.createElement('canvas')
-        canvas.setAttribute('class', 'gl-canvas gl-canvas-context')
-        canvas.setAttribute('style', 'position: absolute; top: 0px; left: 0px; overflow: visible; pointer-events: none;')
-        canvas.setAttribute('width', oldWidth)
-        canvas.setAttribute('height', oldHeight)
-        document.querySelector(`#${ graphElementId } .gl-container`).prepend(canvas)
-      };
-
-      const imageCanvas = document.querySelector('.scp-image-canvas')
-      if (imageCanvas) {
-        imageCanvas.remove()
-      }
-
-      // removeOldExpressionScatterImage()
-    }
-
     const plotlyTraces = updateCountsAndGetTraces(scatter)
 
+
     const startTime = performance.now()
-    Plotly.react(graphElementId, plotlyTraces, layout)
+
+    if (flags?.progressive_loading && genes.length === 1 && document.querySelector(imageSelector)) {
+      Plotly.newPlot(graphElementId, plotlyTraces, layout)
+    } else {
+      Plotly.react(graphElementId, plotlyTraces, layout)
+    }
 
     if (perfTimes) {
       perfTimes.plot = performance.now() - startTime
@@ -372,6 +343,7 @@ function RawScatterPlot({
     // use an image and/or data cache if one has been provided, otherwise query scp-api directly
     if (
       flags?.progressive_loading && isGeneExpression(genes, isCorrelatedScatter) && !isAnnotatedScatter &&
+      !scatterData &&
       genes[0] === 'A1BG-AS1' // Placeholder; likely replace with setting like DE
     ) {
       const bucketName = 'broad-singlecellportal-public'
@@ -398,7 +370,7 @@ function RawScatterPlot({
     })
   }, [cluster, annotation.name, subsample, consensus, genes.join(','), isAnnotatedScatter])
 
-  // Handles custom scatter legend updates
+  // // Handles custom scatter legend updates
   const customColors = scatterData?.customColors ?? {}
   useUpdateEffect(() => {
     // Don't update if graph hasn't loaded
