@@ -49,15 +49,13 @@ class IngestJob
   # Push a file to a workspace bucket in the background and then launch an ingest run and queue polling
   # Can also clear out existing data if necessary (in case of a re-parse)
   #
-  # * *params*
-  #   - +skip_push+ (Boolean) => skip call to study.send_to_firecloud(study_file) (may be in process in different thread)
   # * *yields*
   #   - (Google::Apis::GenomicsV2alpha1::Operation) => Will submit an ingest job in PAPI
   #   - (IngestJob.new(attributes).poll_for_completion) => Will queue a Delayed::Job to poll for completion
   #
   # * *raises*
   #   - (RuntimeError) => If file cannot be pushed to remote bucket
-  def push_remote_and_launch_ingest(skip_push: false)
+  def push_remote_and_launch_ingest
     begin
       file_identifier = "#{study_file.bucket_location}:#{study_file.id}"
       rails_model = MODELS_BY_ACTION[action]
@@ -70,7 +68,7 @@ class IngestJob
       # first check if file is already in bucket (in case user is syncing)
       remote = ApplicationController.firecloud_client.get_workspace_file(study.bucket_id, study_file.bucket_location)
       if remote.nil?
-        is_pushed = poll_for_remote(skip_push: skip_push)
+        is_pushed = poll_for_remote
       else
         is_pushed = true # file is already in bucket
       end
@@ -110,20 +108,15 @@ class IngestJob
 
   # helper method to push & poll for remote file
   #
-  # * *params*
-  #   - +skip_push+ (Boolean) => skip call to study.send_to_firecloud(study_file) (may be in process in different thread)
-  #
   # * *returns*
   #   - (Boolean) => Indication of whether or not file has reached bucket
-  def poll_for_remote(skip_push: false)
+  def poll_for_remote
     attempts = 1
     is_pushed = false
     file_identifier = "#{study_file.bucket_location}:#{study_file.id}"
     while !is_pushed && attempts <= MAX_ATTEMPTS
-      unless skip_push
-        Rails.logger.info "Preparing to push #{file_identifier} to #{study.bucket_id}"
-        study.send_to_firecloud(study_file)
-      end
+      Rails.logger.info "Preparing to push #{file_identifier} to #{study.bucket_id}"
+      study.send_to_firecloud(study_file)
       Rails.logger.info "Polling for upload of #{file_identifier}, attempt #{attempts}"
       remote = ApplicationController.firecloud_client.get_workspace_file(study.bucket_id, study_file.bucket_location)
       if remote.present?
