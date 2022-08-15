@@ -178,7 +178,7 @@ class DifferentialExpressionService
       # launch DE job
       job = IngestJob.new(study: study, study_file: cluster_file, user: user, action: :differential_expression,
                           params_object: params_object)
-      job.delay.push_remote_and_launch_ingest(skip_push: true) # skip push as file is already in bucket
+      job.delay.push_remote_and_launch_ingest
       true
     else
       raise ArgumentError, "job parameters failed to validate: #{params_object.errors.full_messages}"
@@ -198,7 +198,7 @@ class DifferentialExpressionService
   def self.validate_annotation(cluster_file, study, annotation_name, annotation_scope)
     cluster = study.cluster_groups.by_name(cluster_file.name)
     raise ArgumentError, "cannot find cluster for #{cluster_file.name}" if cluster.nil?
-    
+
     result = DifferentialExpressionResult.find_by(study: study,
     cluster_group: cluster,
     annotation_name: annotation_name,

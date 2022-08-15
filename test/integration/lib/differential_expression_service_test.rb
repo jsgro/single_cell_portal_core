@@ -77,7 +77,7 @@ class DifferentialExpressionServiceTest < ActiveSupport::TestCase
 
     # we need to mock 2 levels deep as :delay should yield the :push_remote_and_launch_ingest mock
     job_mock = Minitest::Mock.new
-    job_mock.expect(:push_remote_and_launch_ingest, Delayed::Job.new, [Hash])
+    job_mock.expect(:push_remote_and_launch_ingest, Delayed::Job.new)
     mock = Minitest::Mock.new
     mock.expect(:delay, job_mock)
     IngestJob.stub :new, mock do
@@ -155,7 +155,7 @@ class DifferentialExpressionServiceTest < ActiveSupport::TestCase
     DataArray.create(data_array_params)
 
     job_mock = Minitest::Mock.new
-    job_mock.expect(:push_remote_and_launch_ingest, Delayed::Job.new, [Hash])
+    job_mock.expect(:push_remote_and_launch_ingest, Delayed::Job.new)
     mock = Minitest::Mock.new
     mock.expect(:delay, job_mock)
     IngestJob.stub :new, mock do
@@ -178,7 +178,7 @@ class DifferentialExpressionServiceTest < ActiveSupport::TestCase
     @basic_study.update(default_options: { cluster: 'cluster_diffexp.txt', annotation: 'species--group--study' })
     DataArray.create!(@all_cells_array_params)
     job_mock = Minitest::Mock.new
-    job_mock.expect(:push_remote_and_launch_ingest, Delayed::Job.new, [Hash])
+    job_mock.expect(:push_remote_and_launch_ingest, Delayed::Job.new)
     mock = Minitest::Mock.new
     mock.expect(:delay, job_mock)
     IngestJob.stub :new, mock do
@@ -205,9 +205,9 @@ class DifferentialExpressionServiceTest < ActiveSupport::TestCase
   test 'should run differential expression job on all annotations' do
     DataArray.create!(@all_cells_array_params)
     job_mock = Minitest::Mock.new
-    job_mock.expect(:push_remote_and_launch_ingest, Delayed::Job.new, [Hash])
-    job_mock.expect(:push_remote_and_launch_ingest, Delayed::Job.new, [Hash])
-    job_mock.expect(:push_remote_and_launch_ingest, Delayed::Job.new, [Hash])
+    job_mock.expect(:push_remote_and_launch_ingest, Delayed::Job.new)
+    job_mock.expect(:push_remote_and_launch_ingest, Delayed::Job.new)
+    job_mock.expect(:push_remote_and_launch_ingest, Delayed::Job.new)
     mock = Minitest::Mock.new
     mock.expect(:delay, job_mock)
     mock.expect(:delay, job_mock)
