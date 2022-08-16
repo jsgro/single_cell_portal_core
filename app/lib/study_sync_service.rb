@@ -1,5 +1,237 @@
 # collection of methods to be called during sync actions
 class StudySyncService
+  # mirror local permissions to that of the workspace
+  #
+  # * *params*
+  #   - +study+ (Study) => study to update shares from associated workspace ACL
+  #
+  # * *yields*
+  #   - (StudyShare) => new StudyShare records, as needed
+  #
+  # * *returns*
+  #   - (Array<StudyShare>) => any updated StudyShare records
+  def self.update_shares_from_acl(study)
+    updated_permissions = []
+    firecloud_permissions = ApplicationController.firecloud_client.get_workspace_acl(study.firecloud_project, study.firecloud_workspace)
+    firecloud_permissions['acl'].each do |user, permissions|
+      share_from_acl = process_acl_entry(study, user, permissions)
+      updated_permissions << share_from_acl if share_from_acl.present?
+    end
+
+    # now check to see if there have been permissions removed in FireCloud that need to be removed on the portal side
+    new_study_permissions = study.study_shares.to_a
+    new_study_permissions.each do |share|
+      if firecloud_permissions.dig('acl', share.email).nil?
+        Rails.logger.info "#{Time.zone.now}: removing #{share.email} access to #{@study.name} via sync - no longer in FireCloud acl"
+        share.delete
+      end
+    end
+    updated_permissions
+  end
+
+  # process an individual workspace ACL entry and create new study shares as needed
+  #
+  # * *params*
+  #   - +study+ (Study) => study to update shares from associated workspace ACL
+  #   - +acl_email+ (String) => email address of workspace ACL entry
+  #   - +acl_permissions+ (Hash) => remote ACL object w/ user permissions
+  #
+  # * *returns*
+  #   - (StudyShare, nil) => new/updated StudyShare record, as needed (or nil if no changes are required)
+  def self.process_acl_entry(study, acl_email, acl_permissions)
+    readonly_client = ApplicationController.read_only_firecloud_client
+    is_readonly_share = readonly_client.present? && acl_email == readonly_client.issuer
+    return nil if acl_permissions['accessLevel'] =~ /OWNER/i || is_readonly_share
+
+    portal_permissions = study.local_acl
+    if !portal_permissions.has_key?(acl_email)
+      new_share = study.study_shares.build(email: acl_email,
+                                           permission: StudyShare::PORTAL_ACL_MAP[permissions['accessLevel']],
+                                           firecloud_project: study.firecloud_project,
+                                           firecloud_workspace: study.firecloud_workspace)
+      # skip validation as we don't wont to set the acl in FireCloud as it already exists
+      new_share.save(validate: false)
+      new_share
+    elsif portal_permissions[acl_email] != StudyShare::PORTAL_ACL_MAP[permissions['accessLevel']] && user != study.user.email
+      # share exists, but permissions are wrong
+      share = study.study_shares.detect { |s| s.email == acl_email }
+      share.update(permission: StudyShare::PORTAL_ACL_MAP[permissions['accessLevel']])
+      share
+    else
+      # permissions are correct, skip
+      nil
+    end
+  end
+
+  # main method to iterate list of remote files and create entries as needed
+  #
+  # * *params*
+  #   - +study+ (Study) => study to process remote files for
+  #
+  # * *returns*
+  #   - (Array<StudyFile>) => array of unsynced StudyFile documents
+  def self.process_all_remotes(study)
+    workspace_files = ApplicationController.firecloud_client.execute_gcloud_method(
+      :get_workspace_files, 0, study.bucket_id, delimiter: '_scp_internal'
+    )
+    # we need to duplicate the workspace_files list so that we don't lose track of next?
+    file_extension_map = create_file_map(workspace_files.deep_dup)
+    unsynced_files = process_file_batch(study, workspace_files, file_extension_map: file_extension_map)
+    while workspace_files.next?
+      workspace_files = workspace_files.next
+      unsynced_files += process_file_batch(study, workspace_files, file_extension_map: file_extension_map)
+    end
+    unsynced_files
+  end
+
+  # create a map of remote paths to counts of files by extension
+  # used in creating DirectoryListing objects via sync
+  #
+  # * *params*
+  #   - +files+ (Google::Cloud::Storage::File::List) => listing of remote files in GCP bucket
+  #
+  # * *returns*
+  #   - (Hash) => map of remote directories and counts of files, by extension
+  def self.create_file_map(files)
+    file_extension_map = DirectoryListing.create_extension_map(files, {})
+    while files.next?
+      files = files.next
+      file_extension_map = DirectoryListing.create_extension_map(files, file_extension_map)
+    end
+    file_extension_map
+  end
+
+  # detect candidate files for DirectoryListing entries
+  #
+  # * *params*
+  #   - +files+ (Google::Cloud::Storage::File::List) => current batch of remote files in GCP bucket (up to 1K)
+  #   - +file_extension_map+ (Hash) => output from StudySyncService,create_file_map
+  #
+  # * *returns*
+  #   - (Array<StudyFile>) => array of remote files to add to DirectoryListings
+  def self.find_files_for_directories(files, file_extension_map)
+    files.select do |file|
+      file_type = DirectoryListing.file_type_from_extension(file.name)
+      directory_name = DirectoryListing.get_folder_name(file.name)
+      file_extension_map.dig(directory_name, file_type).to_i >= DirectoryListing::MIN_SIZE && directory_name != '/' ||
+        (directory_name == '/' && DirectoryListing::PRIMARY_DATA_TYPES.include?(file_type))
+    end
+  end
+
+  # add a batch of files to corresponding DirectoryListing entries
+  #
+  # * *params*
+  #   - +study+ (Study) => study to create/update DirectoryListings in
+  #   - +files+ (Google::Cloud::Storage::File::List) => list of candidate remote files
+  #
+  # * *yields*
+  #   - (DirctoryListing) => new/updated DirectoryListing objects to by synced
+  def self.add_files_to_directories(study, files)
+    directories = study.directory_listings.to_a
+    files.each do |file|
+      file_type = DirectoryListing.file_type_from_extension(file.name)
+      directory_name = DirectoryListing.get_folder_name(file.name)
+      remote = { 'name' => file.name, 'size' => file.size, 'generation' => file.generation }
+      existing_dir = directories.detect { |d| d.name == directory_name && d.file_type == file_type }
+      if existing_dir.nil?
+        study.directory_listings.create(name: directory_name, file_type: file_type, files: [remote], sync_status: false)
+      elsif existing_dir.files.detect { |f| f['generation'].to_i == file.generation }.nil?
+        existing_dir.files << remote
+        existing_dir.sync_status = false
+        existing_dir.save
+      end
+    end
+  end
+
+  # process a block of files from bucket
+  # will ignore submission outputs, files in _scp_internal or parse_logs
+  # will also add files to DirectoryListing objects as needed
+  #
+  # * *params*
+  #   - +study+ (Study) => study to create new entities in
+  #   - +files+ (Google::Cloud::Storage::File::List) => current batch of remote files in GCP bucket (up to 1K)
+  #   - +file_extension_map+ (Hash) => output from StudySyncService,create_file_map
+  #
+  # * *returns*
+  #   - (Array<StudyFile>) => array of unsynced StudyFile documents from batch
+  def self.process_file_batch(study, files, file_extension_map:)
+    unsynced_study_files = []
+    valid_files = remove_submission_outputs(study, files)
+    new_files = remove_synced_files(study, valid_files)
+    dir_files = find_files_for_directories(new_files, file_extension_map)
+    add_files_to_directories(study, dir_files)
+    unsynced_files_in_batch = remove_directory_files(dir_files, new_files)
+    unsynced_files_in_batch.each do |file|
+      next if file.size == 0
+
+      unsynced_file = StudyFile.new(study_id: study.id, name: file.name, upload_file_name: file.name,
+                                    upload_content_type: file.content_type, upload_file_size: file.size,
+                                    generation: file.generation, remote_location: file.name)
+      unsynced_file.build_expression_file_info
+      unsynced_study_files << unsynced_file
+    end
+    unsynced_study_files
+  end
+
+  # remove files from batch that are submission outputs from a Terra workflow
+  #
+  # * *params*
+  #   - +study+ (Study) => study to create new entities in
+  #   - +files+ (Array<Google::Cloud::Storage::File>) => current batch of remote files in GCP bucket (up to 1K)
+  #
+  # * *returns*
+  #   - (Array<Google::Cloud::Storage::File>) => filtered list of remote files
+  def self.remove_submission_outputs(study, files)
+    submission_ids = ApplicationController.firecloud_client.get_workspace_submissions(study.firecloud_project,
+                                                                                      study.firecloud_workspace)
+                                          .map { |s| s['submissionId'] }
+    submission_outputs = files.select { |f| submission_ids.include?(f.name.split('/').first) }.map(&:generation)
+    files.delete_if { |f| submission_outputs.include?(f.generation) }
+  end
+
+  # remove known files from remote list
+  # also ignores files in 'parse_logs' directory
+  # TODO: SCP-4595 - move 'parse_logs' into '_scp_internal' so this is done automatically
+  #
+  # * *params*
+  #   - +study+ (Study) => study to get list of valid StudyFile entries from
+  #   - +files+ (Array<Google::Cloud::Storage::File>) => current batch of remote files in GCP bucket (up to 1K)
+  #
+  # * *returns*
+  #   - (Array<Google::Cloud::Storage::File>) => filtered list of remote files
+  def self.remove_synced_files(study, files)
+    files_to_remove = files.select do |file|
+      study.study_files.valid.detect { |f| f.generation.to_i == file.generation || file.name.start_with?('parse_logs') }
+    end.map(&:generation)
+    files.delete_if { |f| files_to_remove.include?(f.generation) }
+  end
+
+  # find StudyFile entries where remote file has been removed from bucket
+  #
+  # * *params*
+  #   - +study+ (Study) => study to get list of valid StudyFile entries from
+  #
+  # * *returns*
+  #   - (Array<StudyFile) => array of StudyFile entries where remote file is missing
+  def self.find_orphaned_files(study)
+    study.study_files.valid.reject do |study_file|
+      ApplicationController.firecloud_client.workspace_file_exists?(study.bucket_id, study_file.bucket_location)
+    end
+  end
+
+  # remove files that have been added to directory listings from list to process
+  #
+  # * *params*
+  #   - +dir_files+ (Array<Google::Cloud::Storage::File>) => list of files already added to a DirectoryListing
+  #   - +workspace_files+ (Array<Google::Cloud::Storage::File>) => current batch of remote files in GCP bucket (up to 1K)
+  #
+  # * *returns*
+  #   - (Array<Google::Cloud::Storage::File>) => filtered list of remote files
+  def self.remove_directory_files(dir_files, workspace_files)
+    generations = dir_files.map(&:generation)
+    workspace_files.delete_if { |f| generations.include?(f.generation) }
+  end
+
   # handle setting the content metadata headers (Content-Type, Content-Encoding) for a GCS resource (e.g. file)
   # this is used mainly to address issues when a user has directly uploaded a file to a bucket via gsutil which can
   # result in headers are not being set correctly that causes downstream issues when localizing files for parsing
