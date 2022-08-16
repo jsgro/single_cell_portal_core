@@ -22,7 +22,7 @@ class StudySyncService
     new_study_permissions = study.study_shares.to_a
     new_study_permissions.each do |share|
       if firecloud_permissions.dig('acl', share.email).nil?
-        Rails.logger.info "#{Time.zone.now}: removing #{share.email} access to #{@study.name} via sync - no longer in FireCloud acl"
+        Rails.logger.info "removing #{share.email} access to #{study.name} via sync - no longer in Terra acl"
         share.delete
       end
     end
