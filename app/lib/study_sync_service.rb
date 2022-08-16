@@ -12,16 +12,16 @@ class StudySyncService
   #   - (Array<StudyShare>) => any updated StudyShare records
   def self.update_shares_from_acl(study)
     updated_permissions = []
-    firecloud_permissions = ApplicationController.firecloud_client.get_workspace_acl(study.firecloud_project, study.firecloud_workspace)
-    firecloud_permissions['acl'].each do |user, permissions|
+    workspace_permissions = ApplicationController.firecloud_client.get_workspace_acl(study.firecloud_project, study.firecloud_workspace)
+    workspace_permissions['acl'].each do |user, permissions|
       share_from_acl = process_acl_entry(study, user, permissions)
       updated_permissions << share_from_acl if share_from_acl.present?
     end
 
-    # now check to see if there have been permissions removed in FireCloud that need to be removed on the portal side
+    # now check to see if there have been permissions removed in Terra that need to be removed on the portal side
     new_study_permissions = study.study_shares.to_a
     new_study_permissions.each do |share|
-      if firecloud_permissions.dig('acl', share.email).nil?
+      if workspace_permissions.dig('acl', share.email).nil?
         Rails.logger.info "removing #{share.email} access to #{study.name} via sync - no longer in Terra acl"
         share.delete
       end
@@ -44,12 +44,12 @@ class StudySyncService
     return nil if acl_permissions['accessLevel'] =~ /OWNER/i || is_readonly_share
 
     portal_permissions = study.local_acl
-    if !portal_permissions.has_key?(acl_email)
+    if !portal_permissions.key?(acl_email)
       new_share = study.study_shares.build(email: acl_email,
                                            permission: StudyShare::PORTAL_ACL_MAP[permissions['accessLevel']],
                                            firecloud_project: study.firecloud_project,
                                            firecloud_workspace: study.firecloud_workspace)
-      # skip validation as we don't wont to set the acl in FireCloud as it already exists
+      # skip validation as we don't wont to set the acl in Terra as it already exists
       new_share.save(validate: false)
       new_share
     elsif portal_permissions[acl_email] != StudyShare::PORTAL_ACL_MAP[permissions['accessLevel']] && user != study.user.email
