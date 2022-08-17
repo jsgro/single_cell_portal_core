@@ -207,7 +207,7 @@ class StudySyncService
   #   - (Array<Google::Cloud::Storage::File>) => filtered list of remote files
   def self.remove_synced_files(study, files)
     files_to_remove = files.select do |file|
-      study.study_files.valid.detect { |f| f.generation.to_i == file.generation }
+      study.study_files.valid.detect { |f| f.generation.to_s == file.generation.to_s }
     end.map(&:generation)
     files.delete_if { |f| files_to_remove.include?(f.generation) || f.name.start_with?('parse_logs') }
   end
