@@ -24,8 +24,9 @@ class DifferentialExpressionResult
   field :matrix_file_id, type: BSON::ObjectId # associated raw count matrix study file
 
   validates :annotation_scope, inclusion: { in: %w[study cluster] }
-  validates :annotation_name, :cluster_name, :matrix_file_id, presence: true
+  validates :cluster_name, :matrix_file_id, presence: true
   validates :computational_method, inclusion: { in: SUPPORTED_COMP_METHODS }
+  validates :annotation_name, presence: true, uniqueness: { scope: %i[study cluster_group annotation_scope] }
   validate :has_observed_values?
   validate :matrix_file_exists?
 
@@ -81,6 +82,8 @@ class DifferentialExpressionResult
   end
 
   # individual filename of label-specific result
+  # will convert non-word characters to underscores "_", except plus signs "+" which are changed to "pos"
+  # this is to handle cases where + or - are the only difference in labels, such as CD4+ and CD4-
   def filename_for(label)
     basename = [
       cluster_name,
@@ -88,7 +91,7 @@ class DifferentialExpressionResult
       label,
       annotation_scope,
       computational_method
-    ].map { |val| val.gsub(/\W/, '_') }.join('--')
+    ].map { |val| val.gsub(/\+/, 'pos').gsub(/\W/, '_') }.join('--')
     "#{basename}.tsv"
   end
 

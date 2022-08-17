@@ -115,10 +115,17 @@ async function makeExpressionScatterPlotImage(gene, page, preamble) {
     omitBackground: true
   })
 
+  // Hardcoded x, y placeholders below derived in processScatterPlots via:
+  // console.log(Math.min(...plotlyTraces[0].x))
+  // console.log(Math.max(...plotlyTraces[0].x))
+  // console.log(Math.min(...plotlyTraces[0].y))
+  // console.log(Math.max(...plotlyTraces[0].y))
+  // These ought to be parseable via the `coordinates` array
+
   const imageDescription = JSON.stringify({
-    expression: [0, 2.433],
-    x: [-50.96, 47.14],
-    y: [-17.20, 12.79],
+    expression: [0, 2.433], // min, max of expression array
+    x: [-12.568, 8.749], // min, max of x coordinates array
+    y: [-15.174, 10.761], // min, max of y coordinates array
     z: []
   })
   await sharp(rawImagePath)

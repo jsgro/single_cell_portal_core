@@ -354,7 +354,7 @@ export async function fetchBucketFile(bucketName, filePath, maxBytes=null, mock=
     return response
   // log errored attempts to access google storage to Sentry
   }).catch(error => {
-    logJSFetchErrorToSentry(error, 'Error in JavaScript when connecting to Google storage')
+    logJSFetchErrorToSentry(error, 'Error in JavaScript when connecting to Google storage', url, init)
   })
 
   return response

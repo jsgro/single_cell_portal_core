@@ -35,7 +35,8 @@ jobs:
           # More context: https://github.com/broadinstitute/single_cell_portal_core/pull/1552#discussion_r910424433
           # TODO: (SCP-4496): Move production-related GCR images out of staging project
           DOCKER_IMAGE_NAME="gcr.io/broad-singlecellportal-staging/single-cell-portal"
-          DOCKER_IMAGE_TAG="$GITHUB_HEAD_REF-$GITHUB_SHA"
+          # add ci- prefix to avoid post-merge build failing due to missing GITHUB_HEAD_REF
+          DOCKER_IMAGE_TAG="ci-$GITHUB_HEAD_REF-$GITHUB_SHA"
           docker build -t $DOCKER_IMAGE_NAME:$DOCKER_IMAGE_TAG -f test/Dockerfile-test .
           bin/load_env_secrets.sh -p secret/kdux/scp/staging/scp_config.json \
                                   -s secret/kdux/scp/staging/scp_service_account.json \

@@ -195,4 +195,38 @@ class PapiClientTest < ActiveSupport::TestCase
     assert_equal resources, pipeline_request.pipeline.resources
     assert_equal exp_cmd, pipeline_request.pipeline.actions.commands
   end
+
+  test 'should create pipeline request object for differential expression job' do
+    # test DE handling of custom VMs
+    de_opts = {
+      annotation_name: 'Category',
+      annotation_scope: 'cluster',
+      annotation_file: @cluster_file.gs_url,
+      cluster_file: @cluster_file.gs_url,
+      cluster_name: 'cluster.txt',
+      matrix_file_path: @expression_matrix.gs_url,
+      matrix_file_type: 'dense',
+      machine_type: 'n1-highmem-16'
+    }
+    de_params = DifferentialExpressionParameters.new(de_opts)
+    de_cmd = @client.get_command_line(study_file: @cluster_file, action: :differential_expression,
+                                      user_metrics_uuid: @user.metrics_uuid, params_object: de_params)
+    environment = @client.set_environment_variables
+    actions = @client.create_actions_object(commands: de_cmd, environment: environment)
+    regions = %w[us-central1]
+    custom_vm = @client.create_virtual_machine_object(machine_type: de_params.machine_type)
+    resources = @client.create_resources_object(regions: regions, vm: custom_vm)
+    pipeline = @client.create_pipeline_object(actions: actions, environment: environment, resources: resources)
+    labels = { custom_machine_type: de_params.machine_type }
+    pipeline_request = @client.create_run_pipeline_request_object(pipeline: pipeline, labels: labels)
+    assert pipeline_request.is_a? Google::Apis::GenomicsV2alpha1::RunPipelineRequest
+    assert_equal pipeline, pipeline_request.pipeline
+    assert_equal actions, pipeline_request.pipeline.actions
+    assert_equal environment, pipeline_request.pipeline.environment
+    assert_equal resources, pipeline_request.pipeline.resources
+    assert_equal de_cmd, pipeline_request.pipeline.actions.commands
+
+    # specifically check machine type override
+    assert_equal de_params.machine_type, pipeline_request.pipeline.resources.virtual_machine.machine_type
+  end
 end

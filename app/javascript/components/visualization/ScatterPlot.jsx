@@ -62,6 +62,11 @@ function RawScatterPlot({
 
   const flags = getFeatureFlagsWithDefaults()
 
+  // Uncomment out when running Image Pipeline
+  // flags.progressive_loading = false
+  // TODO (pre-GA for Image Pipeline):
+  // - Inspect forthcoming SCP API data for whether static image is available
+
   const imageClassName = 'scp-canvas-image'
   const imageSelector = `#${ graphElementId } .${imageClassName}`
 
@@ -225,10 +230,9 @@ function RawScatterPlot({
       }
     })
     const scatter = updateScatterLayout(tmpScatterData)
-    const layout = scatter.layout
+    const layout = Object.assign({}, scatter.layout)
 
     // For gridlines and color bar
-    // TODO: Get these from image metadata (e.g. Exif) or scatter_data file
     layout.xaxis.range = coordinateRanges.x
     layout.yaxis.range = coordinateRanges.y
     const color = expressionRange
@@ -246,8 +250,8 @@ function RawScatterPlot({
           color,
           'colorbar': { 'title': { 'text': titles.magnitude, 'side': 'right' } }
         },
-        'x': layout.xaxis.range,
-        'y': layout.yaxis.range,
+        'x': coordinateRanges.x,
+        'y': coordinateRanges.y,
         'mode': 'markers',
         'type': 'scattergl'
       }
@@ -298,10 +302,9 @@ function RawScatterPlot({
 
     const plotlyTraces = updateCountsAndGetTraces(scatter)
 
-
     const startTime = performance.now()
 
-    if (flags?.progressive_loading && genes.length === 1 && document.querySelector(imageSelector)) {
+    if (flags.progressive_loading && genes.length === 1 && document.querySelector(imageSelector)) {
       Plotly.newPlot(graphElementId, plotlyTraces, layout)
     } else {
       Plotly.react(graphElementId, plotlyTraces, layout)
@@ -342,12 +345,12 @@ function RawScatterPlot({
 
     // use an image and/or data cache if one has been provided, otherwise query scp-api directly
     if (
-      flags?.progressive_loading && isGeneExpression(genes, isCorrelatedScatter) && !isAnnotatedScatter &&
+      flags.progressive_loading && isGeneExpression(genes, isCorrelatedScatter) && !isAnnotatedScatter &&
       !scatterData &&
       genes[0] === 'A1BG-AS1' // Placeholder; likely replace with setting like DE
     ) {
       const bucketName = 'broad-singlecellportal-public'
-      const filePath = `test/scatter_image/${genes[0]}.webp`
+      const filePath = `test/scatter_image/${genes[0]}-v2.webp`
       fetchBucketFile(bucketName, filePath).then(async response => {
         renderImage(response)
       })

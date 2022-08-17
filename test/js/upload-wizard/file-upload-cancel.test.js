@@ -37,7 +37,7 @@ describe('cancels a study file upload', () => {
     </>)
     const saveButton = () => screen.getByTestId('file-save')
     await waitForElementToBeRemoved(() => screen.getByTestId('upload-wizard-spinner'))
-    fireEvent.click(screen.getByText('Miscellaneous / Other'))
+    fireEvent.click(screen.getByText('Miscellaneous'))
     const fileName = 'miscText.txt'
     fireFileSelectionEvent(screen.getByTestId('file-input'), {
       fileName,

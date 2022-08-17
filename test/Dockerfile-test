@@ -1,6 +1,10 @@
 # use SCP base Rails image, configure only project-specific items here
 FROM gcr.io/broad-singlecellportal-staging/single-cell-portal:development
 
+# Set ruby version as this may have changed
+RUN bash -lc 'rvm --default use ruby-3.1.2'
+RUN bash -lc 'rvm rvmrc warning ignore /home/app/webapp/Gemfile'
+
 # run any gem/package updates that may have been introduced by this PR
 WORKDIR /home/app/webapp
 COPY Gemfile /home/app/webapp/Gemfile

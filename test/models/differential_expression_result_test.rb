@@ -150,4 +150,20 @@ class DifferentialExpressionResultTest  < ActiveSupport::TestCase
                                                     matrix_file_id: @raw_matrix.id).exists?
     end
   end
+
+  test 'should prevent creating duplicate results' do
+    duplicate_result = DifferentialExpressionResult.new(
+      study: @study, cluster_group: @cluster_file.cluster_groups.first, annotation_name: 'species',
+      annotation_scope: 'study', matrix_file_id: @raw_matrix.id
+    )
+    assert_not duplicate_result.valid?
+    assert_equal [:annotation_name], duplicate_result.errors.attribute_names
+  end
+
+  test 'should handle plus sign in output file names' do
+    label = 'CD4+'
+    expected_filename = 'cluster_diffexp_txt--species--CD4pos--study--wilcoxon.tsv'
+    filename = @species_result.filename_for(label)
+    assert_equal expected_filename, filename
+  end
 end

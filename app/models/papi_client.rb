@@ -91,10 +91,18 @@ class PapiClient
   #   - (Google::Apis::ServerError) => An error occurred on the server and the request can be retried
   #   - (Google::Apis::ClientError) =>  The request is invalid and should not be retried without modification
   #   - (Google::Apis::AuthorizationError) => Authorization is required
-  def run_pipeline(study_file: , user:, action:, params_object: nil)
+  def run_pipeline(study_file:, user:, action:, params_object: nil)
     study = study_file.study
     accession = study.accession
-    resources = create_resources_object(regions: ['us-central1'])
+
+    # override default VM if this is a differential expression job
+    if action.to_sym == :differential_expression
+      custom_vm = create_virtual_machine_object(machine_type: params_object.machine_type)
+      resources = create_resources_object(regions: ['us-central1'], vm: custom_vm)
+    else
+      resources = create_resources_object(regions: ['us-central1'])
+    end
+
     command_line = get_command_line(study_file: study_file, action: action, user_metrics_uuid: user.metrics_uuid,
                                     params_object: params_object)
     labels = {
@@ -124,7 +132,7 @@ class PapiClient
   #
   # * *return*
   #   - (Google::Apis::GenomicsV2alpha1::Operation)
-  def get_pipeline(name: , fields: nil, user: nil)
+  def get_pipeline(name:, fields: nil, user: nil)
     quota_user = user.present? ? user.id.to_s : nil
     service.get_project_operation(name, fields: fields, quota_user: quota_user)
   end

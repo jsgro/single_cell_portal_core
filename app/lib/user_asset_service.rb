@@ -24,7 +24,7 @@ class UserAssetService
   # * *yields*
   #   - +Google::Cloud::Storage+
   def self.storage_service
-    @@storage_service ||= Google::Cloud::Storage.new(keyfile: self.get_primary_keyfile)
+    @@storage_service ||= Google::Cloud::Storage.new(credentials: self.get_primary_keyfile)
   end
 
   # get storage driver access token
@@ -68,7 +68,7 @@ class UserAssetService
   # * *returns*
   #   - +Array<String>+ => Array of filenames
   def self.get_directory_entries(pathname = Dir.pwd)
-    Dir.exists?(pathname) ? Dir.entries(pathname).keep_if {|entry| !entry.start_with?('.')} : []
+    Dir.exist?(pathname) ? Dir.entries(pathname).keep_if {|entry| !entry.start_with?('.')} : []
   end
 
   # get a list of all local assets; can scope by asset type
@@ -202,7 +202,7 @@ class UserAssetService
   def self.create_download_directory(pathname)
     parent_dir = Pathname.new(pathname).parent
     fullpath = RAILS_PUBLIC_PATH.join(parent_dir)
-    FileUtils.mkdir_p(fullpath) unless Dir.exists?(fullpath)
+    FileUtils.mkdir_p(fullpath) unless Dir.exist?(fullpath)
     fullpath
   end
 

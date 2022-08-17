@@ -35,6 +35,9 @@ import MiscellaneousStep from './MiscellaneousStep'
 import SequenceFileStep from './SequenceFileStep'
 import GeneListStep from './GeneListStep'
 import LoadingSpinner from '~/lib/LoadingSpinner'
+import AnnDataStep from './AnnDataStep'
+import SeuratStep from './SeuratStep'
+
 
 const POLLING_INTERVAL = 10 * 1000 // 10 seconds between state updates
 const CHUNK_SIZE = 10000000 // 10 MB
@@ -51,7 +54,8 @@ const STEPS = [
 ]
 
 const MAIN_STEPS = STEPS.slice(0, 4)
-const SUPPLEMENTAL_STEPS = STEPS.slice(4)
+const SUPPLEMENTAL_STEPS = STEPS.slice(4, 8)
+const NON_VISUALIZABLE_STEPS = STEPS.slice(8)
 
 /** shows the upload wizard */
 export function RawUploadWizard({ studyAccession, name }) {
@@ -64,6 +68,19 @@ export function RawUploadWizard({ studyAccession, name }) {
   const studyObj = serverState?.study
 
   const allowReferenceImageUpload = serverState?.feature_flags?.reference_image_upload
+
+  const allowAnnDataAndSeuratFileUploads = serverState?.feature_flags?.upload_seurat_and_anndata
+
+  if (allowAnnDataAndSeuratFileUploads && !STEPS.includes(AnnDataStep)) {
+    STEPS.splice(8, 0, AnnDataStep)
+    NON_VISUALIZABLE_STEPS.splice(0, 0, AnnDataStep)
+  }
+
+  if (allowAnnDataAndSeuratFileUploads && !STEPS.includes(SeuratStep)) {
+    STEPS.splice(9, 0, SeuratStep)
+    NON_VISUALIZABLE_STEPS.splice(1, 0, SeuratStep)
+  }
+
 
   if (allowReferenceImageUpload && !STEPS.includes(ImageStep)) {
     STEPS.splice(5, 0, ImageStep)
@@ -350,7 +367,7 @@ export function RawUploadWizard({ studyAccession, name }) {
           <div>
             <WizardNavPanel {...{
               formState, serverState, currentStep, setCurrentStep, studyAccession, mainSteps: MAIN_STEPS,
-              supplementalSteps: SUPPLEMENTAL_STEPS, studyName: name
+              supplementalSteps: SUPPLEMENTAL_STEPS, nonVizSteps: NON_VISUALIZABLE_STEPS, studyName: name
             }} />
           </div>
           <div id="overflow-x-scroll">

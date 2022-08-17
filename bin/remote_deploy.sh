@@ -55,9 +55,8 @@ function main {
     echo "### COMPLETED ###"
 
     # run boot command
-    echo "### Booting $PORTAL_CONTAINER ###"
-    run_command_in_deployment "bin/boot_docker -e $PASSENGER_APP_ENV -d $DESTINATION_BASE_DIR -h $PROD_HOSTNAME " \
-                              "-N $PORTAL_NAMESPACE -D $VERSION_TAG -m $MONGO_LOCALHOST"
+    echo "### Booting $PORTAL_CONTAINER with Docker image version $VERSION_TAG ###"
+    run_command_in_deployment "bin/boot_docker -e $PASSENGER_APP_ENV -d $DESTINATION_BASE_DIR -h $PROD_HOSTNAME -N $PORTAL_NAMESPACE -D $VERSION_TAG -m $MONGO_LOCALHOST"
     echo "### COMPLETED ###"
 
     # ensure portal is running

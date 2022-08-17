@@ -24,7 +24,7 @@ class StudyFile
   # constants, used for statuses and file types
   STUDY_FILE_TYPES = ['Cluster', 'Coordinate Labels' ,'Expression Matrix', 'MM Coordinate Matrix', '10X Genes File',
                       '10X Barcodes File', 'Gene List', 'Metadata', 'Fastq', 'BAM', 'BAM Index', 'Documentation',
-                      'Other', 'Analysis Output', 'Ideogram Annotations', 'Image'].freeze
+                      'Other', 'Analysis Output', 'Ideogram Annotations', 'Image', 'AnnData', 'Seurat'].freeze
   CUSTOM_FILE_TYPE_NAMES = {
     'MM Coordinate Matrix' => 'Sparse matrix (.mtx)',
     'Expression Matrix' => 'Dense matrix',
@@ -756,11 +756,11 @@ class StudyFile
 
   def local_location
     path = Rails.root.join(self.study.data_store_path, self.download_location)
-    if File.exists?(path)
+    if File.exist?(path)
       path
     else
       path = Rails.root.join(self.study.data_store_path, self.bucket_location)
-      File.exists?(path) ? path : nil
+      File.exist?(path) ? path : nil
     end
   end
 
@@ -920,7 +920,7 @@ class StudyFile
   # determine a file's content type by reading the first 2 bytes and comparing to known magic numbers
   def determine_content_type
     location = File.join(self.study.data_store_path, self.download_location)
-    if !File.exists?(location)
+    if !File.exist?(location)
       location = File.join(self.study.data_store_path, self.bucket_location)
     end
     signature = File.open(location).read(2)
@@ -1024,10 +1024,10 @@ class StudyFile
   def remove_local_copy
     Rails.logger.info "Removing local copy of #{self.upload_file_name}"
     Dir.chdir(self.study.data_store_path)
-    if Dir.exists?(self.id.to_s)
+    if Dir.exist?(self.id.to_s)
       Rails.logger.info "Removing upload directory for #{self.upload_file_name} at #{Dir.pwd}/#{self.id.to_s}"
       FileUtils.rm_rf(self.id.to_s)
-    elsif File.exists?(self.bucket_location)
+    elsif File.exist?(self.bucket_location)
       Rails.logger.info "Removing local copy at #{Dir.pwd}/#{self.bucket_location}"
       File.delete(self.bucket_location)
     end
