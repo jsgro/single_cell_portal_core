@@ -90,6 +90,37 @@ class StudySyncService
     unsynced_files
   end
 
+  # process a block of files from bucket
+  # will ignore submission outputs, files in _scp_internal or parse_logs
+  # will also add files to DirectoryListing objects as needed
+  #
+  # * *params*
+  #   - +study+ (Study) => study to create new entities in
+  #   - +files+ (Google::Cloud::Storage::File::List) => current batch of remote files in GCP bucket (up to 1K)
+  #   - +file_extension_map+ (Hash) => output from StudySyncService,create_file_map
+  #
+  # * *returns*
+  #   - (Array<StudyFile>) => array of unsynced StudyFile documents from batch
+  def self.process_file_batch(study, files, file_extension_map:)
+    unsynced_study_files = []
+    valid_files = remove_submission_outputs(study, files)
+    new_files = remove_synced_files(study, valid_files)
+    dir_files = find_files_for_directories(new_files, file_extension_map)
+    add_files_to_directories(study, dir_files)
+    unsynced_files_in_batch = remove_directory_files(dir_files, new_files)
+    Rails.logger.info "found #{unsynced_files_in_batch.count} remotes in batch to process for #{study.accession}"
+    unsynced_files_in_batch.each do |file|
+      next if file.size == 0
+
+      unsynced_file = StudyFile.new(study_id: study.id, name: file.name, upload_file_name: file.name,
+                                    upload_content_type: file.content_type, upload_file_size: file.size,
+                                    generation: file.generation, remote_location: file.name)
+      unsynced_file.build_expression_file_info
+      unsynced_study_files << unsynced_file
+    end
+    unsynced_study_files
+  end
+
   # create a map of remote paths to counts of files by extension
   # used in creating DirectoryListing objects via sync
   #
@@ -133,12 +164,11 @@ class StudySyncService
   # * *yields*
   #   - (DirctoryListing) => new/updated DirectoryListing objects to by synced
   def self.add_files_to_directories(study, files)
-    directories = study.directory_listings.to_a
     files.each do |file|
       file_type = DirectoryListing.file_type_from_extension(file.name)
       directory_name = DirectoryListing.get_folder_name(file.name)
       remote = { 'name' => file.name, 'size' => file.size, 'generation' => file.generation }
-      existing_dir = directories.detect { |d| d.name == directory_name && d.file_type == file_type }
+      existing_dir = DirectoryListing.find_by(study_id: study.id, name: directory_name, file_type: file_type)
       if existing_dir.nil?
         study.directory_listings.create(name: directory_name, file_type: file_type, files: [remote], sync_status: false)
       elsif existing_dir.files.detect { |f| f['generation'].to_i == file.generation }.nil?
@@ -147,37 +177,6 @@ class StudySyncService
         existing_dir.save
       end
     end
-  end
-
-  # process a block of files from bucket
-  # will ignore submission outputs, files in _scp_internal or parse_logs
-  # will also add files to DirectoryListing objects as needed
-  #
-  # * *params*
-  #   - +study+ (Study) => study to create new entities in
-  #   - +files+ (Google::Cloud::Storage::File::List) => current batch of remote files in GCP bucket (up to 1K)
-  #   - +file_extension_map+ (Hash) => output from StudySyncService,create_file_map
-  #
-  # * *returns*
-  #   - (Array<StudyFile>) => array of unsynced StudyFile documents from batch
-  def self.process_file_batch(study, files, file_extension_map:)
-    unsynced_study_files = []
-    valid_files = remove_submission_outputs(study, files)
-    new_files = remove_synced_files(study, valid_files)
-    dir_files = find_files_for_directories(new_files, file_extension_map)
-    add_files_to_directories(study, dir_files)
-    unsynced_files_in_batch = remove_directory_files(dir_files, new_files)
-    Rails.logger.info "found #{unsynced_files_in_batch.count} remotes in batch to process for #{study.accession}"
-    unsynced_files_in_batch.each do |file|
-      next if file.size == 0
-
-      unsynced_file = StudyFile.new(study_id: study.id, name: file.name, upload_file_name: file.name,
-                                    upload_content_type: file.content_type, upload_file_size: file.size,
-                                    generation: file.generation, remote_location: file.name)
-      unsynced_file.build_expression_file_info
-      unsynced_study_files << unsynced_file
-    end
-    unsynced_study_files
   end
 
   # remove files from batch that are submission outputs from a Terra workflow
@@ -213,19 +212,6 @@ class StudySyncService
     files.delete_if { |f| files_to_remove.include?(f.generation) || f.name.start_with?('parse_logs') }
   end
 
-  # find StudyFile entries where remote file has been removed from bucket
-  #
-  # * *params*
-  #   - +study+ (Study) => study to get list of valid StudyFile entries from
-  #
-  # * *returns*
-  #   - (Array<StudyFile) => array of StudyFile entries where remote file is missing
-  def self.find_orphaned_files(study)
-    study.study_files.valid.reject do |study_file|
-      ApplicationController.firecloud_client.workspace_file_exists?(study.bucket_id, study_file.bucket_location)
-    end
-  end
-
   # remove files that have been added to directory listings from list to process
   #
   # * *params*
@@ -237,6 +223,19 @@ class StudySyncService
   def self.remove_directory_files(dir_files, workspace_files)
     generations = dir_files.map(&:generation)
     workspace_files.delete_if { |f| generations.include?(f.generation) }
+  end
+
+  # find StudyFile entries where remote file has been removed from bucket
+  #
+  # * *params*
+  #   - +study+ (Study) => study to get list of valid StudyFile entries from
+  #
+  # * *returns*
+  #   - (Array<StudyFile) => array of StudyFile entries where remote file is missing
+  def self.find_orphaned_files(study)
+    study.study_files.valid.reject do |study_file|
+      ApplicationController.firecloud_client.workspace_file_exists?(study.bucket_id, study_file.bucket_location)
+    end
   end
 
   # handle setting the content metadata headers (Content-Type, Content-Encoding) for a GCS resource (e.g. file)
