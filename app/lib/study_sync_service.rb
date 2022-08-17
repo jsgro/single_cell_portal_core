@@ -11,6 +11,8 @@ class StudySyncService
   # * *returns*
   #   - (Array<StudyShare>) => any updated StudyShare records
   def self.update_shares_from_acl(study)
+    study_ws = "#{study.firecloud_project}/#{study.firecloud_workspace}"
+    Rails.logger.info "setting shares for #{study.accession} based on #{study_ws} acl"
     updated_permissions = []
     workspace_permissions = ApplicationController.firecloud_client.get_workspace_acl(study.firecloud_project, study.firecloud_workspace)
     workspace_permissions['acl'].each do |user, permissions|
@@ -22,7 +24,7 @@ class StudySyncService
     new_study_permissions = study.study_shares.to_a
     new_study_permissions.each do |share|
       if workspace_permissions.dig('acl', share.email).nil?
-        Rails.logger.info "removing #{share.email} access to #{study.name} via sync - no longer in Terra acl"
+        Rails.logger.info "removing #{share.email} access to #{study.accession} via sync - no longer in Terra acl"
         share.delete
       end
     end
@@ -39,6 +41,7 @@ class StudySyncService
   # * *returns*
   #   - (StudyShare, nil) => new/updated StudyShare record, as needed (or nil if no changes are required)
   def self.process_acl_entry(study, acl_email, acl_permissions)
+    Rails.logger.info "processing permissions in #{study.accession} for #{acl_email}"
     readonly_client = ApplicationController.read_only_firecloud_client
     is_readonly_share = readonly_client.present? && acl_email == readonly_client.issuer
     return nil if acl_permissions['accessLevel'] =~ /OWNER/i || is_readonly_share
@@ -46,16 +49,17 @@ class StudySyncService
     portal_permissions = study.local_acl
     if !portal_permissions.key?(acl_email)
       new_share = study.study_shares.build(email: acl_email,
-                                           permission: StudyShare::PORTAL_ACL_MAP[permissions['accessLevel']],
+                                           permission: StudyShare::PORTAL_ACL_MAP[acl_permissions['accessLevel']],
                                            firecloud_project: study.firecloud_project,
                                            firecloud_workspace: study.firecloud_workspace)
       # skip validation as we don't wont to set the acl in Terra as it already exists
       new_share.save(validate: false)
       new_share
-    elsif portal_permissions[acl_email] != StudyShare::PORTAL_ACL_MAP[permissions['accessLevel']] && user != study.user.email
+    elsif portal_permissions[acl_email] != StudyShare::PORTAL_ACL_MAP[acl_permissions['accessLevel']] &&
+          acl_email != study.user.email
       # share exists, but permissions are wrong
       share = study.study_shares.detect { |s| s.email == acl_email }
-      share.update(permission: StudyShare::PORTAL_ACL_MAP[permissions['accessLevel']])
+      share.update(permission: StudyShare::PORTAL_ACL_MAP[acl_permissions['accessLevel']])
       share
     else
       # permissions are correct, skip
@@ -71,13 +75,15 @@ class StudySyncService
   # * *returns*
   #   - (Array<StudyFile>) => array of unsynced StudyFile documents
   def self.process_all_remotes(study)
+    Rails.logger.info "processing all remotes for #{study.accession}"
     workspace_files = ApplicationController.firecloud_client.execute_gcloud_method(
       :get_workspace_files, 0, study.bucket_id, delimiter: '_scp_internal'
     )
     # we need to duplicate the workspace_files list so that we don't lose track of next?
-    file_extension_map = create_file_map(workspace_files.deep_dup)
+    file_extension_map = create_file_map(workspace_files.dup)
     unsynced_files = process_file_batch(study, workspace_files, file_extension_map: file_extension_map)
     while workspace_files.next?
+      Rails.logger.info "processing next batch of remotes for #{study.accession}"
       workspace_files = workspace_files.next
       unsynced_files += process_file_batch(study, workspace_files, file_extension_map: file_extension_map)
     end
@@ -161,6 +167,7 @@ class StudySyncService
     dir_files = find_files_for_directories(new_files, file_extension_map)
     add_files_to_directories(study, dir_files)
     unsynced_files_in_batch = remove_directory_files(dir_files, new_files)
+    Rails.logger.info "found #{unsynced_files_in_batch.count} remotes in batch to process for #{study.accession}"
     unsynced_files_in_batch.each do |file|
       next if file.size == 0
 
@@ -201,9 +208,9 @@ class StudySyncService
   #   - (Array<Google::Cloud::Storage::File>) => filtered list of remote files
   def self.remove_synced_files(study, files)
     files_to_remove = files.select do |file|
-      study.study_files.valid.detect { |f| f.generation.to_i == file.generation || file.name.start_with?('parse_logs') }
+      study.study_files.valid.detect { |f| f.generation.to_i == file.generation }
     end.map(&:generation)
-    files.delete_if { |f| files_to_remove.include?(f.generation) }
+    files.delete_if { |f| files_to_remove.include?(f.generation) || f.name.start_with?('parse_logs') }
   end
 
   # find StudyFile entries where remote file has been removed from bucket
