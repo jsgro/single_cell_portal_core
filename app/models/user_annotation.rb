@@ -388,7 +388,7 @@ class UserAnnotation
         study_file = cluster.study_file
         # make new subdirectory for file
         subdir = File.join(study.data_store_path, study_file.id)
-        if !Dir.exists?(subdir)
+        if !Dir.exist?(subdir)
           FileUtils.mkdir_p(subdir)
         end
         new_file = File.new(study_file.upload.path, 'w+')

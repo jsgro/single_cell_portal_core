@@ -8,6 +8,12 @@ module ApiHelpers
   # interval for retry backoff on request retries
   RETRY_INTERVAL = Rails.env.test? ? 0 : 15
 
+  # known good HTTP status codes
+  OK_STATUS_CODES = [200, 201, 202, 204, 206].freeze
+
+  # 50x error codes that are acceptable to retry
+  RETRY_STATUS_CODES = [502, 503, 504].freeze
+
   # get default HTTP headers for making requests
   #
   # * *returns*
@@ -30,7 +36,7 @@ module ApiHelpers
   # * *return*
   #   - +Boolean+ of whether or not response is a known 'OK' response
   def ok?(code)
-    [200, 201, 202, 204, 206].include?(code)
+    OK_STATUS_CODES.include?(code)
   end
 
   # determine if request should be retried based on response code, and will retry if necessary
@@ -43,7 +49,7 @@ module ApiHelpers
   # * *return*
   #   - +Boolean+ of whether or not response code indicates a retry should be executed
   def should_retry?(code)
-    code.nil? || [502, 503, 504].include?(code)
+    code.nil? || RETRY_STATUS_CODES.include?(code)
   end
 
   # merge hash of options into single URL query string, will reject query params with empty values
@@ -55,7 +61,7 @@ module ApiHelpers
   #   - +String+ of concatenated query params
   def merge_query_options(opts={})
     return nil if opts.blank?
-    '?' + opts.reject {|k,v| v.blank?}.to_a.map {|k,v| uri_encode("#{k}=#{v}")}.join('&')
+    '?' + opts.reject {|k,v| k.blank? || v.blank?}.to_a.map {|k,v| "#{uri_encode(k)}=#{uri_encode(v)}"}.join('&')
   end
 
   # handle a RestClient::Response object
@@ -116,6 +122,6 @@ module ApiHelpers
   # * *returns*
   #   - +String+ => URI-encoded parameter
   def uri_encode(parameter)
-    URI.escape(parameter)
+    CGI.escape(parameter.to_s)
   end
 end

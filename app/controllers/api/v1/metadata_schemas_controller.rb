@@ -86,7 +86,7 @@ module Api
           response_type = 'application/json'
         end
 
-        if File.exists?(schema_pathname)
+        if File.exist?(schema_pathname)
           send_file schema_pathname, type: response_type, filename: schema_filename
         else
           head 404 and return

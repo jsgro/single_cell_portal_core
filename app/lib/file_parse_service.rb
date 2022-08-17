@@ -71,7 +71,7 @@ class FileParseService
           bundle.study_files.update_all(parse_status: 'parsing')
           job = IngestJob.new(study: study, study_file: matrix, user: user, action: :ingest_expression, reparse: reparse,
                               persist_on_fail: persist_on_fail)
-          job.delay.push_remote_and_launch_ingest(skip_push: true)
+          job.delay.push_remote_and_launch_ingest
         else
           return self.missing_bundled_file(study_file)
         end

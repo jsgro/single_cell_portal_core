@@ -93,6 +93,8 @@ export function logClick(event) {
     return
   }
 
+  window.Appcues && window.Appcues.track('Click Event')
+
   // we use closest() so we don't lose clicks on, e.g. icons within a link/button
   // (and we have to use $.closest since IE still doesn't have built-in support for it)
   if (target.closest('a').length) {
@@ -408,15 +410,18 @@ export function log(name, props = {}) {
 
   init = Object.assign(init, body)
 
+  window.Appcues && window.Appcues.identify(window.SCP.userId)
+
   if ('SCP' in window || metricsApiMock) {
-    fetch(`${bardDomain}/api/event/`, init).then(response => {
+    const url = `${bardDomain}/api/event/`
+    fetch(url, init).then(response => {
       // log failed attempts to connect with Bard to Sentry
       if (!response.ok) {
         logJSFetchExceptionToSentry(response, 'Error in fetch response when logging event to Bard', true)
       }
     // log errored attempts to connect with Bard to Sentry
     }).catch(error => {
-      logJSFetchErrorToSentry(error, 'Error in JavaScript when logging event to Bard', true)
+      logJSFetchErrorToSentry(error, 'Error in JavaScript when logging event to Bard', true, url, init)
     })
   }
 }

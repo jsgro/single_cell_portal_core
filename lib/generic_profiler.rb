@@ -227,7 +227,7 @@ class GenericProfiler
   # create scratch dir for profiling results
   def self.make_profile_dir(report_dir)
     reports_basepath = Rails.root.join(PROFILE_BASEDIR, report_dir)
-    FileUtils.mkdir_p(reports_basepath) unless Dir.exists?(reports_basepath)
+    FileUtils.mkdir_p(reports_basepath) unless Dir.exist?(reports_basepath)
     reports_basepath
   end
 

@@ -85,7 +85,7 @@ class DataRepoClientTest < ActiveSupport::TestCase
     assert_equal expected_query, @data_repo_client.merge_query_options(opts)
     # ensure params are uri-encoded
     new_opts = { one: 'foo', two: 'bar bing' }
-    expected_encoded_query = '?one=foo&two=bar%20bing'
+    expected_encoded_query = '?one=foo&two=bar+bing'
     assert_equal expected_encoded_query, @data_repo_client.merge_query_options(new_opts)
   end
 

@@ -28,14 +28,24 @@ export function logJSFetchExceptionToSentry(response, titleInfo = '', useThrottl
 }
 
 /**
- * Log an exception to Sentry for failed JS fetch executions
- * i.e. fetches that fail and error
+ * Log an error to Sentry for failed JS fetch executions
  *
- * @param {Object} response - the response object from a failed JS fetch call
+ * @param {Object} error - the error object from a failed JS fetch call
  * @param {String} titleInfo - extra info for the title of the Sentry event
  * @param {Boolean} useThrottle - whether to apply clientside rate limit throttling
+ * @param {String} url - the url used in the fetch request that failed
+ * @param {Object} init - the init object sent in the fetch request that failed
+
  */
-export function logJSFetchErrorToSentry(error, titleInfo = '', useThrottle = false) {
+export function logJSFetchErrorToSentry(error, titleInfo = '', useThrottle = false, url = '', init = {}) {
+  // add details from the error to the 'error info' object that will be logged in Sentry
+  Sentry.setContext('error info', {
+    message: error.message,
+    cause: error.cause,
+    attemptedUrl: url,
+    initObj: init
+  })
+
   const errorObj = new Error(`${error}: ${titleInfo}`)
   logToSentry(errorObj, useThrottle)
 }

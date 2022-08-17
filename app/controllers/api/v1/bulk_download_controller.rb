@@ -446,7 +446,7 @@ module Api
       # can be 'all', or a single directory (with specified file_type as well)
       def self.find_matching_directories(directory_name, file_type, accession)
         study = Study.find_by(accession: accession)
-        sanitized_dirname = URI.decode(directory_name)
+        sanitized_dirname = CGI.unescape(directory_name)
         case sanitized_dirname.downcase
         when 'nodirs'
           []
