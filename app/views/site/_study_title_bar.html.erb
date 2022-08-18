@@ -1,4 +1,9 @@
-<% content_for(:html_title) { "#{@study.accession} - Single Cell Portal" } %>
+
+<% if @study.public? %>
+  <% content_for(:html_title) { "#{@study.name } - Single Cell Portal" } %>
+<% else %>
+  <% content_for(:html_title) { "#{@study.accession} - Single Cell Portal" } %>
+<% end %>
 
 <div class="row">
   <div class="col-md-12">
