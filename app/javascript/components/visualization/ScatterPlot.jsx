@@ -62,7 +62,7 @@ function RawScatterPlot({
 
   const flags = getFeatureFlagsWithDefaults()
 
-  // Uncomment out when running Image Pipeline
+  // Uncomment when running Image Pipeline
   // flags.progressive_loading = false
   // TODO (pre-GA for Image Pipeline):
   // - Inspect forthcoming SCP API data for whether static image is available
@@ -284,7 +284,7 @@ function RawScatterPlot({
 
     /** Image onload handler.  (Drawing before load renders no image.) */
     function renderToCanvas() {
-      // TODO: Calculate scale and xy-offset given viewport and plot dimensions
+      // TODO (SCP-4600): Scale and transform scatter plot image on client
       ctx.scale(0.73, 0.73)
       ctx.drawImage(image, 92, 9)
     }
@@ -304,7 +304,7 @@ function RawScatterPlot({
 
     const startTime = performance.now()
 
-    if (flags.progressive_loading && genes.length === 1 && document.querySelector(imageSelector)) {
+    if (flags?.progressive_loading && genes.length === 1 && document.querySelector(imageSelector)) {
       Plotly.newPlot(graphElementId, plotlyTraces, layout)
     } else {
       Plotly.react(graphElementId, plotlyTraces, layout)
@@ -345,7 +345,7 @@ function RawScatterPlot({
 
     // use an image and/or data cache if one has been provided, otherwise query scp-api directly
     if (
-      flags.progressive_loading && isGeneExpression(genes, isCorrelatedScatter) && !isAnnotatedScatter &&
+      flags?.progressive_loading && isGeneExpression(genes, isCorrelatedScatter) && !isAnnotatedScatter &&
       !scatterData &&
       genes[0] === 'A1BG-AS1' // Placeholder; likely replace with setting like DE
     ) {
