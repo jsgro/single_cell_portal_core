@@ -15,7 +15,7 @@ const MAX_PLOTS = PLOTLY_CONTEXT_NAMES.length
   * renders the scatter tab.
   */
 export default function ScatterTab({
-  exploreInfo, exploreParamsWithDefaults, updateexploreParamsWithDefaults, studyAccession, isGene, isMultiGene,
+  exploreInfo, exploreParamsWithDefaults, updateExploreParamsWithDefaults, studyAccession, isGene, isMultiGene,
   plotPointsSelected, isCellSelecting, showRelatedGenesIdeogram, showViewOptionsControls, scatterColor,
   countsByLabel, setCountsByLabel, dataCache
 }) {
@@ -34,7 +34,7 @@ export default function ScatterTab({
 
   /** helper function for Scatter plot color updates */
   function updateScatterColor(color) {
-    updateexploreParamsWithDefaults({ scatterColor: color }, false)
+    updateExploreParamsWithDefaults({ scatterColor: color }, false)
   }
 
   // identify any repeat graphs
@@ -64,7 +64,7 @@ export default function ScatterTab({
             <ScatterPlot
               {...{
                 studyAccession, plotPointsSelected, isCellSelecting, updateScatterColor,
-                countsByLabel, setCountsByLabel, updateexploreParamsWithDefaults
+                countsByLabel, setCountsByLabel, updateExploreParamsWithDefaults
               }}
               {...params}
               dataCache={dataCache}
