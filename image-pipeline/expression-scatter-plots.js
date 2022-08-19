@@ -30,8 +30,8 @@ const numCPUs = 1
 console.log(`Number of CPUs to be used on this client: ${numCPUs}`)
 
 // TODO (SCP-4564): Document how to adjust network rules to use staging
-// const origin = 'https://singlecell-staging.broadinstitute.org'
-const origin = 'https://localhost:3000'
+const origin = 'https://singlecell-staging.broadinstitute.org'
+// const origin = 'https://localhost:3000'
 
 /** Make output directories if absent */
 function makeLocalOutputDir(leaf) {
@@ -143,9 +143,9 @@ async function makeExpressionScatterPlotImage(gene, page, preamble) {
   // console.log(metadata)
 
   print(`Wrote ${imagePath}`, preamble)
-  if (imagePath === 'output/SCP138/images/A1BG-AS1.webp') {
-    exit()
-  }
+  // if (imagePath === 'output/SCP138/images/A1BG-AS1.webp') {
+  //   exit()
+  // }
 
   return
 }
@@ -164,7 +164,21 @@ function trimExpressionScatterPlotUrl(url) {
 /** Fetch JSON data for gene expression scatter plot, before loading page */
 async function prefetchExpressionData(gene, context) {
   const { accession, preamble, origin } = context
+
+  const jsonPath = `${jsonDir}${gene}.json`
+
   print(`Prefetching JSON for ${gene}`, preamble)
+
+  let isCopyOnFilesystem = true
+  access(jsonPath, async err => {
+    if (err) {isCopyOnFilesystem = false}
+  })
+
+  if (isCopyOnFilesystem) {
+    // Don't process with fetch if expression was already prefetched
+    print(`Using local expression data for ${gene}`, preamble)
+    return
+  }
 
   // Configure URLs
   const apiStem = `${origin}/single_cell/api/v1`
@@ -191,7 +205,6 @@ async function prefetchExpressionData(gene, context) {
     json.data = Object.assign(json.data, coordinates, { annotations })
   }
 
-  const jsonPath = `${jsonDir}${gene}.json`
   await writeFile(jsonPath, JSON.stringify(json))
   print(`Wrote prefetched JSON: ${jsonPath}`, preamble)
 }
@@ -230,8 +243,9 @@ async function configureIntercepts(page) {
       const headers = Object.assign({}, request.headers())
       const [isESPlot, gene] = detectExpressionScatterPlot(request)
       if (isESPlot) {
+        console.log('Reading local file for:')
+        console.log(request.url())
         // Replace SCP API request for expression data with prefetched data.
-        // Non-local app servers throttle real requests, breaking the pipeline.
         //
         // If these files could be made by Ingest Pipeline and put in a bucket,
         // then Image Pipeline could run against production web app while
@@ -254,10 +268,10 @@ async function configureIntercepts(page) {
 async function processScatterPlotImages(genes, context) {
   const { accession, preamble, origin } = context
   // const browser = await puppeteer.launch()
-  // const browser = await puppeteer.launch({ headless: false, devtools: true, acceptInsecureCerts: true, args: ['--ignore-certificate-errors'] })
+  const browser = await puppeteer.launch({ headless: false, devtools: true, acceptInsecureCerts: true, args: ['--ignore-certificate-errors'] })
 
   // Needed for localhost; doesn't hurt to use in other environments
-  const browser = await puppeteer.launch({ acceptInsecureCerts: true, args: ['--ignore-certificate-errors'] })
+  // const browser = await puppeteer.launch({ acceptInsecureCerts: true, args: ['--ignore-certificate-errors'] })
   const page = await browser.newPage()
   await page.setViewport({
     width: 1680,
@@ -324,8 +338,16 @@ let startTime
   // Get list of all genes in study
   const exploreApiUrl = `${origin}/single_cell/api/v1/studies/${accession}/explore`
   console.log(`Fetching ${exploreApiUrl}`)
+
   const response = await fetch(exploreApiUrl)
-  const json = await response.json()
+  let json
+  try {
+    json = await response.json()
+  } catch (error) {
+    console.log('Failed to fetch:')
+    console.log(exploreApiUrl)
+    exit(1)
+  }
   const uniqueGenes = json.uniqueGenes
   console.log(`Total number of genes: ${uniqueGenes.length}`)
 

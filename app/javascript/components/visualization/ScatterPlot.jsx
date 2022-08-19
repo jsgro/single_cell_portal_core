@@ -63,7 +63,7 @@ function RawScatterPlot({
   const flags = getFeatureFlagsWithDefaults()
 
   // Uncomment when running Image Pipeline
-  // flags.progressive_loading = false
+  flags.progressive_loading = false
   // TODO (pre-GA for Image Pipeline):
   // - Inspect forthcoming SCP API data for whether static image is available
 
