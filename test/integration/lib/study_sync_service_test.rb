@@ -13,25 +13,33 @@ class StudySyncServiceTest < ActiveSupport::TestCase
                                     remote_location: 'cluster_1.txt.gz',
                                     generation: '12345',
                                     study: @study)
+
+    # study with actual workspace that will be used in full sync test as well as content header setting
+    # this gives us a true integration test, and also avoids extensive mocking required for those two tests
+    @full_study = FactoryBot.create(:study,
+                                    name_prefix: 'Full Sync Test',
+                                    user: @user,
+                                    test_array: @@studies_to_clean)
+    bucket = ApplicationController.firecloud_client.get_workspace_bucket(@full_study.bucket_id)
+    bucket.create_file 'test/test_data/metadata_example.txt', 'metadata_example.txt'
   end
 
-  # while we could employ mocks in this test, it somewhat defeats the purpose as every GCS function call needs to
-  # be mocked in order for the test to run.  instead, we'll pay the overhead to create a real study and push a file
-  # to the bucket to assert that headers are in fact being set correctly
+  test 'should process all remotes' do
+    unsynced_files = StudySyncService.process_all_remotes(@full_study)
+    unsynced_metadata = unsynced_files.detect { |f| f.name == 'metadata_example.txt' }
+    assert unsynced_metadata.present?
+  end
+
   test 'should update content headers based on file content' do
-    study = FactoryBot.create(:study,
-                              name_prefix: 'StudySyncService Header Test',
-                              user: @user,
-                              test_array: @@studies_to_clean)
     gzipped_file = File.open(Rails.root.join('test/test_data/expression_matrix_example_gzipped.txt.gz'))
     study_file = StudyFile.create(name: 'expression_matrix_example_gzipped.txt.gz', file_type: 'Expression Matrix',
                                  upload: gzipped_file, remote_location: 'expression_matrix_example_gzipped.txt.gz',
-                                 study: study)
+                                 study: @full_study)
     # override upload_content_type to simulate a gsutil upload
     study_file.update(upload_content_type: 'text/plain')
     client = ApplicationController.firecloud_client
     # push directly to bucket, and override content_type & content_encoding to simulate problems from gsutil/user error
-    remote = client.create_workspace_file(study.bucket_id,
+    remote = client.create_workspace_file(@full_study.bucket_id,
                                           gzipped_file.path,
                                           study_file.upload_file_name,
                                           content_type: 'text/plain',
@@ -40,7 +48,7 @@ class StudySyncServiceTest < ActiveSupport::TestCase
     assert_equal 'text/plain', remote.content_type
     assert_equal 'gzip', remote.content_encoding
     assert StudySyncService.fix_file_content_headers(study_file)
-    updated_remote = client.get_workspace_file(study.bucket_id, study_file.bucket_location)
+    updated_remote = client.get_workspace_file(@full_study.bucket_id, study_file.bucket_location)
     assert_equal updated_remote.content_type, 'application/gzip'
     assert updated_remote.content_encoding.blank?
   end
@@ -101,12 +109,41 @@ class StudySyncServiceTest < ActiveSupport::TestCase
     end
   end
 
-  test 'should process all remote files' do
-
-  end
-
   test 'should create directory listings from remotes' do
-
+    file_map = {
+      raw_expression: {
+        csv: 10
+      }
+    }.with_indifferent_access
+    files = []
+    10.times do |i|
+      csv_filename = "raw_expression/#{SecureRandom.uuid}.csv"
+      csv_mock = Minitest::Mock.new
+      # between find_files_for_directories and add_files_to_directories, :name will be called 5 times
+      5.times do
+        csv_mock.expect(:name, csv_filename)
+      end
+      # as more files are added, they each have :generation called, so add more expects as we iterate through the block
+      generation = SecureRandom.uuid
+      num_generations = 1 + i
+      num_generations.times do
+        csv_mock.expect(:generation, generation)
+      end
+      csv_mock.expect(:size, 100)
+      files << csv_mock
+    end
+    non_dir_mock = Minitest::Mock.new
+    non_dir_name = 'matrix.tsv'
+    non_dir_mock.expect(:name, non_dir_name)
+    non_dir_mock.expect(:name, non_dir_name)
+    files << non_dir_mock
+    dir_files = StudySyncService.find_files_for_directories(files, file_map)
+    StudySyncService.add_files_to_directories(@study, dir_files)
+    @study.reload
+    new_dir = @study.directory_listings.find_by(name: 'raw_expression')
+    assert new_dir.present?
+    assert_equal 10, new_dir.files.size
+    files.map(&:verify)
   end
 
   test 'should remove submission outputs from list' do

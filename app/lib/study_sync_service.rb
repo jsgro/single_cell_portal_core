@@ -167,11 +167,11 @@ class StudySyncService
     files.each do |file|
       file_type = DirectoryListing.file_type_from_extension(file.name)
       directory_name = DirectoryListing.get_folder_name(file.name)
-      remote = { 'name' => file.name, 'size' => file.size, 'generation' => file.generation }
+      remote = { 'name' => file.name, 'size' => file.size, 'generation' => file.generation.to_s }
       existing_dir = DirectoryListing.find_by(study_id: study.id, name: directory_name, file_type: file_type)
       if existing_dir.nil?
         study.directory_listings.create(name: directory_name, file_type: file_type, files: [remote], sync_status: false)
-      elsif existing_dir.files.detect { |f| f['generation'].to_i == file.generation }.nil?
+      elsif existing_dir.files.detect { |f| f['generation'].to_s == file.generation.to_s }.nil?
         existing_dir.files << remote
         existing_dir.sync_status = false
         existing_dir.save
@@ -208,8 +208,8 @@ class StudySyncService
   def self.remove_synced_files(study, files)
     files_to_remove = files.select do |file|
       study.study_files.valid.detect { |f| f.generation.to_s == file.generation.to_s }
-    end.map(&:generation)
-    files.delete_if { |f| files_to_remove.include?(f.generation) || f.name.start_with?('parse_logs') }
+    end.map { |f| f.generation.to_s }
+    files.delete_if { |f| files_to_remove.include?(f.generation.to_s) || f.name.start_with?('parse_logs') }
   end
 
   # remove files that have been added to directory listings from list to process
