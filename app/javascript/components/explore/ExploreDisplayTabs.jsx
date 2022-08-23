@@ -316,11 +316,11 @@ export default function ExploreDisplayTabs({
               <div className={shownTab === 'annotatedScatter' ? '' : 'hidden'}>
                 <ScatterPlot
                   studyAccession={studyAccession}
-                  {...exploreParams}
+                  {...exploreParamsWithDefaults}
                   isAnnotatedScatter={true}
                   dimensionProps={{
                     numColumns: 1,
-                    numRows: exploreParams?.spatialGroups.length ? 2 : 1,
+                    numRows: exploreParamsWithDefaults?.spatialGroups.length ? 2 : 1,
                     showRelatedGenesIdeogram,
                     showViewOptionsControls
                   }}
@@ -335,7 +335,7 @@ export default function ExploreDisplayTabs({
               <div className={shownTab === 'correlatedScatter' ? '' : 'hidden'}>
                 <ScatterPlot
                   studyAccession={studyAccession}
-                  {...exploreParams}
+                  {...exploreParamsWithDefaults}
                   isCorrelatedScatter={true}
                   dimensionProps={{
                     numColumns: 1,
@@ -353,7 +353,7 @@ export default function ExploreDisplayTabs({
                 <ScatterTab
                   {...{
                     studyAccession,
-                    exploreParams,
+                    exploreParamsWithDefaults,
                     updateExploreParams,
                     exploreInfo,
                     isGeneList,

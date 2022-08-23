@@ -10,9 +10,11 @@
 import { parseArgs } from 'node:util'
 import { access } from 'node:fs'
 import { mkdir, writeFile, readFile } from 'node:fs/promises'
+import sharp from 'sharp'
 import os from 'node:os'
 
 import puppeteer from 'puppeteer'
+import { exit } from 'node:process'
 
 const args = process.argv.slice(2)
 
@@ -23,8 +25,8 @@ const { values } = parseArgs({ args, options })
 
 // Candidates for CLI argument
 // CPU count on Intel i7 is 1/2 of reported, due to hyperthreading
-const numCPUs = os.cpus().length / 2 - 1
-// const numCPUs = 2
+// const numCPUs = os.cpus().length / 2 - 1
+const numCPUs = 1 // For easier local development
 console.log(`Number of CPUs to be used on this client: ${numCPUs}`)
 
 // TODO (SCP-4564): Document how to adjust network rules to use staging
@@ -83,14 +85,69 @@ async function makeExpressionScatterPlotImage(gene, page, preamble) {
 
   page.waitForTimeout(250) // Wait for janky layout to settle
 
-  // Height and width of plot, x- and y-offset from viewport origin
-  const clipDimensions = { height: 595, width: 660, x: 5, y: 230 }
+  await page.evaluate(() => {
+    // Prepare background colors for later transparency via `omitBackground`
+    document.querySelector('body').style.backgroundColor = '#FFF0'
+    document.querySelector('.study-explore .plot').style.background = '#FFF0'
+    document.querySelector('.explore-tab-content').style.background = '#FFF0'
+    document.querySelector('.scatter-graph svg').style = null
 
-  // Take a screenshot, save it locally.
+    // Remove grid lines on X, Y, and (if present) Z axes
+    document.querySelector('svg .cartesianlayer').remove()
+
+    // Remove color filling vertical bar at right
+    document.querySelector('svg defs .gradients').remove()
+
+    // Remove axis labels, colorbar label (`magnitude` in Plotly.js)
+    document.querySelector('svg .infolayer').remove()
+  })
+
+  // Height and width of plot, x- and y-offset from viewport origin
+  const clipDimensions = { height: 595, width: 660, x: 5, y: 280 }
+
+  // Take a screenshot, save it locally
+  const rawImagePath = `${imagesDir}${gene}-raw.webp`
   const imagePath = `${imagesDir}${gene}.webp`
-  await page.screenshot({ path: imagePath, type: 'webp', clip: clipDimensions })
+  await page.screenshot({
+    path: rawImagePath,
+    type: 'webp',
+    clip: clipDimensions,
+    omitBackground: true
+  })
+
+  // Hardcoded x, y placeholders below derived in processScatterPlots via:
+  // console.log(Math.min(...plotlyTraces[0].x))
+  // console.log(Math.max(...plotlyTraces[0].x))
+  // console.log(Math.min(...plotlyTraces[0].y))
+  // console.log(Math.max(...plotlyTraces[0].y))
+  // These ought to be parseable via the `coordinates` array
+
+  const imageDescription = JSON.stringify({
+    expression: [0, 2.433], // min, max of expression array
+    x: [-12.568, 8.749], // min, max of x coordinates array
+    y: [-15.174, 10.761], // min, max of y coordinates array
+    z: []
+  })
+  await sharp(rawImagePath)
+    .withMetadata({
+      exif: {
+        IFD0: {
+          ImageDescription: imageDescription
+        }
+      }
+    })
+    .toFile(imagePath)
+
+  // const metadata = await sharp(imagePath).metadata()
+  // console.log('metadata:')
+  // console.log(metadata)
 
   print(`Wrote ${imagePath}`, preamble)
+
+  // Uncomment block for easier local development
+  // if (imagePath === 'output/SCP138/images/A1BG-AS1.webp') {
+  //   exit()
+  // }
 
   return
 }
@@ -157,7 +214,7 @@ function isAlwaysIgnorable(request) {
 function detectExpressionScatterPlot(request) {
   const url = request.url()
   if (url.includes('expression&gene=')) {
-    const gene = url.split('gene=')[1]
+    const gene = url.split('gene=')[1].split('&')[0]
     return [true, gene]
   } else {
     return [false, null]

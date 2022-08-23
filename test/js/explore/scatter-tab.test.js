@@ -156,13 +156,13 @@ describe('getNewContextMap correctly assigns contexts', () => {
 
     render((
       <ScatterTab studyAccession='SCP101'
-        exploreParams={{
+        exploreParamsWithDefaults={{
           cluster: 'clusterA',
           spatialGroups: ['spatialClusterA'],
           annotation: { name: 'foo', type: 'group' },
           genes: ['farsa']
         }}
-        updateExploreParams={() => {}}
+        updateExploreParamsWithDefaults={() => {}}
         exploreInfo={MOCK_EXPLORE_RESPONSE}
         isGene={true}
         isMultiGene={false}
