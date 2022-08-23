@@ -21,7 +21,8 @@ class StudySyncServiceTest < ActiveSupport::TestCase
                                     user: @user,
                                     test_array: @@studies_to_clean)
     bucket = ApplicationController.firecloud_client.get_workspace_bucket(@full_study.bucket_id)
-    bucket.create_file 'test/test_data/metadata_example.txt', 'metadata_example.txt'
+    metadata_file = File.open(Rails.root.join('test/test_data/metadata_example.txt'))
+    bucket.create_file metadata_file, 'metadata_example.txt'
   end
 
   test 'should process all remotes' do
