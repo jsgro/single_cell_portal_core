@@ -50,7 +50,6 @@ const jsonDir = await makeLocalOutputDir('json')
 
 // Cache for X, Y, and possibly Z coordinates
 const coordinates = {}
-let annotations = []
 
 /** Print message with browser-tag preamble to local console */
 function print(message, preamble) {
@@ -107,7 +106,7 @@ async function makeExpressionScatterPlotImage(gene, page, preamble) {
   })
 
   // Height and width of plot, x- and y-offset from viewport origin
-  const clipDimensions = { height: 595, width: 660, x: 5, y: 315 }
+  const clipDimensions = { height: 595, width: 660, x: 5, y: 310 }
 
   // Take a screenshot, save it locally
   const rawImagePath = `${imagesDir}${gene}-raw.webp`
@@ -151,7 +150,10 @@ async function makeExpressionScatterPlotImage(gene, page, preamble) {
   return
 }
 
-/** Remove extraneous field parameters from SCP API call */
+/**
+ * Remove extraneous field parameters from SCP API call.
+ * Substantially speeds up pipeline, if local expression data is not available.
+ */
 function trimExpressionScatterPlotUrl(url) {
   url = url.replace('cells%2Cannotation%2C', '')
   if (Object.keys(coordinates).length > 0) {
@@ -177,9 +179,6 @@ async function prefetchExpressionData(gene, context) {
     isCopyOnFilesystem = false
   }
 
-  console.log('isCopyOnFilesystem')
-  console.log(isCopyOnFilesystem)
-
   if (isCopyOnFilesystem) {
     // Don't process with fetch if expression was already prefetched
     print(`Using local expression data for ${gene}`, preamble)
@@ -194,8 +193,6 @@ async function prefetchExpressionData(gene, context) {
   const trimmedUrl = trimExpressionScatterPlotUrl(url)
 
   // Fetch data
-  console.log('trimmedUrl')
-  console.log(trimmedUrl)
   const response = await fetch(trimmedUrl)
   const json = await response.json()
 
@@ -206,11 +203,6 @@ async function prefetchExpressionData(gene, context) {
     if ('z' in json.data) {
       coordinates.z = json.data.z
     }
-    annotations = json.annotations
-  } else {
-    // Merge in previously cached `coordinates` and `annotations` fields
-    // Requesting only `expression` field dramatically accelerates Image Pipeline
-    // json.data = Object.assign(json.data, coordinates, { annotations })
   }
 
   await writeFile(jsonPath, JSON.stringify(json))
@@ -321,7 +313,7 @@ async function processScatterPlotImages(genes, context) {
     const expressionPlotPerfTime = Date.now() - expressionPlotStartTime
     print(`Expression plot time for gene ${gene}: ${expressionPlotPerfTime} ms`, preamble)
 
-
+    // Helpful for local development iterations
     // if (accession === 'SCP138' && gene === 'A1BG-AS1') {
     //   exit()
     // }
