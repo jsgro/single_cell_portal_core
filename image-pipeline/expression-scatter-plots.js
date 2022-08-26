@@ -8,8 +8,8 @@
  * node expression-scatter-plots.js --accession="SCP24" # Staging, 1.3M cell study
  */
 import { parseArgs } from 'node:util'
-import { access } from 'node:fs'
-import { mkdir, writeFile, readFile } from 'node:fs/promises'
+// import { access } from 'node:fs'
+import { mkdir, writeFile, readFile, access } from 'node:fs/promises'
 import sharp from 'sharp'
 import os from 'node:os'
 
@@ -30,19 +30,23 @@ const numCPUs = 1
 console.log(`Number of CPUs to be used on this client: ${numCPUs}`)
 
 // TODO (SCP-4564): Document how to adjust network rules to use staging
-const origin = 'https://singlecell-staging.broadinstitute.org'
-// const origin = 'https://localhost:3000'
+// const origin = 'https://singlecell-staging.broadinstitute.org'
+const origin = 'https://localhost:3000'
 
 /** Make output directories if absent */
-function makeLocalOutputDir(leaf) {
+async function makeLocalOutputDir(leaf) {
   const dir = `output/${values.accession}/${leaf}/`
   const options = { recursive: true }
-  access(dir, async err => {if (err) {await mkdir(dir, options)}})
+  try {
+    await access(dir)
+  } catch {
+    await mkdir(dir, options)
+  }
   return dir
 }
 
-const imagesDir = makeLocalOutputDir('images')
-const jsonDir = makeLocalOutputDir('json')
+const imagesDir = await makeLocalOutputDir('images')
+const jsonDir = await makeLocalOutputDir('json')
 
 // Cache for X, Y, and possibly Z coordinates
 const coordinates = {}
@@ -85,8 +89,8 @@ async function makeExpressionScatterPlotImage(gene, page, preamble) {
 
   page.waitForTimeout(250) // Wait for janky layout to settle
 
+  // Prepare background colors for later transparency via `omitBackground`
   await page.evaluate(() => {
-    // Prepare background colors for later transparency via `omitBackground`
     document.querySelector('body').style.backgroundColor = '#FFF0'
     document.querySelector('.study-explore .plot').style.background = '#FFF0'
     document.querySelector('.explore-tab-content').style.background = '#FFF0'
@@ -143,9 +147,6 @@ async function makeExpressionScatterPlotImage(gene, page, preamble) {
   // console.log(metadata)
 
   print(`Wrote ${imagePath}`, preamble)
-  // if (imagePath === 'output/SCP138/images/A1BG-AS1.webp') {
-  //   exit()
-  // }
 
   return
 }
@@ -170,9 +171,14 @@ async function prefetchExpressionData(gene, context) {
   print(`Prefetching JSON for ${gene}`, preamble)
 
   let isCopyOnFilesystem = true
-  access(jsonPath, async err => {
-    if (err) {isCopyOnFilesystem = false}
-  })
+  try {
+    await access(jsonPath)
+  } catch {
+    isCopyOnFilesystem = false
+  }
+
+  console.log('isCopyOnFilesystem')
+  console.log(isCopyOnFilesystem)
 
   if (isCopyOnFilesystem) {
     // Don't process with fetch if expression was already prefetched
@@ -188,10 +194,12 @@ async function prefetchExpressionData(gene, context) {
   const trimmedUrl = trimExpressionScatterPlotUrl(url)
 
   // Fetch data
+  console.log('trimmedUrl')
+  console.log(trimmedUrl)
   const response = await fetch(trimmedUrl)
   const json = await response.json()
 
-  if (url === trimmedUrl) {
+  if (Object.keys(coordinates).length === 0) {
     // Cache `coordinates` and `annotations` fields; this is done only once
     coordinates.x = json.data.x
     coordinates.y = json.data.y
@@ -202,7 +210,7 @@ async function prefetchExpressionData(gene, context) {
   } else {
     // Merge in previously cached `coordinates` and `annotations` fields
     // Requesting only `expression` field dramatically accelerates Image Pipeline
-    json.data = Object.assign(json.data, coordinates, { annotations })
+    // json.data = Object.assign(json.data, coordinates, { annotations })
   }
 
   await writeFile(jsonPath, JSON.stringify(json))
@@ -312,6 +320,11 @@ async function processScatterPlotImages(genes, context) {
 
     const expressionPlotPerfTime = Date.now() - expressionPlotStartTime
     print(`Expression plot time for gene ${gene}: ${expressionPlotPerfTime} ms`, preamble)
+
+
+    // if (accession === 'SCP138' && gene === 'A1BG-AS1') {
+    //   exit()
+    // }
   }
 
   await browser.close()
