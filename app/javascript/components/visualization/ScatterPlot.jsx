@@ -331,11 +331,8 @@ function RawScatterPlot({
       })
     }
 
-    scatter.hasArrayLabels = (
-      scatter.annotParams.type === 'group' &&
-      scatter.data.annotations.some && // Accounts for optimizations in Image Pipeline
-      scatter.data.annotations.some(annot => annot.includes('|'))
-    )
+    scatter.hasArrayLabels =
+      scatter.annotParams.type === 'group' && scatter.data.annotations.some(annot => annot.includes('|'))
 
     if (clusterResponse) {
       concludeRender(scatter)

@@ -107,7 +107,7 @@ async function makeExpressionScatterPlotImage(gene, page, preamble) {
   })
 
   // Height and width of plot, x- and y-offset from viewport origin
-  const clipDimensions = { height: 595, width: 660, x: 5, y: 280 }
+  const clipDimensions = { height: 595, width: 660, x: 5, y: 315 }
 
   // Take a screenshot, save it locally
   const rawImagePath = `${imagesDir}${gene}-raw.webp`
