@@ -354,7 +354,7 @@ export default function ExploreDisplayTabs({
                   {...{
                     studyAccession,
                     exploreParamsWithDefaults,
-                    updateExploreParams,
+                    updateExploreParamsWithDefaults: updateExploreParams,
                     exploreInfo,
                     isGeneList,
                     isGene,
