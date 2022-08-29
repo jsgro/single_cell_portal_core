@@ -179,6 +179,46 @@ class StudySyncService
     end
   end
 
+  # load all unsynced DirectoryListing entries and partition into 2 groups - primary data, and other
+  #
+  # * *params*
+  #   - +study+ (Study) => study to partition DirectoryListing objects in
+  #
+  # * *returns*
+  #   - (Array<DirectoryListing>) => two arrays of DirectoryListings (primary data, other)
+  def self.load_unsynced_directories(study)
+    study.reload # ensure latest state
+    directories = study.directory_listings.unsynced
+    directories.partition { |dir| DirectoryListing::PRIMARY_DATA_TYPES.include?(dir.file_type) }
+  end
+
+  # set an object of available files for sync views
+  #
+  # * *params*
+  #   - +files+ (Array<Google::Cloud::Storage::File>) => array of remote GCS files that are unsynced
+  #
+  # * *returns*
+  #   - (Array<Hash>) => array of objects with filename, generation, and file size
+  def self.set_available_files(files)
+    files.map { |f| { name: f.name, generation: f.generation, size: f.upload_file_size } }
+  end
+
+  # set array of known "synced" study files for use in sync views
+  # will remove any bundled child files as these are rendered dynamically from parent file
+  #
+  # * *params*
+  #   - +study+ (Study) => study to create/update DirectoryListings in
+  #   - +orphaned_files+ (Array<StudyFile>) => all study files where remote file is now missing
+  #
+  # * *returns*
+  #   - (Array<StudyFile>) => array of study files that are in "synced" state
+  def self.set_synced_files(study, orphaned_files)
+    study.reload
+    synced_files = study.study_files.valid - orphaned_files
+    bundled_file_ids = study.study_file_bundles.map { |bundle| bundle.bundled_files.to_a.map(&:id) }.flatten
+    synced_files.delete_if { |file| bundled_file_ids.include?(file.id) }
+  end
+
   # remove files from batch that are submission outputs from a Terra workflow
   #
   # * *params*

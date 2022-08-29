@@ -222,4 +222,57 @@ class StudySyncServiceTest < ActiveSupport::TestCase
       mock.verify
     end
   end
+
+  test 'should set available files' do
+    expected_files = [
+      { name: 'cluster.tsv', generation: SecureRandom.uuid, size: 1.kilobyte },
+      { name: 'matrix.tsv', generation: SecureRandom.uuid, size: 1.megabyte },
+      { name: 'metadata.tsv', generation: SecureRandom.uuid, size: 10.kilobytes }
+    ]
+    mocks = []
+    expected_files.each do |file|
+      mock = Minitest::Mock.new
+      mock.expect(:name, file[:name])
+      mock.expect(:generation, file[:generation])
+      mock.expect(:upload_file_size, file[:size])
+      mocks << mock
+    end
+    available_files = StudySyncService.set_available_files(mocks)
+    available_files.each do |file|
+      assert_includes expected_files, file
+    end
+    mocks.map(&:verify)
+  end
+
+  test 'should partition directories' do
+    fastq_file = { name: 'sample.fastq', size: 1.megabyte, generation: SecureRandom.uuid }
+    matrix_file = { name: 'matrix.mtx', size: 1.megabyte, generation: SecureRandom.uuid }
+    @full_study.directory_listings.create(name: 'fastqs', file_type: 'fastq', files: [fastq_file], sync_status: false)
+    @full_study.directory_listings.create(name: 'matrix_files', file_type: 'mtx', files: [matrix_file], sync_status: false)
+    primary_data, other = StudySyncService.load_unsynced_directories(@full_study)
+    assert_equal 1, primary_data.size
+    assert_equal 'fastqs', primary_data.first.name
+    assert_equal 1, other.size
+    assert_equal 'matrix_files', other.first.name
+  end
+
+  test 'should set synced files' do
+    # positive test
+    synced_files = StudySyncService.set_synced_files(@study, [])
+    assert_includes synced_files, @study_file
+
+    # orphan test
+    synced_files = StudySyncService.set_synced_files(@study, [@study_file])
+    assert_not_includes synced_files, @study_file
+
+    # bundle test
+    coord_labels = @study.study_files.create(name: 'coord_labels.txt', upload_file_name: 'coordinate_labels_1.txt',
+                                             file_type: 'Coordinate Labels')
+    bundle = @study.study_file_bundles.build(bundle_type: 'Cluster')
+    bundle.add_files(@study_file, coord_labels)
+    bundle.save!
+    synced_files = StudySyncService.set_synced_files(@study, [])
+    assert_not_includes synced_files, coord_labels
+  end
+
 end

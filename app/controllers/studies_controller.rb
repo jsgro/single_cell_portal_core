@@ -125,22 +125,16 @@ class StudiesController < ApplicationController
 
     # refresh study state before continuing as new records may have been inserted
     @study.reload
-
     @synced_directories = @study.directory_listings.are_synced
     @unsynced_directories = @study.directory_listings.unsynced
 
     # split directories into primary data types and 'others'
-    @unsynced_primary_data_dirs = @unsynced_directories.select {|dir| DirectoryListing::PRIMARY_DATA_TYPES.include?(dir.file_type)}
-    @unsynced_other_dirs = @unsynced_directories.select {|dir| !DirectoryListing::PRIMARY_DATA_TYPES.include?(dir.file_type)}
+    @unsynced_primary_data_dirs, @unsynced_other_dirs = StudySyncService.load_unsynced_directories(@study)
 
     # now determine if we have study_files that have been 'orphaned' (cannot find a corresponding bucket file)
     @orphaned_study_files = StudySyncService.find_orphaned_files(@study)
-    @available_files = @unsynced_files.map { |f| { name: f.name, generation: f.generation, size: f.upload_file_size } }
-    @synced_study_files = @study.study_files.valid - @orphaned_study_files
-
-    # now remove any 'bundled' files from @synced_study_files so we can render them inside their parent file's form
-    bundled_file_ids = @study.study_file_bundles.map { |bundle| bundle.bundled_files.to_a.map(&:id) }.flatten
-    @synced_study_files.delete_if { |file| bundled_file_ids.include?(file.id) }
+    @available_files = StudySyncService.set_available_files(@unsynced_files)
+    @synced_study_files = StudySyncService.set_synced_files(@study, @orphaned_study_files)
   end
 
   # sync outputs from a specific submission
