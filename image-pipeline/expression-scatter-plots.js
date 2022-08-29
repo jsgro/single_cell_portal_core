@@ -8,7 +8,6 @@
  * node expression-scatter-plots.js --accession="SCP24" # Staging, 1.3M cell study
  */
 import { parseArgs } from 'node:util'
-// import { access } from 'node:fs'
 import { mkdir, writeFile, readFile, access } from 'node:fs/promises'
 import sharp from 'sharp'
 import os from 'node:os'
