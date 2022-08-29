@@ -87,7 +87,7 @@ SecureHeaders::Configuration.default do |config|
     font_src: %w('self' data: https://fonts.googleapis.com https://fonts.google.com https://fonts.gstatic.com ),
     form_action: %w('self' https://accounts.google.com),
     connect_src: allowed_connect_sources,
-    img_src: %w('self' data: blob: https://www.google-analytics.com https://online.swagger.io res.cloudinary.com twemoji.maxcdn.com https://storage.googleapis.com),
+    img_src: %w('self' data: blob: https://www.google-analytics.com https://online.swagger.io res.cloudinary.com twemoji.maxcdn.com),
     manifest_src: %w('self'),
     object_src: %w('none'),
     script_src: %w('self' blob: 'unsafe-eval' 'unsafe-inline' 'strict-dynamic' https://cdn.plot.ly https://cdn.datatables.net
