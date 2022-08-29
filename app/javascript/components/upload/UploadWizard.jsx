@@ -350,6 +350,8 @@ export function RawUploadWizard({ studyAccession, name }) {
       setFormState(_cloneDeep(response))
       setTimeout(pollServerState, POLLING_INTERVAL)
     })
+    window.document.title = `Upload - Single Cell Portal`
+
   }, [studyAccession])
 
   const nextStep = STEPS[currentStepIndex + 1]

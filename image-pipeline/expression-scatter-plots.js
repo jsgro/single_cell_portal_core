@@ -25,7 +25,7 @@ const { values } = parseArgs({ args, options })
 // Candidates for CLI argument
 // CPU count on Intel i7 is 1/2 of reported, due to hyperthreading
 // const numCPUs = os.cpus().length / 2 - 1
-const numCPUs = 1
+const numCPUs = 1 // For easier local development
 console.log(`Number of CPUs to be used on this client: ${numCPUs}`)
 
 // TODO (SCP-4564): Document how to adjust network rules to use staging
