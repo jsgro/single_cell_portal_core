@@ -12,6 +12,7 @@ COPY Gemfile.lock /home/app/webapp/Gemfile.lock
 COPY package.json /home/app/webapp/package.json
 COPY yarn.lock /home/app/webapp/yarn.lock
 RUN chmod a+w /home/app/webapp/yarn.lock
+RUN chmod a+w /home/app/webapp/node_modules/.yarn-integrity
 
-RUN bundle install
+RUN yarn install
 RUN sudo -E -u app -H yarn install

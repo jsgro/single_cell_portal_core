@@ -3,8 +3,9 @@ import _uniqueId from 'lodash/uniqueId'
 import _remove from 'lodash/remove'
 import Plotly from 'plotly.js-dist'
 import { Store } from 'react-notifications-component'
+import ExifReader from 'exifreader'
 
-import { fetchCluster, updateStudyFile } from '~/lib/scp-api'
+import { fetchCluster, updateStudyFile, fetchBucketFile } from '~/lib/scp-api'
 import { logScatterPlot } from '~/lib/scp-api-metrics'
 import { log } from '~/lib/metrics-api'
 import { useUpdateEffect } from '~/hooks/useUpdate'
@@ -58,6 +59,16 @@ function RawScatterPlot({
   const [editedCustomColors, setEditedCustomColors] = useState({})
 
   const isRefGroup = getIsRefGroup(scatterData?.annotParams?.type, genes, isCorrelatedScatter)
+
+  const flags = getFeatureFlagsWithDefaults()
+
+  // Uncomment when running Image Pipeline
+  // flags.progressive_loading = false
+  // TODO (pre-GA for Image Pipeline):
+  // - Inspect forthcoming SCP API data for whether static image is available
+
+  const imageClassName = 'scp-canvas-image'
+  const imageSelector = `#${ graphElementId } .${imageClassName}`
 
   /**
    * Handle user interaction with one or more labels in legend.
@@ -166,6 +177,121 @@ function RawScatterPlot({
     return traces
   }
 
+  /** Update UI to reflect successfully scatter plot rendering */
+  function concludeRender(scatter) {
+    if (scatter) {
+      setScatterData(scatter)
+    }
+    setShowError(false)
+    setIsLoading(false)
+  }
+
+  /** Display static image of gene expression scatter plot */
+  async function renderImage(response) {
+    const imageBuffer = await response.arrayBuffer()
+    const exifTags = ExifReader.load(imageBuffer)
+    const imageBlob = new Blob([imageBuffer])
+    const imageObjectUrl = URL.createObjectURL(imageBlob)
+
+    // Parse gene-specific plot configuration from image Exif metadata
+    const ranges = JSON.parse(exifTags.ImageDescription.description)
+
+    // For colorbar labels, and gridlines
+    const expressionRange = ranges.expression
+    const coordinateRanges = {
+      x: ranges.x,
+      y: ranges.y,
+      z: ranges.z
+    }
+
+    // TODO: Move this data from per-gene fetch to cluster fetch
+    const titles = {
+      x: 'X',
+      y: 'Y',
+      z: 'Z',
+      magnitude: 'Expression'
+    }
+
+    const tmpScatterData = Object.assign({}, {
+      genes,
+      isCorrelatedScatter,
+      isAnnotatedScatter,
+      axes: {
+        titles,
+        aspects: null
+      },
+      data: {
+        expression: expressionRange // Only range needed here, not full array
+      },
+      annotParams: {
+        'name': 'General_Celltype',
+        'type': 'group',
+        'scope': 'study'
+      }
+    })
+    const scatter = updateScatterLayout(tmpScatterData)
+    const layout = Object.assign({}, scatter.layout)
+
+    // For gridlines and color bar
+    layout.xaxis.range = coordinateRanges.x
+    layout.yaxis.range = coordinateRanges.y
+    const color = expressionRange
+
+    // TODO: Refactor getPlotlyTraces to return most of these; almost none
+    // should need to rely on data fetched per-gene.
+    const plotlyTraces = [
+      {
+        'marker': {
+          'line': { 'color': 'rgb(40,40,40)', 'width': 0 },
+          'size': 3,
+          'showscale': true,
+          'colorscale': '',
+          'reversescale': false,
+          color,
+          'colorbar': { 'title': { 'text': titles.magnitude, 'side': 'right' } }
+        },
+        'x': coordinateRanges.x,
+        'y': coordinateRanges.y,
+        'mode': 'markers',
+        'type': 'scattergl'
+      }
+    ]
+    Plotly.react(graphElementId, plotlyTraces, layout)
+
+    // Replace old mostly-blank WebGL canvas with new "2d" (i.e., non-WebGL) canvas.
+    // Only "2d" contexts support the `drawImage` method:
+    // https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/drawImage
+    const oldCtx = document.querySelector(`#${ graphElementId } .gl-canvas-context`)
+    const oldWidth = oldCtx.width
+    const oldHeight = oldCtx.height
+    oldCtx.remove()
+    const canvas = document.createElement('canvas')
+    canvas.setAttribute('class', 'gl-canvas gl-canvas-context scp-canvas-image')
+    const style = 'position: absolute; top: 0px; left: 0px; overflow: visible; pointer-events: none;'
+    canvas.setAttribute('style', style)
+    canvas.setAttribute('width', oldWidth)
+    canvas.setAttribute('height', oldHeight)
+    document.querySelector(`#${ graphElementId } .gl-container`).append(canvas)
+    const ctx = document.querySelector(`#${ graphElementId } .gl-canvas-context`).getContext('2d')
+
+    // Load static image of plot, and render it in the canvas element
+    const image = new Image()
+    image.className = imageClassName
+    image.addEventListener('load', renderToCanvas)
+    image.width = oldWidth
+    image.height = oldHeight
+    image.src = imageObjectUrl
+
+    /** Image onload handler.  (Drawing before load renders no image.) */
+    function renderToCanvas() {
+      // TODO (SCP-4600): Scale and transform scatter plot image on client
+      ctx.scale(0.73, 0.73)
+      ctx.drawImage(image, 92, 9)
+    }
+
+    concludeRender()
+  }
+
   /** Process scatter plot data fetched from server */
   function processScatterPlot(clusterResponse=null) {
     let [scatter, perfTimes] =
@@ -177,7 +303,12 @@ function RawScatterPlot({
     const plotlyTraces = updateCountsAndGetTraces(scatter)
 
     const startTime = performance.now()
-    Plotly.react(graphElementId, plotlyTraces, layout)
+
+    if (flags?.progressive_loading && genes.length === 1 && document.querySelector(imageSelector)) {
+      Plotly.newPlot(graphElementId, plotlyTraces, layout)
+    } else {
+      Plotly.react(graphElementId, plotlyTraces, layout)
+    }
 
     if (perfTimes) {
       perfTimes.plot = performance.now() - startTime
@@ -191,7 +322,6 @@ function RawScatterPlot({
       computeCorrelations(scatter).then(correlations => {
         const rhoTime = Math.round(performance.now() - rhoStartTime)
         setBulkCorrelation(correlations.bulk)
-        const flags = getFeatureFlagsWithDefaults()
         if (flags.correlation_refinements) {
           setLabelCorrelations(correlations.byLabel)
         }
@@ -205,16 +335,27 @@ function RawScatterPlot({
       scatter.annotParams.type === 'group' && scatter.data.annotations.some(annot => annot.includes('|'))
 
     if (clusterResponse) {
-      setScatterData(scatter)
-      setShowError(false)
-      setIsLoading(false)
+      concludeRender(scatter)
     }
   }
 
   // Fetches plot data then draws it, upon load or change of any data parameter
   useEffect(() => {
     setIsLoading(true)
-    // use a data cache if one has been provided, otherwise query scp-api directly
+
+    // use an image and/or data cache if one has been provided, otherwise query scp-api directly
+    if (
+      flags?.progressive_loading && isGeneExpression(genes, isCorrelatedScatter) && !isAnnotatedScatter &&
+      !scatterData &&
+      genes[0] === 'A1BG-AS1' // Placeholder; likely replace with setting like DE
+    ) {
+      const bucketName = 'broad-singlecellportal-public'
+      const filePath = `test/scatter_image/${genes[0]}-v2.webp`
+      fetchBucketFile(bucketName, filePath).then(async response => {
+        renderImage(response)
+      })
+    }
+
     const fetchMethod = dataCache ? dataCache.fetchCluster : fetchCluster
     fetchMethod({
       studyAccession,
@@ -322,16 +463,14 @@ function RawScatterPlot({
   return (
     <div className="plot">
       { ErrorComponent }
-      { scatterData &&
-        <PlotTitle
-          cluster={scatterData.cluster}
-          annotation={scatterData.annotParams.name}
-          subsample={scatterData.subsample}
-          genes={scatterData.genes}
-          consensus={scatterData.consensus}
-          isCorrelatedScatter={isCorrelatedScatter}
-          correlation={bulkCorrelation}/>
-      }
+      <PlotTitle
+        cluster={cluster}
+        annotation={annotation.name}
+        subsample={subsample}
+        genes={genes}
+        consensus={consensus}
+        isCorrelatedScatter={isCorrelatedScatter}
+        correlation={bulkCorrelation}/>
       <div
         className="scatter-graph"
         id={graphElementId}
@@ -374,6 +513,11 @@ function RawScatterPlot({
 const ScatterPlot = withErrorBoundary(RawScatterPlot)
 export default ScatterPlot
 
+/** Whether this is a gene expression scatter plot */
+function isGeneExpression(genes, isCorrelatedScatter) {
+  return genes.length && !isCorrelatedScatter
+}
+
 /**
  * Whether scatter plot should use custom legend
  *
@@ -382,9 +526,7 @@ export default ScatterPlot
  *   B) also shown at right in single-gene view
  */
 function getIsRefGroup(annotType, genes, isCorrelatedScatter) {
-  const isGeneExpressionForColor = genes.length && !isCorrelatedScatter
-
-  return annotType === 'group' && !isGeneExpressionForColor
+  return annotType === 'group' && !isGeneExpression(genes, isCorrelatedScatter)
 }
 
 /** Get width and height for scatter plot dimensions */

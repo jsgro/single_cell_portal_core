@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import _clone from 'lodash/clone'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faLink, faArrowLeft, faCog, faTimes, faDna, faUndo } from '@fortawesome/free-solid-svg-icons'
+import { faLink, faArrowLeft, faCog, faTimes, faUndo } from '@fortawesome/free-solid-svg-icons'
 
 import StudyGeneField from './StudyGeneField'
 import ClusterSelector from '~/components/visualization/controls/ClusterSelector'
@@ -24,7 +24,7 @@ import Heatmap from '~/components/visualization/Heatmap'
 import GeneListHeatmap from '~/components/visualization/GeneListHeatmap'
 import GenomeView from './GenomeView'
 import ImageTab from './ImageTab'
-import { getAnnotationValues, getDefaultSpatialGroupsForCluster, getMatchedAnnotation } from '~/lib/cluster-utils'
+import { getAnnotationValues, getDefaultSpatialGroupsForCluster } from '~/lib/cluster-utils'
 import RelatedGenesIdeogram from '~/components/visualization/RelatedGenesIdeogram'
 import InferCNVIdeogram from '~/components/visualization/InferCNVIdeogram'
 import useResizeEffect from '~/hooks/useResizeEffect'
@@ -316,11 +316,11 @@ export default function ExploreDisplayTabs({
               <div className={shownTab === 'annotatedScatter' ? '' : 'hidden'}>
                 <ScatterPlot
                   studyAccession={studyAccession}
-                  {...exploreParams}
+                  {...exploreParamsWithDefaults}
                   isAnnotatedScatter={true}
                   dimensionProps={{
                     numColumns: 1,
-                    numRows: exploreParams?.spatialGroups.length ? 2 : 1,
+                    numRows: exploreParamsWithDefaults?.spatialGroups.length ? 2 : 1,
                     showRelatedGenesIdeogram,
                     showViewOptionsControls
                   }}
@@ -335,7 +335,7 @@ export default function ExploreDisplayTabs({
               <div className={shownTab === 'correlatedScatter' ? '' : 'hidden'}>
                 <ScatterPlot
                   studyAccession={studyAccession}
-                  {...exploreParams}
+                  {...exploreParamsWithDefaults}
                   isCorrelatedScatter={true}
                   dimensionProps={{
                     numColumns: 1,
@@ -353,8 +353,8 @@ export default function ExploreDisplayTabs({
                 <ScatterTab
                   {...{
                     studyAccession,
-                    exploreParams,
-                    updateExploreParams,
+                    exploreParamsWithDefaults,
+                    updateExploreParamsWithDefaults: updateExploreParams,
                     exploreInfo,
                     isGeneList,
                     isGene,
