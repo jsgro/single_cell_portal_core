@@ -8,8 +8,7 @@
  * node expression-scatter-plots.js --accession="SCP24" # Staging, 1.3M cell study
  */
 import { parseArgs } from 'node:util'
-import { access } from 'node:fs'
-import { mkdir, writeFile, readFile } from 'node:fs/promises'
+import { mkdir, writeFile, readFile, access } from 'node:fs/promises'
 import sharp from 'sharp'
 import os from 'node:os'
 
@@ -34,19 +33,22 @@ console.log(`Number of CPUs to be used on this client: ${numCPUs}`)
 const origin = 'https://localhost:3000'
 
 /** Make output directories if absent */
-function makeLocalOutputDir(leaf) {
+async function makeLocalOutputDir(leaf) {
   const dir = `output/${values.accession}/${leaf}/`
   const options = { recursive: true }
-  access(dir, async err => {if (err) {await mkdir(dir, options)}})
+  try {
+    await access(dir)
+  } catch {
+    await mkdir(dir, options)
+  }
   return dir
 }
 
-const imagesDir = makeLocalOutputDir('images')
-const jsonDir = makeLocalOutputDir('json')
+const imagesDir = await makeLocalOutputDir('images')
+const jsonDir = await makeLocalOutputDir('json')
 
 // Cache for X, Y, and possibly Z coordinates
 const coordinates = {}
-let annotations = []
 
 /** Print message with browser-tag preamble to local console */
 function print(message, preamble) {
@@ -85,8 +87,8 @@ async function makeExpressionScatterPlotImage(gene, page, preamble) {
 
   page.waitForTimeout(250) // Wait for janky layout to settle
 
+  // Prepare background colors for later transparency via `omitBackground`
   await page.evaluate(() => {
-    // Prepare background colors for later transparency via `omitBackground`
     document.querySelector('body').style.backgroundColor = '#FFF0'
     document.querySelector('.study-explore .plot').style.background = '#FFF0'
     document.querySelector('.explore-tab-content').style.background = '#FFF0'
@@ -103,7 +105,7 @@ async function makeExpressionScatterPlotImage(gene, page, preamble) {
   })
 
   // Height and width of plot, x- and y-offset from viewport origin
-  const clipDimensions = { height: 595, width: 660, x: 5, y: 280 }
+  const clipDimensions = { height: 595, width: 660, x: 5, y: 310 }
 
   // Take a screenshot, save it locally
   const rawImagePath = `${imagesDir}${gene}-raw.webp`
@@ -144,15 +146,13 @@ async function makeExpressionScatterPlotImage(gene, page, preamble) {
 
   print(`Wrote ${imagePath}`, preamble)
 
-  // Uncomment block for easier local development
-  // if (imagePath === 'output/SCP138/images/A1BG-AS1.webp') {
-  //   exit()
-  // }
-
   return
 }
 
-/** Remove extraneous field parameters from SCP API call */
+/**
+ * Remove extraneous field parameters from SCP API call.
+ * Substantially speeds up pipeline, if local expression data is not available.
+ */
 function trimExpressionScatterPlotUrl(url) {
   url = url.replace('cells%2Cannotation%2C', '')
   if (Object.keys(coordinates).length > 0) {
@@ -166,7 +166,23 @@ function trimExpressionScatterPlotUrl(url) {
 /** Fetch JSON data for gene expression scatter plot, before loading page */
 async function prefetchExpressionData(gene, context) {
   const { accession, preamble, origin } = context
+
+  const jsonPath = `${jsonDir}${gene}.json`
+
   print(`Prefetching JSON for ${gene}`, preamble)
+
+  let isCopyOnFilesystem = true
+  try {
+    await access(jsonPath)
+  } catch {
+    isCopyOnFilesystem = false
+  }
+
+  if (isCopyOnFilesystem) {
+    // Don't process with fetch if expression was already prefetched
+    print(`Using local expression data for ${gene}`, preamble)
+    return
+  }
 
   // Configure URLs
   const apiStem = `${origin}/single_cell/api/v1`
@@ -179,21 +195,15 @@ async function prefetchExpressionData(gene, context) {
   const response = await fetch(trimmedUrl)
   const json = await response.json()
 
-  if (url === trimmedUrl) {
+  if (Object.keys(coordinates).length === 0) {
     // Cache `coordinates` and `annotations` fields; this is done only once
     coordinates.x = json.data.x
     coordinates.y = json.data.y
     if ('z' in json.data) {
       coordinates.z = json.data.z
     }
-    annotations = json.annotations
-  } else {
-    // Merge in previously cached `coordinates` and `annotations` fields
-    // Requesting only `expression` field dramatically accelerates Image Pipeline
-    json.data = Object.assign(json.data, coordinates, { annotations })
   }
 
-  const jsonPath = `${jsonDir}${gene}.json`
   await writeFile(jsonPath, JSON.stringify(json))
   print(`Wrote prefetched JSON: ${jsonPath}`, preamble)
 }
@@ -232,8 +242,9 @@ async function configureIntercepts(page) {
       const headers = Object.assign({}, request.headers())
       const [isESPlot, gene] = detectExpressionScatterPlot(request)
       if (isESPlot) {
+        console.log('Reading local file for:')
+        console.log(request.url())
         // Replace SCP API request for expression data with prefetched data.
-        // Non-local app servers throttle real requests, breaking the pipeline.
         //
         // If these files could be made by Ingest Pipeline and put in a bucket,
         // then Image Pipeline could run against production web app while
@@ -256,10 +267,10 @@ async function configureIntercepts(page) {
 async function processScatterPlotImages(genes, context) {
   const { accession, preamble, origin } = context
   // const browser = await puppeteer.launch()
-  // const browser = await puppeteer.launch({ headless: false, devtools: true, acceptInsecureCerts: true, args: ['--ignore-certificate-errors'] })
+  const browser = await puppeteer.launch({ headless: false, devtools: true, acceptInsecureCerts: true, args: ['--ignore-certificate-errors'] })
 
   // Needed for localhost; doesn't hurt to use in other environments
-  const browser = await puppeteer.launch({ acceptInsecureCerts: true, args: ['--ignore-certificate-errors'] })
+  // const browser = await puppeteer.launch({ acceptInsecureCerts: true, args: ['--ignore-certificate-errors'] })
   const page = await browser.newPage()
   await page.setViewport({
     width: 1680,
@@ -300,6 +311,11 @@ async function processScatterPlotImages(genes, context) {
 
     const expressionPlotPerfTime = Date.now() - expressionPlotStartTime
     print(`Expression plot time for gene ${gene}: ${expressionPlotPerfTime} ms`, preamble)
+
+    // Helpful for local development iterations
+    // if (accession === 'SCP138' && gene === 'A1BG-AS1') {
+    //   exit()
+    // }
   }
 
   await browser.close()
@@ -326,8 +342,16 @@ let startTime
   // Get list of all genes in study
   const exploreApiUrl = `${origin}/single_cell/api/v1/studies/${accession}/explore`
   console.log(`Fetching ${exploreApiUrl}`)
+
   const response = await fetch(exploreApiUrl)
-  const json = await response.json()
+  let json
+  try {
+    json = await response.json()
+  } catch (error) {
+    console.log('Failed to fetch:')
+    console.log(exploreApiUrl)
+    exit(1)
+  }
   const uniqueGenes = json.uniqueGenes
   console.log(`Total number of genes: ${uniqueGenes.length}`)
 
