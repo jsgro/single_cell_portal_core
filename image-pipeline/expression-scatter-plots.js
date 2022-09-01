@@ -20,11 +20,12 @@ const args = process.argv.slice(2)
 const options = {
   accession: { type: 'string' },
   cores: { type: 'string' },
-  debug: { type: 'boolean' }
+  debug: { type: 'boolean' },
+  environment: { type: 'string' }
 }
 const { values } = parseArgs({ args, options })
 
-const timeoutMinutes = 0.5
+const timeoutMinutes = 0.75
 
 // Candidates for CLI argument
 // CPU count on Intel i7 is 1/2 of reported, due to hyperthreading
@@ -33,8 +34,13 @@ const numCPUs = values.cores ? parseInt(values.cores) : os.cpus().length / 2 - 1
 console.log(`Number of CPUs to be used on this client: ${numCPUs}`)
 
 // TODO (SCP-4564): Document how to adjust network rules to use staging
-// const origin = 'https://singlecell-staging.broadinstitute.org'
-const origin = 'https://localhost:3000'
+const originsByEnvironment = {
+  'development': 'https://localhost:3000',
+  'staging': 'https://singlecell-staging.broadinstitute.org',
+  'production': 'https://singlecell.broadinstitute.org'
+}
+const environment = values.environment ?? 'development'
+const origin = originsByEnvironment[environment]
 
 /** Make output directories if absent */
 async function makeLocalOutputDir(leaf) {
