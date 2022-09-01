@@ -18,14 +18,18 @@ import { exit } from 'node:process'
 const args = process.argv.slice(2)
 
 const options = {
-  accession: { type: 'string' }
+  accession: { type: 'string' },
+  cores: { type: 'string' },
+  debug: { type: 'boolean' }
 }
 const { values } = parseArgs({ args, options })
 
+const timeoutMinutes = 0.5
+
 // Candidates for CLI argument
 // CPU count on Intel i7 is 1/2 of reported, due to hyperthreading
-// const numCPUs = os.cpus().length / 2 - 1
-const numCPUs = 1 // For easier local development
+const numCPUs = values.cores ? parseInt(values.cores) : os.cpus().length / 2 - 1
+// const numCPUs = 1 // For easier local development
 console.log(`Number of CPUs to be used on this client: ${numCPUs}`)
 
 // TODO (SCP-4564): Document how to adjust network rules to use staging
@@ -267,10 +271,16 @@ async function configureIntercepts(page) {
 async function processScatterPlotImages(genes, context) {
   const { accession, preamble, origin } = context
   // const browser = await puppeteer.launch()
-  const browser = await puppeteer.launch({ headless: false, devtools: true, acceptInsecureCerts: true, args: ['--ignore-certificate-errors'] })
+  let browser
 
-  // Needed for localhost; doesn't hurt to use in other environments
-  // const browser = await puppeteer.launch({ acceptInsecureCerts: true, args: ['--ignore-certificate-errors'] })
+  // Cert args needed for localhost; doesn't hurt in other environments
+  if (values.debug) {
+    browser = await puppeteer.launch({
+      headless: false, devtools: true, acceptInsecureCerts: true, args: ['--ignore-certificate-errors']
+    })
+  } else {
+    browser = await puppeteer.launch({ acceptInsecureCerts: true, args: ['--ignore-certificate-errors'] })
+  }
   const page = await browser.newPage()
   await page.setViewport({
     width: 1680,
@@ -278,8 +288,7 @@ async function processScatterPlotImages(genes, context) {
     deviceScaleFactor: 1
   })
 
-  // const timeoutMinutes = 0.25
-  const timeoutMinutes = 2
+  // const timeoutMinutes = 2
   const timeoutMilliseconds = timeoutMinutes * 60 * 1000
   // page.setDefaultTimeout(0) // No timeout
   page.setDefaultTimeout(timeoutMilliseconds)
