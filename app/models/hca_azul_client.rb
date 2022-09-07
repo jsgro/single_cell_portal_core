@@ -29,7 +29,7 @@ class HcaAzulClient
   }.freeze
 
   # list of words that are common among Azul filter values that result in too many matches
-  # this can cause HTTP 413 Payload Too Large or HTTP 413 URI Too Long errors when executing
+  # this can cause HTTP 413 Payload Too Large or HTTP 414 URI Too Long errors when executing
   # search requests in Azul
   COMMON_AZUL_TERMS = %w[cell cells human single-cell reveals sequencing rna-seq analysis atlas rna disease].freeze
 
@@ -308,7 +308,8 @@ class HcaAzulClient
     query
   end
 
-  # find matching facets based on keyword list, to be passed to :format_query_from_facets
+  # find matching facets based on keyword list along with filters that contain items from term_list
+  # to be passed to :format_query_from_facets
   # since Azul does not support keyword searching, we must find a match for a corresponding facet and treat this as
   # the search request
   # will ignore very common/short words, including known stop words (see StudySearchService::STOP_WORDS)
