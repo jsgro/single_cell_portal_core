@@ -39,7 +39,9 @@ class AzulSearchService
 
     merged_facets = merge_facet_lists(selected_facets, terms_to_facets)
     Rails.logger.info "Executing Azul project query with: #{query_json}"
-    project_results = client.projects(query: query_json)
+    # determine if this is a normal faceted search (1 request), or term-based (split into separate requests and join)
+    search_method = terms_to_facets ? :projects_by_facet : :projects
+    project_results = client.send(search_method, query: query_json)
     project_results['hits'].each do |entry|
       entry_hash = entry.with_indifferent_access
       submission_date = entry_hash[:dates].first[:submissionDate]

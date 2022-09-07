@@ -28,13 +28,8 @@ class HcaAzulClient
     'x-domain-id' => "#{ENV['HOSTNAME']}"
   }.freeze
 
-  # list of words that are common among Azul filter values that result in too many matches
-  # this can cause HTTP 413 Payload Too Large or HTTP 414 URI Too Long errors when executing
-  # search requests in Azul
-  COMMON_AZUL_TERMS = %w[cell cells human single-cell reveals sequencing rna-seq analysis atlas rna disease].freeze
-
-  # union of above terms and known stop words
-  IGNORED_WORDS = (StudySearchService::STOP_WORDS + COMMON_AZUL_TERMS).uniq.freeze
+  # Ignore stop words, as well as the term cell or cells as they are too common in Azul
+  IGNORED_WORDS = (StudySearchService::STOP_WORDS + %w[cell cells]).uniq.freeze
 
   ##
   # Constructors & token management methods
@@ -169,8 +164,7 @@ class HcaAzulClient
   # * *params*
   #   - +catalog+ (String) => HCA catalog name (optional)
   #   - +query+ (Hash) => query object from :format_query_object
-  #   - +terms+ (Array<String>) => Array of terms to use for filtering search results
-  #   - +size+ (Integer) => number of results to return (default is 250)
+  #   - +size+ (Integer) => number of results to return (default is 200)
   #
   # * *returns*
   #   - (Hash) => Available projects
@@ -183,6 +177,34 @@ class HcaAzulClient
     base_path += "&size=#{size}"
     path = append_catalog(base_path, catalog)
     process_api_request(:get, path)
+  end
+
+  # simulate a keyword-search by splitting project queries on facet and joining results
+  #
+  # * *params*
+  #   - +catalog+ (String) => HCA catalog name (optional)
+  #   - +query+ (Hash) => query object from :format_query_object
+  #   - +size+ (Integer) => number of results to return (default is 200)
+  #
+  # * *returns*
+  #   - (Hash) => Available projects
+  #
+  # * *raises*
+  #   - (ArgumentError) => if catalog is not in self.all_catalogs
+  def projects_by_facet(catalog: nil, query: {}, size: MAX_RESULTS)
+    all_results = { 'hits' => [], 'project_ids' => [] }
+    isolated_queries = query.each_pair.map { |facet, filters| { facet => filters } }
+    Parallel.map(isolated_queries, in_threads: isolated_queries.size) do |project_query|
+      results = projects(catalog: catalog, query: project_query, size: size)
+      results['hits'].each do |result|
+        project_id = result['projects'].first['projectId']
+        unless all_results['project_ids'].include?(project_id)
+          all_results['project_ids'] << project_id
+          all_results['hits'] << result
+        end
+      end
+    end
+    all_results
   end
 
   # get a list of all available catalogs
@@ -243,7 +265,7 @@ class HcaAzulClient
   # * *params*
   #   - +catalog+ (String) => HCA catalog name (optional)
   #   - +query+ (Hash) => query object from :format_query_object
-  #   - +size+ (Integer) => number of results to return (default is 250)
+  #   - +size+ (Integer) => number of results to return (default is 200)
   #
   # * *returns*
   #   - (Hash) => List of files matching query
@@ -303,7 +325,13 @@ class HcaAzulClient
         filter_values = safe_facet[:filters].map { |filter| filter[:name] }
         facet_query = { hca_term => { is: filter_values } }
       end
-      query.merge! facet_query
+      if query.key?(hca_term)
+        existing_filters = query.dig(hca_term, :is)
+        new_query = { hca_term => { is: (existing_filters + facet_query.dig(hca_term, :is)).uniq } }
+        query.merge! new_query
+      else
+        query.merge! facet_query
+      end
     end
     query
   end
