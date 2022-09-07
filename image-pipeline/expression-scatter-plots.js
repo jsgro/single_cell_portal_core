@@ -7,21 +7,24 @@
  *
  * node expression-scatter-plots.js --accession="SCP24" # Staging, 1.3M cell study
  */
-import { parseArgs } from 'node:util'
 import { mkdir, writeFile, readFile, access } from 'node:fs/promises'
-import sharp from 'sharp'
 import os from 'node:os'
-
-import puppeteer from 'puppeteer'
 import { exit } from 'node:process'
+import { parseArgs } from 'node:util'
+
+import { gunzipSync, strFromU8 } from 'fflate'
+import puppeteer from 'puppeteer'
+import sharp from 'sharp'
 
 const args = process.argv.slice(2)
 
 const options = {
-  accession: { type: 'string' },
-  cores: { type: 'string' },
-  debug: { type: 'boolean' },
-  environment: { type: 'string' }
+  'accession': { type: 'string' },
+  'cluster': { type: 'string' },
+  'cores': { type: 'string' },
+  'debug': { type: 'boolean' },
+  'environment': { type: 'string' },
+  'json-dir': { type: 'string' }
 }
 const { values } = parseArgs({ args, options })
 
@@ -55,10 +58,17 @@ async function makeLocalOutputDir(leaf) {
 }
 
 const imagesDir = await makeLocalOutputDir('images')
-const jsonDir = await makeLocalOutputDir('json')
+let jsonDir
+if (values['json-dir']) {
+  jsonDir = values['json-dir']
+} else {
+  jsonDir = await makeLocalOutputDir('json')
+}
+const jsonFpStem = `${jsonDir + values.cluster }--`
 
 // Cache for X, Y, and possibly Z coordinates
 const coordinates = {}
+let initExpressionResponse
 
 /** Print message with browser-tag preamble to local console */
 function print(message, preamble) {
@@ -95,10 +105,13 @@ async function makeExpressionScatterPlotImage(gene, page, preamble) {
     return isExpressionScatterPlotLog(request, gene)
   })
 
+  console.log('after page.waitForRequest')
+
   page.waitForTimeout(250) // Wait for janky layout to settle
 
   // Prepare background colors for later transparency via `omitBackground`
   await page.evaluate(() => {
+    console.log('start page.evaluate')
     document.querySelector('body').style.backgroundColor = '#FFF0'
     document.querySelector('.study-explore .plot').style.background = '#FFF0'
     document.querySelector('.explore-tab-content').style.background = '#FFF0'
@@ -112,7 +125,11 @@ async function makeExpressionScatterPlotImage(gene, page, preamble) {
 
     // Remove axis labels, colorbar label (`magnitude` in Plotly.js)
     document.querySelector('svg .infolayer').remove()
+
+    console.log('end page.evaluate')
   })
+
+  console.log('after page.evaluate')
 
   // Height and width of plot, x- and y-offset from viewport origin
   const clipDimensions = { height: 595, width: 660, x: 5, y: 310 }
@@ -175,11 +192,16 @@ function trimExpressionScatterPlotUrl(url) {
 
 /** Fetch JSON data for gene expression scatter plot, before loading page */
 async function prefetchExpressionData(gene, context) {
+  console.log('in prefetchExpressionData')
   const { accession, preamble, origin } = context
 
-  const jsonPath = `${jsonDir}${gene}.json`
+  const extension = values['json-dir'] && initExpressionResponse ? '.gz' : ''
+  const jsonPath = `${jsonFpStem}${gene}.json${extension}`
 
   print(`Prefetching JSON for ${gene}`, preamble)
+
+  console.log('Assess access to jsonPath:')
+  console.log(jsonPath)
 
   let isCopyOnFilesystem = true
   try {
@@ -188,7 +210,10 @@ async function prefetchExpressionData(gene, context) {
     isCopyOnFilesystem = false
   }
 
-  if (isCopyOnFilesystem) {
+  console.log('isCopyOnFilesystem')
+  console.log(isCopyOnFilesystem)
+
+  if (isCopyOnFilesystem && initExpressionResponse) {
     // Don't process with fetch if expression was already prefetched
     print(`Using local expression data for ${gene}`, preamble)
     return
@@ -206,14 +231,20 @@ async function prefetchExpressionData(gene, context) {
   const json = await response.json()
 
   if (Object.keys(coordinates).length === 0) {
+    console.log('in prefetchExpressionData, setting initExpressionResponse')
     // Cache `coordinates` and `annotations` fields; this is done only once
     coordinates.x = json.data.x
     coordinates.y = json.data.y
     if ('z' in json.data) {
       coordinates.z = json.data.z
     }
+    initExpressionResponse = json
   }
 
+  if (values['json-dir']) {
+    print('Populated initExpressionResponse for development run', preamble)
+    return
+  }
   await writeFile(jsonPath, JSON.stringify(json))
   print(`Wrote prefetched JSON: ${jsonPath}`, preamble)
 }
@@ -260,7 +291,27 @@ async function configureIntercepts(page) {
         // then Image Pipeline could run against production web app while
         // incurring virtually no load for app server or DB server, and likely
         // complete warming a study's image cache 5-10x faster.
-        const jsonString = await readFile(`${jsonDir}${gene}.json`, { encoding: 'utf-8' })
+        const extension = values['json-dir'] ? '.gz' : ''
+        const jsonGzPath = `${jsonFpStem + gene }.json${extension}`
+        console.log('jsonGzPath')
+        console.log(jsonGzPath)
+        const content = await readFile(jsonGzPath)
+        console.log('content')
+        console.log(content)
+
+        let jsonString
+        if (extension === '.gz') {
+          const arrayString = strFromU8(gunzipSync(content))
+          initExpressionResponse.data.expression = arrayString
+          jsonString = JSON.stringify(initExpressionResponse)
+        } else {
+          jsonString = content
+        }
+
+        // const jsonString = `{"data":{"expression":${arrayString}}}`
+        {console.log('jsonString.slice(0, 100)')}
+        console.log(jsonString.slice(0, 100))
+
         request.respond({
           status: 200,
           contentType: 'application/json',
