@@ -43,7 +43,7 @@
       window.SCP.featuredSpace = 'covid19'
       <% end %>
 
-      // Set the unique cookie for tracking user IDs in GA.  Also used in Mixpanel.
+      // Set the unique cookie for tracking user IDs in GA.  Also used in Mixpanel and Appcues.
       // This is not personally identifiable, lasts for 1 year or until cleared.
       if ( typeof Cookies.get('user_id') === 'undefined' ) {
         Cookies.set('user_id', '<%= user_signed_in? ? current_user.get_metrics_uuid : SecureRandom.uuid %>', {expires: 365})
