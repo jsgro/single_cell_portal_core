@@ -28,6 +28,14 @@ class HcaAzulClient
     'x-domain-id' => "#{ENV['HOSTNAME']}"
   }.freeze
 
+  # list of words that are common among Azul filter values that result in too many matches
+  # this can cause HTTP 413 Payload Too Large or HTTP 413 URI Too Long errors when executing
+  # search requests in Azul
+  COMMON_AZUL_TERMS = %w[cell cells human single-cell reveals sequencing rna-seq analysis atlas rna disease].freeze
+
+  # union of above terms and known stop words
+  IGNORED_WORDS = (StudySearchService::STOP_WORDS + COMMON_AZUL_TERMS).uniq.freeze
+
   ##
   # Constructors & token management methods
   ##
@@ -300,9 +308,10 @@ class HcaAzulClient
     query
   end
 
-  # create a query from a list of terms
+  # find matching facets based on keyword list, to be passed to :format_query_from_facets
   # since Azul does not support keyword searching, we must find a match for a corresponding facet and treat this as
   # the search request
+  # will ignore very common/short words, including known stop words (see StudySearchService::STOP_WORDS)
   #
   # * *params*
   #   - +term_list+ (Array<String>) => Array of terms to query
@@ -311,7 +320,8 @@ class HcaAzulClient
   #   - (Array<Hash>) => Array of facet objects to be fed to :format_query_from_facets
   def format_facet_query_from_keyword(term_list = [])
     matching_facets = []
-    term_list.each do |term|
+    sanitized_terms = (term_list - IGNORED_WORDS).reject { |t| t.size < 3 }
+    sanitized_terms.each do |term|
       facets = SearchFacet.find_facets_from_term(term)
       next if facets.empty?
 

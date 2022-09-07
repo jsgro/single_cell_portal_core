@@ -216,6 +216,12 @@ class HcaAzulClientTest < ActiveSupport::TestCase
     end
   end
 
+  test 'should ignore common/stop words when creating queries' do
+    ignored_terms = HcaAzulClient::IGNORED_WORDS.sample(5)
+    facets = @hca_azul_client.format_facet_query_from_keyword(ignored_terms)
+    assert_empty facets
+  end
+
   test 'should merge query objects' do
     expected_query = {
       sampleDisease: {
