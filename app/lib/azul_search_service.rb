@@ -57,7 +57,8 @@ class AzulSearchService
         created_at: submission_date, # for sorting purposes
         view_count: 0, # for sorting purposes
         facet_matches: {},
-        term_matches: {},
+        term_matches: [],
+        term_search_weight: 0,
         file_information: [
           {
             project_id: project_id,
