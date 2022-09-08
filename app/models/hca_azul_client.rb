@@ -179,7 +179,7 @@ class HcaAzulClient
     process_api_request(:get, path)
   end
 
-  # simulate a keyword-search by splitting project queries on facet and joining results
+  # simulate OR logic by splitting project queries on facet and joining results
   #
   # * *params*
   #   - +catalog+ (String) => HCA catalog name (optional)
@@ -194,6 +194,7 @@ class HcaAzulClient
   def projects_by_facet(catalog: nil, query: {}, size: MAX_RESULTS)
     all_results = { 'hits' => [], 'project_ids' => [] }
     isolated_queries = query.each_pair.map { |facet, filters| { facet => filters } }
+    Rails.logger.info "Splitting above query into #{isolated_queries.size} requests and joinging results"
     Parallel.map(isolated_queries, in_threads: isolated_queries.size) do |project_query|
       results = projects(catalog: catalog, query: project_query, size: size)
       results['hits'].each do |result|
