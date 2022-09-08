@@ -116,9 +116,9 @@ class HcaAzulClientTest < ActiveSupport::TestCase
 
   test 'should similate OR logic by splitting project queries' do
     # TODO: convert other tests to use mocks to avoid Azul instability/lack of idempotency due to changing data
-    hiv_json = File.open('test/test_data/azul/disease_hiv.json').read
+    hiv_json = File.open(Rails.root.join('test/test_data/azul/disease_hiv.json')).read
     disease_response = JSON.parse(hiv_json).with_indifferent_access
-    homo_sapiens_json = File.open('test/test_data/azul/species_homo_sapiens.json').read
+    homo_sapiens_json = File.open(Rails.root.join('test/test_data/azul/species_homo_sapiens.json')).read
     species_response = JSON.parse(homo_sapiens_json).with_indifferent_access
     mock = Minitest::Mock.new
     mock.expect(:code, 200)
