@@ -304,7 +304,7 @@ module Api
               metadata_weight = @metadata_matches.dig(study.accession, :facet_search_weight).to_i
               -(study.search_weight(@term_list)[:total] + metadata_weight)
             else
-              -study[:term_matches][:total]
+              -study[:term_search_weight]
             end
           end
         when :accession

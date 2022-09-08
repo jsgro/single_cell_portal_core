@@ -75,8 +75,12 @@ class AzulSearchService
       result[:facet_matches] = get_facet_matches(entry_hash, merged_facets)
       if terms
         # only store result if we get a text match on project name/description
-        result[:term_matches] = get_search_term_weights(result, terms)
-        results[short_name] = result if result.dig(:term_matches, :total) > 0
+        match_info = get_search_term_weights(result, terms)
+        if match_info[:total] > 0
+          result[:term_matches] = match_info[:terms].keys
+          result[:term_search_weight] = match_info[:total]
+          results[short_name] = result
+        end
       else
         results[short_name] = result
       end
