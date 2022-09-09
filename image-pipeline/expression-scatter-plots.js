@@ -176,20 +176,6 @@ async function makeExpressionScatterPlotImage(gene, page, preamble) {
   return
 }
 
-/**
- * Remove extraneous field parameters from SCP API call.
- * Substantially speeds up pipeline, if local expression data is not available.
- */
-function trimExpressionScatterPlotUrl(url) {
-  url = url.replace('cells%2Cannotation%2C', '')
-  if (Object.keys(coordinates).length > 0) {
-    // `coordinates` is only needed once, so don't ask for
-    // them if we have them already
-    url = url.replace('=coordinates%2C', '=')
-  }
-  return url
-}
-
 /** Fetch JSON data for gene expression scatter plot, before loading page */
 async function prefetchExpressionData(gene, context) {
   console.log('in prefetchExpressionData')
@@ -224,10 +210,9 @@ async function prefetchExpressionData(gene, context) {
   const allFields = 'coordinates%2Ccells%2Cannotation%2Cexpression'
   const params = `fields=${allFields}&gene=${gene}&subsample=all`
   const url = `${apiStem}/studies/${accession}/clusters/_default?${params}`
-  const trimmedUrl = trimExpressionScatterPlotUrl(url)
 
   // Fetch data
-  const response = await fetch(trimmedUrl)
+  const response = await fetch(url)
   const json = await response.json()
 
   if (Object.keys(coordinates).length === 0) {
