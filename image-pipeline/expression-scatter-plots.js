@@ -28,7 +28,7 @@ const options = {
 }
 const { values } = parseArgs({ args, options })
 
-const timeoutMinutes = 0.75
+const timeoutMinutes = 10 // 0.75
 
 // Candidates for CLI argument
 // CPU count on Intel i7 is 1/2 of reported, due to hyperthreading
@@ -302,8 +302,9 @@ async function configureIntercepts(page) {
         let jsonString
         if (extension === '.gz') {
           const arrayString = strFromU8(gunzipSync(content))
-          initExpressionResponse.data.expression = arrayString
+          initExpressionResponse.data.expression = JSON.parse(arrayString)
           jsonString = JSON.stringify(initExpressionResponse)
+          // await writeFile(`test__${ gene }.json`, jsonString)
         } else {
           jsonString = content
         }
