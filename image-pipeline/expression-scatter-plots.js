@@ -105,13 +105,10 @@ async function makeExpressionScatterPlotImage(gene, page, preamble) {
     return isExpressionScatterPlotLog(request, gene)
   })
 
-  console.log('after page.waitForRequest')
-
   page.waitForTimeout(250) // Wait for janky layout to settle
 
   // Prepare background colors for later transparency via `omitBackground`
   await page.evaluate(() => {
-    console.log('start page.evaluate')
     document.querySelector('body').style.backgroundColor = '#FFF0'
     document.querySelector('.study-explore .plot').style.background = '#FFF0'
     document.querySelector('.explore-tab-content').style.background = '#FFF0'
@@ -125,11 +122,7 @@ async function makeExpressionScatterPlotImage(gene, page, preamble) {
 
     // Remove axis labels, colorbar label (`magnitude` in Plotly.js)
     document.querySelector('svg .infolayer').remove()
-
-    console.log('end page.evaluate')
   })
-
-  console.log('after page.evaluate')
 
   // Height and width of plot, x- and y-offset from viewport origin
   const clipDimensions = { height: 595, width: 660, x: 5, y: 310 }
@@ -167,10 +160,6 @@ async function makeExpressionScatterPlotImage(gene, page, preamble) {
     })
     .toFile(imagePath)
 
-  // const metadata = await sharp(imagePath).metadata()
-  // console.log('metadata:')
-  // console.log(metadata)
-
   print(`Wrote ${imagePath}`, preamble)
 
   return
@@ -178,7 +167,6 @@ async function makeExpressionScatterPlotImage(gene, page, preamble) {
 
 /** Fetch JSON data for gene expression scatter plot, before loading page */
 async function prefetchExpressionData(gene, context) {
-  console.log('in prefetchExpressionData')
   const { accession, preamble, origin } = context
 
   const extension = values['json-dir'] && initExpressionResponse ? '.gz' : ''
@@ -186,18 +174,12 @@ async function prefetchExpressionData(gene, context) {
 
   print(`Prefetching JSON for ${gene}`, preamble)
 
-  console.log('Assess access to jsonPath:')
-  console.log(jsonPath)
-
   let isCopyOnFilesystem = true
   try {
     await access(jsonPath)
   } catch {
     isCopyOnFilesystem = false
   }
-
-  console.log('isCopyOnFilesystem')
-  console.log(isCopyOnFilesystem)
 
   if (isCopyOnFilesystem && initExpressionResponse) {
     // Don't process with fetch if expression was already prefetched
@@ -216,7 +198,6 @@ async function prefetchExpressionData(gene, context) {
   const json = await response.json()
 
   if (Object.keys(coordinates).length === 0) {
-    console.log('in prefetchExpressionData, setting initExpressionResponse')
     // Cache `coordinates` and `annotations` fields; this is done only once
     coordinates.x = json.data.x
     coordinates.y = json.data.y
@@ -268,8 +249,6 @@ async function configureIntercepts(page) {
       const headers = Object.assign({}, request.headers())
       const [isESPlot, gene] = detectExpressionScatterPlot(request)
       if (isESPlot) {
-        console.log('Reading local file for:')
-        console.log(request.url())
         // Replace SCP API request for expression data with prefetched data.
         //
         // If these files could be made by Ingest Pipeline and put in a bucket,
@@ -278,25 +257,16 @@ async function configureIntercepts(page) {
         // complete warming a study's image cache 5-10x faster.
         const extension = values['json-dir'] ? '.gz' : ''
         const jsonGzPath = `${jsonFpStem + gene }.json${extension}`
-        console.log('jsonGzPath')
-        console.log(jsonGzPath)
         const content = await readFile(jsonGzPath)
-        console.log('content')
-        console.log(content)
 
         let jsonString
         if (extension === '.gz') {
           const arrayString = strFromU8(gunzipSync(content))
           initExpressionResponse.data.expression = JSON.parse(arrayString)
           jsonString = JSON.stringify(initExpressionResponse)
-          // await writeFile(`test__${ gene }.json`, jsonString)
         } else {
           jsonString = content
         }
-
-        // const jsonString = `{"data":{"expression":${arrayString}}}`
-        {console.log('jsonString.slice(0, 100)')}
-        console.log(jsonString.slice(0, 100))
 
         request.respond({
           status: 200,
