@@ -98,6 +98,8 @@ export function logClick(event) {
     // https://docs.appcues.com/article/161-javascript-api
     window.Appcues.track('Click Event')
     window.Appcues.on('all', (eventName, event) => {
+      // Event prop building borrowed from Terra UI
+      // https://github.com/DataBiosphere/terra-ui/pull/2463/files
       const eventProps = {
         'appcues.flowId': event.flowId,
         'appcues.flowName': event.flowName,
