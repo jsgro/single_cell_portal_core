@@ -294,10 +294,10 @@ async function processScatterPlotImages(genes, context) {
   // Cert args needed for localhost; doesn't hurt in other environments
   if (values.debug) {
     browser = await puppeteer.launch({
-      headless: false, devtools: true, acceptInsecureCerts: true, args: ['--ignore-certificate-errors']
+      headless: false, devtools: true, acceptInsecureCerts: true, args: ['--ignore-certificate-errors', '--no-sandbox']
     })
   } else {
-    browser = await puppeteer.launch({ acceptInsecureCerts: true, args: ['--ignore-certificate-errors'] })
+    browser = await puppeteer.launch({ acceptInsecureCerts: true, args: ['--ignore-certificate-errors', '--no-sandbox'] })
   }
   const page = await browser.newPage()
   await page.setViewport({
