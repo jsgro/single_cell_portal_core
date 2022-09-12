@@ -144,6 +144,7 @@ function logAppcuesClicks() {
       'appcues.timestamp': event.timestamp
     }
     log(eventName, eventProps)
+    log('appcues:event', eventProps)
   })
 }
 
