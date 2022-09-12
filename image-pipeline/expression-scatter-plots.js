@@ -19,12 +19,12 @@ import sharp from 'sharp'
 const args = process.argv.slice(2)
 
 const options = {
-  'accession': { type: 'string' },
-  'cluster': { type: 'string' },
-  'cores': { type: 'string' },
-  'debug': { type: 'boolean' },
-  'environment': { type: 'string' },
-  'json-dir': { type: 'string' }
+  'accession': { type: 'string' }, // SCP accession
+  'cluster': { type: 'string' }, // Name of clustering
+  'cores': { type: 'string' }, // Number of CPU cores to use. Default: all - 1
+  'debug': { type: 'boolean' }, // Whether to show browser UI and DevTools
+  'environment': { type: 'string' }, // development, staging, or production
+  'json-dir': { type: 'string' } // Path to expression arrays; for development
 }
 const { values } = parseArgs({ args, options })
 
@@ -33,7 +33,6 @@ const timeoutMinutes = 10 // 0.75
 // Candidates for CLI argument
 // CPU count on Intel i7 is 1/2 of reported, due to hyperthreading
 const numCPUs = values.cores ? parseInt(values.cores) : os.cpus().length / 2 - 1
-// const numCPUs = 1 // For easier local development
 console.log(`Number of CPUs to be used on this client: ${numCPUs}`)
 
 // TODO (SCP-4564): Document how to adjust network rules to use staging
@@ -57,7 +56,10 @@ async function makeLocalOutputDir(leaf) {
   return dir
 }
 
+// Make directories for output images
 const imagesDir = await makeLocalOutputDir('images')
+
+// Set and/or make directories for prefetched JSON
 let jsonDir
 if (values['json-dir']) {
   jsonDir = values['json-dir']
@@ -144,12 +146,15 @@ async function makeExpressionScatterPlotImage(gene, page, preamble) {
   // console.log(Math.max(...plotlyTraces[0].y))
   // These ought to be parseable via the `coordinates` array
 
+  // Generalize if this moves beyond prototype
   const imageDescription = JSON.stringify({
     expression: [0, 2.433], // min, max of expression array
     x: [-12.568, 8.749], // min, max of x coordinates array
     y: [-15.174, 10.761], // min, max of y coordinates array
     z: []
   })
+
+  // Embed Plotly.js settings directly into image file's Exif data
   await sharp(rawImagePath)
     .withMetadata({
       exif: {
@@ -301,7 +306,6 @@ async function processScatterPlotImages(genes, context) {
     deviceScaleFactor: 1
   })
 
-  // const timeoutMinutes = 2
   const timeoutMilliseconds = timeoutMinutes * 60 * 1000
   // page.setDefaultTimeout(0) // No timeout
   page.setDefaultTimeout(timeoutMilliseconds)
