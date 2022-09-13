@@ -88,25 +88,25 @@ class RequestUtilsTest < ActiveSupport::TestCase
   end
 
   test 'should set reproducible cache path on viz API requests' do
-    path = '/single_cell/api/v1/clusters/SCP1234'
+    path = '/single_cell/api/v1/clusters/SCP1234/UMAP'
     parameters = {
       annotation_name: 'cell_type__ontology_label',
       annotation_scope: 'study',
       annotation_type: 'group',
-      cluster_name: 'All Cells UMAP',
+      cluster_name: 'UMAP',
       fields: 'coordinates,cells,annotation',
       subsample: 'all',
       study_id: 'SCP1234'
     }
-    expected_digest = '14ea419f44c73ecaf4740526bf7e8c5a54f48b850c197567a3356ae47577c07d'
-    expected_path = "_single_cell_api_v1_clusters_SCP1234_#{expected_digest}"
+    expected_digest = '50122a95a87f2ffa6be253a216f662388988c2e61e530e8d9423b8c97b7c1d60'
+    expected_path = "_single_cell_api_v1_clusters_SCP1234_UMAP_#{expected_digest}"
     assert_equal expected_path, RequestUtils.get_cache_path(path, parameters)
     # reorder parameters to ensure idempotency
     new_params = {
       annotation_type: 'group',
       subsample: 'all',
       annotation_scope: 'study',
-      cluster_name: 'All Cells UMAP',
+      cluster_name: 'UMAP',
       fields: 'coordinates,cells,annotation',
       study_id: 'SCP1234',
       annotation_name: 'cell_type__ontology_label'
