@@ -339,9 +339,10 @@ async function processScatterPlotImages(genes, context) {
     print(`Expression plot time for gene ${gene}: ${expressionPlotPerfTime} ms`, preamble)
 
     // Helpful for local development iterations
-    // if (accession === 'SCP138' && gene === 'A1BG-AS1') {
-    //   exit()
-    // }
+    const humanMilkDePilotAccessions = ['SCP138', 'SCP303', 'SCP1671'] // dev, staging, prod
+    if (humanMilkDePilotAccessions.includes(accession) && gene === 'A1BG-AS1') {
+      process.exit()
+    }
   }
 
   await browser.close()
