@@ -28,7 +28,7 @@ const options = {
 }
 const { values } = parseArgs({ args, options })
 
-const timeoutMinutes = 10 // 0.75
+const timeoutMinutes = 0.75
 
 // Candidates for CLI argument
 // CPU count on Intel i7 is 1/2 of reported, due to hyperthreading
@@ -341,6 +341,7 @@ async function processScatterPlotImages(genes, context) {
     // Helpful for local development iterations
     const humanMilkDePilotAccessions = ['SCP138', 'SCP303', 'SCP1671'] // dev, staging, prod
     if (humanMilkDePilotAccessions.includes(accession) && gene === 'A1BG-AS1') {
+      print('Encountered debug stop gene, exiting', preamble)
       process.exit()
     }
   }
