@@ -34,6 +34,8 @@ class RequestUtils
   def self.construct_params_digest(params)
     sorted_params = params.reject { |name, value| CACHE_PATH_EXCLUDE_LIST.include?(name) || value.empty? }
                           .sort_by { |key, _| key }.flatten
+    return '' if sorted_params.empty? # gotcha to prevent converting empty string into hexdigest
+
     Digest::SHA256.hexdigest sorted_params.join
   end
 
