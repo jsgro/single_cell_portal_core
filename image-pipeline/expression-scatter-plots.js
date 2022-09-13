@@ -22,7 +22,8 @@ const options = {
   'accession': { type: 'string' }, // SCP accession
   'cluster': { type: 'string' }, // Name of clustering
   'cores': { type: 'string' }, // Number of CPU cores to use. Default: all - 1
-  'debug': { type: 'boolean' }, // Whether to show browser UI and DevTools
+  'debug': { type: 'boolean' }, // Whether to show browser UI and exit early
+  'debug-headless': { type: 'boolean' }, // Whether to exit early; for PAPI debugging
   'environment': { type: 'string' }, // development, staging, or production
   'json-dir': { type: 'string' } // Path to expression arrays; for development
 }
@@ -340,7 +341,10 @@ async function processScatterPlotImages(genes, context) {
 
     // Helpful for local development iterations
     const humanMilkDePilotAccessions = ['SCP138', 'SCP303', 'SCP1671'] // dev, staging, prod
-    if (humanMilkDePilotAccessions.includes(accession) && gene === 'A1BG-AS1') {
+    if (
+      (values['debug'] || values['debug-headless']) &&
+      humanMilkDePilotAccessions.includes(accession) && gene === 'A1BG-AS1'
+    ) {
       print('Encountered debug stop gene, exiting', preamble)
       process.exit()
     }
