@@ -1,12 +1,12 @@
-import React, { useEffect, useState } from 'react'
+import React, { useState } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faPalette } from '@fortawesome/free-solid-svg-icons'
 import Modal from 'react-bootstrap/lib/Modal'
 import { HexColorPicker, HexColorInput } from 'react-colorful'
 import _cloneDeep from 'lodash/cloneDeep'
+// import LegendSearch from './LegendSearch'
 
 import { log } from '~/lib/metrics-api'
-import { UNSPECIFIED_ANNOTATION_NAME } from '~/lib/cluster-utils'
 import PlotUtils from '~/lib/plot'
 const { scatterLabelLegendWidth, getColorForLabel, getLegendSortedLabels } = PlotUtils
 
@@ -152,28 +152,7 @@ export default function ScatterPlotLegend({
   const numLabels = labels.length
 
   // setLegendLabels(labels)
-
-  const legendEntries = labels
-    .map((label, i) => {
-      const numPoints = countsByLabel[label]
-      const iconColor = getColorForLabel(label, customColors, editedCustomColors, i)
-
-      return (
-        <LegendEntry
-          key={label}
-          label={label}
-          numPoints={numPoints}
-          iconColor={iconColor}
-          correlations={correlations}
-          hiddenTraces={hiddenTraces}
-          updateHiddenTraces={updateHiddenTraces}
-          numLabels={numLabels}
-          updateEditedCustomColors={updateEditedCustomColors}
-          showColorControls={showColorControls}
-          setActiveTraceLabel={setActiveTraceLabel}
-        />
-      )
-    })
+  const [foundLabels, setFoundLabels] = useState(labels)
 
   const style = { width: scatterLabelLegendWidth, height }
   const filteredClass = (hiddenTraces.length === 0) ? 'unfiltered' : ''
@@ -212,6 +191,42 @@ export default function ScatterPlotLegend({
   /** collect general information when a user's mouse enters the legend  */
   function logMouseEnter() {
     log('hover:scatterlegend', { numLabels })
+  }
+
+  /** */
+  function LegendSearch() {
+    const [filter, setFilter] = useState('')
+    const filteredLabels = labels.filter(f => f.toLowerCase().includes(filter.toLowerCase()) || filter === '')
+
+    return (
+      <div>
+        <input id="filter"
+          name="filter"
+          type="text"
+          value={filter}
+          onChange={event => setFilter(event.target.value)}
+        />
+        {filteredLabels.map((label, i) => {
+          const numPoints = countsByLabel[label]
+          const iconColor = getColorForLabel(label, customColors, editedCustomColors, i)
+          return (
+            <LegendEntry
+              key={label}
+              label={label}
+              numPoints={numPoints}
+              iconColor={iconColor}
+              correlations={correlations}
+              hiddenTraces={hiddenTraces}
+              updateHiddenTraces={updateHiddenTraces}
+              numLabels={numLabels}
+              updateEditedCustomColors={updateEditedCustomColors}
+              showColorControls={showColorControls}
+              setActiveTraceLabel={setActiveTraceLabel}
+            />
+          )
+        })}
+      </div>
+    )
   }
 
   return (
@@ -285,8 +300,8 @@ export default function ScatterPlotLegend({
             }
           </div>
         }
+        <div>{<LegendSearch ></LegendSearch>}</div>
       </div>
-      {legendEntries}
     </div>
   )
 }
