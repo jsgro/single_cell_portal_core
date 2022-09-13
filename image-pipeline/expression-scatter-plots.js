@@ -196,7 +196,7 @@ async function prefetchExpressionData(gene, context) {
   // Configure URLs
   const apiStem = `${origin}/single_cell/api/v1`
   const allFields = 'coordinates%2Ccells%2Cannotation%2Cexpression'
-  const params = `fields=${allFields}&gene=${gene}&subsample=all`
+  const params = `fields=${allFields}&gene=${gene}&subsample=all&isImagePipeline=true`
   const url = `${apiStem}/studies/${accession}/clusters/_default?${params}`
 
   // Fetch data
@@ -301,6 +301,11 @@ async function processScatterPlotImages(genes, context) {
     browser = await puppeteer.launch({ acceptInsecureCerts: true, args: ['--ignore-certificate-errors', '--no-sandbox'] })
   }
   const page = await browser.newPage()
+  // Set user agent to Chrome "9000".
+  // Bard client crudely parses UA, so custom raw user agents are infeasible.
+  await page.setUserAgent(
+    'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/9000.0.3904.108 Safari/537.36'
+  )
   await page.setViewport({
     width: 1680,
     height: 1000,
@@ -315,7 +320,8 @@ async function processScatterPlotImages(genes, context) {
   configureIntercepts(page)
 
   // Go to Explore tab in Study Overview page
-  const exploreViewUrl = `${origin}/single_cell/study/${accession}?subsample=all#study-visualize`
+  const params = `?subsample=all&isImagePipeline=true#study-visualize`
+  const exploreViewUrl = `${origin}/single_cell/study/${accession}${params}`
   print(`Navigating to Explore tab: ${exploreViewUrl}`, preamble)
   await page.goto(exploreViewUrl)
   print(`Completed loading Explore tab`, preamble)
@@ -371,8 +377,9 @@ let startTime
 
   startTime = Date.now()
 
+  const crum = 'isImagePipeline=true'
   // Get list of all genes in study
-  const exploreApiUrl = `${origin}/single_cell/api/v1/studies/${accession}/explore`
+  const exploreApiUrl = `${origin}/single_cell/api/v1/studies/${accession}/explore?${crum}`
   console.log(`Fetching ${exploreApiUrl}`)
 
   const response = await fetch(exploreApiUrl)
