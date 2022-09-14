@@ -32,6 +32,8 @@ import LoadingSpinner from '~/lib/LoadingSpinner'
 import { log } from '~/lib/metrics-api'
 import { getFeatureFlagsWithDefaults } from '~/providers/UserProvider'
 import DifferentialExpressionPanel, { DifferentialExpressionPanelHeader } from './DifferentialExpressionPanel'
+import OverlayTrigger from 'react-bootstrap/lib/OverlayTrigger'
+import Tooltip from 'react-bootstrap/lib/Tooltip'
 
 const tabList = [
   { key: 'loading', label: 'loading...' },
@@ -265,14 +267,16 @@ export default function ExploreDisplayTabs({
               allGenes={exploreInfo ? exploreInfo.uniqueGenes : []}
               isLoading={!exploreInfo}
               speciesList={exploreInfo ? exploreInfo.taxonNames : []}/>
-            { (isGene || isGeneList || hasIdeogramOutputs) && // show if this is gene search || gene list
-              <button className="action fa-lg"
-                onClick={() => searchGenes([])}
-                title="Return to cluster view"
-                data-toggle="tooltip"
-                data-analytics-name="back-to-cluster-view">
-                <FontAwesomeIcon icon={faArrowLeft}/>
-              </button>
+            { // show if this is gene search || gene list
+              (isGene || isGeneList || hasIdeogramOutputs) &&
+                <OverlayTrigger placement='top' overlay={
+                  <Tooltip id='back-to-cluster-view'>{'Return to cluster view'}</Tooltip>
+                }>
+                  <button className="action fa-lg"
+                    onClick={() => searchGenes([])}>
+                    <FontAwesomeIcon icon={faArrowLeft}/>
+                  </button>
+                </OverlayTrigger>
             }
           </div>
         </div>
