@@ -41,7 +41,7 @@ const originsByEnvironment = {
   'staging': 'https://singlecell-staging.broadinstitute.org',
   'production': 'https://singlecell.broadinstitute.org'
 }
-const environment = values.environment ?? 'development'
+const environment = values.environment || 'development'
 const origin = originsByEnvironment[environment]
 
 /** Make output directories if absent */
