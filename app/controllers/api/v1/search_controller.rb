@@ -342,6 +342,9 @@ module Api
           end.reverse
         end
 
+        # attempt to promote an exact text-string match, if possible
+        @studies = self.class.promote_exact_match(params[:terms], @studies) if params[:terms].present?
+
         # save list of study accessions for bulk_download/bulk_download_size calls, in order of results
         @matching_accessions = @studies.map { |study| self.class.get_study_attribute(study, :accession) }
         logger.info "Total matching accessions from all non-inferred searches: #{@matching_accessions}"
@@ -536,6 +539,16 @@ module Api
       # exclude known stop words from a list of terms to increase search result relevance
       def self.reject_stop_words_from_terms(terms)
         terms&.reject { |t| ::StudySearchService::STOP_WORDS.include? t } || []
+      end
+
+      # ascertain if there is an exact match for the entire text-based search and promote result
+      # stripping non-word characters makes matching easier as it is whitespace tolerant
+      def self.promote_exact_match(search_string, studies)
+        safe_search_string = RequestUtils.format_text_for_match(search_string)
+        studies.partition do |study|
+          safe_study_name = RequestUtils.format_text_for_match(get_study_attribute(study, :name))
+          safe_study_name == safe_search_string
+        end.flatten
       end
 
       # generate query string for BQ

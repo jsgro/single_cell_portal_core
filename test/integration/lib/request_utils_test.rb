@@ -52,6 +52,12 @@ class RequestUtilsTest < ActiveSupport::TestCase
                  "Did not correctly sanitize characters from list; #{invalid_output} != #{sanitized_invalid_list}"
   end
 
+  test 'should format text for matching' do
+    search_string = '   ThiS iS a long %%  STRING with non\  word ... charaCTers    iN   It !!!!   '
+    expected_string = 'this is a long string with non word characters in it'
+    assert_equal expected_string, RequestUtils.format_text_for_match(search_string)
+  end
+
   test 'should format file path for os' do
     path = 'path/to/some/file.txt'
     unix_os_list = ['Mac OS X', 'macOSX', 'Generic Linux', 'Android', 'iOS (iPhone)']
