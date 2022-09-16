@@ -100,6 +100,12 @@ class StudyFile
   field :z_axis_max, type: Integer
   field :is_spatial, type: Boolean, default: false
 
+  # Hyperlink to an external web resource for a cluster
+  # Set in upload / sync UI.  Shown in Study Overview page.
+  field :external_link_url, type: String
+  field :external_link_title, type: String # Link text
+  field :external_link_description, type: String # Link tooltip
+
   # for spatial files, the ids of cluster files that correspond to this file for default display
   field :spatial_cluster_associations, type: Array, default: []
   field :queued_for_deletion, type: Boolean, default: false
