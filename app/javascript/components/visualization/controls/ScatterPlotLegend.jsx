@@ -5,6 +5,8 @@ import Modal from 'react-bootstrap/lib/Modal'
 import { HexColorPicker, HexColorInput } from 'react-colorful'
 import _cloneDeep from 'lodash/cloneDeep'
 import Button from 'react-bootstrap/lib/Button'
+import { getFeatureFlagsWithDefaults } from '~/providers/UserProvider'
+
 
 import { log } from '~/lib/metrics-api'
 import PlotUtils from '~/lib/plot'
@@ -157,6 +159,8 @@ export default function ScatterPlotLegend({
   const [showIsEnabled, hideIsEnabled] =
     getShowHideEnabled(hiddenTraces, countsByLabel)
 
+  const flags = getFeatureFlagsWithDefaults()
+
   // filter text for searching the legend
   const [filter, setFilter] = useState('')
 
@@ -217,7 +221,7 @@ export default function ScatterPlotLegend({
   const showClear = !!filter
 
   /** only show the legend search if there are greater than 30 labels in the legend and flag is enabled */
-  const showLegendSearch = numLabels >= 30
+  const showLegendSearch = numLabels >= 30 && flags?.legend_search
 
   /** handle a user pressing the 'x' to clear the field */
   function handleClear() {
@@ -296,7 +300,7 @@ export default function ScatterPlotLegend({
           </>
           }
         </div>
-        {!showColorControls && <div className='legend-search-style'>
+        {(!showColorControls && showLegendSearch) && <div className='legend-search-style'>
           <span className='icon-legend-search'><FontAwesomeIcon icon={faSearch} /></span>
           <input
             id="filter"
