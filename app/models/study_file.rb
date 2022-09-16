@@ -263,6 +263,18 @@ class StudyFile
       key :type, :integer
       key :description, 'Z axis domain maximum (for Clusters)'
     end
+    property :external_link_url do
+      key :type, :string
+      key :description, 'URL of external link  (for Clusters)'
+    end
+    property :external_link_title do
+      key :type, :string
+      key :description, 'Title of external link  (for Clusters)'
+    end
+    property :external_link_description do
+      key :type, :string
+      key :description, 'Description of / tooltip for external link  (for Clusters)'
+    end
     property :queued_for_deletion do
       key :type, :boolean
       key :default, false
@@ -413,6 +425,18 @@ class StudyFile
         property :z_axis_max do
           key :type, :integer
           key :description, 'Z axis domain maximum (for Clusters)'
+        end
+        property :external_link_url do
+          key :type, :string
+          key :description, 'URL of external link  (for Clusters)'
+        end
+        property :external_link_title do
+          key :type, :string
+          key :description, 'Title of external link  (for Clusters)'
+        end
+        property :external_link_description do
+          key :type, :string
+          key :description, 'Description of / tooltip for external link  (for Clusters)'
         end
         property :options do
           key :type, :object
