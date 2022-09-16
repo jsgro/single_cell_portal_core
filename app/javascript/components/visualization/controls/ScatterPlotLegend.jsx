@@ -1,10 +1,10 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faPalette } from '@fortawesome/free-solid-svg-icons'
+import { faPalette, faTimes, faSearch } from '@fortawesome/free-solid-svg-icons'
 import Modal from 'react-bootstrap/lib/Modal'
 import { HexColorPicker, HexColorInput } from 'react-colorful'
 import _cloneDeep from 'lodash/cloneDeep'
-// import LegendSearch from './LegendSearch'
+import Button from 'react-bootstrap/lib/Button'
 
 import { log } from '~/lib/metrics-api'
 import PlotUtils from '~/lib/plot'
@@ -137,7 +137,6 @@ function getShowHideEnabled(hiddenTraces, countsByLabel) {
   return enabled
 }
 
-
 /** Component for custom legend for scatter plots */
 export default function ScatterPlotLegend({
   name, height, countsByLabel, correlations, hiddenTraces,
@@ -151,13 +150,15 @@ export default function ScatterPlotLegend({
   const labels = getLegendSortedLabels(countsByLabel)
   const numLabels = labels.length
 
-  // setLegendLabels(labels)
-  const [foundLabels, setFoundLabels] = useState(labels)
+  const [labelsToShow, setLabelsToShow] = useState(labels)
 
   const style = { width: scatterLabelLegendWidth, height }
   const filteredClass = (hiddenTraces.length === 0) ? 'unfiltered' : ''
   const [showIsEnabled, hideIsEnabled] =
     getShowHideEnabled(hiddenTraces, countsByLabel)
+
+  // filter text for searching the legend
+  const [filter, setFilter] = useState('')
 
   /** updates the user picked color for the given label.  does *not* save change to the server */
   function updateEditedCustomColors(label, color) {
@@ -193,40 +194,35 @@ export default function ScatterPlotLegend({
     log('hover:scatterlegend', { numLabels })
   }
 
-  /** */
-  function LegendSearch() {
-    const [filter, setFilter] = useState('')
-    const filteredLabels = labels.filter(f => f.toLowerCase().includes(filter.toLowerCase()) || filter === '')
+  /** create mapping of labels and colors of full label list */
+  const fullLabelsMappedToColor = labels.map((label, i) => {
+    const iconColor = getColorForLabel(label, customColors, editedCustomColors, i)
+    return { label, iconColor }
+  })
 
-    return (
-      <div>
-        <input id="filter"
-          name="filter"
-          type="text"
-          value={filter}
-          onChange={event => setFilter(event.target.value)}
-        />
-        {filteredLabels.map((label, i) => {
-          const numPoints = countsByLabel[label]
-          const iconColor = getColorForLabel(label, customColors, editedCustomColors, i)
-          return (
-            <LegendEntry
-              key={label}
-              label={label}
-              numPoints={numPoints}
-              iconColor={iconColor}
-              correlations={correlations}
-              hiddenTraces={hiddenTraces}
-              updateHiddenTraces={updateHiddenTraces}
-              numLabels={numLabels}
-              updateEditedCustomColors={updateEditedCustomColors}
-              showColorControls={showColorControls}
-              setActiveTraceLabel={setActiveTraceLabel}
-            />
-          )
-        })}
-      </div>
-    )
+  /** retrieve the color for the label specified */
+  function getColorForLabelIcon(specifiedLabel) {
+    const labelAndColor = fullLabelsMappedToColor.find(legendItem => legendItem.label === specifiedLabel)
+    return labelAndColor.iconColor
+  }
+
+  /** Update the labels to be shown in the legend based on the user filtering */
+  useEffect(() => {
+    const filteredLabels = labels.filter(f => f.toLowerCase().includes(filter.toLowerCase()) || filter === '')
+    setLabelsToShow(filteredLabels)
+  }, [filter])
+
+
+  /** only show the clear button if there is input in the filter searchbar */
+  const showClear = !!filter
+
+  /** only show the legend search if there are greater than 30 labels in the legend and flag is enabled */
+  const showLegendSearch = numLabels >= 30
+
+  /** handle a user pressing the 'x' to clear the field */
+  function handleClear() {
+    setFilter('')
+    setLabelsToShow(labels)
   }
 
   return (
@@ -235,28 +231,8 @@ export default function ScatterPlotLegend({
       onMouseEnter={logMouseEnter}
       style={style}>
       <div className="scatter-legend-head">
-        <div>
-          <p className="scatter-legend-name">{name}</p>
-          {labels.length > 1 && !showColorControls &&
-          <>
-            <a
-              role="button"
-              data-analytics-name='legend-show-all'
-              className={`stateful-link ${getActivity(showIsEnabled)}`}
-              disabled={!showIsEnabled}
-              onClick={() => {showHideAll('show', labels, updateHiddenTraces)}}
-            >Show all</a>
-            <a
-              role="button"
-              data-analytics-name='legend-hide-all'
-              className={`stateful-link pull-right ${getActivity(hideIsEnabled)}`}
-              disabled={!hideIsEnabled}
-              onClick={() => {showHideAll('hide', labels, updateHiddenTraces)}}
-            >Hide all</a>
-          </>
-          }
-        </div>
-        { hasArrayLabels &&
+        <p className="scatter-legend-name">{name}</p>
+        { (hasArrayLabels && !showLegendSearch) &&
           <div>
             { splitLabelArrays &&
               <a
@@ -300,7 +276,63 @@ export default function ScatterPlotLegend({
             }
           </div>
         }
-        <div>{<LegendSearch ></LegendSearch>}</div>
+        <div>
+          {numLabels > 1 && !showColorControls &&
+          <>
+            <a
+              role="button"
+              data-analytics-name='legend-show-all'
+              className={`stateful-link ${getActivity(showIsEnabled)}`}
+              disabled={!showIsEnabled}
+              onClick={() => {showHideAll('show', labels, updateHiddenTraces)}}
+            >Show all</a>
+            <a
+              role="button"
+              data-analytics-name='legend-hide-all'
+              className={`stateful-link pull-right ${getActivity(hideIsEnabled)}`}
+              disabled={!hideIsEnabled}
+              onClick={() => {showHideAll('hide', labels, updateHiddenTraces)}}
+            >Hide all</a>
+          </>
+          }
+        </div>
+        {!showColorControls && <div className='legend-search-style'>
+          <span className='icon-legend-search'><FontAwesomeIcon icon={faSearch} /></span>
+          <input
+            id="filter"
+            name="filter"
+            type="text"
+            className='no-border'
+            placeholder='Search'
+            value={filter}
+            onChange={event => setFilter(event.target.value)}
+          />
+          { showClear && <Button
+            type='button'
+            className='icon-legend-search'
+            onClick={handleClear} >
+            <FontAwesomeIcon icon={faTimes} />
+          </Button> }
+        </div>}
+        {labelsToShow.map(label => {
+          const numPoints = countsByLabel[label]
+          const iconColor = getColorForLabelIcon(label)
+          return (
+            <LegendEntry
+              key={label}
+              label={label}
+              numPoints={numPoints}
+              iconColor={iconColor}
+              correlations={correlations}
+              hiddenTraces={hiddenTraces}
+              updateHiddenTraces={updateHiddenTraces}
+              numLabels={labelsToShow.length}
+              updateEditedCustomColors={updateEditedCustomColors}
+              showColorControls={showColorControls}
+              setActiveTraceLabel={setActiveTraceLabel}
+            />
+          )
+        })}
       </div>
     </div>
   )

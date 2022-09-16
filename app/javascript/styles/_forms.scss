@@ -210,3 +210,27 @@
 hr.divider {
   border-top: 1px solid #AAA;
 }
+
+.no-border {
+  border-style: hidden;
+  outline: none;
+}
+
+.icon-legend-search {
+  border-style: hidden;
+  color: $action-color;
+  padding: 5px 5px 5px 10px;
+}
+
+.legend-search-style {
+  border-style: groove;
+  display: flex;
+  align-items: center;
+  border-radius: 10px;
+  border: 1px solid $action-color;
+  margin-top: 5px;
+  margin-bottom: 5px;
+  font-weight: 500;
+  height: 38px;
+
+}
