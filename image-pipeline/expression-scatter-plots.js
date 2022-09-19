@@ -22,13 +22,14 @@ const options = {
   'accession': { type: 'string' }, // SCP accession
   'cluster': { type: 'string' }, // Name of clustering
   'cores': { type: 'string' }, // Number of CPU cores to use. Default: all - 1
-  'debug': { type: 'boolean' }, // Whether to show browser UI and DevTools
+  'debug': { type: 'boolean' }, // Whether to show browser UI and exit early
+  'debug-headless': { type: 'boolean' }, // Whether to exit early; for PAPI debugging
   'environment': { type: 'string' }, // development, staging, or production
   'json-dir': { type: 'string' } // Path to expression arrays; for development
 }
 const { values } = parseArgs({ args, options })
 
-const timeoutMinutes = 10 // 0.75
+const timeoutMinutes = 0.75
 
 // Candidates for CLI argument
 // CPU count on Intel i7 is 1/2 of reported, due to hyperthreading
@@ -195,7 +196,7 @@ async function prefetchExpressionData(gene, context) {
   // Configure URLs
   const apiStem = `${origin}/single_cell/api/v1`
   const allFields = 'coordinates%2Ccells%2Cannotation%2Cexpression'
-  const params = `fields=${allFields}&gene=${gene}&subsample=all`
+  const params = `fields=${allFields}&gene=${gene}&subsample=all&isImagePipeline=true`
   const url = `${apiStem}/studies/${accession}/clusters/_default?${params}`
 
   // Fetch data
@@ -294,12 +295,17 @@ async function processScatterPlotImages(genes, context) {
   // Cert args needed for localhost; doesn't hurt in other environments
   if (values.debug) {
     browser = await puppeteer.launch({
-      headless: false, devtools: true, acceptInsecureCerts: true, args: ['--ignore-certificate-errors']
+      headless: false, devtools: true, acceptInsecureCerts: true, args: ['--ignore-certificate-errors', '--no-sandbox']
     })
   } else {
-    browser = await puppeteer.launch({ acceptInsecureCerts: true, args: ['--ignore-certificate-errors'] })
+    browser = await puppeteer.launch({ acceptInsecureCerts: true, args: ['--ignore-certificate-errors', '--no-sandbox'] })
   }
   const page = await browser.newPage()
+  // Set user agent to Chrome "9000".
+  // Bard client crudely parses UA, so custom raw user agents are infeasible.
+  await page.setUserAgent(
+    'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/9000.0.3904.108 Safari/537.36'
+  )
   await page.setViewport({
     width: 1680,
     height: 1000,
@@ -314,7 +320,8 @@ async function processScatterPlotImages(genes, context) {
   configureIntercepts(page)
 
   // Go to Explore tab in Study Overview page
-  const exploreViewUrl = `${origin}/single_cell/study/${accession}?subsample=all#study-visualize`
+  const params = `?subsample=all&isImagePipeline=true#study-visualize`
+  const exploreViewUrl = `${origin}/single_cell/study/${accession}${params}`
   print(`Navigating to Explore tab: ${exploreViewUrl}`, preamble)
   await page.goto(exploreViewUrl)
   print(`Completed loading Explore tab`, preamble)
@@ -339,9 +346,14 @@ async function processScatterPlotImages(genes, context) {
     print(`Expression plot time for gene ${gene}: ${expressionPlotPerfTime} ms`, preamble)
 
     // Helpful for local development iterations
-    // if (accession === 'SCP138' && gene === 'A1BG-AS1') {
-    //   exit()
-    // }
+    const humanMilkDePilotAccessions = ['SCP138', 'SCP303', 'SCP1671'] // dev, staging, prod
+    if (
+      (values['debug'] || values['debug-headless']) &&
+      humanMilkDePilotAccessions.includes(accession) && gene === 'A1BG-AS1'
+    ) {
+      print('Encountered debug stop gene, exiting', preamble)
+      process.exit()
+    }
   }
 
   await browser.close()
@@ -365,8 +377,9 @@ let startTime
 
   startTime = Date.now()
 
+  const crum = 'isImagePipeline=true'
   // Get list of all genes in study
-  const exploreApiUrl = `${origin}/single_cell/api/v1/studies/${accession}/explore`
+  const exploreApiUrl = `${origin}/single_cell/api/v1/studies/${accession}/explore?${crum}`
   console.log(`Fetching ${exploreApiUrl}`)
 
   const response = await fetch(exploreApiUrl)
