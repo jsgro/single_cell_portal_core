@@ -164,7 +164,7 @@ function RawScatterPlot({
       isCorrelatedScatter,
       scatterColor,
       editedCustomColors,
-      hiddenTraces,
+      hiddenTraces: isGeneExpression(genes, isCorrelatedScatter) ? [] : hiddenTraces,
       scatter,
       activeTraceLabel,
       expressionFilter,
