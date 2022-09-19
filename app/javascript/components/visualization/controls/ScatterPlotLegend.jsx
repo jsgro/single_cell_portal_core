@@ -19,8 +19,8 @@ function getActivity(isActive) {
 
 /** Component for row in legend */
 function LegendEntry({
-  label, numPoints, iconColor, correlations,
-  numLabels, hiddenTraces, updateHiddenTraces, showColorControls, updateEditedCustomColors, setActiveTraceLabel
+  label, numPoints, iconColor, correlations, numLabels, hiddenTraces, updateHiddenTraces,
+  showColorControls, updateEditedCustomColors, setActiveTraceLabel, showLegendSearch
 }) {
   let entry = label
   // whether to show the color picker modal
@@ -78,7 +78,7 @@ function LegendEntry({
           <span className="num-points" title={`${numPoints} points in this group`}>{numPoints}</span>
         </div>
       </div>
-      { showColorPicker &&
+      { showColorPicker && !showLegendSearch &&
         <Modal
           id='color-picker-modal'
           show={showColorPicker}
@@ -198,26 +198,26 @@ export default function ScatterPlotLegend({
     log('hover:scatterlegend', { numLabels })
   }
 
-  /** create mapping of labels and colors of full label list */
+  /** create mapping of labels and colors of full label list (used for filtered legends) */
   const fullLabelsMappedToColor = labels.map((label, i) => {
     const iconColor = getColorForLabel(label, customColors, editedCustomColors, i)
     return { label, iconColor }
   })
 
-  /** retrieve the color for the label specified */
+  /** retrieve the color for the label specified (used for filtered legends) */
   function getColorForLabelIcon(specifiedLabel) {
     const labelAndColor = fullLabelsMappedToColor.find(legendItem => legendItem.label === specifiedLabel)
     return labelAndColor.iconColor
   }
 
-  /** Update the labels to be shown in the legend based on the user filtering */
+  /** Update the labels to be shown in the legend based on the user filtering (used for filtered legends) */
   useEffect(() => {
     const filteredLabels = labels.filter(f => f.toLowerCase().includes(filter.toLowerCase()) || filter === '')
     setLabelsToShow(filteredLabels)
   }, [filter])
 
 
-  /** only show the clear button if there is input in the filter searchbar */
+  /** only show the clear button if there is input in the filter searchbar (used for filtered legends) */
   const showClear = !!filter
 
   /** only show the legend search if there are greater than 30 labels in the legend and flag is enabled */
@@ -254,7 +254,7 @@ export default function ScatterPlotLegend({
             }
           </div>
         }
-        { enableColorPicking &&
+        { enableColorPicking && !showLegendSearch &&
           <div>
             { showColorControls &&
               <>
@@ -318,9 +318,11 @@ export default function ScatterPlotLegend({
             <FontAwesomeIcon icon={faTimes} />
           </Button> }
         </div>}
-        {labelsToShow.map(label => {
+        {labelsToShow.map((label, i) => {
           const numPoints = countsByLabel[label]
-          const iconColor = getColorForLabelIcon(label)
+          const iconColor = showLegendSearch ?
+            getColorForLabelIcon(label) :
+            getColorForLabel(label, customColors, editedCustomColors, i)
           return (
             <LegendEntry
               key={label}
@@ -334,6 +336,7 @@ export default function ScatterPlotLegend({
               updateEditedCustomColors={updateEditedCustomColors}
               showColorControls={showColorControls}
               setActiveTraceLabel={setActiveTraceLabel}
+              showLegendSearch={showLegendSearch}
             />
           )
         })}
