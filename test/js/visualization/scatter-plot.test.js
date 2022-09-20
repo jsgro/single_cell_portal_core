@@ -7,6 +7,7 @@ import Plotly from 'plotly.js-dist'
 
 import * as ScpApi from 'lib/scp-api'
 import ScatterPlot from 'components/visualization/ScatterPlot'
+import ScatterPlotLegend from 'components/visualization/controls/ScatterPlotLegend'
 import * as ScpApiMetrics from 'lib/scp-api-metrics'
 import * as MetricsApi from 'lib/metrics-api'
 
@@ -120,6 +121,29 @@ it('shows custom legend with default group scatter plot', async () => {
       hasCorrelations: false
     }
   )
+})
+
+it('shows cluster external link', async () => {
+  const scatterData = BASIC_PLOT_DATA.scatter
+  const countsByLabel = COUNTS_BY_LABEL
+
+  render((<ScatterPlotLegend
+    name={scatterData.annotParams.name}
+    height={scatterData.height}
+    countsByLabel={countsByLabel}
+    hiddenTraces={[]}
+    hasArrayLabels={scatterData.hasArrayLabels}
+    externalLink={BASIC_PLOT_DATA.externalLink}
+  />))
+
+  const { container } = render(<ScatterPlot/>)
+
+  await waitFor(() => {
+    container.querySelectorAll('#study-scatter-1-legend').length > 0
+  })
+
+  const externalLink = await screen.findByText('link display text')
+  expect(externalLink).toBeTruthy()
 })
 
 describe('getPlotlyTraces handles expression graphs', () => {

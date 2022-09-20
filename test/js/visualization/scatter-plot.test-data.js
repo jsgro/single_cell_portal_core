@@ -66,7 +66,12 @@ export const BASIC_PLOT_DATA = {
   annotType: 'group',
   annotName: 'biosample_id',
   clusterFileId: 'aaaaaaa1111112222234344',
-  customColors: {}
+  customColors: {},
+  externalLink: {
+    url: 'https://example.com',
+    title: 'link display text',
+    description: 'tooltip text'
+  }
 }
 
 /**
