@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faPalette } from '@fortawesome/free-solid-svg-icons'
+import { faPalette, faExternalLinkAlt } from '@fortawesome/free-solid-svg-icons'
 import Modal from 'react-bootstrap/lib/Modal'
 import { HexColorPicker, HexColorInput } from 'react-colorful'
 import _cloneDeep from 'lodash/cloneDeep'
@@ -230,7 +230,7 @@ export default function ScatterPlotLegend({
             data-toggle="tooltip"
             data-original-title={externalLink.description}
           >
-            {externalLink.title}
+            {externalLink.title}&nbsp;&nbsp;<FontAwesomeIcon icon={faExternalLinkAlt}/>
           </a>
         </div>
         }
