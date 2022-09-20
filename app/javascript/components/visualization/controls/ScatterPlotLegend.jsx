@@ -311,6 +311,7 @@ export default function ScatterPlotLegend({
           <span className='legend-search-icon'><FontAwesomeIcon icon={faSearch} /></span>
           <input
             id="filter"
+            data-analytics-name='legend-search'
             name="filter"
             type="text"
             className='no-border'
@@ -320,6 +321,7 @@ export default function ScatterPlotLegend({
           />
           { showClear && <Button
             type='button'
+            data-analytics-name='clear-legend-search'
             className='legend-search-icon'
             onClick={handleClear} >
             <FontAwesomeIcon icon={faTimes} />
