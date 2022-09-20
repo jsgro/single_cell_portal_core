@@ -300,8 +300,8 @@ export default function ScatterPlotLegend({
           </>
           }
         </div>
-        {(!showColorControls && showLegendSearch) && <div className='legend-search-style'>
-          <span className='icon-legend-search'><FontAwesomeIcon icon={faSearch} /></span>
+        {(!showColorControls && showLegendSearch) && <div className='legend-search'>
+          <span className='legend-search-icon'><FontAwesomeIcon icon={faSearch} /></span>
           <input
             id="filter"
             name="filter"
@@ -313,7 +313,7 @@ export default function ScatterPlotLegend({
           />
           { showClear && <Button
             type='button'
-            className='icon-legend-search'
+            className='legend-search-icon'
             onClick={handleClear} >
             <FontAwesomeIcon icon={faTimes} />
           </Button> }
