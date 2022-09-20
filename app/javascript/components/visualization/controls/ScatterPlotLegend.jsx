@@ -143,7 +143,8 @@ export default function ScatterPlotLegend({
   name, height, countsByLabel, correlations, hiddenTraces,
   updateHiddenTraces, customColors, editedCustomColors, setEditedCustomColors,
   enableColorPicking=false, saveCustomColors, activeTraceLabel, setActiveTraceLabel,
-  splitLabelArrays, setSplitLabelArrays, hasArrayLabels
+  splitLabelArrays, setSplitLabelArrays, hasArrayLabels,
+  externalLink
 }) {
   // is the user currently in color-editing mode
   const [showColorControls, setShowColorControls] = useState(false)
@@ -220,70 +221,83 @@ export default function ScatterPlotLegend({
       onMouseEnter={logMouseEnter}
       style={style}>
       <div className="scatter-legend-head">
+        {externalLink.url &&
+        <div className="cluster-external-link-container">
+          <a
+            className="cluster-external-link"
+            href={externalLink.url}
+            target="blank"
+            data-toggle="tooltip"
+            data-original-title={externalLink.description}
+          >
+            {externalLink.title}
+          </a>
+        </div>
+        }
         <div>
           <p className="scatter-legend-name">{name}</p>
           {labels.length > 1 && !showColorControls &&
-          <>
-            <a
-              role="button"
-              data-analytics-name='legend-show-all'
-              className={`stateful-link ${getActivity(showIsEnabled)}`}
-              disabled={!showIsEnabled}
-              onClick={() => {showHideAll('show', labels, updateHiddenTraces)}}
-            >Show all</a>
-            <a
-              role="button"
-              data-analytics-name='legend-hide-all'
-              className={`stateful-link pull-right ${getActivity(hideIsEnabled)}`}
-              disabled={!hideIsEnabled}
-              onClick={() => {showHideAll('hide', labels, updateHiddenTraces)}}
-            >Hide all</a>
-          </>
+            <>
+              <a
+                role="button"
+                data-analytics-name='legend-show-all'
+                className={`stateful-link ${getActivity(showIsEnabled)}`}
+                disabled={!showIsEnabled}
+                onClick={() => {showHideAll('show', labels, updateHiddenTraces)}}
+              >Show all</a>
+              <a
+                role="button"
+                data-analytics-name='legend-hide-all'
+                className={`stateful-link pull-right ${getActivity(hideIsEnabled)}`}
+                disabled={!hideIsEnabled}
+                onClick={() => {showHideAll('hide', labels, updateHiddenTraces)}}
+              >Hide all</a>
+            </>
           }
         </div>
         { hasArrayLabels &&
-          <div>
-            { splitLabelArrays &&
-              <a
-                role="button"
-                data-analytics-name='split-traces-unsplit'
-                onClick={() => {updateHiddenTraces([], false, true); setSplitLabelArrays(false)}}
-              >Merge array labels</a>
-            }
-            { !splitLabelArrays &&
-              <a
-                role="button"
-                data-analytics-name='split-traces-split'
-                onClick={() => {updateHiddenTraces([], false, true); setSplitLabelArrays(true)}}
-              >Split array labels</a>
-            }
-          </div>
+            <div>
+              { splitLabelArrays &&
+                <a
+                  role="button"
+                  data-analytics-name='split-traces-unsplit'
+                  onClick={() => {updateHiddenTraces([], false, true); setSplitLabelArrays(false)}}
+                >Merge array labels</a>
+              }
+              { !splitLabelArrays &&
+                <a
+                  role="button"
+                  data-analytics-name='split-traces-split'
+                  onClick={() => {updateHiddenTraces([], false, true); setSplitLabelArrays(true)}}
+                >Split array labels</a>
+              }
+            </div>
         }
         { enableColorPicking &&
-          <div>
-            { showColorControls &&
-              <>
-                <span>Click a label to select a new color</span><br/>
-                <div>
-                  <a role="button" data-analytics-name="legend-color-picker-save" onClick={saveColors}>
-                    Save colors
-                  </a>
-                  <a role="button" className="pull-right" data-analytics-name="legend-color-picker-cancel" onClick={cancelColors}>
-                    Cancel
-                  </a><br/>
-                  &nbsp;
-                  <a role="button" className="pull-right" data-analytics-name="legend-color-picker-reset" onClick={resetColors}>
-                    Reset to defaults
-                  </a>
-                </div>
-              </>
-            }
-            { !showColorControls &&
-              <a role="button" data-analytics-name="legend-color-picker-show" onClick={() => setShowColorControls(true)}>
-                Customize colors <FontAwesomeIcon icon={faPalette}/>
-              </a>
-            }
-          </div>
+            <div>
+              { showColorControls &&
+                <>
+                  <span>Click a label to select a new color</span><br/>
+                  <div>
+                    <a role="button" data-analytics-name="legend-color-picker-save" onClick={saveColors}>
+                      Save colors
+                    </a>
+                    <a role="button" className="pull-right" data-analytics-name="legend-color-picker-cancel" onClick={cancelColors}>
+                      Cancel
+                    </a><br/>
+                    &nbsp;
+                    <a role="button" className="pull-right" data-analytics-name="legend-color-picker-reset" onClick={resetColors}>
+                      Reset to defaults
+                    </a>
+                  </div>
+                </>
+              }
+              { !showColorControls &&
+                <a role="button" data-analytics-name="legend-color-picker-show" onClick={() => setShowColorControls(true)}>
+                  Customize colors <FontAwesomeIcon icon={faPalette}/>
+                </a>
+              }
+            </div>
         }
       </div>
       {legendEntries}

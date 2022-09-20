@@ -174,5 +174,3 @@ describe('getPlotlyTraces handles expression graphs', () => {
     expect(traces[0].marker.reversescale).toEqual(true)
   })
 })
-
-
