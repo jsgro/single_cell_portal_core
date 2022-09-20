@@ -80,3 +80,37 @@ function ensure_container_running {
     done
     echo "$RUNNING"
 }
+
+# get all matching images, will return image IDs in the order of most recent first
+function get_matching_image_ids {
+    IMAGE_NAME="$1"
+    IMAGES=$(docker images | grep -F $IMAGE_NAME | awk '{ print $3 }')
+    echo $IMAGES
+}
+
+# remove all but the most recent release image
+function prune_docker_artifacts {
+    IMAGE_NAME="$1"
+    # get all matching images, then pop the first entry off
+    ALL_IMAGES=($(get_matching_image_ids $IMAGE_NAME))
+    RELEASE_IMAGE_ID="${ALL_IMAGES[1]}"
+    ALL_IMAGES=("${ALL_IMAGES[@]:1}")
+    RELEASE_IMAGE_NAME=$(get_image_tag_from_id $RELEASE_IMAGE_ID)
+    echo "Keeping $RELEASE_IMAGE_NAME image as most recent"
+    for IMAGE in $ALL_IMAGES; do
+        IMAGE_TAG=$(get_image_tag_from_id $IMAGE)
+        echo "Removing obsolete image $IMAGE_TAG"
+        docker rmi $IMAGE
+    done
+    # prune unused image layers and volumes
+    echo "pruning orphaned image layers"
+    docker image prune --force
+    echo "pruning orphaned volumes"
+    docker volume prune --force
+}
+
+# use docker inspect to get an image tag from ID
+function get_image_tag_from_id {
+    IMAGE_ID="$1"
+    echo $(docker image inspect $IMAGE_ID | jq '.[0].RepoTags[0]')
+}
