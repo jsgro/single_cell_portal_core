@@ -212,7 +212,14 @@ export default function ScatterPlotLegend({
 
   /** Update the labels to be shown in the legend based on the user filtering (used for filtered legends) */
   useEffect(() => {
-    const filteredLabels = labels.filter(f => f.toLowerCase().includes(filter.toLowerCase()) || filter === '')
+    let filteredLabels
+    if (filter === '') {
+      filteredLabels = labels
+    } else {
+      const lowerCaseFilter = filter.toLowerCase()
+      filteredLabels = labels.filter(f => f.toLowerCase().includes(lowerCaseFilter))
+    }
+
     setLabelsToShow(filteredLabels)
   }, [filter])
 
