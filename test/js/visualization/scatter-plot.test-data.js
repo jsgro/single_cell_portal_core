@@ -896,6 +896,7 @@ export const MANY_LABELS_MOCKS = {
     subsample: 'all',
     consensus: null,
     clusterFileId: 'aaaaaaa1111112222234344',
-    customColors: {}
+    customColors: {},
+    externalLink: { url: '', title: '', description: '' }
   }
 }
