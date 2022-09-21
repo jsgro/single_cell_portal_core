@@ -90,13 +90,18 @@ function get_matching_image_ids {
 
 # remove all but the most recent release image
 function prune_docker_artifacts {
+    INDEX=0
+    if [[ "$SHELL" = '/bin/zsh' ]]; then
+        echo "zsh detected, setting array index to 1"
+        INDEX=1
+    fi
     IMAGE_NAME="$1"
     # get all matching images, then pop off the first two as "current" and "rollback" images
     ALL_IMAGES=($(get_matching_image_ids $IMAGE_NAME))
-    RELEASE_IMAGE_ID="${ALL_IMAGES[1]}"
-    ALL_IMAGES=("${ALL_IMAGES[@]:1}") # remove first element and reindex
-    ROLLBACK_IMAGE_ID="${ALL_IMAGES[1]}"
-    ALL_IMAGES=("${ALL_IMAGES[@]:1}")
+    RELEASE_IMAGE_ID="${ALL_IMAGES[$INDEX]}"
+    ALL_IMAGES=("${ALL_IMAGES[@]:$INDEX}") # remove first element and reindex
+    ROLLBACK_IMAGE_ID="${ALL_IMAGES[$INDEX]}"
+    ALL_IMAGES=("${ALL_IMAGES[@]:$INDEX}")
     RELEASE_IMAGE_NAME=$(get_image_tag_from_id $RELEASE_IMAGE_ID)
     ROLLBACK_IMAGE_NAME=$(get_image_tag_from_id $ROLLBACK_IMAGE_ID)
     echo "Keeping $RELEASE_IMAGE_NAME as current, $ROLLBACK_IMAGE_NAME as rollback"
