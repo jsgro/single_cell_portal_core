@@ -9,12 +9,6 @@ class ClusterFileInfo
   # on pipes (assuming it is array-based).  Unspecified is treated as false by the front end
   field :annotation_split_defaults, type: String
 
-  # Hyperlink to an external web resource for this cluster
-  # Set in upload / sync UI.  Shown in Study Overview page.
-  field :external_link_url, type: String
-  field :external_link_title, type: String # Link text
-  field :external_link_description, type: String # Link tooltip
-
   before_save :stringify_hashes
 
   # decode string back to Hash
