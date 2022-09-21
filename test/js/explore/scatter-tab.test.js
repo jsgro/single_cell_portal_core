@@ -50,7 +50,8 @@ const MOCK_CLUSTER_RESPONSE = {
     identifier: 'biosample_id--group--study'
   },
   subsample: 'all',
-  consensus: null
+  consensus: null,
+  externalLink: { url: '', title: '', description: '' }
 }
 
 const CACHE_PERF_PARAMS = {
