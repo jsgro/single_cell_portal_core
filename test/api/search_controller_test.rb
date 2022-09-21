@@ -492,8 +492,11 @@ class SearchControllerTest < ActionDispatch::IntegrationTest
   end
 
   test 'should reorder results for exact name match' do
-    studies = Api::V1::SearchController.promote_exact_match(@other_study.name,[@study, @other_study])
+    studies, match_data = Api::V1::SearchController.promote_exact_match(@other_study.name,
+                                                                        [@study, @other_study],
+                                                                        {})
     assert_equal @other_study.accession, studies.first.accession
+    assert_equal 1, match_data.with_indifferent_access['numResults:scp:exactTitle']
   end
 
   test 'should return initialized studies first in empty search' do
