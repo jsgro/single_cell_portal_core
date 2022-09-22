@@ -8,6 +8,7 @@
  * node expression-scatter-plots.js --accession="SCP24" # Staging, 1.3M cell study
  */
 import { mkdir, writeFile, readFile, access } from 'node:fs/promises'
+import { createWriteStream } from 'node:fs'
 import os from 'node:os'
 import { exit } from 'node:process'
 import { parseArgs } from 'node:util'
@@ -15,67 +16,13 @@ import { parseArgs } from 'node:util'
 import { gunzipSync, strFromU8 } from 'fflate'
 import puppeteer from 'puppeteer'
 import sharp from 'sharp'
-
-const args = process.argv.slice(2)
-
-const options = {
-  'accession': { type: 'string' }, // SCP accession
-  'cluster': { type: 'string' }, // Name of clustering
-  'cores': { type: 'string' }, // Number of CPU cores to use. Default: all - 1
-  'debug': { type: 'boolean' }, // Whether to show browser UI and exit early
-  'debug-headless': { type: 'boolean' }, // Whether to exit early; for PAPI debugging
-  'environment': { type: 'string' }, // development, staging, or production
-  'json-dir': { type: 'string' } // Path to expression arrays; for development
-}
-const { values } = parseArgs({ args, options })
-
-const timeoutMinutes = 0.75
-
-// Candidates for CLI argument
-// CPU count on Intel i7 is 1/2 of reported, due to hyperthreading
-const numCPUs = values.cores ? parseInt(values.cores) : os.cpus().length / 2 - 1
-console.log(`Number of CPUs to be used on this client: ${numCPUs}`)
-
-// TODO (SCP-4564): Document how to adjust network rules to use staging
-const originsByEnvironment = {
-  'development': 'https://localhost:3000',
-  'staging': 'https://singlecell-staging.broadinstitute.org',
-  'production': 'https://singlecell.broadinstitute.org'
-}
-const environment = values.environment || 'development'
-const origin = originsByEnvironment[environment]
-
-/** Make output directories if absent */
-async function makeLocalOutputDir(leaf) {
-  const dir = `output/${values.accession}/${leaf}/`
-  const options = { recursive: true }
-  try {
-    await access(dir)
-  } catch {
-    await mkdir(dir, options)
-  }
-  return dir
-}
-
-// Make directories for output images
-const imagesDir = await makeLocalOutputDir('images')
-
-// Set and/or make directories for prefetched JSON
-let jsonDir
-if (values['json-dir']) {
-  jsonDir = values['json-dir']
-} else {
-  jsonDir = await makeLocalOutputDir('json')
-}
-const jsonFpStem = `${jsonDir + values.cluster }--`
-
-// Cache for X, Y, and possibly Z coordinates
-const coordinates = {}
-let initExpressionResponse
+import { Storage } from '@google-cloud/storage'
 
 /** Print message with browser-tag preamble to local console */
 function print(message, preamble) {
-  console.log(`${preamble} ${message}`)
+  const fullMessage = `${preamble} ${message}`
+  console.log(fullMessage)
+  logFileWriteStream.write(fullMessage)
 }
 
 /** Is request a log post to Bard? */
@@ -366,6 +313,72 @@ function sliceGenes(uniqueGenes, numCPUs, cpuIndex) {
   const end = batchSize * (cpuIndex + 1)
   return uniqueGenes.slice(start, end)
 }
+
+
+const args = process.argv.slice(2)
+
+const storage = new Storage()
+const bn = 'broad-singlecellportal-staging-testing-data'
+const opts = { destination: 'parse_logs_image_pipeline/package.json' }
+await storage.bucket(bn).upload('package.json', opts)
+console.log(`package.json uploaded to ${bn}`)
+
+const options = {
+  'accession': { type: 'string' }, // SCP accession
+  'cluster': { type: 'string' }, // Name of clustering
+  'cores': { type: 'string' }, // Number of CPU cores to use. Default: all - 1
+  'debug': { type: 'boolean' }, // Whether to show browser UI and exit early
+  'debug-headless': { type: 'boolean' }, // Whether to exit early; for PAPI debugging
+  'environment': { type: 'string' }, // development, staging, or production
+  'json-dir': { type: 'string' } // Path to expression arrays; for development
+}
+const { values } = parseArgs({ args, options })
+
+const timeoutMinutes = 0.75
+
+// Candidates for CLI argument
+// CPU count on Intel i7 is 1/2 of reported, due to hyperthreading
+const numCPUs = values.cores ? parseInt(values.cores) : os.cpus().length / 2 - 1
+console.log(`Number of CPUs to be used on this client: ${numCPUs}`)
+
+// TODO (SCP-4564): Document how to adjust network rules to use staging
+const originsByEnvironment = {
+  'development': 'https://localhost:3000',
+  'staging': 'https://singlecell-staging.broadinstitute.org',
+  'production': 'https://singlecell.broadinstitute.org'
+}
+const environment = values.environment || 'development'
+const origin = originsByEnvironment[environment]
+
+const logFileWriteStream = createWriteStream('log.txt')
+
+/** Make output directories if absent */
+async function makeLocalOutputDir(leaf) {
+  const dir = `output/${values.accession}/${leaf}/`
+  const options = { recursive: true }
+  try {
+    await access(dir)
+  } catch {
+    await mkdir(dir, options)
+  }
+  return dir
+}
+
+// Make directories for output images
+const imagesDir = await makeLocalOutputDir('images')
+
+// Set and/or make directories for prefetched JSON
+let jsonDir
+if (values['json-dir']) {
+  jsonDir = values['json-dir']
+} else {
+  jsonDir = await makeLocalOutputDir('json')
+}
+const jsonFpStem = `${jsonDir + values.cluster }--`
+
+// Cache for X, Y, and possibly Z coordinates
+const coordinates = {}
+let initExpressionResponse
 
 // For tracking total runtime, internally
 let startTime
