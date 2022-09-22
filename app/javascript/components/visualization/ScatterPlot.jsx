@@ -494,6 +494,7 @@ function RawScatterPlot({
             hasArrayLabels={scatterData.hasArrayLabels}
             splitLabelArrays={splitLabelArrays}
             setSplitLabelArrays={setSplitLabelArrays}
+            externalLink={scatterData.externalLink}
           />
         }
       </div>

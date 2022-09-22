@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faPalette, faTimes, faSearch } from '@fortawesome/free-solid-svg-icons'
+import { faPalette, faExternalLinkAlt, faTimes, faSearch } from '@fortawesome/free-solid-svg-icons'
 import Modal from 'react-bootstrap/lib/Modal'
 import { HexColorPicker, HexColorInput } from 'react-colorful'
 import _cloneDeep from 'lodash/cloneDeep'
@@ -144,7 +144,8 @@ export default function ScatterPlotLegend({
   name, height, countsByLabel, correlations, hiddenTraces,
   updateHiddenTraces, customColors, editedCustomColors, setEditedCustomColors,
   enableColorPicking=false, saveCustomColors, activeTraceLabel, setActiveTraceLabel,
-  splitLabelArrays, setSplitLabelArrays, hasArrayLabels
+  splitLabelArrays, setSplitLabelArrays, hasArrayLabels,
+  externalLink
 }) {
   // is the user currently in color-editing mode
   const [showColorControls, setShowColorControls] = useState(false)
@@ -242,24 +243,37 @@ export default function ScatterPlotLegend({
       onMouseEnter={logMouseEnter}
       style={style}>
       <div className="scatter-legend-head">
+        {externalLink.url &&
+        <div className="cluster-external-link-container">
+          <a
+            className="cluster-external-link"
+            href={externalLink.url}
+            target="blank"
+            data-toggle="tooltip"
+            data-original-title={externalLink.description}
+          >
+            {externalLink.title}&nbsp;&nbsp;<FontAwesomeIcon icon={faExternalLinkAlt}/>
+          </a>
+        </div>
+        }
         <p className="scatter-legend-name">{name}</p>
         { (hasArrayLabels && !showLegendSearch) &&
-          <div>
-            { splitLabelArrays &&
-              <a
-                role="button"
-                data-analytics-name='split-traces-unsplit'
-                onClick={() => {updateHiddenTraces([], false, true); setSplitLabelArrays(false)}}
-              >Merge array labels</a>
-            }
-            { !splitLabelArrays &&
-              <a
-                role="button"
-                data-analytics-name='split-traces-split'
-                onClick={() => {updateHiddenTraces([], false, true); setSplitLabelArrays(true)}}
-              >Split array labels</a>
-            }
-          </div>
+            <div>
+              { splitLabelArrays &&
+                <a
+                  role="button"
+                  data-analytics-name='split-traces-unsplit'
+                  onClick={() => {updateHiddenTraces([], false, true); setSplitLabelArrays(false)}}
+                >Merge array labels</a>
+              }
+              { !splitLabelArrays &&
+                <a
+                  role="button"
+                  data-analytics-name='split-traces-split'
+                  onClick={() => {updateHiddenTraces([], false, true); setSplitLabelArrays(true)}}
+                >Split array labels</a>
+              }
+            </div>
         }
         { enableColorPicking && !showLegendSearch &&
           <div>

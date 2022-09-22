@@ -8,9 +8,9 @@ import Plotly from 'plotly.js-dist'
 import * as UserProvider from '~/providers/UserProvider'
 import * as ScpApi from 'lib/scp-api'
 import ScatterPlot from 'components/visualization/ScatterPlot'
+import ScatterPlotLegend from 'components/visualization/controls/ScatterPlotLegend'
 import * as ScpApiMetrics from 'lib/scp-api-metrics'
 import * as MetricsApi from 'lib/metrics-api'
-import ScatterPlotLegend from 'components/visualization/controls/ScatterPlotLegend'
 
 import '@testing-library/jest-dom/extend-expect'
 
@@ -124,6 +124,29 @@ it('shows custom legend with default group scatter plot', async () => {
   )
 })
 
+it('shows cluster external link', async () => {
+  const scatterData = BASIC_PLOT_DATA.scatter
+  const countsByLabel = COUNTS_BY_LABEL
+
+  render((<ScatterPlotLegend
+    name={scatterData.annotParams.name}
+    height={scatterData.height}
+    countsByLabel={countsByLabel}
+    hiddenTraces={[]}
+    hasArrayLabels={scatterData.hasArrayLabels}
+    externalLink={BASIC_PLOT_DATA.externalLink}
+  />))
+
+  const { container } = render(<ScatterPlot/>)
+
+  await waitFor(() => {
+    container.querySelectorAll('#study-scatter-1-legend').length > 0
+  })
+
+  const externalLink = await screen.findByText('link display text')
+  expect(externalLink).toBeTruthy()
+})
+
 it('shows legend search', async () => {
   const scatterData = BASIC_PLOT_DATA.scatter
   const countsByLabel = COUNTS_BY_LABEL
@@ -140,10 +163,11 @@ it('shows legend search', async () => {
       countsByLabel={countsByLabel}
       hiddenTraces={[]}
       hasArrayLabels={scatterData.hasArrayLabels}
+      externalLink={BASIC_PLOT_DATA.externalLink}
     />))
 
-  const externalLink = await screen.findByPlaceholderText('Search')
-  expect(externalLink).toBeTruthy()
+  const labelSearchBox = await screen.findByPlaceholderText('Search')
+  expect(labelSearchBox).toBeTruthy()
 })
 
 describe('getPlotlyTraces handles expression graphs', () => {
@@ -198,5 +222,3 @@ describe('getPlotlyTraces handles expression graphs', () => {
     expect(traces[0].marker.reversescale).toEqual(true)
   })
 })
-
-
