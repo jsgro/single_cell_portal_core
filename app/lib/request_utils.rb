@@ -76,6 +76,12 @@ class RequestUtils
     SANITIZER.sanitize(inputs).encode(Encoding.find('ASCII-8BIT'), invalid: :replace, undef: :replace)
   end
 
+  # convert a string into a format for matching
+  # will strip non-word characters and extraneous whitespace and downcase to make matching easier
+  def self.format_text_for_match(text)
+    text.split.map { |term| term.downcase.gsub(/\W/, '') }.reject(&:blank?).join(' ')
+  end
+
   # takes a comma-delimited string of ids (e.g. StudyFile ids) and returns an array of ids
   # raises Argument error if any of the strings are not valid ids
   def self.validate_id_list(id_list_string)
