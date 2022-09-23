@@ -391,23 +391,28 @@ async function run() {
   coordinates = {}
 
   const accession = values.accession
-  console.log(`Accession: ${accession}`)
+  print(`Accession: ${accession}`)
 
   startTime = Date.now()
 
   const crum = 'isImagePipeline=true'
   // Get list of all genes in study
   const exploreApiUrl = `${origin}/single_cell/api/v1/studies/${accession}/explore?${crum}`
-  console.log(`Fetching ${exploreApiUrl}`)
+  print(`Fetching ${exploreApiUrl}`)
 
   const response = await fetch(exploreApiUrl)
+  print('response.status')
+  print(response.status)
+  const text = await response.text()
+  print('response text')
+  print(text)
   let json
   try {
-    json = await response.json()
+    json = JSON.parse(text)
   } catch (error) {
     console.log('Failed to fetch:')
     console.log(exploreApiUrl)
-    exit(1)
+    throw error
   }
   const uniqueGenes = json.uniqueGenes
   console.log(`Total number of genes: ${uniqueGenes.length}`)
@@ -442,7 +447,7 @@ try {
   await run()
   await uploadLog()
 } catch (e) {
-  print(e)
+  print(e.stack)
   await uploadLog()
   exit(1)
 }
