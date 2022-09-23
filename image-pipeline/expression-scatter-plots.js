@@ -118,7 +118,7 @@ async function makeExpressionScatterPlotImage(gene, page, preamble) {
 
   print(`Wrote ${imagePath}`, preamble)
 
-  // Optimization idea: parallelize upload, and atomically trigger on success.
+  // TODO (SCP-4698): parallelize upload, and atomically trigger on success.
   //
   // `gcloud storage cp` or (slower) `gsutil -m cp` would upload in parallel,
   // without needing to call GCS client library's bucket.upload on each file.
