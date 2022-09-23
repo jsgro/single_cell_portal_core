@@ -300,7 +300,7 @@ async function processScatterPlotImages(genes, context) {
       humanMilkDePilotAccessions.includes(accession) && gene === 'A1BG-AS1'
     ) {
       print('Encountered debug stop gene, exiting', preamble)
-      process.exit()
+      throw Error('Encountered debug stop gene, exiting')
     }
   }
 
@@ -329,6 +329,9 @@ async function makeLocalOutputDir(leaf) {
 
 /** Wrap argument parsing so it's more testable and loggable */
 async function parseCliArgs() {
+  const commandToNode = process.argv.join(' ').split('/').slice(-1)[0]
+  print(`Command run via Node:\n\n${ commandToNode}\n`)
+
   const args = process.argv.slice(2)
 
   const options = {
@@ -422,14 +425,26 @@ async function run() {
 
     const context = { accession, preamble, origin }
 
-    processScatterPlotImages(genes, context)
+    await processScatterPlotImages(genes, context)
   }
+}
+
+/** Upload / delocalize log file to GCS bucket */
+async function uploadLog() {
+  const storage = new Storage()
+  const bn = 'broad-singlecellportal-staging-testing-data'
+  const opts = { destination: 'parse_logs/log_image_pipeline.txt' }
+  await storage.bucket(bn).upload('log.txt', opts)
+  console.log(`*** log.txt uploaded to ${bn}`)
 }
 
 try {
   await run()
+  await uploadLog()
 } catch (e) {
   print(e)
+  await uploadLog()
+  exit(1)
 }
 
 
