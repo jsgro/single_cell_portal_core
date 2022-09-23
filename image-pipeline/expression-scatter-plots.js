@@ -20,10 +20,11 @@ import { Storage } from '@google-cloud/storage'
 
 /** Print message with browser-tag preamble to local console */
 function print(message, preamble='') {
+  const timestamp = new Date().toISOString()
   if (preamble !== '') {preamble = `${preamble} `}
   const fullMessage = preamble + message
   console.log(fullMessage)
-  logFileWriteStream.write(`${fullMessage }\n`)
+  logFileWriteStream.write(`[${timestamp}] -- : ${fullMessage }\n`)
 }
 
 /** Is request a log post to Bard? */
