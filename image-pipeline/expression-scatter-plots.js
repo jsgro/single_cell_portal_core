@@ -19,10 +19,11 @@ import sharp from 'sharp'
 import { Storage } from '@google-cloud/storage'
 
 /** Print message with browser-tag preamble to local console */
-function print(message, preamble) {
-  const fullMessage = `${preamble} ${message}`
+function print(message, preamble='') {
+  if (preamble !== '') {preamble = `${preamble} `}
+  const fullMessage = preamble + message
   console.log(fullMessage)
-  logFileWriteStream.write(fullMessage)
+  logFileWriteStream.write(`${fullMessage }\n`)
 }
 
 /** Is request a log post to Bard? */
@@ -314,44 +315,6 @@ function sliceGenes(uniqueGenes, numCPUs, cpuIndex) {
   return uniqueGenes.slice(start, end)
 }
 
-
-const args = process.argv.slice(2)
-
-const storage = new Storage()
-const bn = 'broad-singlecellportal-staging-testing-data'
-const opts = { destination: 'parse_logs_image_pipeline/package.json' }
-await storage.bucket(bn).upload('package.json', opts)
-console.log(`package.json uploaded to ${bn}`)
-
-const options = {
-  'accession': { type: 'string' }, // SCP accession
-  'cluster': { type: 'string' }, // Name of clustering
-  'cores': { type: 'string' }, // Number of CPU cores to use. Default: all - 1
-  'debug': { type: 'boolean' }, // Whether to show browser UI and exit early
-  'debug-headless': { type: 'boolean' }, // Whether to exit early; for PAPI debugging
-  'environment': { type: 'string' }, // development, staging, or production
-  'json-dir': { type: 'string' } // Path to expression arrays; for development
-}
-const { values } = parseArgs({ args, options })
-
-const timeoutMinutes = 0.75
-
-// Candidates for CLI argument
-// CPU count on Intel i7 is 1/2 of reported, due to hyperthreading
-const numCPUs = values.cores ? parseInt(values.cores) : os.cpus().length / 2 - 1
-console.log(`Number of CPUs to be used on this client: ${numCPUs}`)
-
-// TODO (SCP-4564): Document how to adjust network rules to use staging
-const originsByEnvironment = {
-  'development': 'https://localhost:3000',
-  'staging': 'https://singlecell-staging.broadinstitute.org',
-  'production': 'https://singlecell.broadinstitute.org'
-}
-const environment = values.environment || 'development'
-const origin = originsByEnvironment[environment]
-
-const logFileWriteStream = createWriteStream('log.txt')
-
 /** Make output directories if absent */
 async function makeLocalOutputDir(leaf) {
   const dir = `output/${values.accession}/${leaf}/`
@@ -364,27 +327,66 @@ async function makeLocalOutputDir(leaf) {
   return dir
 }
 
-// Make directories for output images
-const imagesDir = await makeLocalOutputDir('images')
+/** Wrap argument parsing so it's more testable and loggable */
+async function parseCliArgs() {
+  const args = process.argv.slice(2)
 
-// Set and/or make directories for prefetched JSON
-let jsonDir
-if (values['json-dir']) {
-  jsonDir = values['json-dir']
-} else {
-  jsonDir = await makeLocalOutputDir('json')
+  const options = {
+    'accession': { type: 'string' }, // SCP accession
+    'cluster': { type: 'string' }, // Name of clustering
+    'cores': { type: 'string' }, // Number of CPU cores to use. Default: all - 1
+    'debug': { type: 'boolean' }, // Whether to show browser UI and exit early
+    'debug-headless': { type: 'boolean' }, // Whether to exit early; for PAPI debugging
+    'environment': { type: 'string' }, // development, staging, or production
+    'json-dir': { type: 'string' } // Path to expression arrays; for development
+  }
+  const { values } = parseArgs({ args, options })
+
+  // Candidates for CLI argument
+  // CPU count on Intel i7 is 1/2 of reported, due to hyperthreading
+  const numCPUs = values.cores ? parseInt(values.cores) : os.cpus().length / 2 - 1
+  print(`Number of CPUs to be used on this client: ${numCPUs}`)
+
+  // TODO (SCP-4564): Document how to adjust network rules to use staging
+  const originsByEnvironment = {
+    'development': 'https://localhost:3000',
+    'staging': 'https://singlecell-staging.broadinstitute.org',
+    'production': 'https://singlecell.broadinstitute.org'
+  }
+  const environment = values.environment || 'development'
+  const origin = originsByEnvironment[environment]
+
+  return { values, numCPUs, origin }
 }
-const jsonFpStem = `${jsonDir + values.cluster }--`
 
-// Cache for X, Y, and possibly Z coordinates
-const coordinates = {}
+const logFileWriteStream = createWriteStream('log.txt')
+
+const { values, numCPUs, origin } = await parseCliArgs()
+
+const timeoutMinutes = 0.75
+
+let imagesDir
+let jsonFpStem
+let coordinates
 let initExpressionResponse
+let startTime // For tracking total runtime, internally
+/** Main function.  Run Image Pipeline */
+async function run() {
+  // Make directories for output images
+  imagesDir = await makeLocalOutputDir('images')
 
-// For tracking total runtime, internally
-let startTime
+  // Set and/or make directories for prefetched JSON
+  let jsonDir
+  if (values['json-dir']) {
+    jsonDir = values['json-dir']
+  } else {
+    jsonDir = await makeLocalOutputDir('json')
+  }
+  jsonFpStem = `${jsonDir + values.cluster }--`
 
-// Main  function
-(async () => {
+  // Cache for X, Y, and possibly Z coordinates
+  coordinates = {}
+
   const accession = values.accession
   console.log(`Accession: ${accession}`)
 
@@ -422,7 +424,14 @@ let startTime
 
     processScatterPlotImages(genes, context)
   }
-})()
+}
+
+try {
+  await run()
+} catch (e) {
+  print(e)
+}
+
 
 // // This executes immediately after calling main function.
 // // Perhaps refactor that to use Promise.all, then call this as a function.
