@@ -18,13 +18,22 @@ import puppeteer from 'puppeteer'
 import sharp from 'sharp'
 import { Storage } from '@google-cloud/storage'
 
+let numLogEntries = 0
+
 /** Print message with browser-tag preamble to local console and log file */
 function print(message, preamble='') {
   const timestamp = new Date().toISOString()
   if (preamble !== '') {preamble = `${preamble} `}
   const fullMessage = preamble + message
+
   console.log(fullMessage)
+
   logFileWriteStream.write(`[${timestamp}] -- : ${fullMessage }\n`)
+  numLogEntries += 1
+
+  // Stream logs to bucket in small chunks
+  // For observability into _ongoing_ jobs and crash-resilient logs
+  if (numLogEntries % 20 === 0) {uploadLog()}
 }
 
 /** Is request a log post to Bard? */
