@@ -293,16 +293,6 @@ async function processScatterPlotImages(genes, context) {
 
     const expressionPlotPerfTime = Date.now() - expressionPlotStartTime
     print(`Expression plot time for gene ${gene}: ${expressionPlotPerfTime} ms`, preamble)
-
-    // Helpful for local development iterations
-    const humanMilkDePilotAccessions = ['SCP138', 'SCP303', 'SCP1671'] // dev, staging, prod
-    if (
-      (values['debug'] || values['debug-headless']) &&
-      humanMilkDePilotAccessions.includes(accession) && gene === 'A1BG-AS1'
-    ) {
-      print('Encountered debug stop gene, exiting', preamble)
-      throw Error('Encountered debug stop gene, exiting')
-    }
   }
 
   await browser.close()
@@ -427,7 +417,11 @@ async function run() {
     // const gene = uniqueGenes[geneIndex]
 
     // Generate a series of plots, then save them locally
-    const genes = sliceGenes(uniqueGenes, numCPUs, cpuIndex)
+    let genes = sliceGenes(uniqueGenes, numCPUs, cpuIndex)
+    if (values['debug'] || values['debug-headless']) {
+      print('DEBUG: only processing 2 genes', preamble)
+      genes = genes.slice(0, 2)
+    }
 
     const context = { accession, preamble, origin }
 
@@ -441,7 +435,7 @@ async function uploadLog() {
   const bn = 'broad-singlecellportal-staging-testing-data'
   const opts = { destination: 'parse_logs/log_image_pipeline.txt' }
   await storage.bucket(bn).upload('log.txt', opts)
-  console.log(`*** log.txt uploaded to ${bn}`)
+  console.log(`log.txt uploaded to ${bn}`)
 }
 
 try {
