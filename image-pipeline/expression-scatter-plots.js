@@ -18,7 +18,7 @@ import puppeteer from 'puppeteer'
 import sharp from 'sharp'
 import { Storage } from '@google-cloud/storage'
 
-/** Print message with browser-tag preamble to local console */
+/** Print message with browser-tag preamble to local console and log file */
 function print(message, preamble='') {
   const timestamp = new Date().toISOString()
   if (preamble !== '') {preamble = `${preamble} `}
