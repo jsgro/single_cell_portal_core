@@ -79,9 +79,10 @@ async function makeExpressionScatterPlotImage(gene, page, preamble) {
   // Height and width of plot, x- and y-offset from viewport origin
   const clipDimensions = { height: 595, width: 660, x: 5, y: 310 }
 
+  const webpFileName = `${gene}.webp`
   // Take a screenshot, save it locally
   const rawImagePath = `${imagesDir}${gene}-raw.webp`
-  const imagePath = `${imagesDir}${gene}.webp`
+  const imagePath = `${imagesDir}${webpFileName}`
   await page.screenshot({
     path: rawImagePath,
     type: 'webp',
@@ -116,6 +117,15 @@ async function makeExpressionScatterPlotImage(gene, page, preamble) {
     .toFile(imagePath)
 
   print(`Wrote ${imagePath}`, preamble)
+
+  // Optimization idea: parallelize upload, and atomically trigger on success.
+  //
+  // `gcloud storage cp` or (slower) `gsutil -m cp` would upload in parallel,
+  // without needing to call GCS client library's bucket.upload on each file.
+  // Ideally there would be a GCS client library equivalent of those commands,
+  // but brief research found none.
+  const toFilePath = `images/expression_scatter/${webpFileName}`
+  uploadToBucket(imagePath, toFilePath, preamble)
 
   return
 }
@@ -419,13 +429,14 @@ async function run() {
 }
 
 /** Upload a file from a local path to a destination path in a Google bucket */
-async function uploadToBucket(fromFilePath, toFilePath) {
+async function uploadToBucket(fromFilePath, toFilePath, preamble) {
   const bucketName = 'broad-singlecellportal-staging-testing-data'
-  const opts = { destination: toFilePath }
+  const opts = { destination: `_scp_internal/${toFilePath}` }
   await storage.bucket(bucketName).upload(fromFilePath, opts)
-  console.log(
+  print(
     `File "${fromFilePath}" uploaded to destination "${toFilePath}" ` +
-    `in bucket "${bucketName}"`
+    `in bucket "${bucketName}"`,
+    preamble
   )
 }
 
