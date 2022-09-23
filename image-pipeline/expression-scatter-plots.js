@@ -353,17 +353,6 @@ async function parseCliArgs() {
   return { values, numCPUs, origin }
 }
 
-const logFileWriteStream = createWriteStream('log.txt')
-
-const { values, numCPUs, origin } = await parseCliArgs()
-
-const timeoutMinutes = 0.75
-
-let imagesDir
-let jsonFpStem
-let coordinates
-let initExpressionResponse
-let startTime // For tracking total runtime, internally
 /** Main function.  Run Image Pipeline */
 async function run() {
   // Make directories for output images
@@ -429,14 +418,35 @@ async function run() {
   }
 }
 
+/** Upload a file from a local path to a destination path in a Google bucket */
+async function uploadToBucket(fromFilePath, toFilePath) {
+  const bucketName = 'broad-singlecellportal-staging-testing-data'
+  const opts = { destination: toFilePath }
+  await storage.bucket(bucketName).upload(fromFilePath, opts)
+  console.log(
+    `File "${fromFilePath}" uploaded to destination "${toFilePath}" ` +
+    `in bucket "${bucketName}"`
+  )
+}
+
 /** Upload / delocalize log file to GCS bucket */
 async function uploadLog() {
-  const storage = new Storage()
-  const bn = 'broad-singlecellportal-staging-testing-data'
-  const opts = { destination: 'parse_logs/log_image_pipeline.txt' }
-  await storage.bucket(bn).upload('log.txt', opts)
-  console.log(`log.txt uploaded to ${bn}`)
+  uploadToBucket('log.txt', 'parse_logs/log_image_pipeline.txt')
 }
+
+const logFileWriteStream = createWriteStream('log.txt')
+
+const { values, numCPUs, origin } = await parseCliArgs()
+
+const timeoutMinutes = 0.75
+
+const storage = new Storage()
+
+let imagesDir
+let jsonFpStem
+let coordinates
+let initExpressionResponse
+let startTime // For tracking total runtime, internally
 
 try {
   await run()
