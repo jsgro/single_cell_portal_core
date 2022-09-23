@@ -391,6 +391,9 @@ async function run() {
   print(`Fetching ${exploreApiUrl}`)
 
   const response = await fetch(exploreApiUrl)
+
+  // TODO (SCP-4666): Use plain-old response.json() without all this log noise
+  // once we can access staging SCP API from staging-project PAPI VM.
   print('response.status')
   print(response.status)
   const text = await response.text()
