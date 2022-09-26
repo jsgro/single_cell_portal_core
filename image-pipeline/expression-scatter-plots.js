@@ -363,7 +363,8 @@ async function parseCliArgs() {
   // TODO (SCP-4564): Document how to adjust network rules to use staging
   const originsByEnvironment = {
     'development': 'https://localhost:3000',
-    'staging': 'https://singlecell-staging.broadinstitute.org',
+    // Internal IP address for https://singlecell-staging.broadinstitute.org
+    'staging': '10.128.0.5',
     'production': 'https://singlecell.broadinstitute.org'
   }
   const environment = values.environment || 'development'
