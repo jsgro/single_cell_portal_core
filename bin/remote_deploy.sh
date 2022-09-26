@@ -83,7 +83,7 @@ function main {
     if [[ $(get_http_status_code $PORTAL_HOMEPAGE) != "200" ]] ; then exit_with_error_message "Portal still not available at $PORTAL_HOMEPAGE after 6 minutes, deployment failed" ; fi
     echo "### CLEANING UP SECRETS/OLD IMAGES ###"
     rm $PORTAL_SECRETS_PATH
-    prune_docker_artifacts $DOCKER_IMAGE_NAME
+    prune_docker_artifacts "$DOCKER_IMAGE_NAME" "$VERSION_TAG"
     echo "### DEPLOYMENT COMPLETED ###"
 }
 

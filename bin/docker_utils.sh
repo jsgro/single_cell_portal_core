@@ -96,20 +96,27 @@ function prune_docker_artifacts {
         INDEX=1
     fi
     IMAGE_NAME="$1"
-    # get all matching images, then pop off the first two as "current" and "rollback" images
-    ALL_IMAGES=($(get_matching_image_ids $IMAGE_NAME))
-    RELEASE_IMAGE_ID="${ALL_IMAGES[$INDEX]}"
-    ALL_IMAGES=("${ALL_IMAGES[@]:$INDEX}") # remove first element and reindex
-    ROLLBACK_IMAGE_ID="${ALL_IMAGES[$INDEX]}"
-    ALL_IMAGES=("${ALL_IMAGES[@]:$INDEX}")
-    RELEASE_IMAGE_NAME=$(get_image_tag_from_id $RELEASE_IMAGE_ID)
-    ROLLBACK_IMAGE_NAME=$(get_image_tag_from_id $ROLLBACK_IMAGE_ID)
-    echo "Keeping $RELEASE_IMAGE_NAME as current, $ROLLBACK_IMAGE_NAME as rollback"
-    for IMAGE in $ALL_IMAGES; do
-        IMAGE_TAG=$(get_image_tag_from_id $IMAGE)
-        echo "Removing obsolete image $IMAGE_TAG"
-        docker rmi $IMAGE
-    done
+    CURRENT_TAG="$2"
+    # if the current tag is 'development', don't attempt to remove any images by name as they are all the same tag
+    # docker image prune will handle any necessary cleanup in this case
+    if [[ "$CURRENT_TAG" -ne "development" ]]; then
+        # get all matching images, then pop off the first two as "current" and "rollback" images
+        ALL_IMAGES=($(get_matching_image_ids $IMAGE_NAME))
+        RELEASE_IMAGE_ID="${ALL_IMAGES[$INDEX]}"
+        ALL_IMAGES=("${ALL_IMAGES[@]:$INDEX}") # remove first element and reindex
+        ROLLBACK_IMAGE_ID="${ALL_IMAGES[$INDEX]}"
+        ALL_IMAGES=("${ALL_IMAGES[@]:$INDEX}")
+        RELEASE_IMAGE_NAME=$(get_image_tag_from_id $RELEASE_IMAGE_ID)
+        ROLLBACK_IMAGE_NAME=$(get_image_tag_from_id $ROLLBACK_IMAGE_ID)
+        echo "Keeping $RELEASE_IMAGE_NAME as current, $ROLLBACK_IMAGE_NAME as rollback"
+        for IMAGE in $ALL_IMAGES; do
+            IMAGE_TAG=$(get_image_tag_from_id $IMAGE)
+            echo "Removing obsolete image $IMAGE_TAG"
+            docker rmi $IMAGE
+        done
+    else
+        echo "Current tag is $CURRENT_TAG, skipping manual image cleanup of $IMAGE_NAME"
+    fi
     # prune unused image layers and volumes
     echo "pruning orphaned image layers"
     docker image prune --force
