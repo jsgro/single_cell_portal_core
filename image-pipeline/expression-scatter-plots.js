@@ -32,7 +32,7 @@ function print(message, preamble='') {
   numLogEntries += 1
 
   // Stream logs to bucket in small chunks
-  // For observability into _ongoing_ jobs and crash-resilient logs
+  // For observability into ongoing jobs and crash-resilient logs
   if (numLogEntries % 20 === 0) {uploadLog()}
 }
 
@@ -408,6 +408,7 @@ async function run() {
   const text = await response.text()
   print('response text')
   print(text)
+
   let json
   try {
     json = JSON.parse(text)
@@ -454,7 +455,7 @@ async function uploadToBucket(fromFilePath, toFilePath, preamble) {
 
 /** Upload / delocalize log file to GCS bucket */
 async function uploadLog() {
-  uploadToBucket('log.txt', 'parse_logs/log_image_pipeline.txt')
+  await uploadToBucket('log.txt', 'parse_logs/log_image_pipeline.txt')
 }
 
 const logFileWriteStream = createWriteStream('log.txt')
