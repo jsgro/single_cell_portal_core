@@ -360,11 +360,18 @@ async function parseCliArgs() {
   const numCPUs = values.cores ? parseInt(values.cores) : os.cpus().length / 2 - 1
   print(`Number of CPUs to be used on this client: ${numCPUs}`)
 
+
+  // Internal IP address for https://singlecell-staging.broadinstitute.org
+  // Reference: singlecell-01 in
+  // https://console.cloud.google.com/compute/instances?project=broad-singlecellportal-staging
+  // This allows PAPI to access the staging web app server, which is
+  // otherwise blocked per firewall / GCP Cloud Armor.
+  const stagingOrigin = '10.128.0.5'
+
   // TODO (SCP-4564): Document how to adjust network rules to use staging
   const originsByEnvironment = {
     'development': 'https://localhost:3000',
-    // Internal IP address for https://singlecell-staging.broadinstitute.org
-    'staging': '10.128.0.5',
+    'staging': stagingOrigin,
     'production': 'https://singlecell.broadinstitute.org'
   }
   const environment = values.environment || 'development'
