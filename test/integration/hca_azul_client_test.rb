@@ -245,6 +245,14 @@ class HcaAzulClientTest < ActiveSupport::TestCase
     assert_empty facets
   end
 
+  test 'should filter common/stop words from term lists' do
+    ignored_terms = HcaAzulClient::IGNORED_WORDS.sample(5)
+    assert_empty @hca_azul_client.filter_term_list(ignored_terms)
+    assert_empty @hca_azul_client.filter_term_list(ignored_terms.map(&:capitalize)) # case sensitivity
+    good_terms = %w[cancer brain human]
+    assert_equal good_terms, @hca_azul_client.filter_term_list(good_terms)
+  end
+
   test 'should merge query objects' do
     expected_query = {
       sampleDisease: {

@@ -7,30 +7,43 @@
  *
  * node expression-scatter-plots.js --accession="SCP24" # Staging, 1.3M cell study
  */
-import { parseArgs } from 'node:util'
 import { mkdir, writeFile, readFile, access } from 'node:fs/promises'
-import sharp from 'sharp'
 import os from 'node:os'
-
-import puppeteer from 'puppeteer'
 import { exit } from 'node:process'
+import { parseArgs } from 'node:util'
+
+import { gunzipSync, strFromU8 } from 'fflate'
+import puppeteer from 'puppeteer'
+import sharp from 'sharp'
 
 const args = process.argv.slice(2)
 
 const options = {
-  accession: { type: 'string' }
+  'accession': { type: 'string' }, // SCP accession
+  'cluster': { type: 'string' }, // Name of clustering
+  'cores': { type: 'string' }, // Number of CPU cores to use. Default: all - 1
+  'debug': { type: 'boolean' }, // Whether to show browser UI and exit early
+  'debug-headless': { type: 'boolean' }, // Whether to exit early; for PAPI debugging
+  'environment': { type: 'string' }, // development, staging, or production
+  'json-dir': { type: 'string' } // Path to expression arrays; for development
 }
 const { values } = parseArgs({ args, options })
 
+const timeoutMinutes = 0.75
+
 // Candidates for CLI argument
 // CPU count on Intel i7 is 1/2 of reported, due to hyperthreading
-// const numCPUs = os.cpus().length / 2 - 1
-const numCPUs = 1 // For easier local development
+const numCPUs = values.cores ? parseInt(values.cores) : os.cpus().length / 2 - 1
 console.log(`Number of CPUs to be used on this client: ${numCPUs}`)
 
 // TODO (SCP-4564): Document how to adjust network rules to use staging
-// const origin = 'https://singlecell-staging.broadinstitute.org'
-const origin = 'https://localhost:3000'
+const originsByEnvironment = {
+  'development': 'https://localhost:3000',
+  'staging': 'https://singlecell-staging.broadinstitute.org',
+  'production': 'https://singlecell.broadinstitute.org'
+}
+const environment = values.environment || 'development'
+const origin = originsByEnvironment[environment]
 
 /** Make output directories if absent */
 async function makeLocalOutputDir(leaf) {
@@ -44,11 +57,21 @@ async function makeLocalOutputDir(leaf) {
   return dir
 }
 
+// Make directories for output images
 const imagesDir = await makeLocalOutputDir('images')
-const jsonDir = await makeLocalOutputDir('json')
+
+// Set and/or make directories for prefetched JSON
+let jsonDir
+if (values['json-dir']) {
+  jsonDir = values['json-dir']
+} else {
+  jsonDir = await makeLocalOutputDir('json')
+}
+const jsonFpStem = `${jsonDir + values.cluster }--`
 
 // Cache for X, Y, and possibly Z coordinates
 const coordinates = {}
+let initExpressionResponse
 
 /** Print message with browser-tag preamble to local console */
 function print(message, preamble) {
@@ -124,12 +147,15 @@ async function makeExpressionScatterPlotImage(gene, page, preamble) {
   // console.log(Math.max(...plotlyTraces[0].y))
   // These ought to be parseable via the `coordinates` array
 
+  // Generalize if this moves beyond prototype
   const imageDescription = JSON.stringify({
     expression: [0, 2.433], // min, max of expression array
     x: [-12.568, 8.749], // min, max of x coordinates array
     y: [-15.174, 10.761], // min, max of y coordinates array
     z: []
   })
+
+  // Embed Plotly.js settings directly into image file's Exif data
   await sharp(rawImagePath)
     .withMetadata({
       exif: {
@@ -140,34 +166,17 @@ async function makeExpressionScatterPlotImage(gene, page, preamble) {
     })
     .toFile(imagePath)
 
-  // const metadata = await sharp(imagePath).metadata()
-  // console.log('metadata:')
-  // console.log(metadata)
-
   print(`Wrote ${imagePath}`, preamble)
 
   return
-}
-
-/**
- * Remove extraneous field parameters from SCP API call.
- * Substantially speeds up pipeline, if local expression data is not available.
- */
-function trimExpressionScatterPlotUrl(url) {
-  url = url.replace('cells%2Cannotation%2C', '')
-  if (Object.keys(coordinates).length > 0) {
-    // `coordinates` is only needed once, so don't ask for
-    // them if we have them already
-    url = url.replace('=coordinates%2C', '=')
-  }
-  return url
 }
 
 /** Fetch JSON data for gene expression scatter plot, before loading page */
 async function prefetchExpressionData(gene, context) {
   const { accession, preamble, origin } = context
 
-  const jsonPath = `${jsonDir}${gene}.json`
+  const extension = values['json-dir'] && initExpressionResponse ? '.gz' : ''
+  const jsonPath = `${jsonFpStem}${gene}.json${extension}`
 
   print(`Prefetching JSON for ${gene}`, preamble)
 
@@ -178,7 +187,7 @@ async function prefetchExpressionData(gene, context) {
     isCopyOnFilesystem = false
   }
 
-  if (isCopyOnFilesystem) {
+  if (isCopyOnFilesystem && initExpressionResponse) {
     // Don't process with fetch if expression was already prefetched
     print(`Using local expression data for ${gene}`, preamble)
     return
@@ -187,12 +196,11 @@ async function prefetchExpressionData(gene, context) {
   // Configure URLs
   const apiStem = `${origin}/single_cell/api/v1`
   const allFields = 'coordinates%2Ccells%2Cannotation%2Cexpression'
-  const params = `fields=${allFields}&gene=${gene}&subsample=all`
+  const params = `fields=${allFields}&gene=${gene}&subsample=all&isImagePipeline=true`
   const url = `${apiStem}/studies/${accession}/clusters/_default?${params}`
-  const trimmedUrl = trimExpressionScatterPlotUrl(url)
 
   // Fetch data
-  const response = await fetch(trimmedUrl)
+  const response = await fetch(url)
   const json = await response.json()
 
   if (Object.keys(coordinates).length === 0) {
@@ -202,8 +210,13 @@ async function prefetchExpressionData(gene, context) {
     if ('z' in json.data) {
       coordinates.z = json.data.z
     }
+    initExpressionResponse = json
   }
 
+  if (values['json-dir']) {
+    print('Populated initExpressionResponse for development run', preamble)
+    return
+  }
   await writeFile(jsonPath, JSON.stringify(json))
   print(`Wrote prefetched JSON: ${jsonPath}`, preamble)
 }
@@ -242,15 +255,25 @@ async function configureIntercepts(page) {
       const headers = Object.assign({}, request.headers())
       const [isESPlot, gene] = detectExpressionScatterPlot(request)
       if (isESPlot) {
-        console.log('Reading local file for:')
-        console.log(request.url())
         // Replace SCP API request for expression data with prefetched data.
         //
         // If these files could be made by Ingest Pipeline and put in a bucket,
         // then Image Pipeline could run against production web app while
         // incurring virtually no load for app server or DB server, and likely
         // complete warming a study's image cache 5-10x faster.
-        const jsonString = await readFile(`${jsonDir}${gene}.json`, { encoding: 'utf-8' })
+        const extension = values['json-dir'] ? '.gz' : ''
+        const jsonGzPath = `${jsonFpStem + gene }.json${extension}`
+        const content = await readFile(jsonGzPath)
+
+        let jsonString
+        if (extension === '.gz') {
+          const arrayString = strFromU8(gunzipSync(content))
+          initExpressionResponse.data.expression = JSON.parse(arrayString)
+          jsonString = JSON.stringify(initExpressionResponse)
+        } else {
+          jsonString = content
+        }
+
         request.respond({
           status: 200,
           contentType: 'application/json',
@@ -267,19 +290,28 @@ async function configureIntercepts(page) {
 async function processScatterPlotImages(genes, context) {
   const { accession, preamble, origin } = context
   // const browser = await puppeteer.launch()
-  const browser = await puppeteer.launch({ headless: false, devtools: true, acceptInsecureCerts: true, args: ['--ignore-certificate-errors'] })
+  let browser
 
-  // Needed for localhost; doesn't hurt to use in other environments
-  // const browser = await puppeteer.launch({ acceptInsecureCerts: true, args: ['--ignore-certificate-errors'] })
+  // Cert args needed for localhost; doesn't hurt in other environments
+  if (values.debug) {
+    browser = await puppeteer.launch({
+      headless: false, devtools: true, acceptInsecureCerts: true, args: ['--ignore-certificate-errors', '--no-sandbox']
+    })
+  } else {
+    browser = await puppeteer.launch({ acceptInsecureCerts: true, args: ['--ignore-certificate-errors', '--no-sandbox'] })
+  }
   const page = await browser.newPage()
+  // Set user agent to Chrome "9000".
+  // Bard client crudely parses UA, so custom raw user agents are infeasible.
+  await page.setUserAgent(
+    'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/9000.0.3904.108 Safari/537.36'
+  )
   await page.setViewport({
     width: 1680,
     height: 1000,
     deviceScaleFactor: 1
   })
 
-  // const timeoutMinutes = 0.25
-  const timeoutMinutes = 2
   const timeoutMilliseconds = timeoutMinutes * 60 * 1000
   // page.setDefaultTimeout(0) // No timeout
   page.setDefaultTimeout(timeoutMilliseconds)
@@ -288,7 +320,8 @@ async function processScatterPlotImages(genes, context) {
   configureIntercepts(page)
 
   // Go to Explore tab in Study Overview page
-  const exploreViewUrl = `${origin}/single_cell/study/${accession}?subsample=all#study-visualize`
+  const params = `?subsample=all&isImagePipeline=true#study-visualize`
+  const exploreViewUrl = `${origin}/single_cell/study/${accession}${params}`
   print(`Navigating to Explore tab: ${exploreViewUrl}`, preamble)
   await page.goto(exploreViewUrl)
   print(`Completed loading Explore tab`, preamble)
@@ -313,9 +346,14 @@ async function processScatterPlotImages(genes, context) {
     print(`Expression plot time for gene ${gene}: ${expressionPlotPerfTime} ms`, preamble)
 
     // Helpful for local development iterations
-    // if (accession === 'SCP138' && gene === 'A1BG-AS1') {
-    //   exit()
-    // }
+    const humanMilkDePilotAccessions = ['SCP138', 'SCP303', 'SCP1671'] // dev, staging, prod
+    if (
+      (values['debug'] || values['debug-headless']) &&
+      humanMilkDePilotAccessions.includes(accession) && gene === 'A1BG-AS1'
+    ) {
+      print('Encountered debug stop gene, exiting', preamble)
+      process.exit()
+    }
   }
 
   await browser.close()
@@ -339,8 +377,9 @@ let startTime
 
   startTime = Date.now()
 
+  const crum = 'isImagePipeline=true'
   // Get list of all genes in study
-  const exploreApiUrl = `${origin}/single_cell/api/v1/studies/${accession}/explore`
+  const exploreApiUrl = `${origin}/single_cell/api/v1/studies/${accession}/explore?${crum}`
   console.log(`Fetching ${exploreApiUrl}`)
 
   const response = await fetch(exploreApiUrl)

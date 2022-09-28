@@ -350,7 +350,7 @@ class HcaAzulClient
   #   - (Array<Hash>) => Array of facet objects to be fed to :format_query_from_facets
   def format_facet_query_from_keyword(term_list = [])
     matching_facets = []
-    sanitized_terms = (term_list - IGNORED_WORDS).reject { |t| t.size < 3 }
+    sanitized_terms = filter_term_list(term_list)
     sanitized_terms.each do |term|
       facets = SearchFacet.find_facets_from_term(term)
       next if facets.empty?
@@ -439,6 +439,17 @@ class HcaAzulClient
     validate_catalog_name(catalog)
     delimiter = api_path.include?('?') ? '&' : '?'
     "#{api_path}#{delimiter}catalog=#{catalog}"
+  end
+
+  # filter irrelevant terms from keyword query to increase relevance of search
+  #
+  # * *params*
+  #   - +term_list+ (Array) => list of terms to filter
+  #
+  # * *returns*
+  #   - (Array) => filtered list of terms
+  def filter_term_list(term_list)
+    (term_list.map(&:downcase) - IGNORED_WORDS).reject { |t| t.size < 3 }
   end
 
   private
