@@ -366,7 +366,9 @@ async function parseCliArgs() {
   // https://console.cloud.google.com/compute/instances?project=broad-singlecellportal-staging
   // This allows PAPI to access the staging web app server, which is
   // otherwise blocked per firewall / GCP Cloud Armor.
-  const stagingOrigin = '10.128.0.5'
+  const stagingIP = '10.128.0.5'
+  const stagingDomainName = 'https://singlecell-staging.broadinstitute.org'
+  const stagingOrigin = process.env?.IS_PAPI ? stagingIP : stagingDomainName
 
   // TODO (SCP-4564): Document how to adjust network rules to use staging
   const originsByEnvironment = {
@@ -399,8 +401,6 @@ async function run() {
 
   const accession = values.accession
   print(`Accession: ${accession}`)
-
-  startTime = Date.now()
 
   const crum = 'isImagePipeline=true'
   // Get list of all genes in study
@@ -463,7 +463,7 @@ async function uploadToBucket(fromFilePath, toFilePath, preamble) {
 
 /** Upload / delocalize log file to GCS bucket */
 async function uploadLog() {
-  await uploadToBucket('log.txt', 'parse_logs/log_image_pipeline.txt')
+  await uploadToBucket('log.txt', 'parse_logs/log_image_pipeline_eweitz.txt')
 }
 
 const logFileWriteStream = createWriteStream('log.txt')
@@ -478,14 +478,50 @@ let imagesDir
 let jsonFpStem
 let coordinates
 let initExpressionResponse
-let startTime // For tracking total runtime, internally
 
+/**
+ * Convert duration in milliseconds to hours, minutes, seconds (hh:mm:ss)
+ * Source: https://stackoverflow.com/a/19700358
+ */
+function msToTime(duration) {
+  const milliseconds = Math.floor((duration % 1000) / 100)
+  let seconds = Math.floor((duration / 1000) % 60)
+  let minutes = Math.floor((duration / (1000 * 60)) % 60)
+  let hours = Math.floor((duration / (1000 * 60 * 60)) % 24)
+
+  hours = (hours < 10) ? `0${ hours}` : hours
+  minutes = (minutes < 10) ? `0${ minutes}` : minutes
+  seconds = (seconds < 10) ? `0${ seconds}` : seconds
+
+  return `${hours }:${ minutes }:${ seconds }.${ milliseconds}`
+}
+
+/** Wrap up job.  Log status, run time. */
+async function complete(error=null) {
+  if (error) {print(error.stack)}
+
+  // Get timing data
+  const endTime = Date.now()
+  const perfTime = endTime - startTime // Duration in milliseconds
+  const durationHMS = msToTime(perfTime) // Friendly time
+  const durationNote = `Total run time: ${perfTime} ms (${durationHMS})`
+
+  // Get status data
+  const status = error ? 'failure' : 'success'
+  const statusNote = `Status: ${status}`
+
+  const signature = 'Completed Image Pipeline run'
+  print(`\n${signature}.  ${statusNote}.  ${durationNote}\n\n`)
+
+  await uploadLog()
+}
+
+const startTime = Date.now()
 try {
   await run()
-  await uploadLog()
-} catch (e) {
-  print(e.stack)
-  await uploadLog()
+  await complete()
+} catch (error) {
+  await complete(error)
   exit(1)
 }
 
