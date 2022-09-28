@@ -133,7 +133,7 @@ async function makeExpressionScatterPlotImage(gene, page, preamble) {
   // without needing to call GCS client library's bucket.upload on each file.
   // Ideally there would be a GCS client library equivalent of those commands,
   // but brief research found none.
-  const toFilePath = `images/expression_scatter/${webpFileName}`
+  const toFilePath = `images/expression_scatter_eweitz/${webpFileName}`
   uploadToBucket(imagePath, toFilePath, preamble)
 
   return
@@ -367,8 +367,9 @@ async function parseCliArgs() {
   // This allows PAPI to access the staging web app server, which is
   // otherwise blocked per firewall / GCP Cloud Armor.
   const stagingIP = '10.128.0.5'
-  const stagingDomainName = 'https://singlecell-staging.broadinstitute.org'
-  const stagingOrigin = process.env?.IS_PAPI ? stagingIP : stagingDomainName
+  const stagingDomainName = 'singlecell-staging.broadinstitute.org'
+  const isPAPI = process.env?.IS_PAPI
+  const stagingOrigin = `https://${isPAPI ? stagingIP : stagingDomainName}`
 
   // TODO (SCP-4564): Document how to adjust network rules to use staging
   const originsByEnvironment = {
