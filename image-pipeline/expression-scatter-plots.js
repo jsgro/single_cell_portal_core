@@ -133,7 +133,7 @@ async function makeExpressionScatterPlotImage(gene, page, preamble) {
   // without needing to call GCS client library's bucket.upload on each file.
   // Ideally there would be a GCS client library equivalent of those commands,
   // but brief research found none.
-  const toFilePath = `images/expression_scatter_eweitz/${webpFileName}`
+  const toFilePath = `images/expression_scatter${debugNonce}/${webpFileName}`
   uploadToBucket(imagePath, toFilePath, preamble)
 
   return
@@ -260,13 +260,24 @@ async function processScatterPlotImages(genes, context) {
   // const browser = await puppeteer.launch()
   let browser
 
+  const pptrArgs = [
+    '--ignore-certificate-errors',
+    '--no-sandbox'
+  ]
+
+  // Map staging domain name to staging internal IP address on PAPI
+  if (process.env?.IS_PAPI) {
+    const dnsEntry = `${stagingHost.domainName} ${stagingHost.ip}`
+    pptrArgs.push(`--host-rules=MAP ${dnsEntry}`)
+  }
+
   // Cert args needed for localhost; doesn't hurt in other environments
   if (values.debug) {
     browser = await puppeteer.launch({
-      headless: false, devtools: true, acceptInsecureCerts: true, args: ['--ignore-certificate-errors', '--no-sandbox']
+      headless: false, devtools: true, acceptInsecureCerts: true, args: pptrArgs
     })
   } else {
-    browser = await puppeteer.launch({ acceptInsecureCerts: true, args: ['--ignore-certificate-errors', '--no-sandbox'] })
+    browser = await puppeteer.launch({ acceptInsecureCerts: true, args: pptrArgs })
   }
   const page = await browser.newPage()
   // Set user agent to Chrome "9000".
@@ -298,6 +309,21 @@ async function processScatterPlotImages(genes, context) {
 
   await page.waitForSelector('#study-visualize-nav')
   await page.click('#study-visualize-nav')
+
+
+  // // Helpful to debug if troubleshooting initial page display
+  // const clipDimensions = { height: 1300, width: 1300, x: 0, y: 0 }
+  // const webpFileName = `debug_${accession}_explore_view.webp`
+  // const imagePath = `${imagesDir}${webpFileName}`
+  // await page.screenshot({
+  //   path: imagePath,
+  //   type: 'webp',
+  //   clip: clipDimensions,
+  //   omitBackground: true
+  // })
+  // const toFilePath = `images/expression_scatter${debugNonce}/${webpFileName}`
+  // uploadToBucket(imagePath, toFilePath, preamble)
+
   await page.waitForSelector('.gene-keyword-search input')
 
   for (let i = 0; i < genes.length; i++) {
@@ -341,6 +367,7 @@ async function makeLocalOutputDir(leaf) {
 async function parseCliArgs() {
   const commandToNode = process.argv.join(' ').split('/').slice(-1)[0]
   print(`Command run via Node:\n\n${ commandToNode}\n`)
+  await uploadLog()
 
   const args = process.argv.slice(2)
 
@@ -368,19 +395,18 @@ async function parseCliArgs() {
   // otherwise blocked per firewall / GCP Cloud Armor.
   const stagingIP = '10.128.0.5'
   const stagingDomainName = 'singlecell-staging.broadinstitute.org'
-  const isPAPI = process.env?.IS_PAPI
-  const stagingOrigin = `https://${isPAPI ? stagingIP : stagingDomainName}`
+  const stagingHost = { ip: stagingIP, domainName: stagingDomainName }
 
   // TODO (SCP-4564): Document how to adjust network rules to use staging
   const originsByEnvironment = {
     'development': 'https://localhost:3000',
-    'staging': stagingOrigin,
+    'staging': 'https://singlecell-staging.broadinstitute.org',
     'production': 'https://singlecell.broadinstitute.org'
   }
   const environment = values.environment || 'development'
   const origin = originsByEnvironment[environment]
 
-  return { values, numCPUs, origin }
+  return { values, numCPUs, origin, stagingHost }
 }
 
 /** Main function.  Run Image Pipeline */
@@ -403,6 +429,8 @@ async function run() {
   const accession = values.accession
   print(`Accession: ${accession}`)
 
+  await uploadLog()
+
   const crum = 'isImagePipeline=true'
   // Get list of all genes in study
   const exploreApiUrl = `${origin}/single_cell/api/v1/studies/${accession}/explore?${crum}`
@@ -410,17 +438,14 @@ async function run() {
 
   const response = await fetch(exploreApiUrl)
 
-  // TODO (SCP-4666): Use plain-old response.json() without all this log noise
-  // once we can access staging SCP API from staging-project PAPI VM.
-  print('response.status')
-  print(response.status)
-  const text = await response.text()
-  print('response text')
-  print(text)
+  // Helpful for debugging errors
+  // const text = await response.text()
+  // print('response text')
+  // print(text)
 
   let json
   try {
-    json = JSON.parse(text)
+    json = await response.json()
   } catch (error) {
     console.log('Failed to fetch:')
     console.log(exploreApiUrl)
@@ -464,21 +489,9 @@ async function uploadToBucket(fromFilePath, toFilePath, preamble) {
 
 /** Upload / delocalize log file to GCS bucket */
 async function uploadLog() {
-  await uploadToBucket('log.txt', 'parse_logs/log_image_pipeline_eweitz.txt')
+  const logName = 'expression_scatter_images'
+  await uploadToBucket('log.txt', `parse_logs/${logName}_${nonce}.txt`)
 }
-
-const logFileWriteStream = createWriteStream('log.txt')
-
-const { values, numCPUs, origin } = await parseCliArgs()
-
-const timeoutMinutes = 0.75
-
-const storage = new Storage()
-
-let imagesDir
-let jsonFpStem
-let coordinates
-let initExpressionResponse
 
 /**
  * Convert duration in milliseconds to hours, minutes, seconds (hh:mm:ss)
@@ -518,6 +531,31 @@ async function complete(error=null) {
 }
 
 const startTime = Date.now()
+// Adds a unique signature to output; helpful when debugging
+
+// Start time in ISO-8601 format, without colons
+const timestamp = new Date().toISOString().split('.')[0].replace(/\:/g, '')
+const nonceName = '' // e.g. "eweitz_"
+const nonce = `_${nonceName}${timestamp}`
+
+const storage = new Storage()
+
+const timeoutMinutes = 0.75
+
+const logFileWriteStream = createWriteStream('log.txt')
+
+const { values, numCPUs, origin, stagingHost } = await parseCliArgs()
+
+let debugNonce = ''
+if (values['debug'] || values['debug-headless']) {
+  debugNonce = `_debug${ nonce}`
+}
+
+let imagesDir
+let jsonFpStem
+let coordinates
+let initExpressionResponse
+
 try {
   await run()
   await complete()
