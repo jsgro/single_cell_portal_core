@@ -2,7 +2,7 @@
 
 # shell shortcuts for starting/stopping/removing docker containers
 
-THIS_DIR="$(cd "$(dirname "$0")"; pwd)"
+THIS_DIR="$(cd "$(dirname -- "$0")"; pwd)"
 
 # load common utils
 
@@ -84,38 +84,43 @@ function ensure_container_running {
 # get all matching images, will return image IDs in the order of most recent first
 function get_matching_image_ids {
     IMAGE_NAME="$1"
-    IMAGES=$(docker images | grep -F $IMAGE_NAME | awk '{ print $3 }')
-    echo $IMAGES
+    IMAGES=$(docker images | grep -F $IMAGE_NAME | awk '{ print $3 }' | xargs echo -n)
+    echo -n "$IMAGES"
 }
 
 # remove all but the most recent release image
+# due to complexities of handling arrays/values in different shells, this only works in bash as this
+# is what our deployed environments default to
 function prune_docker_artifacts {
-    INDEX=0
     if [[ "$SHELL" = '/bin/zsh' ]]; then
-        echo "zsh detected, setting array index to 1"
-        INDEX=1
+        echo "zsh detected, exiting as this function only operates on bash shells"
+        return 1
     fi
     IMAGE_NAME="$1"
     CURRENT_TAG="$2"
-    # if the current tag is 'development', don't attempt to remove any images by name as they are all the same tag
-    # docker image prune will handle any necessary cleanup in this case
-    if [[ "$CURRENT_TAG" -ne "development" ]]; then
-        # get all matching images, then pop off the first two as "current" and "rollback" images
-        ALL_IMAGES=($(get_matching_image_ids $IMAGE_NAME))
-        RELEASE_IMAGE_ID="${ALL_IMAGES[$INDEX]}"
-        ALL_IMAGES=("${ALL_IMAGES[@]:$INDEX}") # remove first element and reindex
-        ROLLBACK_IMAGE_ID="${ALL_IMAGES[$INDEX]}"
-        ALL_IMAGES=("${ALL_IMAGES[@]:$INDEX}")
+    if [[ -z "$IMAGE_NAME" ]] || [[ -z "$CURRENT_TAG" ]]; then
+        echo "Not enough arguments supplied, quitting"
+        return 1
+    fi
+    # get all matching images, then grab second entry as the rollback image
+    ALL_IMAGES=$(get_matching_image_ids $IMAGE_NAME)
+    RELEASE_IMAGE_ID=$(echo $ALL_IMAGES | awk '{ print $1 }')
+    ROLLBACK_IMAGE_ID=$(echo $ALL_IMAGES | awk '{ print $2 }')
+    # only remove older images if we are not dealing with 'development' tag, and we have identified both a
+    # release & rollback image
+    if [[ "$CURRENT_TAG" != "development" ]] && [[ -n "$RELEASE_IMAGE_ID" ]] && [[ -n "$ROLLBACK_IMAGE_ID" ]]; then
         RELEASE_IMAGE_NAME=$(get_image_tag_from_id $RELEASE_IMAGE_ID)
         ROLLBACK_IMAGE_NAME=$(get_image_tag_from_id $ROLLBACK_IMAGE_ID)
         echo "Keeping $RELEASE_IMAGE_NAME as current, $ROLLBACK_IMAGE_NAME as rollback"
         for IMAGE in $ALL_IMAGES; do
-            IMAGE_TAG=$(get_image_tag_from_id $IMAGE)
-            echo "Removing obsolete image $IMAGE_TAG"
-            docker rmi $IMAGE
+            if [[ "$IMAGE" != "$RELEASE_IMAGE_ID" ]] && [[ "$IMAGE" != "$ROLLBACK_IMAGE_ID" ]]; then
+                IMAGE_TAG=$(get_image_tag_from_id $IMAGE)
+                echo "Removing obsolete image $IMAGE_TAG"
+                docker rmi $IMAGE
+            fi
         done
     else
-        echo "Current tag is $CURRENT_TAG, skipping manual image cleanup of $IMAGE_NAME"
+        echo "Skipping manual image cleanup of $IMAGE_NAME:$CURRENT_TAG; not enough versions present"
     fi
     # prune unused image layers and volumes
     echo "pruning orphaned image layers"
