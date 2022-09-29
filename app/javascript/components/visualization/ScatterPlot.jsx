@@ -126,7 +126,7 @@ function RawScatterPlot({
   }, [editedCustomColors])
 
   /** Save any changes to the legend colors */
-  const saveCustomColors = async newColors => {
+  async function saveCustomColors(newColors) {
     const colorObj = {}
     // read the annotation name off of scatterData to ensure it's the real name, and not '' or '_default'
     colorObj[scatterData?.annotParams?.name] = newColors
