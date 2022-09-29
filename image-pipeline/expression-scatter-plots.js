@@ -8,6 +8,7 @@
  * node expression-scatter-plots.js --accession="SCP24" # Staging, 1.3M cell study
  */
 import { mkdir, writeFile, readFile, access } from 'node:fs/promises'
+import { createWriteStream } from 'node:fs'
 import os from 'node:os'
 import { exit } from 'node:process'
 import { parseArgs } from 'node:util'
@@ -15,67 +16,24 @@ import { parseArgs } from 'node:util'
 import { gunzipSync, strFromU8 } from 'fflate'
 import puppeteer from 'puppeteer'
 import sharp from 'sharp'
+import { Storage } from '@google-cloud/storage'
 
-const args = process.argv.slice(2)
+let numLogEntries = 0
 
-const options = {
-  'accession': { type: 'string' }, // SCP accession
-  'cluster': { type: 'string' }, // Name of clustering
-  'cores': { type: 'string' }, // Number of CPU cores to use. Default: all - 1
-  'debug': { type: 'boolean' }, // Whether to show browser UI and exit early
-  'debug-headless': { type: 'boolean' }, // Whether to exit early; for PAPI debugging
-  'environment': { type: 'string' }, // development, staging, or production
-  'json-dir': { type: 'string' } // Path to expression arrays; for development
-}
-const { values } = parseArgs({ args, options })
+/** Print message with browser-tag preamble to local console and log file */
+function print(message, preamble='') {
+  const timestamp = new Date().toISOString()
+  if (preamble !== '') {preamble = `${preamble} `}
+  const fullMessage = preamble + message
 
-const timeoutMinutes = 0.75
+  console.log(fullMessage)
 
-// Candidates for CLI argument
-// CPU count on Intel i7 is 1/2 of reported, due to hyperthreading
-const numCPUs = values.cores ? parseInt(values.cores) : os.cpus().length / 2 - 1
-console.log(`Number of CPUs to be used on this client: ${numCPUs}`)
+  logFileWriteStream.write(`[${timestamp}] -- : ${fullMessage }\n`)
+  numLogEntries += 1
 
-// TODO (SCP-4564): Document how to adjust network rules to use staging
-const originsByEnvironment = {
-  'development': 'https://localhost:3000',
-  'staging': 'https://singlecell-staging.broadinstitute.org',
-  'production': 'https://singlecell.broadinstitute.org'
-}
-const environment = values.environment || 'development'
-const origin = originsByEnvironment[environment]
-
-/** Make output directories if absent */
-async function makeLocalOutputDir(leaf) {
-  const dir = `output/${values.accession}/${leaf}/`
-  const options = { recursive: true }
-  try {
-    await access(dir)
-  } catch {
-    await mkdir(dir, options)
-  }
-  return dir
-}
-
-// Make directories for output images
-const imagesDir = await makeLocalOutputDir('images')
-
-// Set and/or make directories for prefetched JSON
-let jsonDir
-if (values['json-dir']) {
-  jsonDir = values['json-dir']
-} else {
-  jsonDir = await makeLocalOutputDir('json')
-}
-const jsonFpStem = `${jsonDir + values.cluster }--`
-
-// Cache for X, Y, and possibly Z coordinates
-const coordinates = {}
-let initExpressionResponse
-
-/** Print message with browser-tag preamble to local console */
-function print(message, preamble) {
-  console.log(`${preamble} ${message}`)
+  // Stream logs to bucket in small chunks
+  // For observability into ongoing jobs and crash-resilient logs
+  if (numLogEntries % 20 === 0) {uploadLog()}
 }
 
 /** Is request a log post to Bard? */
@@ -130,9 +88,10 @@ async function makeExpressionScatterPlotImage(gene, page, preamble) {
   // Height and width of plot, x- and y-offset from viewport origin
   const clipDimensions = { height: 595, width: 660, x: 5, y: 310 }
 
+  const webpFileName = `${gene}.webp`
   // Take a screenshot, save it locally
   const rawImagePath = `${imagesDir}${gene}-raw.webp`
-  const imagePath = `${imagesDir}${gene}.webp`
+  const imagePath = `${imagesDir}${webpFileName}`
   await page.screenshot({
     path: rawImagePath,
     type: 'webp',
@@ -167,6 +126,15 @@ async function makeExpressionScatterPlotImage(gene, page, preamble) {
     .toFile(imagePath)
 
   print(`Wrote ${imagePath}`, preamble)
+
+  // TODO (SCP-4698): parallelize upload, and atomically trigger on success.
+  //
+  // `gcloud storage cp` or (slower) `gsutil -m cp` would upload in parallel,
+  // without needing to call GCS client library's bucket.upload on each file.
+  // Ideally there would be a GCS client library equivalent of those commands,
+  // but brief research found none.
+  const toFilePath = `images/expression_scatter/${webpFileName}`
+  uploadToBucket(imagePath, toFilePath, preamble)
 
   return
 }
@@ -344,16 +312,6 @@ async function processScatterPlotImages(genes, context) {
 
     const expressionPlotPerfTime = Date.now() - expressionPlotStartTime
     print(`Expression plot time for gene ${gene}: ${expressionPlotPerfTime} ms`, preamble)
-
-    // Helpful for local development iterations
-    const humanMilkDePilotAccessions = ['SCP138', 'SCP303', 'SCP1671'] // dev, staging, prod
-    if (
-      (values['debug'] || values['debug-headless']) &&
-      humanMilkDePilotAccessions.includes(accession) && gene === 'A1BG-AS1'
-    ) {
-      print('Encountered debug stop gene, exiting', preamble)
-      process.exit()
-    }
   }
 
   await browser.close()
@@ -367,29 +325,97 @@ function sliceGenes(uniqueGenes, numCPUs, cpuIndex) {
   return uniqueGenes.slice(start, end)
 }
 
-// For tracking total runtime, internally
-let startTime
+/** Make output directories if absent */
+async function makeLocalOutputDir(leaf) {
+  const dir = `output/${values.accession}/${leaf}/`
+  const options = { recursive: true }
+  try {
+    await access(dir)
+  } catch {
+    await mkdir(dir, options)
+  }
+  return dir
+}
 
-// Main  function
-(async () => {
+/** Wrap argument parsing so it's more testable and loggable */
+async function parseCliArgs() {
+  const commandToNode = process.argv.join(' ').split('/').slice(-1)[0]
+  print(`Command run via Node:\n\n${ commandToNode}\n`)
+
+  const args = process.argv.slice(2)
+
+  const options = {
+    'accession': { type: 'string' }, // SCP accession
+    'cluster': { type: 'string' }, // Name of clustering
+    'cores': { type: 'string' }, // Number of CPU cores to use. Default: all - 1
+    'debug': { type: 'boolean' }, // Whether to show browser UI and exit early
+    'debug-headless': { type: 'boolean' }, // Whether to exit early; for PAPI debugging
+    'environment': { type: 'string' }, // development, staging, or production
+    'json-dir': { type: 'string' } // Path to expression arrays; for development
+  }
+  const { values } = parseArgs({ args, options })
+
+  // Candidates for CLI argument
+  // CPU count on Intel i7 is 1/2 of reported, due to hyperthreading
+  const numCPUs = values.cores ? parseInt(values.cores) : os.cpus().length / 2 - 1
+  print(`Number of CPUs to be used on this client: ${numCPUs}`)
+
+  // TODO (SCP-4564): Document how to adjust network rules to use staging
+  const originsByEnvironment = {
+    'development': 'https://localhost:3000',
+    'staging': 'https://singlecell-staging.broadinstitute.org',
+    'production': 'https://singlecell.broadinstitute.org'
+  }
+  const environment = values.environment || 'development'
+  const origin = originsByEnvironment[environment]
+
+  return { values, numCPUs, origin }
+}
+
+/** Main function.  Run Image Pipeline */
+async function run() {
+  // Make directories for output images
+  imagesDir = await makeLocalOutputDir('images')
+
+  // Set and/or make directories for prefetched JSON
+  let jsonDir
+  if (values['json-dir']) {
+    jsonDir = values['json-dir']
+  } else {
+    jsonDir = await makeLocalOutputDir('json')
+  }
+  jsonFpStem = `${jsonDir + values.cluster }--`
+
+  // Cache for X, Y, and possibly Z coordinates
+  coordinates = {}
+
   const accession = values.accession
-  console.log(`Accession: ${accession}`)
+  print(`Accession: ${accession}`)
 
   startTime = Date.now()
 
   const crum = 'isImagePipeline=true'
   // Get list of all genes in study
   const exploreApiUrl = `${origin}/single_cell/api/v1/studies/${accession}/explore?${crum}`
-  console.log(`Fetching ${exploreApiUrl}`)
+  print(`Fetching ${exploreApiUrl}`)
 
   const response = await fetch(exploreApiUrl)
+
+  // TODO (SCP-4666): Use plain-old response.json() without all this log noise
+  // once we can access staging SCP API from staging-project PAPI VM.
+  print('response.status')
+  print(response.status)
+  const text = await response.text()
+  print('response text')
+  print(text)
+
   let json
   try {
-    json = await response.json()
+    json = JSON.parse(text)
   } catch (error) {
     console.log('Failed to fetch:')
     console.log(exploreApiUrl)
-    exit(1)
+    throw error
   }
   const uniqueGenes = json.uniqueGenes
   console.log(`Total number of genes: ${uniqueGenes.length}`)
@@ -403,13 +429,58 @@ let startTime
     // const gene = uniqueGenes[geneIndex]
 
     // Generate a series of plots, then save them locally
-    const genes = sliceGenes(uniqueGenes, numCPUs, cpuIndex)
+    let genes = sliceGenes(uniqueGenes, numCPUs, cpuIndex)
+    if (values['debug'] || values['debug-headless']) {
+      print('DEBUG: only processing 2 genes', preamble)
+      genes = genes.slice(0, 2)
+    }
 
     const context = { accession, preamble, origin }
 
-    processScatterPlotImages(genes, context)
+    await processScatterPlotImages(genes, context)
   }
-})()
+}
+
+/** Upload a file from a local path to a destination path in a Google bucket */
+async function uploadToBucket(fromFilePath, toFilePath, preamble) {
+  const bucketName = 'broad-singlecellportal-staging-testing-data'
+  const opts = { destination: `_scp_internal/${toFilePath}` }
+  await storage.bucket(bucketName).upload(fromFilePath, opts)
+  print(
+    `File "${fromFilePath}" uploaded to destination "${toFilePath}" ` +
+    `in bucket "${bucketName}"`,
+    preamble
+  )
+}
+
+/** Upload / delocalize log file to GCS bucket */
+async function uploadLog() {
+  await uploadToBucket('log.txt', 'parse_logs/log_image_pipeline.txt')
+}
+
+const logFileWriteStream = createWriteStream('log.txt')
+
+const { values, numCPUs, origin } = await parseCliArgs()
+
+const timeoutMinutes = 0.75
+
+const storage = new Storage()
+
+let imagesDir
+let jsonFpStem
+let coordinates
+let initExpressionResponse
+let startTime // For tracking total runtime, internally
+
+try {
+  await run()
+  await uploadLog()
+} catch (e) {
+  print(e.stack)
+  await uploadLog()
+  exit(1)
+}
+
 
 // // This executes immediately after calling main function.
 // // Perhaps refactor that to use Promise.all, then call this as a function.
