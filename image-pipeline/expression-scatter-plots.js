@@ -133,7 +133,7 @@ async function makeExpressionScatterPlotImage(gene, page, preamble) {
   // without needing to call GCS client library's bucket.upload on each file.
   // Ideally there would be a GCS client library equivalent of those commands,
   // but brief research found none.
-  const toFilePath = `images/expression_scatter${debugNonce}/${webpFileName}`
+  const toFilePath = `cache/expression_scatter/images/${debugNonce}${webpFileName}`
   uploadToBucket(imagePath, toFilePath, preamble)
 
   return
@@ -321,7 +321,7 @@ async function processScatterPlotImages(genes, context) {
   //   clip: clipDimensions,
   //   omitBackground: true
   // })
-  // const toFilePath = `images/expression_scatter${debugNonce}/${webpFileName}`
+  // const toFilePath = `cache/expression_scatter/images/{debugNonce}${webpFileName}`
   // uploadToBucket(imagePath, toFilePath, preamble)
 
   await page.waitForSelector('.gene-keyword-search input')
@@ -548,7 +548,7 @@ const { values, numCPUs, origin, stagingHost } = await parseCliArgs()
 
 let debugNonce = ''
 if (values['debug'] || values['debug-headless']) {
-  debugNonce = `_debug${ nonce}`
+  debugNonce = `_debug${ nonce}/`
 }
 
 let imagesDir
