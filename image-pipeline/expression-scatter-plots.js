@@ -257,28 +257,25 @@ async function configureIntercepts(page) {
 /** CPU-level wrapper to make images for a sub-list of genes */
 async function processScatterPlotImages(genes, context) {
   const { accession, preamble, origin } = context
-  // const browser = await puppeteer.launch()
-  let browser
 
+  // Set up Puppeteer Chrome browser
   const pptrArgs = [
     '--ignore-certificate-errors',
     '--no-sandbox'
   ]
-
   // Map staging domain name to staging internal IP address on PAPI
   if (process.env?.IS_PAPI) {
     const dnsEntry = `${stagingHost.domainName} ${stagingHost.ip}`
     pptrArgs.push(`--host-rules=MAP ${dnsEntry}`)
   }
-
-  // Cert args needed for localhost; doesn't hurt in other environments
+  const pptrArgsObj = { acceptInsecureCerts: true, args: pptrArgs }
   if (values.debug) {
-    browser = await puppeteer.launch({
-      headless: false, devtools: true, acceptInsecureCerts: true, args: pptrArgs
-    })
-  } else {
-    browser = await puppeteer.launch({ acceptInsecureCerts: true, args: pptrArgs })
+    pptrArgsObj.headless = false
+    pptrArgsObj.devtools = true
   }
+
+  const browser = await puppeteer.launch(pptrArgsObj)
+
   const page = await browser.newPage()
   // Set user agent to Chrome "9000".
   // Bard client crudely parses UA, so custom raw user agents are infeasible.
