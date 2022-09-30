@@ -141,7 +141,7 @@ async function makeExpressionScatterPlotImage(gene, page, preamble) {
 
 /** Fetch JSON data for gene expression scatter plot, before loading page */
 async function prefetchExpressionData(gene, context) {
-  const { accession, preamble, origin } = context
+  const { accession, preamble, origin, fetchOrigin } = context
 
   const extension = values['json-dir'] && initExpressionResponse ? '.gz' : ''
   const jsonPath = `${jsonFpStem}${gene}.json${extension}`
@@ -162,7 +162,7 @@ async function prefetchExpressionData(gene, context) {
   }
 
   // Configure URLs
-  const apiStem = `${origin}/single_cell/api/v1`
+  const apiStem = `${fetchOrigin}/single_cell/api/v1`
   const allFields = 'coordinates%2Ccells%2Cannotation%2Cexpression'
   const params = `fields=${allFields}&gene=${gene}&subsample=all&isImagePipeline=true`
   const url = `${apiStem}/studies/${accession}/clusters/_default?${params}`
@@ -403,7 +403,11 @@ async function parseCliArgs() {
   const environment = values.environment || 'development'
   const origin = originsByEnvironment[environment]
 
-  return { values, numCPUs, origin, stagingHost }
+  // Set origin for use in standalone fetch, which lacks Puppeteer host map
+  const isStagingPAPI = environment === 'staging' && process.env?.IS_PAPI
+  const fetchOrigin = isStagingPAPI ? `https://${ stagingHost.ip}` : origin
+
+  return { values, numCPUs, origin, stagingHost, fetchOrigin }
 }
 
 /** Main function.  Run Image Pipeline */
@@ -430,7 +434,7 @@ async function run() {
 
   const crum = 'isImagePipeline=true'
   // Get list of all genes in study
-  const exploreApiUrl = `${origin}/single_cell/api/v1/studies/${accession}/explore?${crum}`
+  const exploreApiUrl = `${fetchOrigin}/single_cell/api/v1/studies/${accession}/explore?${crum}`
   print(`Fetching ${exploreApiUrl}`)
 
   const response = await fetch(exploreApiUrl)
@@ -442,6 +446,7 @@ async function run() {
 
   let json
   try {
+    // json = JSON.parse(text)
     json = await response.json()
   } catch (error) {
     console.log('Failed to fetch:')
@@ -466,7 +471,7 @@ async function run() {
       genes = genes.slice(0, 2)
     }
 
-    const context = { accession, preamble, origin }
+    const context = { accession, preamble, origin, fetchOrigin }
 
     await processScatterPlotImages(genes, context)
   }
@@ -541,7 +546,7 @@ const timeoutMinutes = 0.75
 
 const logFileWriteStream = createWriteStream('log.txt')
 
-const { values, numCPUs, origin, stagingHost } = await parseCliArgs()
+const { values, numCPUs, origin, stagingHost, fetchOrigin } = await parseCliArgs()
 
 let debugNonce = ''
 if (values['debug'] || values['debug-headless']) {
