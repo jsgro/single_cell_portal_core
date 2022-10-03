@@ -51,7 +51,8 @@ const MOCK_CLUSTER_RESPONSE = {
   },
   subsample: 'all',
   consensus: null,
-  externalLink: { url: '', title: '', description: '' }
+  externalLink: { url: '', title: '', description: '' },
+  customColors: {}
 }
 
 const CACHE_PERF_PARAMS = {

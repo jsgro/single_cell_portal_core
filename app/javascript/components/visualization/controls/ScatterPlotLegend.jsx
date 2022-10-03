@@ -3,7 +3,6 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faPalette, faExternalLinkAlt, faTimes, faSearch } from '@fortawesome/free-solid-svg-icons'
 import Modal from 'react-bootstrap/lib/Modal'
 import { HexColorPicker, HexColorInput } from 'react-colorful'
-import _cloneDeep from 'lodash/cloneDeep'
 import Button from 'react-bootstrap/lib/Button'
 import { getFeatureFlagsWithDefaults } from '~/providers/UserProvider'
 
@@ -67,7 +66,9 @@ function LegendEntry({
         className={`scatter-legend-row ${shownClass}`}
         role="button"
         onClick={entryClickFunction}
-        onMouseEnter={() => setActiveTraceLabel(label)}
+        onMouseEnter={() => {
+          setActiveTraceLabel(label)
+        }}
         onMouseLeave={() => setActiveTraceLabel(null)}
       >
         <div className="scatter-legend-icon" style={iconStyle}>
@@ -142,10 +143,10 @@ function getShowHideEnabled(hiddenTraces, countsByLabel) {
 /** Component for custom legend for scatter plots */
 export default function ScatterPlotLegend({
   name, height, countsByLabel, correlations, hiddenTraces,
-  updateHiddenTraces, customColors, editedCustomColors, setEditedCustomColors,
-  enableColorPicking=false, saveCustomColors, activeTraceLabel, setActiveTraceLabel,
+  updateHiddenTraces, customColors, editedCustomColors, setEditedCustomColors, setCustomColors,
+  enableColorPicking=false, activeTraceLabel, setActiveTraceLabel,
   splitLabelArrays, setSplitLabelArrays, hasArrayLabels,
-  externalLink
+  externalLink, saveCustomColors
 }) {
   // is the user currently in color-editing mode
   const [showColorControls, setShowColorControls] = useState(false)
@@ -167,9 +168,8 @@ export default function ScatterPlotLegend({
 
   /** updates the user picked color for the given label.  does *not* save change to the server */
   function updateEditedCustomColors(label, color) {
-    const newColors = _cloneDeep(editedCustomColors)
-    newColors[label] = color
-    setEditedCustomColors(newColors)
+    editedCustomColors[label] = color
+    setEditedCustomColors({ ...editedCustomColors })
   }
 
   /** resets any unsaved changes to user colors */
@@ -179,19 +179,18 @@ export default function ScatterPlotLegend({
   }
 
   /** resets any unsaved changes to user colors and clears custom colors */
-  function resetColors() {
+  async function resetColors() {
     setEditedCustomColors({})
-    saveCustomColors({})
+    await saveCustomColors({})
     setShowColorControls(false)
   }
 
   /** save the colors to the server */
-  function saveColors() {
+  async function saveColors() {
     // merge the user picked colors with existing custom colors so previously saved values are preserved
-    const colorsToSave = _cloneDeep(customColors)
-    Object.assign(colorsToSave, editedCustomColors)
+    const colorsToSave = Object.assign(customColors, editedCustomColors)
+    await saveCustomColors(colorsToSave)
     setShowColorControls(false)
-    saveCustomColors(colorsToSave)
   }
 
   /** collect general information when a user's mouse enters the legend  */
