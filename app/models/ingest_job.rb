@@ -13,7 +13,9 @@ class IngestJob
   MAX_ATTEMPTS = 3
 
   # valid ingest actions to perform
-  VALID_ACTIONS = %i[ingest_expression ingest_cluster ingest_cell_metadata subsample differential_expression].freeze
+  VALID_ACTIONS = %i[
+    ingest_expression ingest_cluster ingest_cell_metadata subsample differential_expression render_expression_arrays
+  ].freeze
 
   # Mappings between actions & models (for cleaning up data on re-parses)
   MODELS_BY_ACTION = {
@@ -22,6 +24,11 @@ class IngestJob
     ingest_cell_metadata: CellMetadatum,
     ingest_subsample: ClusterGroup
   }.freeze
+
+  # non-standard job actions where data is not being read from a file to insert into MongoDB
+  # these jobs usually process files and write objects back to the bucket, and as such have special pre/post-processing
+  # steps that need to be accounted for
+  SPECIAL_ACTIONS = %i[differential_expression render_expression_arrays].freeze
 
   # Name of pipeline submission running in GCP (from [PapiClient#run_pipeline])
   attr_accessor :pipeline_name
@@ -307,8 +314,8 @@ class IngestJob
     if done? && !failed?
       Rails.logger.info "IngestJob poller: #{pipeline_name} is done!"
       Rails.logger.info "IngestJob poller: #{pipeline_name} status: #{current_status}"
-      study_file.update(parse_status: 'parsed')
-      study_file.bundled_files.each { |sf| sf.update(parse_status: 'parsed') }
+      study_file.update(parse_status: 'parsed') unless is_special_action?
+      study_file.bundled_files.each { |sf| sf.update(parse_status: 'parsed') } unless is_special_action?
       study.reload # refresh cached instance of study
       study_file.reload # refresh cached instance of study_file
       set_study_state_after_ingest
@@ -322,8 +329,8 @@ class IngestJob
       # log errors to application log for inspection
       log_error_messages
       log_to_mixpanel # log before queuing file for deletion to preserve properties
-      # don't delete files or notify users if differential_expression job fails
-      unless action.to_sym == :differential_expression
+      # don't delete files or notify users if this is a 'special action', like DE or image pipeline jobs
+      unless is_special_action?
         create_study_file_copy
         study_file.update(parse_status: 'failed')
         DeleteQueueJob.new(study_file).delay.perform
@@ -649,8 +656,17 @@ class IngestJob
   def log_to_mixpanel
     mixpanel_log_props = get_job_analytics
     # log job properties to Mixpanel
-    event_name = action.to_sym == :differential_expression ? 'differential-expression-ingest' : 'ingest'
-    MetricsService.log(event_name, mixpanel_log_props, user)
+    MetricsService.log(get_mixpanel_event_name, mixpanel_log_props, user)
+  end
+
+  # set a mixpanel event name based on action
+  # will either be 'ingest', or '{special-action-name}-ingest'
+  def get_mixpanel_event_name
+    if is_special_action?
+      "#{action.gsub(/_/, '-')}-ingest"
+    else
+      'ingest'
+    end
   end
 
   # generates parse completion email body
@@ -717,6 +733,12 @@ class IngestJob
     when :differential_expression
       message << "Differential expression calculations for #{params_object.cluster_name} have completed"
       message << "Selected annotation: #{params_object.annotation_name} (#{params_object.annotation_scope})"
+    when :render_expression_arrays
+      matrix_name = params_object.matrix_file_path.split('/').last
+      matrix = study.expression_matrices.find_by(name: matrix_name)
+      genes = Gene.where(study_id: study.id, study_file_id: matrix.id).count
+      message << "Image Pipeline data pre-rendering completed for '#{params_object.cluster_name}' completed"
+      message << "Gene-level files created: #{genes}"
     end
     message
   end
@@ -827,5 +849,10 @@ class IngestJob
       end
       message + values
     end
+  end
+
+  # helper to identify 'special action' jobs, such as differential expression or image pipeline jobs
+  def is_special_action?
+    SPECIAL_ACTIONS.include?(action.to_sym)
   end
 end

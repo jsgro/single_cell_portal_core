@@ -23,8 +23,12 @@ class PapiClient
     ingest_cluster: ['Cluster'],
     ingest_cell_metadata: ['Metadata'],
     ingest_subsample: ['Cluster'],
-    differential_expression: ['Cluster']
+    differential_expression: ['Cluster'],
+    render_expression_arrays: ['Cluster']
   }.freeze
+
+  # jobs that require custom virtual machine types (e.g. more RAM, CPU)
+  CUSTOM_VM_ACTIONS = %i[differential_expression render_expression_arrays].freeze
 
   # Default constructor for PapiClient
   #
@@ -82,7 +86,7 @@ class PapiClient
   #   - +action+ (String) => Action that is being performed, maps to Ingest pipeline action
   #     (e.g. 'ingest_cell_metadata', 'subsample')
   #   - +params_object+ (Class) => Class containing parameters for PAPI job (like DifferentialExpressionParameters)
-  #                                must implement :to_options_array method
+  #                                must include Parameterizable concern for to_options_array support
   #
   # * *return*
   #   - (Google::Apis::GenomicsV2alpha1::Operation)
@@ -95,8 +99,8 @@ class PapiClient
     study = study_file.study
     accession = study.accession
 
-    # override default VM if this is a differential expression job
-    if action.to_sym == :differential_expression
+    # override default VM if required for this action
+    if needs_custom_vm?(action)
       custom_vm = create_virtual_machine_object(machine_type: params_object.machine_type)
       resources = create_resources_object(regions: ['us-central1'], vm: custom_vm)
     else
@@ -308,9 +312,9 @@ class PapiClient
     end
 
     # add optional command line arguments based on file type and action
-    if action.to_s == 'differential_expression'
-      unless params_object.present? && params_object.respond_to?(:to_options_array)
-        raise ArgumentError, "invalid params_object for differential_expression: #{params_object.inspect}"
+    if params_object.present?
+      unless params_object_valid?(params_object)
+        raise ArgumentError, "invalid params_object for #{action}: #{params_object.inspect}"
       end
 
       optional_args = params_object.to_options_array
@@ -381,5 +385,19 @@ class PapiClient
   #   - (JSON) => Sanitized JSON object with escaped double quotes
   def sanitize_json(json)
     json.gsub("\"", "'")
+  end
+
+  # helper to determine which actions need custom GCP vms
+  #
+  # * *params*
+  #   - +action_name+ (String, Symbol) => name of action to run, from IngestJob::VALID_ACTIONS
+  def needs_custom_vm?(action_name)
+    CUSTOM_VM_ACTIONS.include?(action_name.to_sym)
+  end
+
+  # determine if an external parameters object is valid (e.g. DifferentialExpressionParameters)
+  # must validate internally and also implement Parameterizable#to_options_array
+  def params_object_valid?(params_object)
+    params_object.valid? && params_object.respond_to?(:to_options_array)
   end
 end
