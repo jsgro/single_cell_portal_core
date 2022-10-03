@@ -258,7 +258,7 @@ async function configureIntercepts(page) {
 async function processScatterPlotImages(genes, context) {
   const { accession, preamble, origin } = context
 
-  // Set up Puppeteer Chrome browser
+  // Set up Puppeteer Chromium browser
   const pptrArgs = [
     '--ignore-certificate-errors',
     '--no-sandbox'
@@ -390,14 +390,14 @@ async function parseCliArgs() {
   // https://console.cloud.google.com/compute/instances?project=broad-singlecellportal-staging
   // This allows PAPI to access the staging web app server, which is
   // otherwise blocked per firewall / GCP Cloud Armor.
-  const stagingIP = '10.128.0.5'
+  const stagingIP = process.env?.STAGING_INTERNAL_IP
   const stagingDomainName = 'singlecell-staging.broadinstitute.org'
   const stagingHost = { ip: stagingIP, domainName: stagingDomainName }
 
-  // TODO (SCP-4564): Document how to adjust network rules to use staging
+  // TODO (SCP-4564): Document how to adjust network rules to use staging locally
   const originsByEnvironment = {
     'development': 'https://localhost:3000',
-    'staging': 'https://singlecell-staging.broadinstitute.org',
+    'staging': `https://${ stagingDomainName}`,
     'production': 'https://singlecell.broadinstitute.org'
   }
   const environment = values.environment || 'development'
@@ -405,7 +405,7 @@ async function parseCliArgs() {
 
   // Set origin for use in standalone fetch, which lacks Puppeteer host map
   const isStagingPAPI = environment === 'staging' && process.env?.IS_PAPI
-  const fetchOrigin = isStagingPAPI ? `https://${ stagingHost.ip}` : origin
+  const fetchOrigin = isStagingPAPI ? `https://${ stagingIP}` : origin
 
   return { values, numCPUs, origin, stagingHost, fetchOrigin }
 }
@@ -446,7 +446,7 @@ async function run() {
 
   let json
   try {
-    // json = JSON.parse(text)
+    // json = JSON.parse(text) // Helpful to debug errors
     json = await response.json()
   } catch (error) {
     console.log('Failed to fetch:')
