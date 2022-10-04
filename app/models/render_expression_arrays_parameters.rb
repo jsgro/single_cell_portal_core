@@ -2,7 +2,12 @@ class RenderExpressionArraysParameters
   include ActiveModel::Model
   include Parameterizable
 
-  MACHINE_TYPE = 'n1-highcpu-96'.freeze # largest N1 CPU machine
+  # stores mapping for small/medium/large images, based on matrix file size
+  MACHINE_TYPES = {
+    small: 'n1-highcpu-4',
+    medium: 'n1-highcpu-32',
+    large: 'n1-highcpu-96'
+  }.freeze
 
   # name of Python parameter that invokes correct parser
   PARAMETER_NAME = '--render-expression-arrays'.freeze
@@ -31,10 +36,27 @@ class RenderExpressionArraysParameters
     super
   end
 
-  # machine_type for PAPI jobs, hard coded to MACHINE_TYPE
-  # note: this is not a configurable parameter, is only implemented to use with PapiClient#create_virtual_machine_object
+  # get the size of the source expression matrix
+  # used for determining what size image to provision
+  def matrix_size
+    segments = matrix_file_path.split('/')
+    bucket_id = segments[2]
+    filename = segments.last
+    study = Study.find_by(bucket_id: bucket_id)
+    study_file = StudyFile.find_by(study: study, upload_file_name: filename)
+    study_file.upload_file_size
+  end
+
+  # machine_type for PAPI jobs, varies depending on size of matrix
   def machine_type
-    MACHINE_TYPE
+    case matrix_size
+    when 1..1.megabyte
+      MACHINE_TYPES[:small]
+    when 1.megabyte..1.gigabyte
+      MACHINE_TYPES[:medium]
+    else
+      MACHINE_TYPES[:large]
+    end
   end
 
   # default attributes hash
