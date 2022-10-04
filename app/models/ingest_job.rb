@@ -107,7 +107,7 @@ class IngestJob
       user_message = "<p>An error has occurred when attempting to launch the parse job associated with #{study_file.upload_file_name}.  "
       user_message += 'Support staff has been notified and are investigating the issue.  '
       user_message += 'If you require immediate assistance, please contact scp-support@broadinstitute.zendesk.com.</p>'
-      unless action == :differential_expression
+      unless special_action?
         SingleCellMailer.user_notification(user, "Unable to parse #{study_file.upload_file_name}", user_message).deliver_now
       end
     end
