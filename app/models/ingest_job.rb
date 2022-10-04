@@ -314,8 +314,10 @@ class IngestJob
     if done? && !failed?
       Rails.logger.info "IngestJob poller: #{pipeline_name} is done!"
       Rails.logger.info "IngestJob poller: #{pipeline_name} status: #{current_status}"
-      study_file.update(parse_status: 'parsed') unless is_special_action?
-      study_file.bundled_files.each { |sf| sf.update(parse_status: 'parsed') } unless is_special_action?
+      unless special_action?
+        study_file.update(parse_status: 'parsed')
+        study_file.bundled_files.each { |sf| sf.update(parse_status: 'parsed') }
+      end
       study.reload # refresh cached instance of study
       study_file.reload # refresh cached instance of study_file
       set_study_state_after_ingest
@@ -330,13 +332,15 @@ class IngestJob
       log_error_messages
       log_to_mixpanel # log before queuing file for deletion to preserve properties
       # don't delete files or notify users if this is a 'special action', like DE or image pipeline jobs
-      unless is_special_action?
+      unless special_action?
         create_study_file_copy
         study_file.update(parse_status: 'failed')
         DeleteQueueJob.new(study_file).delay.perform
-        ApplicationController.firecloud_client.delete_workspace_file(study.bucket_id, study_file.bucket_location) unless persist_on_fail
-        study_file.bundled_files.each do |bundled_file|
-          ApplicationController.firecloud_client.delete_workspace_file(study.bucket_id, bundled_file.bucket_location) unless persist_on_fail
+        unless persist_on_fail
+          ApplicationController.firecloud_client.delete_workspace_file(study.bucket_id, study_file.bucket_location)
+          study_file.bundled_files.each do |bundled_file|
+            ApplicationController.firecloud_client.delete_workspace_file(study.bucket_id, bundled_file.bucket_location)
+          end
         end
         subject = "Error: #{study_file.file_type} file: '#{study_file.upload_file_name}' parse has failed"
         user_email_content = generate_error_email_body
@@ -656,17 +660,13 @@ class IngestJob
   def log_to_mixpanel
     mixpanel_log_props = get_job_analytics
     # log job properties to Mixpanel
-    MetricsService.log(get_mixpanel_event_name, mixpanel_log_props, user)
+    MetricsService.log(mixpanel_event_name, mixpanel_log_props, user)
   end
 
   # set a mixpanel event name based on action
   # will either be 'ingest', or '{special-action-name}-ingest'
-  def get_mixpanel_event_name
-    if is_special_action?
-      "#{action.to_s.gsub(/_/, '-')}-ingest"
-    else
-      'ingest'
-    end
+  def mixpanel_event_name
+    special_action? ? "#{action.to_s.gsub(/_/, '-')}-ingest" : 'ingest'
   end
 
   # generates parse completion email body
@@ -852,7 +852,7 @@ class IngestJob
   end
 
   # helper to identify 'special action' jobs, such as differential expression or image pipeline jobs
-  def is_special_action?
+  def special_action?
     SPECIAL_ACTIONS.include?(action.to_sym)
   end
 end
