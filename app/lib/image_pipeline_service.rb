@@ -22,8 +22,8 @@ class ImagePipelineService
     requested_user = user || study.user
     params_object = create_expression_parameters_object(cluster_file, matrix_file)
     if params_object.valid?
-      job = IngestJob.new(study: study, study_file: cluster_file, user: requested_user, action: :render_expression_arrays,
-                          params_object: params_object)
+      job = IngestJob.new(study: study, study_file: cluster_file, user: requested_user,
+                          action: :render_expression_arrays, params_object: params_object)
       job.delay.push_remote_and_launch_ingest
       true
     else
@@ -47,13 +47,11 @@ class ImagePipelineService
     { cluster_file:, matrix_file: }.each do |param_name, study_file|
       validate_study_file(study_file, param_name)
     end
-
     parameters = {
       cluster_file: cluster_file.gs_url,
       cluster_name: cluster_file.name,
       matrix_file_path: matrix_file.gs_url
     }
-
     case matrix_file.file_type
     when 'Expression Matrix'
       parameters[:matrix_file_type] = 'dense'
@@ -82,8 +80,8 @@ class ImagePipelineService
     raise ArgumentError, "invalid file for #{param_name}: #{study_file.class.name}" unless study_file.is_a?(StudyFile)
     raise ArgumentError, "#{param_name}:#{study_file.upload_file_name} not in bucket" unless file_in_bucket?(study_file)
 
-    if study_file.is_expression? && study_file.should_bundle?
-      raise ArgumentError, "matrix #{matrix_file.name} missing completed bundle" unless matrix_file.has_completed_bundle?
+    if study_file.is_expression? && study_file.should_bundle? && !matrix_file.has_completed_bundle?
+      raise ArgumentError, "matrix #{matrix_file.name} missing completed bundle"
     end
   end
 
@@ -95,6 +93,8 @@ class ImagePipelineService
   # * *returns*
   #   - (Boolean) => T/F if file is present in bucket
   def self.file_in_bucket?(study_file)
-    ApplicationController.firecloud_client.workspace_file_exists?(study_file.study.bucket_id, study_file.bucket_location)
+    ApplicationController.firecloud_client.workspace_file_exists?(
+      study_file.study.bucket_id, study_file.bucket_location
+    )
   end
 end

@@ -663,7 +663,7 @@ class IngestJob
   # will either be 'ingest', or '{special-action-name}-ingest'
   def get_mixpanel_event_name
     if is_special_action?
-      "#{action.gsub(/_/, '-')}-ingest"
+      "#{action.to_s.gsub(/_/, '-')}-ingest"
     else
       'ingest'
     end
