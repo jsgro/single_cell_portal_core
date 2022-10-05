@@ -1,6 +1,8 @@
 class RenderExpressionArraysParameters
   include ActiveModel::Model
+  include ActiveModel::Attributes
   include Parameterizable
+  include IndifferentAttributes
 
   # stores mapping for small/medium/large images, based on matrix file size
   MACHINE_TYPES = {
@@ -18,7 +20,12 @@ class RenderExpressionArraysParameters
   # matrix_file_type: type of processed matrix (dense, sparse)
   # gene_file (optional): genes/features file for sparse matrix
   # barcode_file (optional): barcodes file for sparse matrix
-  attr_accessor :cluster_file, :cluster_name, :matrix_file_path, :matrix_file_type, :gene_file, :barcode_file
+  attribute :cluster_file, :string # clustering file with cells to use as list for rendering expression arrays
+  attribute :cluster_name, :string # name of associated ClusterGroup object
+  attribute :matrix_file_path, :string # processed expression matrix with source expression data
+  attribute :matrix_file_type, :string # type of processed matrix (dense, sparse)
+  attribute :gene_file, :string # genes/features file for sparse matrix (optional)
+  attribute :barcode_file, :string #  barcodes file for sparse matrix (optional)
 
   validates :cluster_file, :cluster_name, :matrix_file_path, :matrix_file_type, presence: true
   validates :cluster_file, :matrix_file_path,
@@ -31,10 +38,6 @@ class RenderExpressionArraysParameters
               message: 'is not a valid GS url'
             },
             if: -> { matrix_file_type == 'mtx' }
-
-  def initialize(attributes = {})
-    super
-  end
 
   # get the size of the source expression matrix
   # used for determining what size image to provision
@@ -57,17 +60,5 @@ class RenderExpressionArraysParameters
     else
       MACHINE_TYPES[:large]
     end
-  end
-
-  # default attributes hash
-  def attributes
-    {
-      cluster_file: cluster_file,
-      cluster_name: cluster_name,
-      matrix_file_path: matrix_file_path,
-      matrix_file_type: matrix_file_type,
-      gene_file: gene_file,
-      barcode_file: barcode_file
-    }.with_indifferent_access
   end
 end
