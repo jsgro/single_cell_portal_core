@@ -22,6 +22,10 @@
           <%= f.label :annotation, 'Default Annotation' %><br />
           <%= f.select :annotation, grouped_options_for_select(@default_cluster_annotations, @study.default_annotation), {}, class: 'form-control' %>
         </div>
+        <div class="col-sm-4">
+          <%= f.label :override_viz_limit_annotations, "Annotation display override <i class='fas fa-info-circle' data-toggle='tooltip' title='Select annotations from the list to allow showing groups with only 1 or more than #{CellMetadatum::GROUP_VIZ_THRESHOLD.last} values' ></i>".html_safe %><br />
+          <%= f.select :override_viz_limit_annotations, options_for_select(@viz_override_annotations, @study.override_viz_limit_annotations), { include_blank: 'Select all that apply...', include_hidden: false } , class: 'form-control', multiple: true %>
+        </div>
       </div>
       <div class="form-group row">
         <div class="col-sm-4">

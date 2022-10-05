@@ -36,6 +36,10 @@
           <%= opts.label :color_profile, "Default color profile <i class='fas fa-info-circle' title='Default color profile for numeric annotations and expression plots' data-toggle='tooltip'></i>".html_safe %><br />
           <%= opts.select :color_profile, options_for_select(SiteController::COLORSCALE_THEMES, @study.default_color_profile), {include_blank: 'N/A'} , class: 'form-control' %>
         </div>
+        <div class="col-sm-4">
+          <%= opts.label :override_viz_limit_annotations, "Annotation display override <i class='fas fa-info-circle' data-toggle='tooltip' title='Select annotations from the list to allow showing groups with only 1 or more than #{CellMetadatum::GROUP_VIZ_THRESHOLD.last} values' ></i>".html_safe %><br />
+          <%= opts.select :override_viz_limit_annotations, options_for_select(@viz_override_annotations, @study.override_viz_limit_annotations), { include_blank: 'Select all that apply...', include_hidden: false } , class: 'form-control', multiple: true %>
+        </div>
       </div>
       <div class="form-group row">
         <div class="col-sm-12">
