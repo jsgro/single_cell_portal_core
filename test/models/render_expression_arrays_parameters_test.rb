@@ -61,8 +61,24 @@ class RenderExpressionArraysParametersTest < ActiveSupport::TestCase
     assert_equal '--foo', Parameterizable.to_cli_opt('foo')
   end
 
-  test 'should set default machine type for render expression array jobs' do
-    params = RenderExpressionArraysParameters.new
-    assert_equal RenderExpressionArraysParameters::MACHINE_TYPE, params.machine_type
+  test 'should get correct machine based on matrix size' do
+    user = FactoryBot.create(:user, test_array: @@users_to_clean)
+    study = FactoryBot.create(:detached_study,
+                              user: user,
+                              name_prefix: 'Machine Type Test',
+                              test_array: @@studies_to_clean)
+    matrix = FactoryBot.create(:expression_file,
+                               name: 'expression.txt',
+                               expression_file_info: {
+                                 is_raw_counts: false,
+                                 library_preparation_protocol: 'Drop-seq',
+                                 biosample_input_type: 'Whole cell',
+                                 modality: 'Proteomic'
+                               },
+                               study: study,
+                               upload_file_size: 10.megabytes)
+    matrix_file_path = "gs://#{study.bucket_id}/#{matrix.name}"
+    params = RenderExpressionArraysParameters.new(matrix_file_path:)
+    assert_equal RenderExpressionArraysParameters::MACHINE_TYPES[:medium], params.machine_type
   end
 end

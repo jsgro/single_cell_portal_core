@@ -1,5 +1,11 @@
 # handles launching jobs related to image pipeline
 class ImagePipelineService
+  # map of parameter names to StudyFile types
+  FILE_TYPES_BY_PARAM = {
+    cluster_file: ['Cluster'],
+    matrix_file: ['Expression Matrix', 'MM Coordinate Matrix']
+  }.freeze
+
   # launch a job to generate expression array artifacts to be used downstream by image pipeline
   #
   # * *params*
@@ -78,10 +84,13 @@ class ImagePipelineService
   #   - (ArgumentError) => if study file does not validate
   def self.validate_study_file(study_file, param_name)
     raise ArgumentError, "invalid file for #{param_name}: #{study_file.class.name}" unless study_file.is_a?(StudyFile)
+    unless FILE_TYPES_BY_PARAM[param_name].include?(study_file.file_type)
+      raise ArgumentError, "invalid file_type for #{param_name}: #{study_file.file_type}"
+    end
     raise ArgumentError, "#{param_name}:#{study_file.upload_file_name} not in bucket" unless file_in_bucket?(study_file)
 
-    if study_file.is_expression? && study_file.should_bundle? && !matrix_file.has_completed_bundle?
-      raise ArgumentError, "matrix #{matrix_file.name} missing completed bundle"
+    if study_file.is_expression? && study_file.should_bundle? && !study_file.has_completed_bundle?
+      raise ArgumentError, "matrix #{study_file.name} missing completed bundle"
     end
   end
 
