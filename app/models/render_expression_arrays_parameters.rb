@@ -41,9 +41,9 @@ class RenderExpressionArraysParameters
   def matrix_size
     segments = matrix_file_path.split('/')
     bucket_id = segments[2]
-    filename = segments.last
-    study = Study.find_by(bucket_id: bucket_id)
-    study_file = StudyFile.find_by(study: study, upload_file_name: filename)
+    upload_file_name = segments.last
+    study = Study.find_by(bucket_id:)
+    study_file = StudyFile.find_by(study:, upload_file_name:)
     study_file.upload_file_size
   end
 
