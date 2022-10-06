@@ -249,8 +249,8 @@ const plainTextExtensions = ['.txt', '.tsv', '.text', '.csv']
 const mtxExtensions = ['.mtx', '.mm', '.txt', '.text']
 const imageExtensions = ['.jpeg', '.jpg', '.png', '.bmp']
 const miscExtensions = ['.txt', '.text', '.tsv', '.csv', '.jpg', '.jpeg', '.png', '.pdf',
-  '.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx', '.zip', '.loom', '.h5', '.h5ad', '.h5an',
-  '.ipynb', '.Rda', '.rda', '.Rds', '.rds']
+  '.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx', '.zip', '.loom', '.h5an',
+  '.ipynb', '.Rda', '.rda']
 const sequenceExtensions = ['.fq', '.fastq', '.fq.tar.gz', '.fastq.tar.gz', '.fq.gz', '.fastq.gz', '.bam']
 const baiExtensions = ['.bai']
 const annDataExtensions = ['.h5', '.h5ad', 'h5ad1', '.hdf5']
