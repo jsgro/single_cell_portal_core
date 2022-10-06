@@ -7,7 +7,7 @@ class DifferentialExpressionParameters
   # https://cloud.google.com/compute/docs/general-purpose-machines#n1-high-memory
   GOOGLE_VM_MACHINE_TYPES = [2, 4, 8, 16, 32, 64, 96].map { |i| "n1-highmem-#{i}" }.freeze
 
-  # name of Python parameter that invokes correct parser
+  # name of Ingest Pipeline CLI parameter that invokes correct parser
   PARAMETER_NAME = '--differential-expression'.freeze
 
   # annotation_name: name of annotation to use for DE

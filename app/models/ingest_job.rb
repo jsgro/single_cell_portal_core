@@ -737,7 +737,7 @@ class IngestJob
       matrix_name = params_object.matrix_file_path.split('/').last
       matrix = study.expression_matrices.find_by(name: matrix_name)
       genes = Gene.where(study_id: study.id, study_file_id: matrix.id).count
-      message << "Image Pipeline data pre-rendering completed for '#{params_object.cluster_name}' completed"
+      message << "Image Pipeline data pre-rendering completed for \"#{params_object.cluster_name}\""
       message << "Gene-level files created: #{genes}"
     end
     message

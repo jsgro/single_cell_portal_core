@@ -11,8 +11,8 @@ module Parameterizable
     "--#{param_name.to_s.gsub(/_/, '-')}"
   end
 
-  # return array of all initialized attributes in Python CLI form, e.g. annotation_name => --annotation-name
-  # will also append --differential-expression at the end
+  # return array of all initialized attributes as CLI arguments, e.g. annotation_name => --annotation-name
+  # will also append PARAMETER_NAME at the end as defined by including class
   def to_options_array
     options_array = []
     attributes.each do |attr_name, value|
