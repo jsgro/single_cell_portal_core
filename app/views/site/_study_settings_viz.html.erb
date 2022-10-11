@@ -37,10 +37,12 @@
       </div>
       <div class="form-group row">
         <div class="col-sm-6">
-          <%= opts.label :override_viz_limit_annotations, "Annotation display override <i class='fas fa-info-circle' data-toggle='tooltip' title='Select annotations from the list to allow showing groups with only 1 or more than #{CellMetadatum::GROUP_VIZ_THRESHOLD.last} values' ></i>".html_safe %><br />
-          <%= render partial: '/layouts/multiselect_checkbox_field', locals: {
-            form: opts, options: @viz_override_annotations, overrides: @study.override_viz_limit_annotations
-          } %>
+          <% if @viz_override_annotations.any? %>
+            <%= opts.label :override_viz_limit_annotations, "Add undisplayed annotations (>200 or single value) to dropdown" %><br />
+            <%= render partial: '/layouts/multiselect_checkbox_field', locals: {
+              form: opts, options: @viz_override_annotations, overrides: @study.override_viz_limit_annotations
+            } %>
+          <% end %>
         </div>
       </div>
       <div class="form-group row">
