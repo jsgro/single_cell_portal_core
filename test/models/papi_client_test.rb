@@ -214,19 +214,41 @@ class PapiClientTest < ActiveSupport::TestCase
     environment = @client.set_environment_variables
     actions = @client.create_actions_object(commands: de_cmd, environment: environment)
     regions = %w[us-central1]
-    custom_vm = @client.create_virtual_machine_object(machine_type: de_params.machine_type)
+    labels = @client.job_labels(
+      action: :differential_expression, study: @study, study_file: @cluster_file, user: @user,
+      machine_type: de_params.machine_type
+    )
+    machine_type = de_params.machine_type
+    custom_vm = @client.create_virtual_machine_object(machine_type:, labels:)
     resources = @client.create_resources_object(regions: regions, vm: custom_vm)
-    pipeline = @client.create_pipeline_object(actions: actions, environment: environment, resources: resources)
-    labels = { custom_machine_type: de_params.machine_type }
-    pipeline_request = @client.create_run_pipeline_request_object(pipeline: pipeline, labels: labels)
+    pipeline = @client.create_pipeline_object(actions:, environment:, resources:)
+    pipeline_request = @client.create_run_pipeline_request_object(pipeline:, labels:)
     assert pipeline_request.is_a? Google::Apis::GenomicsV2alpha1::RunPipelineRequest
     assert_equal pipeline, pipeline_request.pipeline
     assert_equal actions, pipeline_request.pipeline.actions
     assert_equal environment, pipeline_request.pipeline.environment
     assert_equal resources, pipeline_request.pipeline.resources
     assert_equal de_cmd, pipeline_request.pipeline.actions.commands
+    assert_equal labels, custom_vm.labels
+    assert_equal labels, pipeline_request.labels
 
     # specifically check machine type override
     assert_equal de_params.machine_type, pipeline_request.pipeline.resources.virtual_machine.machine_type
+  end
+
+  test 'should set labels for job' do
+    labels = @client.job_labels(action: :ingest_cluster, study: @study, study_file: @cluster_file, user: @user)
+    expected_labels = {
+      study_accession: @study.accession,
+      user_id: @user.id.to_s,
+      filename: @cluster_file.upload_file_name,
+      action: 'ingest_pipeline',
+      docker_image: AdminConfiguration.get_ingest_docker_image,
+      environment: 'test',
+      file_type: 'Cluster',
+      machine_type: PapiClient::DEFAULT_MACHINE_TYPE,
+      boot_disk_size_gb: 300
+    }
+    assert_equal expected_labels, labels
   end
 end
