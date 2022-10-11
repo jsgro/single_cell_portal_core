@@ -14,5 +14,5 @@ COPY yarn.lock /home/app/webapp/yarn.lock
 RUN chmod a+w /home/app/webapp/yarn.lock
 RUN chmod a+w /home/app/webapp/node_modules/.yarn-integrity
 
-RUN yarn install
+RUN bundle install
 RUN sudo -E -u app -H yarn install
