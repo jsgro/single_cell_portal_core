@@ -154,10 +154,7 @@ class PapiClient
   # * *return*
   #   - (Google::Apis::GenomicsV2alpha1::RunPipelineRequest)
   def create_run_pipeline_request_object(pipeline:, labels: {})
-    Google::Apis::GenomicsV2alpha1::RunPipelineRequest.new(
-      pipeline: pipeline,
-      labels: labels
-    )
+    Google::Apis::GenomicsV2alpha1::RunPipelineRequest.new(pipeline:, labels:)
   end
 
   # Create a pipeline object detailing all required information in order to run an ingest job
@@ -171,12 +168,7 @@ class PapiClient
   # * *return*
   #   - (Google::Apis::GenomicsV2alpha1::Pipeline)
   def create_pipeline_object(actions:, environment:, resources:, timeout: nil)
-    Google::Apis::GenomicsV2alpha1::Pipeline.new(
-      actions: actions,
-      environment: environment,
-      resources: resources,
-      timeout: timeout
-    )
+    Google::Apis::GenomicsV2alpha1::Pipeline.new(actions:, environment:, resources:, timeout:)
   end
 
   # Instantiate actions for pipeline, which holds command line actions, docker information,
@@ -242,7 +234,7 @@ class PapiClient
     Google::Apis::GenomicsV2alpha1::Resources.new(
       project_id: project,
       regions: regions,
-      virtual_machine: vm.nil? ? create_virtual_machine_object(labels: labels) : vm
+      virtual_machine: vm.nil? ? create_virtual_machine_object(labels:) : vm
     )
   end
 
