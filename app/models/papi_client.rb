@@ -33,6 +33,10 @@ class PapiClient
   # default GCE machine_type
   DEFAULT_MACHINE_TYPE = 'n1-highmem-4'.freeze
 
+  # regex to sanitize label values for VMs/pipelines
+  # alphanumeric plus - and _
+  LABEL_SANITIZER = /[^a-zA-Z\d\-_]/
+
   # Default constructor for PapiClient
   #
   # * *params*
@@ -377,16 +381,17 @@ class PapiClient
   # * *returns*
   #   - (Hash)
   def job_labels(action:, study:, study_file:, user:, machine_type: DEFAULT_MACHINE_TYPE, boot_disk_size_gb: 300)
+    ingest_version = AdminConfiguration.get_ingest_docker_image_attributes[:tag]
     {
-      study_accession: study.accession,
+      study_accession: sanitize_label(study.accession),
       user_id: user.id.to_s,
-      filename: study_file.upload_file_name,
+      filename: sanitize_label(study_file.upload_file_name),
       action: label_for_action(action),
-      docker_image: AdminConfiguration.get_ingest_docker_image,
-      environment: Rails.env,
-      file_type: study_file.file_type,
+      docker_image: sanitize_label(ingest_version),
+      environment: Rails.env.to_s,
+      file_type: sanitize_label(study_file.file_type),
       machine_type: machine_type,
-      boot_disk_size_gb: boot_disk_size_gb
+      boot_disk_size_gb: sanitize_label(boot_disk_size_gb)
     }
   end
 
@@ -408,6 +413,17 @@ class PapiClient
     else
       action
     end
+  end
+
+  # sanitizer for GCE label value (lowercase, alphanumeric with dash & underscore only)
+  #
+  # * *params*
+  #   - +label+ (String, Symbol, Integer) => label value
+  #
+  # * *returns*
+  #   - (String) => lowercase label with invalid characters removed
+  def sanitize_label(label)
+    label.to_s.gsub(LABEL_SANITIZER, '_').downcase
   end
 
   private

@@ -238,16 +238,17 @@ class PapiClientTest < ActiveSupport::TestCase
 
   test 'should set labels for job' do
     labels = @client.job_labels(action: :ingest_cluster, study: @study, study_file: @cluster_file, user: @user)
+    ingest_tag = AdminConfiguration.get_ingest_docker_image_attributes[:tag].gsub(/\./, '_')
     expected_labels = {
-      study_accession: @study.accession,
+      study_accession: @study.accession.downcase,
       user_id: @user.id.to_s,
-      filename: @cluster_file.upload_file_name,
+      filename: 'cluster_txt',
       action: 'ingest_pipeline',
-      docker_image: AdminConfiguration.get_ingest_docker_image,
+      docker_image: ingest_tag,
       environment: 'test',
-      file_type: 'Cluster',
+      file_type: 'cluster',
       machine_type: PapiClient::DEFAULT_MACHINE_TYPE,
-      boot_disk_size_gb: 300
+      boot_disk_size_gb: '300'
     }
     assert_equal expected_labels, labels
   end
