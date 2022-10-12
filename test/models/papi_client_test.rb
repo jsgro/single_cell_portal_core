@@ -252,4 +252,18 @@ class PapiClientTest < ActiveSupport::TestCase
     }
     assert_equal expected_labels, labels
   end
+
+  test 'should get correct label for action' do
+    PapiClient::FILE_TYPES_BY_ACTION.keys.select { |k| k =~ /ingest/ }.each do |action|
+      assert_equal 'ingest_pipeline', @client.label_for_action(action)
+    end
+    assert_equal 'differential_expression', @client.label_for_action('differential_expression')
+    assert_equal 'image_pipeline', @client.label_for_action('render_expression_arrays')
+    assert_equal 'foo', @client.label_for_action('foo')
+  end
+
+  test 'should sanitize label' do
+    assert_equal 'foo_bar', @client.sanitize_label('FOO&bar')
+    assert_equal 'n1-highcpu-96', @client.sanitize_label('n1-highcpu-96')
+  end
 end
