@@ -57,6 +57,7 @@ function RawScatterPlot({
   const [activeTraceLabel, setActiveTraceLabel] = useState(null)
   // map of label name to color hex codes, for any labels the user has picked a color for
   const [editedCustomColors, setEditedCustomColors] = useState({})
+  const [customColors, setCustomColors] = useState({})
 
   const isRefGroup = getIsRefGroup(scatterData?.annotParams?.type, genes, isCorrelatedScatter)
 
@@ -116,13 +117,21 @@ function RawScatterPlot({
     return scatter
   }
 
+  /** redraw the plot when editedCustomColors changes */
+  useEffect(() => {
+    if (editedCustomColors && Object.keys(editedCustomColors).length > 0) {
+      const plotlyTraces = document.getElementById(graphElementId).data
+      Plotly.react(graphElementId, plotlyTraces, scatterData.layout)
+    }
+  }, [editedCustomColors])
+
   /** Save any changes to the legend colors */
   async function saveCustomColors(newColors) {
     const colorObj = {}
     // read the annotation name off of scatterData to ensure it's the real name, and not '' or '_default'
-    colorObj[scatterData.annotParams.name] = newColors
+    colorObj[scatterData?.annotParams?.name] = newColors
     const newFileObj = {
-      _id: scatterData.clusterFileId,
+      _id: scatterData?.clusterFileId,
       custom_color_updates: colorObj
     }
     setIsLoading(true)
@@ -136,9 +145,10 @@ function RawScatterPlot({
       const newScatterData = Object.assign({}, scatterData, {
         customColors: response.cluster_file_info?.custom_colors[scatterData.annotParams.name] ?? {}
       })
-      setEditedCustomColors({})
       setIsLoading(false)
       setScatterData(newScatterData)
+      setCustomColors({ ...newColors })
+      setEditedCustomColors({ ...newColors })
     } catch (error) {
       Store.addNotification(failureNotification(<span>Error saving colors<br/>{error}</span>))
       setIsLoading(false)
@@ -181,6 +191,7 @@ function RawScatterPlot({
   function concludeRender(scatter) {
     if (scatter) {
       setScatterData(scatter)
+      setCustomColors(scatter.customColors)
     }
     setShowError(false)
     setIsLoading(false)
@@ -373,11 +384,10 @@ function RawScatterPlot({
     })
   }, [cluster, annotation.name, subsample, consensus, genes.join(','), isAnnotatedScatter])
 
-  // Handles custom scatter legend updates
-  const customColors = scatterData?.customColors ?? {}
   useUpdateEffect(() => {
     // Don't update if graph hasn't loaded
     if (scatterData && !isLoading) {
+      scatterData.customColors = customColors
       const plotlyTraces = updateCountsAndGetTraces(scatterData)
       Plotly.react(graphElementId, plotlyTraces, scatterData.layout)
     }
@@ -486,9 +496,10 @@ function RawScatterPlot({
             updateHiddenTraces={updateHiddenTraces}
             editedCustomColors={editedCustomColors}
             setEditedCustomColors={setEditedCustomColors}
+            setCustomColors={setCustomColors}
+            saveCustomColors={saveCustomColors}
             customColors={customColors}
             enableColorPicking={canEdit}
-            saveCustomColors={saveCustomColors}
             activeTraceLabel={activeTraceLabel}
             setActiveTraceLabel={setActiveTraceLabel}
             hasArrayLabels={scatterData.hasArrayLabels}
