@@ -401,7 +401,7 @@ class PapiClient
     when /differential/
       'differential_expression'
     when 'render_expression_arrays'
-      'image_pipeline'
+      'data_cache_pipeline'
     else
       action
     end
