@@ -258,7 +258,7 @@ class PapiClientTest < ActiveSupport::TestCase
       assert_equal 'ingest_pipeline', @client.label_for_action(action)
     end
     assert_equal 'differential_expression', @client.label_for_action('differential_expression')
-    assert_equal 'image_pipeline', @client.label_for_action('render_expression_arrays')
+    assert_equal 'data_cache_pipeline', @client.label_for_action('render_expression_arrays')
     assert_equal 'foo', @client.label_for_action('foo')
   end
 
