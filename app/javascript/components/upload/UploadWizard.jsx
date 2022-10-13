@@ -75,7 +75,7 @@ export function RawUploadWizard({ studyAccession, name }) {
     NON_VISUALIZABLE_STEPS.splice(0, 0, AnnDataStep)
   }
 
-  if ( !STEPS.includes(SeuratStep)) {
+  if (!STEPS.includes(SeuratStep)) {
     STEPS.splice(9, 0, SeuratStep)
     NON_VISUALIZABLE_STEPS.splice(1, 0, SeuratStep)
   }
