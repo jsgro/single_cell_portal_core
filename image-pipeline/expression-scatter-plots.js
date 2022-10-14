@@ -21,7 +21,8 @@ import { Storage } from '@google-cloud/storage'
 let numLogEntries = 0
 
 /** Print message with browser-tag preamble to local console and log file */
-function print(message, preamble='') {
+function print(message, context) {
+  let preamble = ('preamble' in context === false) ? '' : context.preamble
   const timestamp = new Date().toISOString()
   if (preamble !== '') {preamble = `${preamble} `}
   const fullMessage = preamble + message
@@ -33,7 +34,7 @@ function print(message, preamble='') {
 
   // Stream logs to bucket in small chunks
   // For observability into ongoing jobs and crash-resilient logs
-  if (numLogEntries % 20 === 0) {uploadLog()}
+  if (numLogEntries % 20 === 0) {uploadLog(context.bucket)}
 }
 
 /** Is request a log post to Bard? */
@@ -52,13 +53,13 @@ function isExpressionScatterPlotLog(request) {
 }
 
 /** In Explore view, search gene, await plot, save plot image locally */
-async function makeExpressionScatterPlotImage(gene, page, preamble) {
+async function makeExpressionScatterPlotImage(gene, page, context) {
   // Trigger a gene search
-  print(`Inputting search for gene: ${gene}`, preamble)
+  print(`Inputting search for gene: ${gene}`, context)
   await page.type('.gene-keyword-search input', gene, { delay: 1 })
   await page.keyboard.press('Enter')
   await page.$eval('.gene-keyword-search button', el => el.click())
-  print(`Awaiting expression plot for gene: ${gene}`, preamble)
+  print(`Awaiting expression plot for gene: ${gene}`, context)
 
   // Wait for reliable signal that expression plot has finished rendering.
   // A Mixpanel / Bard log request always fires immediately upon render.
@@ -125,7 +126,7 @@ async function makeExpressionScatterPlotImage(gene, page, preamble) {
     })
     .toFile(imagePath)
 
-  print(`Wrote ${imagePath}`, preamble)
+  print(`Wrote ${imagePath}`, context)
 
   // TODO (SCP-4698): parallelize upload, and atomically trigger on success.
   //
@@ -134,19 +135,19 @@ async function makeExpressionScatterPlotImage(gene, page, preamble) {
   // Ideally there would be a GCS client library equivalent of those commands,
   // but brief research found none.
   const toFilePath = `cache/expression_scatter/images/${debugNonce}${webpFileName}`
-  uploadToBucket(imagePath, toFilePath, preamble)
+  uploadToBucket(imagePath, toFilePath, context)
 
   return
 }
 
 /** Fetch JSON data for gene expression scatter plot, before loading page */
 async function prefetchExpressionData(gene, context) {
-  const { accession, preamble, origin, fetchOrigin } = context
+  const { accession, preamble, origin, fetchOrigin, cluster } = context
 
   const extension = values['json-dir'] && initExpressionResponse ? '.gz' : ''
   const jsonPath = `${jsonFpStem}${gene}.json${extension}`
 
-  print(`Prefetching JSON for ${gene}`, preamble)
+  print(`Prefetching JSON for ${gene}`, context)
 
   let isCopyOnFilesystem = true
   try {
@@ -157,36 +158,42 @@ async function prefetchExpressionData(gene, context) {
 
   if (isCopyOnFilesystem && initExpressionResponse) {
     // Don't process with fetch if expression was already prefetched
-    print(`Using local expression data for ${gene}`, preamble)
+    print(`Using local expression data for ${gene}`, context)
     return
   }
 
-  // Configure URLs
-  const apiStem = `${fetchOrigin}/single_cell/api/v1`
-  const allFields = 'coordinates%2Ccells%2Cannotation%2Cexpression'
-  const params = `fields=${allFields}&gene=${gene}&subsample=all&isImagePipeline=true`
-  const url = `${apiStem}/studies/${accession}/clusters/_default?${params}`
+  let json
+  if (!initExpressionResponse) {
+    // Configure URLs
+    const apiStem = `${fetchOrigin}/single_cell/api/v1`
+    const allFields = 'coordinates%2Ccells%2Cannotation%2Cexpression'
+    const params = `fields=${allFields}&gene=${gene}&subsample=all&isImagePipeline=true`
+    const url = `${apiStem}/studies/${accession}/clusters/_default?${params}`
 
-  // Fetch data
-  const response = await fetch(url)
-  const json = await response.json()
+    // Fetch data
+    const response = await fetch(url)
+    json = await response.json()
 
-  if (Object.keys(coordinates).length === 0) {
-    // Cache `coordinates` and `annotations` fields; this is done only once
-    coordinates.x = json.data.x
-    coordinates.y = json.data.y
-    if ('z' in json.data) {
-      coordinates.z = json.data.z
+    if (Object.keys(coordinates).length === 0) {
+      // Cache `coordinates` and `annotations` fields; this is done only once
+      coordinates.x = json.data.x
+      coordinates.y = json.data.y
+      if ('z' in json.data) {
+        coordinates.z = json.data.z
+      }
+      initExpressionResponse = json
     }
-    initExpressionResponse = json
+  } else {
+    const fromFilePath = `_scp_internal/cache/expression_scatter/data/${cluster}/${gene}.json`
+    json = await downloadFromBucket(fromFilePath, context)
   }
 
   if (values['json-dir']) {
-    print('Populated initExpressionResponse for development run', preamble)
+    print('Populated initExpressionResponse for development run', context)
     return
   }
   await writeFile(jsonPath, JSON.stringify(json))
-  print(`Wrote prefetched JSON: ${jsonPath}`, preamble)
+  print(`Wrote prefetched JSON: ${jsonPath}`, context)
 }
 
 /** Is this request on critical render path for expression scatter plots? */
@@ -298,11 +305,11 @@ async function processScatterPlotImages(genes, context) {
   // Go to Explore tab in Study Overview page
   const params = `?subsample=all&isImagePipeline=true#study-visualize`
   const exploreViewUrl = `${origin}/single_cell/study/${accession}${params}`
-  print(`Navigating to Explore tab: ${exploreViewUrl}`, preamble)
+  print(`Navigating to Explore tab: ${exploreViewUrl}`, context)
   await page.goto(exploreViewUrl)
-  print(`Completed loading Explore tab`, preamble)
+  print(`Completed loading Explore tab`, context)
 
-  print(`Number of genes to image: ${genes.length}`, preamble)
+  print(`Number of genes to image: ${genes.length}`, context)
 
   await page.waitForSelector('#study-visualize-nav')
   await page.click('#study-visualize-nav')
@@ -328,13 +335,13 @@ async function processScatterPlotImages(genes, context) {
 
     const gene = genes[i]
     await prefetchExpressionData(gene, context)
-    await makeExpressionScatterPlotImage(gene, page, preamble)
+    await makeExpressionScatterPlotImage(gene, page, context)
 
     // Clear search input to avoid wrong plot type
     await page.$eval('.gene-keyword-search-input svg', el => el.parentElement.click())
 
     const expressionPlotPerfTime = Date.now() - expressionPlotStartTime
-    print(`Expression plot time for gene ${gene}: ${expressionPlotPerfTime} ms`, preamble)
+    print(`Expression plot time for gene ${gene}: ${expressionPlotPerfTime} ms`, context)
   }
 
   await browser.close()
@@ -363,14 +370,13 @@ async function makeLocalOutputDir(leaf) {
 /** Wrap argument parsing so it's more testable and loggable */
 async function parseCliArgs() {
   const commandToNode = process.argv.join(' ').split('/').slice(-1)[0]
-  print(`Command run via Node:\n\n${ commandToNode}\n`)
-  await uploadLog()
 
   const args = process.argv.slice(2)
 
   const options = {
     'accession': { type: 'string' }, // SCP accession
     'cluster': { type: 'string' }, // Name of clustering
+    'bucket': { type: 'string' }, // Name of Google Cloud Storage (GCS) bucket
     'cores': { type: 'string' }, // Number of CPU cores to use. Default: all - 1
     'debug': { type: 'boolean' }, // Whether to show browser UI and exit early
     'debug-headless': { type: 'boolean' }, // Whether to exit early; for PAPI debugging
@@ -379,11 +385,14 @@ async function parseCliArgs() {
   }
   const { values } = parseArgs({ args, options })
 
+  const bucket = values.bucket
+  print(`Command run via Node:\n\n${ commandToNode}\n`, { bucket })
+  await uploadLog(bucket)
+
   // Candidates for CLI argument
   // CPU count on Intel i7 is 1/2 of reported, due to hyperthreading
   const numCPUs = values.cores ? parseInt(values.cores) : os.cpus().length / 2 - 1
-  print(`Number of CPUs to be used on this client: ${numCPUs}`)
-
+  print(`Number of CPUs to be used on this client: ${numCPUs}`, { bucket })
 
   // Internal IP address for https://singlecell-staging.broadinstitute.org
   // Reference: singlecell-01 in
@@ -415,6 +424,10 @@ async function run() {
   // Make directories for output images
   imagesDir = await makeLocalOutputDir('images')
 
+  const cluster = values.cluster
+
+  const bucket = values.bucket
+
   // Set and/or make directories for prefetched JSON
   let jsonDir
   if (values['json-dir']) {
@@ -422,20 +435,20 @@ async function run() {
   } else {
     jsonDir = await makeLocalOutputDir('json')
   }
-  jsonFpStem = `${jsonDir + values.cluster }--`
+  jsonFpStem = `${jsonDir + cluster }--`
 
   // Cache for X, Y, and possibly Z coordinates
   coordinates = {}
 
   const accession = values.accession
-  print(`Accession: ${accession}`)
+  print(`Accession: ${accession}`, { bucket })
 
-  await uploadLog()
+  await uploadLog(bucket)
 
   const crum = 'isImagePipeline=true'
   // Get list of all genes in study
   const exploreApiUrl = `${fetchOrigin}/single_cell/api/v1/studies/${accession}/explore?${crum}`
-  print(`Fetching ${exploreApiUrl}`)
+  print(`Fetching ${exploreApiUrl}`, { bucket })
 
   const response = await fetch(exploreApiUrl)
 
@@ -464,35 +477,49 @@ async function run() {
     // const geneIndex = Math.floor(Math.random() * uniqueGenes.length)
     // const gene = uniqueGenes[geneIndex]
 
+    const context = {
+      accession, preamble, origin, fetchOrigin, cluster, bucket
+    }
+
     // Generate a series of plots, then save them locally
     let genes = sliceGenes(uniqueGenes, numCPUs, cpuIndex)
     if (values['debug'] || values['debug-headless']) {
-      print('DEBUG: only processing 2 genes', preamble)
+      print('DEBUG: only processing 2 genes', context)
       genes = genes.slice(0, 2)
     }
-
-    const context = { accession, preamble, origin, fetchOrigin }
 
     await processScatterPlotImages(genes, context)
   }
 }
 
+/** Fetch a file from a bucket to PAPI VM, return contents */
+async function downloadFromBucket(fromFilePath, context) {
+  const bucket = context.bucket // 'broad-singlecellportal-staging-testing-data'
+  const content = await storage.bucket(bucket).file(fromFilePath).download()
+  print(
+    `File "${fromFilePath}" downloaded from bucket "${bucket}"`,
+    context
+  )
+  return content
+}
+
 /** Upload a file from a local path to a destination path in a Google bucket */
-async function uploadToBucket(fromFilePath, toFilePath, preamble) {
-  const bucketName = 'broad-singlecellportal-staging-testing-data'
+async function uploadToBucket(fromFilePath, toFilePath, context) {
+  const bucket = context.bucket // 'broad-singlecellportal-staging-testing-data'
   const opts = { destination: `_scp_internal/${toFilePath}` }
-  await storage.bucket(bucketName).upload(fromFilePath, opts)
+  await storage.bucket(bucket).upload(fromFilePath, opts)
   print(
     `File "${fromFilePath}" uploaded to destination "${toFilePath}" ` +
-    `in bucket "${bucketName}"`,
-    preamble
+    `in bucket "${bucket}"`,
+    context
   )
 }
 
 /** Upload / delocalize log file to GCS bucket */
-async function uploadLog() {
+async function uploadLog(bucket) {
+  const context = { bucket }
   const logName = 'expression_scatter_images'
-  await uploadToBucket('log.txt', `parse_logs/${logName}_${nonce}.txt`)
+  await uploadToBucket('log.txt', `parse_logs/${logName}_${nonce}.txt`, context)
 }
 
 /**
@@ -514,7 +541,8 @@ function msToTime(duration) {
 
 /** Wrap up job.  Log status, run time. */
 async function complete(error=null) {
-  if (error) {print(error.stack)}
+  const context = { bucket: values.bucket }
+  if (error) {print(error.stack, context)}
 
   // Get timing data
   const endTime = Date.now()
@@ -527,7 +555,7 @@ async function complete(error=null) {
   const statusNote = `Status: ${status}`
 
   const signature = 'Completed Image Pipeline run'
-  print(`\n${signature}.  ${statusNote}.  ${durationNote}\n\n`)
+  print(`\n${signature}.  ${statusNote}.  ${durationNote}\n\n`, context)
 
   await uploadLog()
 }
