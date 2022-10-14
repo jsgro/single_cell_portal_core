@@ -5,6 +5,7 @@ import Modal from 'react-bootstrap/lib/Modal'
 import { HexColorPicker, HexColorInput } from 'react-colorful'
 import Button from 'react-bootstrap/lib/Button'
 import { getFeatureFlagsWithDefaults } from '~/providers/UserProvider'
+import debounce from 'lodash.debounce'
 
 
 import { log } from '~/lib/metrics-api'
@@ -58,6 +59,43 @@ function LegendEntry({
     setShowColorPicker(false)
   }
 
+  /**
+   * Handle mouse enter events used for hovering by
+   * wrapping setting the active label in a debounce, this
+   * will delay the call to active trace label by 1000ms and
+   * can be canceled
+   */
+  const debouncedHandleMouseEnter = debounce(() => {
+    setActiveTraceLabel(label)
+  }, 1000)
+
+  /**
+   * Cancel the call to update the active labels from the debounced-mouse-leave function
+   * and call the debounced-mouse-enter function
+   */
+  const handleOnMouseEnter = () => {
+    debouncedHandleMouseLeave.cancel()
+    debouncedHandleMouseEnter()
+  }
+
+  /**
+   * Cancel the call to update the active labels from the debounced-mouse-enter function
+   * and call the debounced-mouse-leave function
+   */
+  const handleOnMouseLeave = () => {
+    debouncedHandleMouseEnter.cancel()
+    debouncedHandleMouseLeave()
+  }
+
+  /**
+   * Handle mouse leave events by restting the active label,
+   * but wrap this call in a debounce so that it can be delayed and canceled
+   */
+  const debouncedHandleMouseLeave = debounce(() => {
+    setActiveTraceLabel('')
+  }, 300)
+
+
   // clicking the label will either hide the trace, or pop up a color picker
   const entryClickFunction = showColorControls ? () => setShowColorPicker(true) : toggleSelection
   return (
@@ -66,10 +104,9 @@ function LegendEntry({
         className={`scatter-legend-row ${shownClass}`}
         role="button"
         onClick={entryClickFunction}
-        onMouseEnter={() => {
-          setActiveTraceLabel(label)
-        }}
-        onMouseLeave={() => setActiveTraceLabel(null)}
+
+        onMouseEnter={handleOnMouseEnter}
+        onMouseLeave={handleOnMouseLeave}
       >
         <div className="scatter-legend-icon" style={iconStyle}>
           { showColorControls && <FontAwesomeIcon icon={faPalette} title="Change the color for this label"/> }
