@@ -60,17 +60,16 @@ function LegendEntry({
   }
 
   /**
-   * Handle mouse enter events used for hovering by
-   * wrapping setting the active label in a debounce, this
-   * will delay the call to active trace label by 1000ms and
-   * can be canceled
+   * Handle mouse-enter-events, used for hovering, by wrapping setActiveTraceLabel in a debounce,
+   * this will delay the call to setActiveTraceLabel and can be canceled. These enhancements
+   * will reduce the calls to setActiveTraceLabel that occur from quick mouse movements in the legend.
    */
   const debouncedHandleMouseEnter = debounce(() => {
     setActiveTraceLabel(label)
-  }, 1000)
+  }, 600) // ms to delay the call to setActiveTraceLabel()
 
   /**
-   * Cancel the call to update the active labels from the debounced-mouse-leave function
+   * Cancel the call to update the active label from the debounced-mouse-leave function
    * and call the debounced-mouse-enter function
    */
   const handleOnMouseEnter = () => {
@@ -79,7 +78,7 @@ function LegendEntry({
   }
 
   /**
-   * Cancel the call to update the active labels from the debounced-mouse-enter function
+   * Cancel the call to update the active label from the debounced-mouse-enter function
    * and call the debounced-mouse-leave function
    */
   const handleOnMouseLeave = () => {
@@ -88,12 +87,13 @@ function LegendEntry({
   }
 
   /**
-   * Handle mouse leave events by restting the active label,
-   * but wrap this call in a debounce so that it can be delayed and canceled
+   * Handle mouse leave events by resetting the active label, and wrap this call in a debounce
+   * so that it can be delayed and canceled to reduce the calls to setActiveTraceLabel that occur
+   * from quick mouse movements in the legend.
    */
   const debouncedHandleMouseLeave = debounce(() => {
     setActiveTraceLabel('')
-  }, 300)
+  }, 600) // ms to delay the call to setActiveTraceLabel()
 
 
   // clicking the label will either hide the trace, or pop up a color picker
