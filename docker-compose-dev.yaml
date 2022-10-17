@@ -1,0 +1,43 @@
+services:
+  app:
+    container_name: single_cell
+    image: gcr.io/broad-singlecellportal-staging/single-cell-portal:development
+    environment:
+      VITE_RUBY_HOST: vite
+    depends_on:
+      - vite
+    env_file:
+      - config/secrets/.source_env.bash
+    command:
+      - /bin/bash
+      - -c
+      - |
+        bundle install
+        bin/rails s
+    ports:
+      - 3000:3000
+      - 3001:3001
+    expose:
+      - 27017
+    volumes:
+      - .:/home/app/webapp
+      - type: volume
+        target: /home/app/webapp/node_modules
+  vite:
+    container_name: single_cell_vite
+    image: gcr.io/broad-singlecellportal-staging/single-cell-portal:development
+    command:
+      - /bin/bash
+      - -c
+      - |
+        yarn install
+        bin/vite dev
+    environment:
+      RAILS_ENV: development
+      VITE_RUBY_HOST: 0.0.0.0
+    ports:
+      - 3036:3036
+    volumes:
+      - .:/home/app/webapp
+      - type: volume
+        target: /home/app/webapp/node_modules
