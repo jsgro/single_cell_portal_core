@@ -5,11 +5,9 @@ require 'optparse'
 
 # Set up the environment for doing local development/testing outside of Docker
 # will export all secrets from vault for the current user and create configuration files
-#
 # can also be run to print 'dockerized' paths to use inside of Docker for hybrid setup
-# run ./rails_local_setup.rb -d and then docker-compose -f docker-compose-dev.yaml up
 #
-# usage: ruby rails_local_setup.rb [-e, --environment ENVIRONMENT] [-u, --username USERNAME]
+# usage: ./rails_local_setup.rb [-e, --environment ENVIRONMENT] [-u, --username USERNAME] [-d, --docker-paths]
 
 # defaults
 username = `whoami`.chomp
