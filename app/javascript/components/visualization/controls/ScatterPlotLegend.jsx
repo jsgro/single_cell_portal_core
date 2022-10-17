@@ -72,7 +72,7 @@ function LegendEntry({
    * Cancel the call to update the active label from the debounced-mouse-leave function
    * and call the debounced-mouse-enter function
    */
-  const handleOnMouseEnter = () => {
+  function handleOnMouseEnter() {
     debouncedHandleMouseLeave.cancel()
     debouncedHandleMouseEnter()
   }
@@ -81,7 +81,7 @@ function LegendEntry({
    * Cancel the call to update the active label from the debounced-mouse-enter function
    * and call the debounced-mouse-leave function
    */
-  const handleOnMouseLeave = () => {
+  function handleOnMouseLeave() {
     debouncedHandleMouseEnter.cancel()
     debouncedHandleMouseLeave()
   }
@@ -98,6 +98,7 @@ function LegendEntry({
 
   // clicking the label will either hide the trace, or pop up a color picker
   const entryClickFunction = showColorControls ? () => setShowColorPicker(true) : toggleSelection
+
   return (
     <>
       <div
