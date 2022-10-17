@@ -21,7 +21,7 @@ import { Storage } from '@google-cloud/storage'
 let numLogEntries = 0
 
 /** Print message with browser-tag preamble to local console and log file */
-function print(message, context) {
+function print(message, context={}) {
   let preamble = ('preamble' in context === false) ? '' : context.preamble
   const timestamp = new Date().toISOString()
   if (preamble !== '') {preamble = `${preamble} `}
@@ -34,7 +34,7 @@ function print(message, context) {
 
   // Stream logs to bucket in small chunks
   // For observability into ongoing jobs and crash-resilient logs
-  if (numLogEntries % 20 === 0) {uploadLog(context.bucket)}
+  if (numLogEntries % 20 === 0 && context.bucket) {uploadLog(context.bucket)}
 }
 
 /** Is request a log post to Bard? */
@@ -162,7 +162,7 @@ async function prefetchExpressionData(gene, context) {
     return
   }
 
-  let json
+  let jsonString
   if (!initExpressionResponse) {
     // Configure URLs
     const apiStem = `${fetchOrigin}/single_cell/api/v1`
@@ -172,7 +172,8 @@ async function prefetchExpressionData(gene, context) {
 
     // Fetch data
     const response = await fetch(url)
-    json = await response.json()
+    const json = await response.json()
+    jsonString = JSON.stringify(json)
 
     if (Object.keys(coordinates).length === 0) {
       // Cache `coordinates` and `annotations` fields; this is done only once
@@ -185,15 +186,20 @@ async function prefetchExpressionData(gene, context) {
     }
   } else {
     const fromFilePath = `_scp_internal/cache/expression_scatter/data/${cluster}/${gene}.json`
-    json = await downloadFromBucket(fromFilePath, context)
+    const buffer = await downloadFromBucket(fromFilePath, context)
+    jsonString = buffer.toString()
   }
 
   if (values['json-dir']) {
     print('Populated initExpressionResponse for development run', context)
     return
   }
-  await writeFile(jsonPath, JSON.stringify(json))
-  print(`Wrote prefetched JSON: ${jsonPath}`, context)
+  print('jsonString', context)
+  print(jsonString, context)
+  print('^ jsonString', context)
+  expressionByGene[gene] = jsonString
+  // await writeFile(jsonPath, jsonString)
+  // print(`Wrote prefetched JSON: ${jsonPath}`, context)
 }
 
 /** Is this request on critical render path for expression scatter plots? */
@@ -230,21 +236,27 @@ async function configureIntercepts(page) {
       const headers = Object.assign({}, request.headers())
       const [isESPlot, gene] = detectExpressionScatterPlot(request)
       if (isESPlot) {
+        // TODO: Retain this block for now
         // Replace SCP API request for expression data with prefetched data.
-        //
-        // If these files could be made by Ingest Pipeline and put in a bucket,
-        // then Image Pipeline could run against production web app while
-        // incurring virtually no load for app server or DB server, and likely
-        // complete warming a study's image cache 5-10x faster.
         const extension = values['json-dir'] ? '.gz' : ''
-        const jsonGzPath = `${jsonFpStem + gene }.json${extension}`
-        const content = await readFile(jsonGzPath)
+        // const jsonGzPath = `${jsonFpStem + gene }.json${extension}`
+        // const content = await readFile(jsonGzPath)
+
+        const content = expressionByGene[gene]
+        print('content')
+        if (content) {print(content.slice(0, 1000)} else {print('no content!')}
+        print('^ content')
 
         let jsonString
         if (extension === '.gz') {
-          const arrayString = strFromU8(gunzipSync(content))
-          initExpressionResponse.data.expression = JSON.parse(arrayString)
-          jsonString = JSON.stringify(initExpressionResponse)
+          // TODO: Retain this comment block for now.
+          // Gzipping data _in scatter data pipeline_ prior bucket upload
+          // and _not_ leveraging decompressive transcoding would:
+          //  - A. Save transfer time, which might exceed client-side (de)compression time
+          //  - B. Save egress cost, since that's calculated _after_ decompressing
+          // const arrayString = strFromU8(gunzipSync(content))
+          // initExpressionResponse.data.expression = JSON.parse(arrayString)
+          // jsonString = JSON.stringify(initExpressionResponse)
         } else {
           jsonString = content
         }
@@ -541,7 +553,8 @@ function msToTime(duration) {
 
 /** Wrap up job.  Log status, run time. */
 async function complete(error=null) {
-  const context = { bucket: values.bucket }
+  const bucket = values.bucket
+  const context = { bucket }
   if (error) {print(error.stack, context)}
 
   // Get timing data
@@ -557,7 +570,7 @@ async function complete(error=null) {
   const signature = 'Completed Image Pipeline run'
   print(`\n${signature}.  ${statusNote}.  ${durationNote}\n\n`, context)
 
-  await uploadLog()
+  await uploadLog(bucket)
 }
 
 const startTime = Date.now()
@@ -585,6 +598,7 @@ let imagesDir
 let jsonFpStem
 let coordinates
 let initExpressionResponse
+const expressionByGene = {}
 
 try {
   await run()
