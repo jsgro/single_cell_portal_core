@@ -60,13 +60,19 @@ function LegendEntry({
   }
 
   /**
+   * If there are 200 or more labels for the annotation add a delay for hover functionality for
+   * mouse events on the legend for better performance.
+   */
+  const delayTimeForHover = (numLabels >= 200) ? 700 : 0
+
+  /**
    * Handle mouse-enter-events, used for hovering, by wrapping setActiveTraceLabel in a debounce,
    * this will delay the call to setActiveTraceLabel and can be canceled. These enhancements
    * will reduce the calls to setActiveTraceLabel that occur from quick mouse movements in the legend.
    */
   const debouncedHandleMouseEnter = debounce(() => {
     setActiveTraceLabel(label)
-  }, 600) // ms to delay the call to setActiveTraceLabel()
+  }, delayTimeForHover) // ms to delay the call to setActiveTraceLabel()
 
   /**
    * Cancel the call to update the active label from the debounced-mouse-leave function
@@ -93,7 +99,7 @@ function LegendEntry({
    */
   const debouncedHandleMouseLeave = debounce(() => {
     setActiveTraceLabel('')
-  }, 600) // ms to delay the call to setActiveTraceLabel()
+  }, delayTimeForHover) // ms to delay the call to setActiveTraceLabel()
 
 
   // clicking the label will either hide the trace, or pop up a color picker
