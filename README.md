@@ -339,11 +339,10 @@ To create an admin user account:
 Developing on SCP without a Docker container, while less robust, opens up some faster development paradigms, including live css/js reloading, faster build times, and byebug debugging in rails.  See [Non-containerized development README](./NON_CONTAINERIZED_DEV_README.md) for instructions
 
 ## HYBRID DOCKER LOCAL DEVELOPMENT
-It is possible for Broad Institute team members to develop locally using Docker with a 'hybrid' setup that merges the 
-speed of developing outside the container with the ease of using Docker for package/gem management.  This allows using 
-`vite` for hot module replacement (HMR) along with all the other features of native Rails development, but uses 
-`docker-compose` to build and deploy containers locally.  Both containers are built off of the 
-`single-cell-portal:development` Docker image referenced above.
+SCP team members can develop locally using Docker with a 'hybrid' setup that merges the speed of developing outside the 
+container with the ease of using Docker for package/gem management.  This allows using `vite` for hot module replacement 
+(HMR) along with all the other features of native Rails development, but uses `docker-compose` to build and deploy 
+containers locally.  Both containers are built off of the `single-cell-portal:development` Docker image referenced above.
 
 This setup will behave almost exactly like developing 
 outside of the container - you can edit files in your IDE and have them updated in the container in real time, and any 
@@ -354,8 +353,8 @@ reduce this latency by rebuilding the `single-cell-portal:development` Docker im
 [building the Docker image](#pullingbuilding-the-docker-image) above for more information.
 
 ### USING DOCKER COMPOSE LOCALLY
-To leverage this setup, there are two shell scripts for both setup and cleanup, respectively.  To start the local 
-instance, run:
+To leverage this setup, there are two shell scripts for setup and cleanup, respectively.  To start the local instance, 
+run:
 
     bin/docker-compose-setup.sh
 
