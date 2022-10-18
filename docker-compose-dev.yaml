@@ -8,12 +8,7 @@ services:
       - vite
     env_file:
       - config/secrets/.source_env.bash
-    command:
-      - /bin/bash
-      - -c
-      - |
-        bundle install
-        bin/rails s
+    entrypoint: ./rails-dev-entrypoint.sh
     ports:
       - 3000:3000
       - 3001:3001
@@ -26,12 +21,7 @@ services:
   vite:
     container_name: single_cell_vite
     image: gcr.io/broad-singlecellportal-staging/single-cell-portal:development
-    command:
-      - /bin/bash
-      - -c
-      - |
-        yarn install
-        bin/vite dev
+    entrypoint: ./vite-dev-entrypoint.sh
     environment:
       RAILS_ENV: development
       VITE_RUBY_HOST: 0.0.0.0
