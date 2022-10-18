@@ -1,4 +1,8 @@
 #! /bin/sh
+
+# docker-compose-cleanup.sh
+# stop/remove all containers/volumes created by docker-compose and revert environment config files
+
 echo "### REMOVING CONTAINERS/VOLUMES ###"
 docker-compose -f docker-compose-dev.yaml down
 docker volume prune --force

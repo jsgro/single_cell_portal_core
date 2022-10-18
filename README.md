@@ -348,7 +348,7 @@ speed of developing outside the container with the ease of using Docker for pack
 This setup will behave almost exactly like developing 
 outside of the container - you can edit files in your IDE and have them updated in the container in real time, and any 
 JS/CSS changes will automatically reload thanks to HMR without any page refresh.  The startup process (minus any 
-`docker pull` latency) should only take 20-30s, though if you update any JS dependencies it can take 2-3 minutes to run 
+`docker pull` latency) should only take ~30s, though if you update any JS dependencies it can take 2-3 minutes to run 
 `yarn install` on boot depending on how constrained your local Docker installation is in terms of CPU/RAM.  You can 
 reduce this latency by rebuilding the `single-cell-portal:development` Docker image locally.  See the section on 
 [building the Docker image](#pullingbuilding-the-docker-image) above for more information.
@@ -363,9 +363,16 @@ This will pull all necessary secrets from `vault` and write env files to pass to
 locally: `single_cell` (application server), and `single_cell_vite` (vite dev server). Both containers will install 
 their dependencies automatically if you have updated any gems or JS packages and then start their required services.  In 
 addition to the Rails server, the `single_cell` container will run any required migrations and start `Delayed::Job` on 
-startup.  Both containers can be stopped by pressing `Ctrl-C`.
+startup.  Both containers can be stopped by pressing `Ctrl-C`.  This will not remove either container, and they can both 
+be restarted with the same command.
 
-To clean up the Docker environment, run:
+You can also start these containers headlessly by passing `-d`.  This runs the same startup commands, but will not 
+attach `STDOUT` from the containers to the terminal.  When using this option, note that it will take between 30-60 
+seconds before the portal instance is available at `https://localhost:3000/single_cell`.
+
+    bin/docker-compose-setup.sh -d
+
+To stop both services and clean up the Docker environment, run:
 
     bin/docker-compose-cleanup.sh
 
