@@ -2,6 +2,7 @@
 
 # docker-compose-setup.sh
 # bring up local development environment via docker-compose
+# More context: https://github.com/broadinstitute/single_cell_portal_core#hybrid-docker-local-development
 
 usage=$(
 cat <<EOF

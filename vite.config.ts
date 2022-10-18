@@ -9,7 +9,8 @@ const version = readFileSync('version.txt', { encoding: 'utf8' })
 export default defineConfig({
   'define': {
     '__SCP_VERSION__': version,
-    '__FRONTEND_SERVICE_WORKER_CACHE__': process.env.VITE_FRONTEND_SERVICE_WORKER_CACHE
+    '__FRONTEND_SERVICE_WORKER_CACHE__': process.env.VITE_FRONTEND_SERVICE_WORKER_CACHE,
+    '__DEV_MODE__': process.env.VITE_DEV_MODE
   },
   'plugins': [
     // inject plugin needs to be first

@@ -2,6 +2,7 @@
 
 # docker-compose-cleanup.sh
 # stop/remove all containers/volumes created by docker-compose and revert environment config files
+# More context: https://github.com/broadinstitute/single_cell_portal_core#hybrid-docker-local-development
 
 echo "### REMOVING CONTAINERS/VOLUMES ###"
 docker-compose -f docker-compose-dev.yaml down
