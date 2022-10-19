@@ -8,15 +8,23 @@ usage=$(
 cat <<EOF
 $0 [OPTION]
 -d   run docker-compose in detached mode (default is attatched to terminal STDOUT)
+-c   enable VITE_FRONTEND_SERVICE_WORKER_CACHE (default is disabled)
 -h   print this text
 EOF
 )
 
-DETACHED="no"
-while getopts "dh" OPTION; do
+DETACHED=""
+VITE_FRONTEND_SERVICE_WORKER_CACHE="false"
+while getopts "dch" OPTION; do
 case $OPTION in
   d)
-    DETACHED="yes"
+    echo "### SETTING DETACHED ###"
+    DETACHED="--detach"
+    echo "### PLEASE ALLOW 30s ONCE SERVICES START BEFORE ISSUING REQUESTS ###"
+    ;;
+  c)
+    echo "### ENABLING VITE_FRONTEND_SERVICE_WORKER_CACHE ###"
+    VITE_FRONTEND_SERVICE_WORKER_CACHE="true"
     ;;
   h)
   	echo "$usage"
@@ -33,11 +41,6 @@ done
 echo "### SETTING UP ENVIRONMENT ###"
 ./rails_local_setup.rb --docker-paths
 source config/secrets/.source_env.bash
-if [[ "$DETACHED" = "yes" ]]; then
-  echo "### SERVICES STARTING IN DETACHED MODE ###"
-  docker-compose -f docker-compose-dev.yaml up --detach
-  echo "### please wait 60s before issuing requests to localhost:3000 ###"
-else
-  echo "### STARTING SERVICES ###"
-  docker-compose -f docker-compose-dev.yaml up
-fi
+echo "### STARTING SERVICES ###"
+VITE_FRONTEND_SERVICE_WORKER_CACHE="$VITE_FRONTEND_SERVICE_WORKER_CACHE" \
+docker-compose -f docker-compose-dev.yaml up $DETACHED

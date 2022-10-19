@@ -5,6 +5,8 @@
 # More context: https://github.com/broadinstitute/single_cell_portal_core#hybrid-docker-local-development
 
 echo "### REMOVING CONTAINERS/VOLUMES ###"
+# set VITE_FRONTEND_SERVICE_WORKER_CACHE to silence warnings from docker-compose
+VITE_FRONTEND_SERVICE_WORKER_CACHE="$VITE_FRONTEND_SERVICE_WORKER_CACHE" \
 docker-compose -f docker-compose-dev.yaml down
 docker volume prune --force
 rm tmp/pids/*.pid
