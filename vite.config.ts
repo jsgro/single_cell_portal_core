@@ -8,7 +8,7 @@ const version = readFileSync('version.txt', { encoding: 'utf8' })
 
 export default defineConfig({
   'define': {
-    '__SCP_VERSION__': version,
+    '__SCP_VERSION__': process.env.SCP_VERSION ? process.env.SCP_VERSION : version,
     '__FRONTEND_SERVICE_WORKER_CACHE__': process.env.VITE_FRONTEND_SERVICE_WORKER_CACHE,
     '__DEV_MODE__': process.env.VITE_DEV_MODE
   },
