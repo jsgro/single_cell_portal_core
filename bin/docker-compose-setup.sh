@@ -41,6 +41,7 @@ done
 echo "### SETTING UP ENVIRONMENT ###"
 ./rails_local_setup.rb --docker-paths
 source config/secrets/.source_env.bash
+rm tmp/pids/*.pid
 echo "### STARTING SERVICES ###"
 VITE_FRONTEND_SERVICE_WORKER_CACHE="$VITE_FRONTEND_SERVICE_WORKER_CACHE" \
 docker-compose -f docker-compose-dev.yaml up $DETACHED
