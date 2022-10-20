@@ -63,17 +63,22 @@ class Users::OmniauthCallbacksController < Devise::OmniauthCallbacksController
 
   # validate omniauth.origin is redirecting to same host
   # will allow redirect if hostnames match, otherwise will return nil to force redirect to home page
+  # malicious redirects are logged as SecurityError in Sentry/Mixpanel
   def set_omniauth_redirect(request, user)
     begin
       hostname = URI.parse(request.env['omniauth.origin']).hostname
       if hostname == ENV['HOSTNAME']
         request.env['omniauth.origin']
       else
-        Rails.logger.error "Invalid origin: #{request.env['omniauth.origin']} requested, redirecting to home page"
-        nil
+        raise SecurityError, "Invalid origin: #{hostname} requested, does not match #{ENV['HOSTNAME']}"
       end
-    rescue URI::InvalidURIError, NoMethodError => e
+    rescue SecurityError => e
+      Rails.logger.error e.message
       # we can't use RequestUtils.log_exception as this isn't a handled request exception
+      ErrorTracker.report_exception(e, user, request.params)
+      MetricsService.report_error(e, request, user, nil)
+      nil
+    rescue URI::InvalidURIError, NoMethodError => e
       Rails.logger.error "Error processing omniauth.origin: (#{e.class.name}) #{e.message}"
       ErrorTracker.report_exception(e, user, request.params)
       MetricsService.report_error(e, request, user, nil)
