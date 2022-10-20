@@ -149,18 +149,19 @@ async function prefetchExpressionData(gene, context) {
 
   print(`Prefetching JSON for ${gene}`, context)
 
-  let isCopyOnFilesystem = true
-  try {
-    await access(jsonPath)
-  } catch {
-    isCopyOnFilesystem = false
-  }
-
-  if (isCopyOnFilesystem && initExpressionResponse) {
-    // Don't process with fetch if expression was already prefetched
-    print(`Using local expression data for ${gene}`, context)
-    return
-  }
+  // Commented-out code is intended.  Use after incorporating `gcloud storage`.
+  //
+  // let isCopyOnFilesystem = true
+  // try {
+  //   await access(jsonPath)
+  // } catch {
+  //   isCopyOnFilesystem = false
+  // }
+  // if (isCopyOnFilesystem && initExpressionResponse) {
+  //   // Don't process with fetch if expression was already prefetched
+  //   print(`Using local expression data for ${gene} at ${jsonPath}`, context)
+  //   return
+  // }
 
   let jsonString
   if (!initExpressionResponse) {
@@ -173,7 +174,6 @@ async function prefetchExpressionData(gene, context) {
     // Fetch data
     const response = await fetch(url)
     const json = await response.json()
-    jsonString = JSON.stringify(json)
 
     if (Object.keys(coordinates).length === 0) {
       // Cache `coordinates` and `annotations` fields; this is done only once
@@ -184,20 +184,20 @@ async function prefetchExpressionData(gene, context) {
       }
       initExpressionResponse = json
     }
-  } else {
-    const fromFilePath = `_scp_internal/cache/expression_scatter/data/${cluster}/${gene}.json`
-    const buffer = await downloadFromBucket(fromFilePath, context)
-    jsonString = buffer.toString()
   }
+
+  const fromFilePath = `_scp_internal/cache/expression_scatter/data/${cluster}/${gene}.json`
+  const buffer = await downloadFromBucket(fromFilePath, context)
+  const expressionArrayString = buffer.toString()
 
   if (values['json-dir']) {
     print('Populated initExpressionResponse for development run', context)
     return
   }
-  print('jsonString', context)
-  print(jsonString, context)
-  print('^ jsonString', context)
-  expressionByGene[gene] = jsonString
+
+  expressionByGene[gene] = expressionArrayString
+
+  // Uncomment code below for local debugging
   // await writeFile(jsonPath, jsonString)
   // print(`Wrote prefetched JSON: ${jsonPath}`, context)
 }
@@ -243,11 +243,7 @@ async function configureIntercepts(page) {
         // const content = await readFile(jsonGzPath)
 
         const content = expressionByGene[gene]
-        print('content')
-        if (content) {print(content.slice(0, 1000)} else {print('no content!')}
-        print('^ content')
 
-        let jsonString
         if (extension === '.gz') {
           // TODO: Retain this comment block for now.
           // Gzipping data _in scatter data pipeline_ prior bucket upload
@@ -255,11 +251,10 @@ async function configureIntercepts(page) {
           //  - A. Save transfer time, which might exceed client-side (de)compression time
           //  - B. Save egress cost, since that's calculated _after_ decompressing
           // const arrayString = strFromU8(gunzipSync(content))
-          // initExpressionResponse.data.expression = JSON.parse(arrayString)
-          // jsonString = JSON.stringify(initExpressionResponse)
-        } else {
-          jsonString = content
         }
+        const expressionArrayString = content
+        initExpressionResponse.data.expression = JSON.parse(expressionArrayString)
+        const jsonString = JSON.stringify(initExpressionResponse)
 
         request.respond({
           status: 200,
