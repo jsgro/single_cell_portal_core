@@ -67,6 +67,8 @@ class Users::OmniauthCallbacksController < Devise::OmniauthCallbacksController
   def set_omniauth_redirect(request, user)
     begin
       hostname = URI.parse(request.env['omniauth.origin']).hostname
+      return nil if hostname.nil? # no referrer set, so default logic applies
+
       if hostname == ENV['HOSTNAME']
         request.env['omniauth.origin']
       else
