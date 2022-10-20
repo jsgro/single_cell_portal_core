@@ -66,9 +66,9 @@ class Users::OmniauthCallbacksController < Devise::OmniauthCallbacksController
   # malicious redirects are logged as SecurityError in Sentry/Mixpanel
   def set_omniauth_redirect(request, user)
     begin
-      hostname = URI.parse(request.env['omniauth.origin']).hostname
-      return nil if hostname.nil? # no referrer set, so default logic applies
+      return nil if request.env['omniauth.origin'].nil? # no referrer set, so default logic applies
 
+      hostname = URI.parse(request.env['omniauth.origin']).hostname
       if hostname == ENV['HOSTNAME']
         request.env['omniauth.origin']
       else
