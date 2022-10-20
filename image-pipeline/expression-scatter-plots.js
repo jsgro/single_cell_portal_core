@@ -476,6 +476,7 @@ async function run() {
   const uniqueGenes = json.uniqueGenes
   console.log(`Total number of genes: ${uniqueGenes.length}`)
 
+  const processPromises = []
   for (let cpuIndex = 0; cpuIndex < numCPUs; cpuIndex++) {
     /** Log prefix to distinguish messages for different browser instances */
     const preamble = `Browser ${cpuIndex}:`
@@ -495,8 +496,14 @@ async function run() {
       genes = genes.slice(0, 2)
     }
 
-    await processScatterPlotImages(genes, context)
+    const processScatter = new Promise(resolve => {
+      processScatterPlotImages(genes, context).then(() => {
+        resolve()
+      })
+    })
+    processPromises.push(processScatter)
   }
+  await Promise.all(processPromises)
 }
 
 /** Fetch a file from a bucket to PAPI VM, return contents */
