@@ -61,6 +61,7 @@ export default function StudyGeneField({ genes, searchGenes, allGenes, speciesLi
     } else if (newGeneArray && newGeneArray.length) {
       const genesToSearch = newGeneArray.map(g => g.value)
       if (genesToSearch.length > window.MAX_GENE_SEARCH) {
+        log('search-too-many-genes', {numGenes: genesToSearch.length})
         setShowTooManyGenesModal(true)
       } else {
         if (event) { // this was not a 'clear'
