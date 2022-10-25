@@ -1297,8 +1297,7 @@ class FireCloudClient
   # * *return*
   #   - Object depends on method, can be one of the following: +Google::Cloud::Storage::Bucket+, +Google::Cloud::Storage::File+,
   #     +Google::Cloud::Storage::FileList+, +Boolean+, +File+, or +String+
-
-  def execute_gcloud_method(method_name, retry_count=0, *params)
+  def execute_gcloud_method(method_name, retry_count = 0, *params)
     begin
       self.send(method_name, *params)
     rescue => e
@@ -1316,7 +1315,7 @@ class FireCloudClient
                                                                  retry_count: current_retry, params: params})
         end
         Rails.logger.info "Retry count exceeded calling #{method_name} with #{params.join(', ')}: #{e.message}"
-        raise RuntimeError, e.message
+        raise e.message # raise implicitly creates RuntimeError
       end
     end
   end
