@@ -237,21 +237,12 @@ async function configureIntercepts(page) {
       const [isESPlot, gene] = detectExpressionScatterPlot(request)
       if (isESPlot) {
         // TODO: Retain this block for now
-        // Replace SCP API request for expression data with prefetched data.
-        const extension = values['json-dir'] ? '.gz' : ''
-        // const jsonGzPath = `${jsonFpStem + gene }.json${extension}`
-        // const content = await readFile(jsonGzPath)
+        // Might be useful after incorporating `google storage cp`
+        // const jsonPath = `${jsonFpStem + gene }.json`
+        // const content = await readFile(jsonPath)
 
         const content = expressionByGene[gene]
 
-        if (extension === '.gz') {
-          // TODO: Retain this comment block for now.
-          // Gzipping data _in scatter data pipeline_ prior bucket upload
-          // and _not_ leveraging decompressive transcoding would:
-          //  - A. Save transfer time, which might exceed client-side (de)compression time
-          //  - B. Save egress cost, since that's calculated _after_ decompressing
-          // const arrayString = strFromU8(gunzipSync(content))
-        }
         const expressionArrayString = content
         initExpressionResponse.data.expression = JSON.parse(expressionArrayString)
         const jsonString = JSON.stringify(initExpressionResponse)
