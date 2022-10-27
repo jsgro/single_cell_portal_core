@@ -1,5 +1,5 @@
 {
-  "name": "hdf5-js-proof",
+  "name": "@single-cell-portal/hdf5",
   "version": "0.0.1",
   "private": true,
   "dependencies": {
