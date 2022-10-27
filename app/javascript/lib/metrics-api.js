@@ -324,8 +324,8 @@ export function logMenuChange(event) {
 /**
  * Log front-end error (e.g. uncaught ReferenceError)
  */
-export function logError(text) {
-  const props = { text }
+export function logError(text, details = {}) {
+  const props = { text, ...details }
   log('error', props)
 }
 

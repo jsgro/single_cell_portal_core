@@ -1,5 +1,6 @@
 import { UNSPECIFIED_ANNOTATION_NAME } from '~/lib/cluster-utils'
-import { log } from '~/lib/metrics-api'
+import { log, logError } from '~/lib/metrics-api'
+import {logToSentry} from '~/lib/sentry-logging'
 
 // Default plot colors, combining ColorBrewer sets 1-3 with tweaks to yellows.
 const colorBrewerList = [
@@ -295,11 +296,16 @@ PlotUtils.getLegendSortedLabels = function(countsByLabel) {
  * didn't have to do this.  See https://github.com/plotly/plotly.js/issues/5612
 */
 function countValues(array) {
-  return array.reduce((acc, curr) => {
-    acc[curr] ||= 0
-    acc[curr] += 1
-    return acc
-  }, {})
+  try {
+    return array.reduce((acc, curr) => {
+      acc[curr] ||= 0
+      acc[curr] += 1
+      return acc
+    }, {})
+  } catch (error) {
+    logToSentry(error)
+    logError('Error counting values for trace array', { error: error.message })
+  }
 }
 
 /**
