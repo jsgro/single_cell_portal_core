@@ -1,6 +1,7 @@
 {
-  "name": "@single-cell-portal/hdf5",
+  "name": "@single-cell-portal/hdf5-parser",
   "version": "0.0.1",
+  "type": "module",
   "private": true,
   "dependencies": {
     "jsfive": "0.3.13"
