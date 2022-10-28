@@ -255,7 +255,7 @@ module Api
             consensus: consensus,
             customColors: custom_annotation_colors,
             clusterFileId: cluster.study_file_id.to_s,
-            splitLabelArrays: split_label_arrays,
+            isSplitLabelArrays: split_label_arrays,
             externalLink: {
               url: cluster.study_file[:external_link_url],
               title: cluster.study_file[:external_link_title],
