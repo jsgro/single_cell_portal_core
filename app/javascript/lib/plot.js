@@ -67,14 +67,14 @@ function emptyTrace(expectedLength, hasZvalues, hasExpression) {
  */
 PlotUtils.filterTrace = function({
   trace, hiddenTraces=[], groupByAnnotation=false,
-  activeTraceLabel, expressionFilter, expressionData, splitLabelArrays
+  activeTraceLabel, expressionFilter, expressionData, isSplitLabelArrays
 }) {
   const isHidingByLabel = hiddenTraces && hiddenTraces.length
   const isFilteringByExpression = expressionFilter && expressionData &&
     (expressionFilter[0] !== 0 || expressionFilter[1] !== 1)
   const hasZvalues = !!trace.z
   const hasExpression = !!trace.expression
-  if (splitLabelArrays) {
+  if (isSplitLabelArrays) {
     trace = PlotUtils.splitTraceByAnnotationArray(trace, hasZvalues)
   }
   const oldLength = trace.x.length
