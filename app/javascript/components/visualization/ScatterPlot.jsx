@@ -181,9 +181,9 @@ function RawScatterPlot({
       splitLabelArrays: splitLabelArrays ?? scatter.splitLabelArrays,
       isRefGroup: isRG
     })
-    if (isRG) {
-      setCountsByLabel(labelCounts)
-    }
+    setCountsByLabel(isRG ? labelCounts : null)
+    // console.log('traces in updatecountsandgettraces:', traces)
+
     return traces
   }
 

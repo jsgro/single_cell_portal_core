@@ -306,14 +306,20 @@ export default function ScatterPlotLegend({
                 <a
                   role="button"
                   data-analytics-name='split-traces-unsplit'
-                  onClick={() => {updateHiddenTraces([], false, true); setSplitLabelArrays(false)}}
+                  onClick={() => {
+                    setSplitLabelArrays(false)
+                    setLabelsToShow(labels)
+                  }}
                 >Merge array labels</a>
               }
               { !splitLabelArrays &&
                 <a
                   role="button"
                   data-analytics-name='split-traces-split'
-                  onClick={() => {updateHiddenTraces([], false, true); setSplitLabelArrays(true)}}
+                  onClick={() => {
+                    setSplitLabelArrays(true)
+                    setLabelsToShow(labels)
+                  }}
                 >Split array labels</a>
               }
             </div>
