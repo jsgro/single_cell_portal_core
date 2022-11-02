@@ -312,7 +312,7 @@ export default function ScatterPlotLegend({
                   data-analytics-name='split-traces-unsplit'
                   onClick={() => {
                     updateIsSplitLabelArrays(false)
-                    updateHiddenTraces([], false, true)
+                    updateHiddenTraces([], false, true) // TODO (SCP-4623), remove this line once ticket is complete
                   }}
                 >Merge array labels</a>
               }
@@ -322,7 +322,7 @@ export default function ScatterPlotLegend({
                   data-analytics-name='split-traces-split'
                   onClick={() => {
                     updateIsSplitLabelArrays(true)
-                    updateHiddenTraces([], false, true)
+                    updateHiddenTraces([], false, true) // TODO (SCP-4623), remove this line once ticket is complete
                   }}
                 >Split array labels</a>
               }
