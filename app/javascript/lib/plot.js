@@ -295,8 +295,6 @@ PlotUtils.getLegendSortedLabels = function(countsByLabel) {
  * didn't have to do this.  See https://github.com/plotly/plotly.js/issues/5612
 */
 function countValues(array) {
-  // This prints the correct items!
-  console.log('counting values:', array)
   return array.reduce((acc, curr) => {
     acc[curr] ||= 0
     acc[curr] += 1
