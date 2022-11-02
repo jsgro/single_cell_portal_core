@@ -31,7 +31,7 @@ class FireCloudClient
   # List of URLs/Method names to never retry on or report error, regardless of error state
   ERROR_IGNORE_LIST = ["#{BASE_URL}/register"]
   # List of URLs/Method names to ignore incremental backoffs on (in cases of UI blocking)
-  RETRY_BACKOFF_BLACKLIST = ["#{BASE_URL}/register", :generate_signed_url, :generate_api_url]
+  RETRY_BACKOFF_DENYLIST = ["#{BASE_URL}/register", :generate_signed_url, :generate_api_url]
   # default namespace used for all FireCloud workspaces owned by the 'portal'
   PORTAL_NAMESPACE = ENV['PORTAL_NAMESPACE'].present? ? ENV['PORTAL_NAMESPACE'] : 'single-cell-portal'
   # Permission values allowed for FireCloud workspace ACLs
@@ -231,11 +231,11 @@ class FireCloudClient
       context = " encountered when requesting '#{path}', attempt ##{current_retry}"
       log_message = "#{e.message}: #{e.http_body}; #{context}"
       Rails.logger.error log_message
-      retry_time = retry_count * ApiHelpers::RETRY_INTERVAL
-      sleep(retry_time) unless RETRY_BACKOFF_BLACKLIST.include?(path) # only sleep if non-blocking
       # only retry if status code indicates a possible temporary error, and we are under the retry limit and
       # not calling a method that is blocked from retries
       if should_retry?(e.http_code) && retry_count < ApiHelpers::MAX_RETRY_COUNT && !ERROR_IGNORE_LIST.include?(path)
+        retry_time = retry_interval_for(current_retry)
+        sleep(retry_time) unless RETRY_BACKOFF_DENYLIST.include?(path) # only sleep if non-blocking
         process_firecloud_request(http_method, path, payload, opts, current_retry)
       else
         # we have reached our retry limit or the response code indicates we should not retry
@@ -1305,8 +1305,8 @@ class FireCloudClient
       current_retry = retry_count + 1
       if should_retry?(status_code) && retry_count < ApiHelpers::MAX_RETRY_COUNT && !ERROR_IGNORE_LIST.include?(method_name)
         Rails.logger.info "error calling #{method_name} with #{params.join(', ')}; #{e.message} -- attempt ##{current_retry}"
-        retry_time = retry_count * ApiHelpers::RETRY_INTERVAL
-        sleep(retry_time) unless RETRY_BACKOFF_BLACKLIST.include?(method_name)
+        retry_time = retry_interval_for(current_retry)
+        sleep(retry_time) unless RETRY_BACKOFF_DENYLIST.include?(method_name)
         execute_gcloud_method(method_name, current_retry, *params)
       else
         # we have reached our retry limit or the response code indicates we should not retry
