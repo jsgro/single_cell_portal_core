@@ -207,7 +207,7 @@ class DifferentialExpressionService
   #   - +annotation+ (Hash) => annotation object
   #
   # * *returns*
-  #   - (Boolean) => T/F if DE results already exist for requested annotation in given study
+  #   - (Boolean)
   def self.results_exist?(study, annotation)
     ids = annotation[:scope] == 'cluster' ? [annotation[:cluster_group_id]] : study.cluster_groups.pluck(:id)
     DifferentialExpressionResult.where(
@@ -216,6 +216,27 @@ class DifferentialExpressionService
       :annotation_name => annotation[:name],
       :annotation_scope => annotation[:scope]
     ).exists?
+  end
+
+  # determine if a study meets the requirements for differential expression:
+  # 1. public
+  # 2. has clustering/metadata
+  # 3. has raw counts
+  # 4. has group-based annotations that can be visualized
+  # Individual annotations will be validated at submission time as this is more time/resource intensive
+  #
+  # * *params*
+  #   - +study+ (Study) => study to check eligibility for differential expression jobs
+  #
+  # * *returns*
+  #   - (Boolean)
+  def self.study_eligible?(study)
+    begin
+      validate_study(study)
+      find_eligible_annotations(study).any? && study.has_raw_counts_matrices?
+    rescue ArgumentError
+      false
+    end
   end
 
   # validate annotation exists and can be visualized for a DE job
