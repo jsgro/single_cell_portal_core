@@ -1,6 +1,5 @@
 import { UNSPECIFIED_ANNOTATION_NAME } from '~/lib/cluster-utils'
 import { log, logError } from '~/lib/metrics-api'
-import {logToSentry} from '~/lib/sentry-logging'
 
 // Default plot colors, combining ColorBrewer sets 1-3 with tweaks to yellows.
 const colorBrewerList = [
@@ -303,8 +302,8 @@ function countValues(array) {
       return acc
     }, {})
   } catch (error) {
-    logToSentry(error)
-    logError('Error counting values for trace array', { error: error.message })
+    // This will log to both Mixpanel and Sentry
+    logError('Error counting values for trace array', error)
   }
 }
 
