@@ -267,6 +267,10 @@ export default function ScatterPlotLegend({
     setLabelsToShow(filteredLabels)
   }, [filter])
 
+  /** Update the labels to be shown in the legend when the counts by label changes (needed for split array labels)  */
+  useEffect(() => {
+    setLabelsToShow(labels)
+  }, [countsByLabel])
 
   /** only show the clear button if there is input in the filter searchbar (used for filtered legends) */
   const showClear = !!filter
@@ -308,7 +312,7 @@ export default function ScatterPlotLegend({
                   data-analytics-name='split-traces-unsplit'
                   onClick={() => {
                     updateIsSplitLabelArrays(false)
-                    setLabelsToShow(labels)
+                    updateHiddenTraces([], false, true)
                   }}
                 >Merge array labels</a>
               }
@@ -318,7 +322,7 @@ export default function ScatterPlotLegend({
                   data-analytics-name='split-traces-split'
                   onClick={() => {
                     updateIsSplitLabelArrays(true)
-                    setLabelsToShow(labels)
+                    updateHiddenTraces([], false, true)
                   }}
                 >Split array labels</a>
               }
