@@ -227,13 +227,14 @@ class DifferentialExpressionService
   #
   # * *params*
   #   - +study+ (Study) => study to check eligibility for differential expression jobs
+  #   - +skip_existing+   (Boolean) => Skip annotations that already have DE results
   #
   # * *returns*
   #   - (Boolean)
-  def self.study_eligible?(study)
+  def self.study_eligible?(study, skip_existing: false)
     begin
       validate_study(study)
-      find_eligible_annotations(study).any? && study.has_raw_counts_matrices?
+      find_eligible_annotations(study, skip_existing:).any? && study.has_raw_counts_matrices?
     rescue ArgumentError
       false
     end
