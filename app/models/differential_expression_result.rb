@@ -55,22 +55,10 @@ class DifferentialExpressionResult
     end
   end
 
-  def info
-    { study_accession:, cluster_name:, annotation_name:, annotation_scope:, observed_values:, matrix_file_name: }
-  end
-
-  def self.report
-    all.map(&:info).group_by { |entry| entry.delete(:study_accession) }
-  end
-
-  ## GETTERS
+  ## STUDY FILE GETTERS
   # associated raw count matrix
   def matrix_file
     StudyFile.find(matrix_file_id)
-  end
-
-  def matrix_file_name
-    matrix_file.upload_file_name
   end
 
   # associated clustering file
@@ -86,10 +74,6 @@ class DifferentialExpressionResult
     when 'cluster'
       cluster_file
     end
-  end
-
-  def study_accession
-    study.accession
   end
 
   # compute the relative path inside a GCS bucket of a DE output file for a given label
