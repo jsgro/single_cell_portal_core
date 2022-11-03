@@ -36,14 +36,13 @@ export default function PlotTitle({
     <span className="detail"> {detailContent} </span>
     { isCorrelatedScatter && !!correlation &&
     <>
-      <span className="correlation">
+      <span className="correlation icon-left">
         Spearman rho = { Math.round(correlation * 1000) / 1000}
       </span>
       <span
         data-analytics-name="bulk-correlation-tooltip"
         data-toggle="tooltip"
         data-original-title={tooltipText}
-        style={{ marginLeft: '10px' }}
       >
         <FontAwesomeIcon className="action help-icon" icon={faInfoCircle} />
       </span>
