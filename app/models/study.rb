@@ -737,6 +737,7 @@ class Study
   before_destroy    :ensure_cascade_on_associations
   after_destroy     :remove_data_dir
   before_save       :set_readonly_access
+  after_save        :check_de_eligibility, on: :update, if: proc { |attr| attr.public }
 
   # search definitions
   index({"name" => "text", "description" => "text"}, {background: true})
@@ -1776,6 +1777,13 @@ class Study
     end
   end
 
+  # check after saving if this study now qualifies for DE
+  # this can happen if the study went private => public
+  def check_de_eligibility
+    if DifferentialExpressionService.study_eligible?(self)
+      DifferentialExpressionService.run_differential_expression_on_all(accession, skip_existing: true)
+    end
+  end
 
   def last_public_date
     history_tracks.where('modified.public': true).order_by(created_at: :desc).first&.created_at
