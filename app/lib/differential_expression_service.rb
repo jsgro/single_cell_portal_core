@@ -51,7 +51,7 @@ class DifferentialExpressionService
                                               skip_existing: false)
     study = Study.find_by(accession: study_accession)
     validate_study(study)
-    eligible_annotations = find_eligible_annotations(study, machine_type:, dry_run:, skip_existing:)
+    eligible_annotations = find_eligible_annotations(study, skip_existing:)
     raise ArgumentError, "#{study_accession} does not have any eligible annotations" if eligible_annotations.empty?
 
     log_message "#{study_accession} has annotations eligible for DE; validating inputs"
@@ -66,6 +66,7 @@ class DifferentialExpressionService
 
           annotation_params = annotation.deep_dup # make a copy so we don't lose the association next time we check
           annotation_params.delete(:cluster_file_id)
+          annotation_params.merge!(dry_run:, machine_type:)
           annotation_identifier = [
             annotation_params[:annotation_name], 'group', annotation_params[:annotation_scope]
           ].join('--')
@@ -157,18 +158,14 @@ class DifferentialExpressionService
   #
   # * *params*
   #   - +study+        (Study) => Associated study object
-  #   - +machine_type+ (String) => Override default VM machine type
-  #   - +dry_run+      (Boolean) => Indication of whether or not this is a pre-flight check
   #   - +skip_existing+   (Boolean) => Skip annotations that already have DE results
   #
   # * *returns*
   #   - (Array<Hash>) => Array of annotation objects available for DE
-  def self.find_eligible_annotations(study, machine_type: nil, dry_run: nil, skip_existing: false)
+  def self.find_eligible_annotations(study, skip_existing: false)
     annotations = []
     metadata = study.cell_metadata.where(annotation_type: 'group').select(&:can_visualize?)
-    annotations += metadata.map do |meta|
-      { annotation_name: meta.name, annotation_scope: 'study', machine_type: machine_type, dry_run: dry_run }
-    end
+    annotations += metadata.map { |meta| { annotation_name: meta.name, annotation_scope: 'study' } }
     cell_annotations = []
     groups_to_process = study.cluster_groups.select { |cg| cg.cell_annotations.any? }
     groups_to_process.map do |cluster|
@@ -185,9 +182,7 @@ class DifferentialExpressionService
       {
         annotation_name: annot[:name],
         annotation_scope: 'cluster',
-        cluster_file_id: annot[:cluster_file_id],
-        machine_type: machine_type,
-        dry_run: dry_run
+        cluster_file_id: annot[:cluster_file_id]
       }
     end
     if skip_existing

@@ -240,12 +240,9 @@ class DifferentialExpressionServiceTest < ActiveSupport::TestCase
     cluster = @basic_study.cluster_groups.by_name(@cluster_file.name)
     annot = cluster.cell_annotations.first
     expected_annotations = [
-      { annotation_name: 'species', annotation_scope: 'study', dry_run: nil, machine_type: nil },
-      { annotation_name: 'disease', annotation_scope: 'study', dry_run: nil, machine_type: nil },
-      {
-        annotation_name: 'foo', annotation_scope: 'cluster', cluster_file_id: @cluster_file.id,
-        dry_run: nil, machine_type: nil
-      }
+      { annotation_name: 'species', annotation_scope: 'study' },
+      { annotation_name: 'disease', annotation_scope: 'study' },
+      { annotation_name: 'foo', annotation_scope: 'cluster', cluster_file_id: @cluster_file.id }
     ]
     eligible_annotations = DifferentialExpressionService.find_eligible_annotations(@basic_study)
     assert_equal expected_annotations.count, eligible_annotations.count
