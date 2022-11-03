@@ -1781,7 +1781,12 @@ class Study
   # this can happen if the study went private => public
   def check_de_eligibility
     if DifferentialExpressionService.study_eligible?(self)
-      DifferentialExpressionService.run_differential_expression_on_all(accession, skip_existing: true)
+      begin
+        DifferentialExpressionService.run_differential_expression_on_all(accession, skip_existing: true)
+      rescue ArgumentError
+        # it is possible that there will not be any eligible annotations, which will throw an ArgumentError
+        true
+      end
     end
   end
 
