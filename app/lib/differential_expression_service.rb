@@ -173,7 +173,8 @@ class DifferentialExpressionService
     groups_to_process = study.cluster_groups.select { |cg| cg.cell_annotations.any? }
     groups_to_process.map do |cluster|
       cell_annots = cluster.cell_annotations.select do |annot|
-        annot['type'] == 'group' && cluster.can_visualize_cell_annotation?(annot)
+        safe_annot = annot.with_indifferent_access
+        safe_annot[:type] == 'group' && cluster.can_visualize_cell_annotation?(safe_annot)
       end
       cell_annots.each do |annot|
         annot[:cluster_file_id] = cluster.study_file.id # for checking associations later
@@ -213,8 +214,8 @@ class DifferentialExpressionService
     DifferentialExpressionResult.where(
       :study => study,
       :cluster_group_id.in => ids,
-      :annotation_name => annotation[:name],
-      :annotation_scope => annotation[:scope]
+      :annotation_name => annotation[:annotation_name],
+      :annotation_scope => annotation[:annotation_scope]
     ).exists?
   end
 
