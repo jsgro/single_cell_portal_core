@@ -108,7 +108,7 @@ class MetricsService
     if user.present? && user.registered_for_firecloud
       props.merge!({ authenticated: true, registeredForTerra: user.registered_for_firecloud })
     else
-      props.merge!({ authenticated: user.present?, distinct_id: request.cookies['user_id'] })
+      props.merge!({ authenticated: user.present?, distinct_id: user.get_metrics_uuid })
     end
 
     post_body = {'event' => name, 'properties' => props}.to_json
