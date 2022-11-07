@@ -18,7 +18,13 @@ module Parameterizable
     attributes.each do |attr_name, value|
       options_array += [Parameterizable.to_cli_opt(attr_name), "#{value}"] if value.present?
     end
-    options_array << self.class::PARAMETER_NAME
+    options_array << self.class::PARAMETER_NAME if defined? self.class::PARAMETER_NAME
     options_array
+  end
+
+  # name of ingest action
+  # example: RenderExpressionArraysParameters => :render_expression_arrays
+  def action_name
+    self.class.name.gsub(/Parameters/, '').underscore.to_sym
   end
 end
