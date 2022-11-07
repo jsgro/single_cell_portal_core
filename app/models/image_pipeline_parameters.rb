@@ -2,9 +2,20 @@ class ImagePipelineParameters
   include ActiveModel::Model
   include Parameterizable
 
+  # accession: study accession
+  # bucket: GCS bucket name
+  # cluster: name of ClusterGroup object
+  # environment: Rails environment
+  # cores: number of cores to use in processing images (defaults to available cores - 1)
+  # docker_image: image pipeline docker image to use
+  # machine_type: GCE machine type, see Parameterizable::GOOGLE_VM_MACHINE_TYPES
   attr_accessor :accession, :bucket, :cluster, :environment, :cores, :docker_image, :machine_type
 
   validates :accession, :bucket, :cluster, :environment, :cores, presence: true
+  validates :machine_type, inclusion: Parameterizable::GCE_MACHINE_TYPES
+  validates :environment, inclusion: %w[development test staging production]
+  validates :docker_image, format: { with: Parameterizable::GCR_URI_REGEXP }
+  validate :machine_has_cores?
 
   # default values for all jobs
   PARAM_DEFAULTS = {
@@ -14,8 +25,15 @@ class ImagePipelineParameters
 
   def initialize(attributes = {})
     super
+    @environment ||= Rails.env.to_s
     @docker_image ||= PARAM_DEFAULTS[:docker_image]
     @machine_type ||= PARAM_DEFAULTS[:machine_type]
+    @cores ||= machine_type_cores - 1
+  end
+
+  # available cores by machine_type
+  def machine_type_cores
+    machine_type.split('-').last.to_i
   end
 
   # default attributes hash
@@ -23,5 +41,14 @@ class ImagePipelineParameters
     {
       accession:, bucket:, cluster:, environment:, cores:
     }.with_indifferent_access
+  end
+
+  private
+
+  # ensure requested cores supported by machine_type, reserving 1 for OS
+  def machine_has_cores?
+    if cores + 1 > machine_type_cores || cores < 1
+      errors.add(:cores, "(#{cores}) not supported by machine_type: #{machine_type}")
+    end
   end
 end
