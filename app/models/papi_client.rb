@@ -121,7 +121,9 @@ class PapiClient
     command_line = get_command_line(study_file:, action:, user_metrics_uuid:, params_object:)
 
     environment = set_environment_variables
-    action = create_actions_object(commands: command_line, environment: environment)
+    action = create_actions_object(
+      commands: command_line, environment: environment, image_uri: params_object&.docker_image
+    )
     pipeline = create_pipeline_object(actions: [action], environment: environment, resources: resources)
     pipeline_request = create_run_pipeline_request_object(pipeline:, labels:)
     Rails.logger.info "Request object sent to Google Pipelines API (PAPI), excluding 'environment' parameters:"
@@ -184,15 +186,16 @@ class PapiClient
   #   - +image_uri+: (String) => GCR Docker image to pull, defaults to AdminConfiguration.get_ingest_docker_image
   #   - +labels+: (Hash) => Hash of labels to associate with the action
   #   - +timeout+: (String) => Maximum runtime of action
+  #   - +image_uri+: (String) => Override for docker image URI
   #
   #  * *return*
   #   - (Google::Apis::GenomicsV2alpha1::Action)
-  def create_actions_object(commands: [], environment: {}, flags: [], labels: {}, timeout: nil)
+  def create_actions_object(commands: [], environment: {}, flags: [], labels: {}, timeout: nil, image_uri: nil)
     Google::Apis::GenomicsV2alpha1::Action.new(
       commands: commands,
       environment: environment,
       flags: flags,
-      image_uri: AdminConfiguration.get_ingest_docker_image,
+      image_uri: image_uri || AdminConfiguration.get_ingest_docker_image,
       labels: labels,
       timeout: timeout
     )
