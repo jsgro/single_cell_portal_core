@@ -134,9 +134,6 @@ class MetricsServiceTest < ActiveSupport::TestCase
 
     mock = Minitest::Mock.new
 
-    puts('expected:', expected_args)
-    puts('result:', mock)
-
     mock.expect :call, mock, [expected_args]
 
     RestClient::Request.stub :execute, mock do
