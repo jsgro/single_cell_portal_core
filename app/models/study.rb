@@ -737,7 +737,6 @@ class Study
   before_destroy    :ensure_cascade_on_associations
   after_destroy     :remove_data_dir
   before_save       :set_readonly_access
-  after_update      :check_de_eligibility, if: proc { |attr| attr.public }
 
   # search definitions
   index({"name" => "text", "description" => "text"}, {background: true})
@@ -1774,19 +1773,6 @@ class Study
       bq_dataset.query "DELETE FROM #{CellMetadatum::BIGQUERY_TABLE} WHERE study_accession = '#{self.accession}' AND file_id = '#{self.metadata_file.id}'"
       Rails.logger.info "BQ cleanup for #{self.accession} completed"
       SearchFacet.delay.update_all_facet_filters
-    end
-  end
-
-  # check after saving if this study now qualifies for DE
-  # this can happen if the study went private => public
-  def check_de_eligibility
-    if DifferentialExpressionService.study_eligible?(self)
-      begin
-        DifferentialExpressionService.run_differential_expression_on_all(accession, skip_existing: true)
-      rescue ArgumentError
-        # it is possible that there will not be any eligible annotations, which will throw an ArgumentError
-        true
-      end
     end
   end
 

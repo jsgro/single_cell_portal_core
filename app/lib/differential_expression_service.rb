@@ -287,7 +287,6 @@ class DifferentialExpressionService
   #   - (ArgumentError) => If requested study is not eligible for DE
   def self.validate_study(study)
     raise ArgumentError, 'Requested study does not exist' if study.nil?
-    raise ArgumentError, "#{study.accession} is not public" unless study.public?
     raise ArgumentError, "#{study.accession} cannot view cluster plots" unless study.can_visualize_clusters?
   end
 

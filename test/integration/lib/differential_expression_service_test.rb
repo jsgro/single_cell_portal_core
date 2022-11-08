@@ -59,6 +59,8 @@ class DifferentialExpressionServiceTest < ActiveSupport::TestCase
   teardown do
     DataArray.find_by(@all_cells_array_params)&.destroy
     @basic_study.differential_expression_results.destroy_all
+    @basic_study.public = true
+    @basic_study.save(validate: false) # skip callbacks for performance
   end
 
   test 'should validate parameters and launch differential expression job' do
@@ -237,8 +239,6 @@ class DifferentialExpressionServiceTest < ActiveSupport::TestCase
   end
 
   test 'should find eligible annotations' do
-    cluster = @basic_study.cluster_groups.by_name(@cluster_file.name)
-    annot = cluster.cell_annotations.first
     expected_annotations = [
       { annotation_name: 'species', annotation_scope: 'study' },
       { annotation_name: 'disease', annotation_scope: 'study' },
@@ -252,6 +252,11 @@ class DifferentialExpressionServiceTest < ActiveSupport::TestCase
   end
 
   test 'should determine study eligibility' do
+    assert DifferentialExpressionService.study_eligible?(@basic_study)
+    # ensure private studies still qualify
+    @basic_study.public = true
+    @basic_study.save(validate: false) # skip callbacks for performance
+    @basic_study.reload
     assert DifferentialExpressionService.study_eligible?(@basic_study)
     empty_study = FactoryBot.create(:detached_study,
                                     name_prefix: 'Empty Test',
