@@ -121,7 +121,7 @@ class PapiClient
     user_metrics_uuid = user.metrics_uuid
     command_line = get_command_line(study_file:, action:, user_metrics_uuid:, params_object:)
 
-    environment = set_environment_variables
+    environment = set_environment_variables(action)
     if params_object.respond_to?(:docker_image) && params_object.docker_image
       action = create_actions_object(
         commands: command_line, environment: environment, image_uri: params_object.docker_image
@@ -214,11 +214,15 @@ class PapiClient
   #   - +GOOGLE_PROJECT_ID+: Name of the GCP project this pipeline is running in
   #   - +SENTRY_DSN+: Sentry Data Source Name (DSN); URL to send Sentry logs to
   #   - +BARD_HOST_URL+: URL for Bard host that proxies Mixpanel
+  #   - +IS_PAPI+: Denotes Pipelines API run (for :image_pipeline)
+  #   - +NODE_TLS_REJECT_UNAUTHORIZED+: Configure node behavior for self-signed certificates (for :image_pipeline)
   #
+  # * *params*
+  #   - +action+ (Symbol) => ingest action being performed
   # * *returns*
   #   - (Hash) => Hash of required environment variables
-  def set_environment_variables
-    {
+  def set_environment_variables(action)
+    vars = {
       'DATABASE_HOST' => ENV['MONGO_INTERNAL_IP'],
       'MONGODB_USERNAME' => 'single_cell',
       'MONGODB_PASSWORD' => ENV['PROD_DATABASE_PASSWORD'],
@@ -227,6 +231,10 @@ class PapiClient
       'SENTRY_DSN' => ENV['SENTRY_DSN'],
       'BARD_HOST_URL' => Rails.application.config.bard_host_url
     }
+    if action == :image_pipeline
+      vars.merge({ 'IS_PAPI' => '1', 'NODE_TLS_REJECT_UNAUTHORIZED' => '0' })
+    end
+    vars
   end
 
   # Instantiate a resources object to tell where to run a pipeline
@@ -321,7 +329,7 @@ class PapiClient
       command_line += " --study-accession #{study.accession}"
     when 'image_pipeline'
       # image_pipeline is node-based, so python command line to this point no longer applies
-      command_line = 'IS_PAPI=1 NODE_TLS_REJECT_UNAUTHORIZED=0 node expression-scatter-plots.js'
+      command_line = 'node expression-scatter-plots.js'
     end
 
     # add optional command line arguments based on file type and action
