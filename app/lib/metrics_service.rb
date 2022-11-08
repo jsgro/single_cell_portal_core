@@ -35,12 +35,13 @@ class MetricsService
 
   def self.get_default_headers(user)
     headers = { 'Content-Type' => 'application/json'}
-    if user.present?
+    if user.present? && user.registered_for_firecloud && user.token_for_api_call.present?
       access_token = user.token_for_api_call
       headers.merge!({
-        'Authorization' => "Bearer #{access_token.present? ? access_token.dig('access_token') : nil }",
+        'Authorization' => "Bearer #{access_token.dig(:access_token)}",
       })
     end
+    return headers
   end
 
   # Merges unauth’d and auth’d user identities in Mixpanel via Bard
@@ -108,7 +109,7 @@ class MetricsService
     if user.present? && user.registered_for_firecloud
       props.merge!({ authenticated: true, registeredForTerra: user.registered_for_firecloud })
     else
-      props.merge!({ authenticated: user.present?, distinct_id: user.get_metrics_uuid })
+      props.merge!({ authenticated: false, distinct_id: user.get_metrics_uuid, registeredForTerra: false })
     end
 
     post_body = {'event' => name, 'properties' => props}.to_json

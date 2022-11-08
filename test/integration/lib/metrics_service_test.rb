@@ -31,15 +31,15 @@ class MetricsServiceTest < ActiveSupport::TestCase
     expected_output_props = input_props.merge({
       appId: "single-cell-portal",
       env: "test",
-      registeredForTerra: true,
-      authenticated: true
+      authenticated: true,
+      registeredForTerra: true
     })
 
     # As input into RestClient::Request.execute.
     # These expected arguments are the main thing we are testing.
     expected_args = {
       url: "https://terra-bard-dev.appspot.com/api/event",
-      headers: {'Authorization' => "Bearer ", "Content-Type" => "application/json"},
+      headers: {"Content-Type" => "application/json", 'Authorization' => "Bearer #{@user.token_for_api_call.dig(:access_token)}"},
       payload: {event: event, properties: expected_output_props}.to_json,
       method: "POST"
     }
@@ -68,7 +68,7 @@ class MetricsServiceTest < ActiveSupport::TestCase
     # These expected arguments are the main thing we are testing.
     expected_args = {
       url: "https://terra-bard-dev.appspot.com/api/identify",
-      headers: {"Authorization" => "Bearer ", "Content-Type" => "application/json"},
+      headers: {"Authorization" => "Bearer #{@user.token_for_api_call.dig(:access_token)}", "Content-Type" => "application/json"},
       payload: {anonId: anon_id}.to_json,
       method: "POST"
     }
@@ -133,6 +133,10 @@ class MetricsServiceTest < ActiveSupport::TestCase
     }
 
     mock = Minitest::Mock.new
+
+    puts('expected:', expected_args)
+    puts('result:', mock)
+
     mock.expect :call, mock, [expected_args]
 
     RestClient::Request.stub :execute, mock do
@@ -197,9 +201,9 @@ class MetricsServiceTest < ActiveSupport::TestCase
       {
         appId: "single-cell-portal",
         env: "test",
-        registeredForTerra: false,
+        authenticated: false,
         distinct_id: unregistered_user.metrics_uuid,
-        authenticated: false
+        registeredForTerra: false
       }
     )
 
