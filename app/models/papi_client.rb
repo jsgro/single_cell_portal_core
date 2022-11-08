@@ -105,23 +105,19 @@ class PapiClient
   #   - (Google::Apis::AuthorizationError) => Authorization is required
   def run_pipeline(study_file:, user:, action:, params_object: nil)
     study = study_file.study
-
+    labels = job_labels(action:, study:, study_file:, user:, params_object:)
     # override default VM if required for this action
     if needs_custom_vm?(action)
-      labels = job_labels(
-        action: action, study: study, study_file: study_file, user: user, machine_type: params_object.machine_type
-      )
       custom_vm = create_virtual_machine_object(machine_type: params_object.machine_type, labels: labels)
       resources = create_resources_object(regions: ['us-central1'], vm: custom_vm)
     else
-      labels = job_labels(action:, study:, study_file:, user:)
       resources = create_resources_object(regions: ['us-central1'], labels: labels)
     end
 
     user_metrics_uuid = user.metrics_uuid
     command_line = get_command_line(study_file:, action:, user_metrics_uuid:, params_object:)
 
-    environment = set_environment_variables(action)
+    environment = set_environment_variables(action:)
     if params_object.respond_to?(:docker_image) && params_object.docker_image
       action = create_actions_object(
         commands: command_line, environment: environment, image_uri: params_object.docker_image
@@ -221,7 +217,7 @@ class PapiClient
   #   - +action+ (Symbol) => ingest action being performed
   # * *returns*
   #   - (Hash) => Hash of required environment variables
-  def set_environment_variables(action)
+  def set_environment_variables(action: nil)
     vars = {
       'DATABASE_HOST' => ENV['MONGO_INTERNAL_IP'],
       'MONGODB_USERNAME' => 'single_cell',
@@ -233,8 +229,9 @@ class PapiClient
     }
     if action == :image_pipeline
       vars.merge({ 'IS_PAPI' => '1', 'NODE_TLS_REJECT_UNAUTHORIZED' => '0' })
+    else
+      vars
     end
-    vars
   end
 
   # Instantiate a resources object to tell where to run a pipeline
@@ -386,19 +383,27 @@ class PapiClient
   #   - +study+ (Study) => parent study of file
   #   - +study_file+ (StudyFile) => File to be ingested/processed
   #   - +user+ (User) => user requesting action
-  #   - +machine_type+ (String) => GCE machine type
+  #   - +params_object+ (Multiple) => Job parameters object, e.g. ImagePipelineParameters
   #   - +boot_disk_size_gb+ (Integer) => size of boot disk, in GB
   #
   # * *returns*
   #   - (Hash)
-  def job_labels(action:, study:, study_file:, user:, machine_type: DEFAULT_MACHINE_TYPE, boot_disk_size_gb: 300)
-    ingest_version = AdminConfiguration.get_ingest_docker_image_attributes[:tag]
+  def job_labels(action:, study:, study_file:, user:, params_object:, boot_disk_size_gb: 300)
+    ingest_attributes = AdminConfiguration.get_ingest_docker_image_attributes
+    docker_image = ingest_attributes[:image_name]
+    docker_tag = ingest_attributes[:tag]
+    machine_type = params_object&.machine_type || DEFAULT_MACHINE_TYPE
+    if params_object && params_object.respond_to?(:docker_image)
+      image_attributes = params_object.docker_image.split('/').last
+      docker_image, docker_tag = image_attributes.split(':')
+    end
     {
       study_accession: sanitize_label(study.accession),
       user_id: user.id.to_s,
       filename: sanitize_label(study_file.upload_file_name),
       action: label_for_action(action),
-      docker_image: sanitize_label(ingest_version),
+      docker_image: sanitize_label(docker_image),
+      docker_tag: sanitize_label(docker_tag),
       environment: Rails.env.to_s,
       file_type: sanitize_label(study_file.file_type),
       machine_type: machine_type,
