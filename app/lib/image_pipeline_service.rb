@@ -128,10 +128,7 @@ class ImagePipelineService
   def self.create_image_pipeline_parameters_object(study, cluster_file)
     validate_study_file(cluster_file, :cluster_file)
     cluster_name = ClusterGroup.find_by(study: study, study_file: cluster_file)&.name
-    ImagePipelineParameters.new(
-      accession: study.accession, bucket: study.bucket_id,
-      cluster: cluster_name, environment: Rails.env.to_s, cores: '92'
-    )
+    ImagePipelineParameters.new(accession: study.accession, bucket: study.bucket_id, cluster: cluster_name)
   end
 
   # validate a study is a candidate for image pipeline jobs

@@ -24,11 +24,12 @@ class PapiClient
     ingest_cell_metadata: ['Metadata'],
     ingest_subsample: ['Cluster'],
     differential_expression: ['Cluster'],
-    render_expression_arrays: ['Cluster']
+    render_expression_arrays: ['Cluster'],
+    image_pipeline: ['Cluster']
   }.freeze
 
   # jobs that require custom virtual machine types (e.g. more RAM, CPU)
-  CUSTOM_VM_ACTIONS = %i[differential_expression render_expression_arrays].freeze
+  CUSTOM_VM_ACTIONS = %i[differential_expression render_expression_arrays image_pipeline].freeze
 
   # default GCE machine_type
   DEFAULT_MACHINE_TYPE = 'n1-highmem-4'.freeze
@@ -121,9 +122,13 @@ class PapiClient
     command_line = get_command_line(study_file:, action:, user_metrics_uuid:, params_object:)
 
     environment = set_environment_variables
-    action = create_actions_object(
-      commands: command_line, environment: environment, image_uri: params_object&.docker_image
-    )
+    if params_object.respond_to?(:docker_image) && params_object.docker_image
+      action = create_actions_object(
+        commands: command_line, environment: environment, image_uri: params_object.docker_image
+      )
+    else
+      action = create_actions_object(commands: command_line, environment: environment)
+    end
     pipeline = create_pipeline_object(actions: [action], environment: environment, resources: resources)
     pipeline_request = create_run_pipeline_request_object(pipeline:, labels:)
     Rails.logger.info "Request object sent to Google Pipelines API (PAPI), excluding 'environment' parameters:"
@@ -314,6 +319,9 @@ class PapiClient
       command_line += " --cluster-file #{study_file.gs_url} --cell-metadata-file #{metadata_file.gs_url} --subsample"
     when 'differential_expression'
       command_line += " --study-accession #{study.accession}"
+    when 'image_pipeline'
+      # image_pipeline is node-based, so python command line to this point no longer applies
+      command_line = 'IS_PAPI=1 NODE_TLS_REJECT_UNAUTHORIZED=0 node expression-scatter-plots.js'
     end
 
     # add optional command line arguments based on file type and action
