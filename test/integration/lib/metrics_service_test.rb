@@ -199,8 +199,8 @@ class MetricsServiceTest < ActiveSupport::TestCase
         appId: "single-cell-portal",
         env: "test",
         authenticated: false,
-        distinct_id: unregistered_user.metrics_uuid,
-        registeredForTerra: false
+        registeredForTerra: false,
+        distinct_id: unregistered_user.metrics_uuid
       }
     )
 
