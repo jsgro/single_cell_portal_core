@@ -17,6 +17,8 @@ class ExploreControllerTest < ActionDispatch::IntegrationTest
                                                   file_type: 'Cluster',
                                                   study: @basic_study,
                                                   annotation_input: [{name: 'foo', type: 'group', values: ['bar', 'bar', 'baz']}])
+    cluster = @basic_study.cluster_groups.by_name('clusterA.txt')
+    cluster.update(has_image_cache: true)
 
     @spatial_study_cluster_file = FactoryBot.create(:cluster_file,
                                                     name: 'spatialA.txt',
@@ -73,8 +75,10 @@ class ExploreControllerTest < ActionDispatch::IntegrationTest
     execute_http_request(:get, api_v1_study_explore_path(@basic_study))
     assert_response :success
 
-    assert_equal ['clusterA.txt'], json['clusterGroupNames']
+    cluster_name = 'clusterA.txt'
+    assert_equal [cluster_name], json['clusterGroupNames']
     assert_equal [{"name" => 'spatialA.txt', "associated_clusters" => []}], json['spatialGroups']
+    assert_includes json['hasImageCache'], cluster_name
 
     execute_http_request(:get, api_v1_study_explore_path(@empty_study))
     assert_equal [], json['clusterGroupNames']
@@ -119,17 +123,6 @@ class ExploreControllerTest < ActionDispatch::IntegrationTest
     assert_equal 1, json['annotations'].length
     assert_equal 0, json['annotations'].select{|a| a['name'] == 'user_annot'}.length
     assert_equal false, json['canEdit']
-  end
-
-  test 'should get clusters with image cache' do
-    cluster_name = 'clusterA.txt'
-    cluster = @basic_study.cluster_groups.by_name(cluster_name)
-    cluster.update(has_image_cache: true)
-    @basic_study.reload
-    sign_in_and_update @user
-    execute_http_request(:get, api_v1_study_explore_path(@basic_study))
-    assert_response :success
-    assert_includes json['hasImageCache'], cluster_name
   end
 
   test 'should handle invalid study id' do
