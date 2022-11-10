@@ -6,12 +6,13 @@ class ImagePipelineService
     matrix_file: ['Expression Matrix', 'MM Coordinate Matrix']
   }.freeze
 
-  # launch a job to generate static images using array artifacts generated from :run_render_expression_arrays_job
-  # #
+  # launch a job to generate cache of static images using array artifacts generated from
+  # :run_render_expression_arrays_job
+  #
   # * *params*
-  #   - +study+       (Study) => study to generate images in
+  #   - +study+        (Study) => study to generate images in
   #   - +cluster_file+ (StudyFile) => clustering file to use as source for cell names
-  #   - +user+        (User) => associated user (for email notifications)
+  #   - +user+         (User) => associated user (for email notifications)
   #
   # * *yields*
   #   - (IngestJob) => image_pipeline job in PAPI
@@ -31,10 +32,10 @@ class ImagePipelineService
   # launch a job to generate expression array artifacts to be used downstream by image pipeline
   #
   # * *params*
-  #   - +study+       (Study) => study to generate data in
+  #   - +study+        (Study) => study to generate data in
   #   - +cluster_file+ (StudyFile) => clustering file to use as source for cell names
   #   - +matrix_file+  (StudyFile) => processed expression matrix to use as source for expression values
-  #   - +user+        (User) => associated user (for email notifications)
+  #   - +user+         (User) => associated user (for email notifications)
   #
   # * *yields*
   #   - (IngestJob) => render_expression_arrays job in PAPI
@@ -55,9 +56,9 @@ class ImagePipelineService
   #
   # * *params*
   #   - +study+          (Study) => study to launch job for
-  #   - +cluster_file+    (StudyFile) => clustering file to use as source for cell names
+  #   - +cluster_file+   (StudyFile) => clustering file to use as source for cell names
   #   - +requested_user+ (User) => associated user (for email notifications)
-  #   - +params_object+  (Multiple) => parameters object, e.g. ImagePipelineParameters
+  #   - +params_object+  (ImagePipelineParameters, RenderExpressionArrayParameters) => parameters object
   #
   # * *yields*
   #   - (IngestJob) => render_expression_arrays job in PAPI
@@ -117,7 +118,7 @@ class ImagePipelineService
   # create a ImagePipelineParameters object to pass to IngestJob
   #
   # * *params*
-  #   - +study+       (Study) => study to generate images in
+  #   - +study+        (Study) => study to generate images in
   #   - +cluster_file+ (StudyFile) => clustering file to use as source for cell names
   #
   # * *returns*
@@ -150,7 +151,7 @@ class ImagePipelineService
   #
   # * *params*
   #   - +study_file+  (StudyFile) => study file to validate
-  #   - +param_name+ (String, Symbol) => name of parameter being validated
+  #   - +param_name+  (String, Symbol) => name of parameter being validated
   #
   # * *raises*
   #   - (ArgumentError) => if study file does not validate

@@ -6,7 +6,7 @@ module Parameterizable
   # regular expression to validate GS url format
   GS_URL_REGEXP = %r{\Ags://}
 
-  # regular expression to match GCI URI format
+  # regular expression to match GCR URI format
   # faster than checking repository for image presence, has no upstream dependencies
   # format as gcr.io/google-project/docker-image:version
   # google-project: 6-30 alphanumeric characters, plus dash (-)

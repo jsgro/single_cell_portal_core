@@ -380,7 +380,7 @@ class IngestJob
     when :differential_expression
       create_differential_expression_results
     when :image_pipeline
-      set_has_image_data
+      set_has_image_cache
     end
     set_study_initialized
   end
@@ -512,10 +512,10 @@ class IngestJob
   end
 
   # set flags to denote when a cluster has image data
-  def set_has_image_data
+  def set_has_image_cache
     Rails.logger.info "Setting image_pipeline flags in #{study.accession} for cluster: #{study_file.name}"
     cluster_group = ClusterGroup.find_by(study_id: study.id, study_file_id: study_file.id)
-    cluster_group.update(has_image_data: true) if cluster_group.present?
+    cluster_group.update(has_image_cache: true) if cluster_group.present?
   end
 
   # set corresponding is_differential_expression_enabled flags on annotations

@@ -228,7 +228,7 @@ class PapiClient
       'BARD_HOST_URL' => Rails.application.config.bard_host_url
     }
     if action == :image_pipeline
-      vars.merge({ 'IS_PAPI' => '1', 'NODE_TLS_REJECT_UNAUTHORIZED' => '0' })
+      vars.merge({ 'IS_PAPI' => '1', 'STAGING_INTERNAL_IP' => ENV['APP_INTERNAL_IP'] })
     else
       vars
     end
