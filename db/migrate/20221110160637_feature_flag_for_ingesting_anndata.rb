@@ -1,4 +1,4 @@
-class AddFeatureFlagForIngestingAnndata < Mongoid::Migration
+class FeatureFlagForIngestingAnndata < Mongoid::Migration
     # mirror of FeatureFlag.rb, so this migration won't error if that class is renamed/altered
     class FeatureFlagMigrator
       include Mongoid::Document
@@ -9,13 +9,13 @@ class AddFeatureFlagForIngestingAnndata < Mongoid::Migration
     end
   
     def self.up
-      FeatureFlagMigrator.create!(name: 'add_feature_flag_for_ingesting_anndata',
+      FeatureFlagMigrator.create!(name: 'ingest_anndata_file',
                                   default_value: false,
-                                  description: 'Feature flag to allow annData ingest or not')
+                                  description: 'allow AnnData files to ingest or not')
     end
   
     def self.down
-      FeatureFlagMigrator.find_by(name: 'add_feature_flag_for_ingesting_anndata').destroy
+      FeatureFlagMigrator.find_by(name: 'ingest_anndata_file').destroy
     end
   end
   
