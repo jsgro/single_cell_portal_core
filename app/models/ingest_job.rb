@@ -28,7 +28,7 @@ class IngestJob
   # non-standard job actions where data is not being read from a file to insert into MongoDB
   # these jobs usually process files and write objects back to the bucket, and as such have special pre/post-processing
   # steps that need to be accounted for
-  SPECIAL_ACTIONS = %i[differential_expression render_expression_arrays].freeze
+  SPECIAL_ACTIONS = %i[differential_expression render_expression_arrays image_pipeline].freeze
 
   # Name of pipeline submission running in GCP (from [PapiClient#run_pipeline])
   attr_accessor :pipeline_name
@@ -389,6 +389,8 @@ class IngestJob
       set_subsampling_flags
     when :differential_expression
       create_differential_expression_results
+    when :image_pipeline
+      set_has_image_cache
     end
     set_study_initialized
   end
@@ -525,6 +527,13 @@ class IngestJob
       matrix_file_id: matrix_file.id
     )
     de_result.save
+  end
+
+  # set flags to denote when a cluster has image data
+  def set_has_image_cache
+    Rails.logger.info "Setting image_pipeline flags in #{study.accession} for cluster: #{study_file.name}"
+    cluster_group = ClusterGroup.find_by(study_id: study.id, study_file_id: study_file.id)
+    cluster_group.update(has_image_cache: true) if cluster_group.present?
   end
 
   # set corresponding is_differential_expression_enabled flags on annotations
@@ -761,6 +770,8 @@ class IngestJob
       genes = Gene.where(study_id: study.id, study_file_id: matrix.id).count
       message << "Image Pipeline data pre-rendering completed for \"#{params_object.cluster_name}\""
       message << "Gene-level files created: #{genes}"
+    when :image_pipeline
+      message << "Image Pipeline image rendering completed for \"#{params_object.cluster}\""
     end
     message
   end

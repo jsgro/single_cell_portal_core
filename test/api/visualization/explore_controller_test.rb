@@ -121,6 +121,16 @@ class ExploreControllerTest < ActionDispatch::IntegrationTest
     assert_equal false, json['canEdit']
   end
 
+  test 'should get clusters with image cache' do
+    cluster_name = 'clusterA.txt'
+    cluster = @basic_study.cluster_groups.by_name(cluster_name)
+    cluster.update(has_image_cache: true)
+    @basic_study.reload
+    sign_in_and_update @user
+    execute_http_request(:get, api_v1_study_explore_path(@basic_study))
+    assert_response :success
+    assert_includes json['hasImageCache'], cluster_name
+  end
 
   test 'should handle invalid study id' do
     sign_in_and_update @user
