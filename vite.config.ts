@@ -19,6 +19,18 @@ export default defineConfig({
       jsxRuntime: 'classic'
     })
   ],
+  'build': {
+    'chunkSizeWarningLimit': 4096,
+    'rollupOptions': {
+      'output': {
+        'manualChunks': {
+          'morpheus-app': ['morpheus-app'],
+          'plotly.js-dist': ['plotly.js-dist'],
+          'igv': ['@single-cell-portal/igv']
+        }
+      }
+    }
+  },
   'server': {
     'hmr': {
       'host': '127.0.0.1',
