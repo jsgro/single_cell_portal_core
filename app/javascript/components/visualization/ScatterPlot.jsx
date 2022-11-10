@@ -44,7 +44,7 @@ window.Plotly = Plotly
 function RawScatterPlot({
   studyAccession, cluster, annotation, subsample, consensus, genes, scatterColor, dimensionProps,
   isAnnotatedScatter=false, isCorrelatedScatter=false, isCellSelecting=false, plotPointsSelected, dataCache,
-  canEdit, expressionFilter=[0, 1],
+  canEdit, bucketId, expressionFilter=[0, 1],
   countsByLabel, setCountsByLabel, hiddenTraces=[], isSplitLabelArrays, updateExploreParams
 }) {
   const [isLoading, setIsLoading] = useState(false)
@@ -359,12 +359,13 @@ function RawScatterPlot({
     // use an image and/or data cache if one has been provided, otherwise query scp-api directly
     if (
       flags?.progressive_loading && isGeneExpression(genes, isCorrelatedScatter) && !isAnnotatedScatter &&
-      !scatterData &&
-      genes[0] === 'A1BG-AS1' // Placeholder; likely replace with setting like DE
+      !scatterData
     ) {
-      const bucketName = 'broad-singlecellportal-public'
-      const filePath = `test/scatter_image/${genes[0]}-v2.webp`
-      fetchBucketFile(bucketName, filePath).then(async response => {
+      const urlSafeCluster = cluster.replaceAll(' ', '_')
+      const gene = genes[0]
+      const leaf = `${urlSafeCluster}/${gene}.webp`
+      const filePath = `_scp_internal/cache/expression_scatter/images/${leaf}`
+      fetchBucketFile(bucketId, filePath).then(async response => {
         renderImage(response)
       })
     }
