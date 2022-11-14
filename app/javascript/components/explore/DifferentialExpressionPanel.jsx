@@ -2,6 +2,7 @@
 import React, { useState } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faArrowLeft, faInfoCircle } from '@fortawesome/free-solid-svg-icons'
+import { Button, Popover, OverlayTrigger } from 'react-bootstrap'
 
 import DifferentialExpressionGroupPicker from '~/components/visualization/controls/DifferentialExpressionGroupPicker'
 import { logSearchFromDifferentialExpression } from '~/lib/search-metrics'
@@ -48,6 +49,15 @@ export default function DifferentialExpressionPanel({
     setChecked(newChecked)
   }
 
+  const dePopover = (
+    <Popover id="de-info-popover" title="Learn about SCP DE genes analysis">
+      These are exploratory results calculated automatically by SCP, not the study owner. Any discrepancies between
+      these results and an associated publication may be because this dataset benefits from different methods than the
+      ones that SCP uses.  They are intended purely as an aid in exploring this dataset. Click the info icon to learn
+      more about these results are computed.
+    </Popover>
+  )
+
   return (
     <>
       <DifferentialExpressionGroupPicker
@@ -75,17 +85,19 @@ export default function DifferentialExpressionPanel({
             data-original-title="Download all DE genes data for this group"
           >
             <FontAwesomeIcon icon={faDownload}/></a> */}
-          <a href="https://singlecell.zendesk.com/hc/en-us/articles/6059411840027"
-            target="_blank"
-            data-analytics-name="differential-expression-docs"
-            // style={{ 'marginLeft': '10px' }} // Dev placeholder for when download is enable
-            data-toggle="tooltip"
-            data-original-title="Learn about SCP DE genes analysis"
-          >
-            <FontAwesomeIcon
-              className="action help-icon" icon={faInfoCircle}
-            />
-          </a>
+          {
+            <OverlayTrigger placement="left" trigger={['hover', 'focus']} overlay={dePopover}>
+              <a href="https://singlecell.zendesk.com/hc/en-us/articles/6059411840027"
+                 target="_blank"
+                 data-analytics-name="differential-expression-docs"
+                // style={{ 'marginLeft': '10px' }} // Dev placeholder for when download is enable
+              >
+                <FontAwesomeIcon
+                  className="action help-icon" icon={faInfoCircle}
+                />
+              </a>
+            </OverlayTrigger>
+          }
         </span>
         <table data-testid="differential-expression-table" className="table table-terra table-scp-compact">
           <thead>
