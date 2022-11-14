@@ -54,7 +54,7 @@ export default function DifferentialExpressionPanel({
       These are exploratory results calculated automatically by SCP, not the study owner. Any discrepancies between
       these results and an associated publication may be because this dataset benefits from different methods than the
       ones that SCP uses.  They are intended purely as an aid in exploring this dataset. Click the info icon to learn
-      more about these results are computed.
+      more about how these results are computed.
     </Popover>
   )
 
