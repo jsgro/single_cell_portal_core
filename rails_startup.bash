@@ -24,10 +24,10 @@ if [[ $PASSENGER_APP_ENV = "production" ]] || [[ $PASSENGER_APP_ENV = "staging" 
 then
     echo "*** PRECOMPILING ASSETS ***"
     export NODE_OPTIONS="--max-old-space-size=4096"
-    # precompiled assets are read-only therefore no need to run as app user and sidesteps permission issues
-    bin/rails NODE_ENV=production RAILS_ENV=$PASSENGER_APP_ENV assets:clobber
-    bin/rails NODE_ENV=production RAILS_ENV=$PASSENGER_APP_ENV vite:clobber
-    bin/rails NODE_ENV=production RAILS_ENV=$PASSENGER_APP_ENV assets:precompile
+    sudo chown app:app ./node_modules/.yarn-integrity
+    sudo -E -u app -H bin/rails NODE_ENV=production RAILS_ENV=$PASSENGER_APP_ENV assets:clobber
+    sudo -E -u app -H bin/rails NODE_ENV=production RAILS_ENV=$PASSENGER_APP_ENV vite:clobber
+    sudo -E -u app -H bin/rails NODE_ENV=production RAILS_ENV=$PASSENGER_APP_ENV assets:precompile
     echo "*** COMPLETED ***"
 fi
 
