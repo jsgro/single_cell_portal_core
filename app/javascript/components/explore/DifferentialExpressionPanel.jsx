@@ -54,12 +54,11 @@ export default function DifferentialExpressionPanel({
   const deModalContent = (
     <div>
       <p>These are exploratory results calculated automatically by SCP, not the study owner. Any discrepancies between
-        these results and an associated publication may be because it benefits from different methods than the ones that
-        SCP uses. They are intended purely as an aid in exploring this dataset.&nbsp;
+        these results and an associated publication may be because it benefits from methods different from SCP's. These results are intended purely as an aid in exploring this dataset.&nbsp;
         <a href="https://singlecell.zendesk.com/hc/en-us/articles/6059411840027"
            target="_blank" data-analytics-name="differential-expression-docs">
-          Read more
-        </a> to learn about how these results are computed.</p>
+          Learn more
+        </a> about how these results are computed.</p>
     </div>
   )
 
@@ -103,7 +102,7 @@ export default function DifferentialExpressionPanel({
             onHide={() => closeModal(setShowDeModal)}
             animation={false}>
             <Modal.Header>
-              <h4 className="text-center">Learn about SCP exploratory differential gene expression analysis</h4>
+              <h4 className="text-center">Exploratory differential expression</h4>
             </Modal.Header>
             <Modal.Body>
               { deModalContent }
