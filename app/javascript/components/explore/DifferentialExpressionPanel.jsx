@@ -2,7 +2,8 @@
 import React, { useState } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faArrowLeft, faInfoCircle } from '@fortawesome/free-solid-svg-icons'
-import { Popover, OverlayTrigger } from 'react-bootstrap'
+import Modal from 'react-bootstrap/lib/Modal'
+import { closeModal } from '~/components/search/controls/SearchPanel'
 
 import DifferentialExpressionGroupPicker from '~/components/visualization/controls/DifferentialExpressionGroupPicker'
 import { logSearchFromDifferentialExpression } from '~/lib/search-metrics'
@@ -42,6 +43,7 @@ export default function DifferentialExpressionPanel({
 
   const [checked, setChecked] = useState(initChecked(deGenes))
   const [deFileUrl, setDeFileUrl] = useState(null)
+  const [showDeModal, setShowDeModal] = useState(false)
 
   /** Check radio button such that changing group unchecks all buttons */
   function changeRadio(event) {
@@ -49,13 +51,22 @@ export default function DifferentialExpressionPanel({
     setChecked(newChecked)
   }
 
-  const dePopover = (
-    <Popover id="de-info-popover" title="Learn about SCP DE genes analysis">
-      These are exploratory results calculated automatically by SCP, not the study owner. Any discrepancies between
-      these results and an associated publication may be because this dataset benefits from different methods than the
-      ones that SCP uses.  They are intended purely as an aid in exploring this dataset. Click the info icon to learn
-      more about how these results are computed.
-    </Popover>
+  const deModalContent = (
+    <div>
+      <p>These are exploratory results calculated automatically by SCP, not the study owner. Any discrepancies between
+        these results and an associated publication may be because it benefits from different methods than the ones that
+        SCP uses. They are intended purely as an aid in exploring this dataset.&nbsp;
+        <a href="https://singlecell.zendesk.com/hc/en-us/articles/6059411840027"
+           target="_blank" data-analytics-name="differential-expression-docs">
+          Read more
+        </a> to learn about how these results are computed.</p>
+    </div>
+  )
+
+  const deModalHelpLink = (
+    <a onClick={() => setShowDeModal(true)} data-analytics-name="de-info-help">
+      <FontAwesomeIcon className="action help-icon" icon={faInfoCircle} />
+    </a>
   )
 
   return (
@@ -85,19 +96,19 @@ export default function DifferentialExpressionPanel({
             data-original-title="Download all DE genes data for this group"
           >
             <FontAwesomeIcon icon={faDownload}/></a> */}
-          {
-            <OverlayTrigger placement="left" trigger={['hover', 'focus']} overlay={dePopover}>
-              <a href="https://singlecell.zendesk.com/hc/en-us/articles/6059411840027"
-                 target="_blank"
-                 data-analytics-name="differential-expression-docs"
-                // style={{ 'marginLeft': '10px' }} // Dev placeholder for when download is enable
-              >
-                <FontAwesomeIcon
-                  className="action help-icon" icon={faInfoCircle}
-                />
-              </a>
-            </OverlayTrigger>
-          }
+          { deModalHelpLink }
+          <Modal
+            id="de-info-modal"
+            show={showDeModal}
+            onHide={() => closeModal(setShowDeModal)}
+            animation={false}>
+            <Modal.Header>
+              <h4 className="text-center">Learn about SCP exploratory differential gene expression analysis</h4>
+            </Modal.Header>
+            <Modal.Body>
+              { deModalContent }
+            </Modal.Body>
+          </Modal>
         </span>
         <table data-testid="differential-expression-table" className="table table-terra table-scp-compact">
           <thead>
