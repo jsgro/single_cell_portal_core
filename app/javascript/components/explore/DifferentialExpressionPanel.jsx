@@ -54,7 +54,8 @@ export default function DifferentialExpressionPanel({
   const deModalContent = (
     <div>
       <p>These are exploratory results calculated automatically by SCP, not the study owner. Any discrepancies between
-        these results and an associated publication may be because it benefits from methods different from SCP's. These results are intended purely as an aid in exploring this dataset.&nbsp;
+        these results and an associated publication may be because it benefits from methods different from SCP's.
+        These results are intended purely as an aid in exploring this dataset.&nbsp;
         <a href="https://singlecell.zendesk.com/hc/en-us/articles/6059411840027"
            target="_blank" data-analytics-name="differential-expression-docs">
           Learn more
