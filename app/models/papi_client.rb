@@ -25,7 +25,8 @@ class PapiClient
     ingest_subsample: ['Cluster'],
     differential_expression: ['Cluster'],
     render_expression_arrays: ['Cluster'],
-    image_pipeline: ['Cluster']
+    image_pipeline: ['Cluster'],
+    ingest_anndata: ['AnnData']
   }.freeze
 
   # jobs that require custom virtual machine types (e.g. more RAM, CPU)
@@ -327,6 +328,9 @@ class PapiClient
     when 'image_pipeline'
       # image_pipeline is node-based, so python command line to this point no longer applies
       command_line = 'node expression-scatter-plots.js'
+    when 'ingest_anndata'
+      # extract cluster data from AnnData file, currently hardcoding the obsm-keys
+      command_line +=  " --ingest-anndata --anndata-file #{study_file.gs_url} --extract-cluster --obsm-keys ['X_umap','X_tsne']"
     end
 
     # add optional command line arguments based on file type and action

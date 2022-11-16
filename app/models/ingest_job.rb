@@ -14,7 +14,7 @@ class IngestJob
 
   # valid ingest actions to perform
   VALID_ACTIONS = %i[
-    ingest_expression ingest_cluster ingest_cell_metadata subsample differential_expression render_expression_arrays
+    ingest_expression ingest_cluster ingest_cell_metadata subsample differential_expression render_expression_arrays ingest_anndata
   ].freeze
 
   # Mappings between actions & models (for cleaning up data on re-parses)
@@ -391,6 +391,13 @@ class IngestJob
       create_differential_expression_results
     when :image_pipeline
       set_has_image_cache
+    when :ingest_anndata
+      # currently extracting and ingesting only clustering data
+      # this will likely error until the DB inserts ingest job is done
+      set_cluster_point_count
+      set_study_default_options
+      launch_subsample_jobs
+      # TODO (SCP-4708)(SCP-4709)(SCP-4710) will duplicate a lot more from above 
     end
     set_study_initialized
   end
@@ -680,6 +687,8 @@ class IngestJob
           numAnnotationValues: annotation[:values]&.size
         }
       )
+    when :ingest_anndata
+      # AnnData file analytics TODO
     end
     job_props.with_indifferent_access
   end
@@ -772,6 +781,8 @@ class IngestJob
       message << "Gene-level files created: #{genes}"
     when :image_pipeline
       message << "Image Pipeline image rendering completed for \"#{params_object.cluster}\""
+    when :ingest_anndata
+      message << "AnnData file ingest has completed"
     end
     message
   end
