@@ -2,8 +2,7 @@
 import React, { useState } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faArrowLeft, faInfoCircle } from '@fortawesome/free-solid-svg-icons'
-import Modal from 'react-bootstrap/lib/Modal'
-import { closeModal } from '~/components/search/controls/SearchPanel'
+import DifferentialExpressionModal from '~/components/explore/DifferentialExpressionModal'
 
 import DifferentialExpressionGroupPicker from '~/components/visualization/controls/DifferentialExpressionGroupPicker'
 import { logSearchFromDifferentialExpression } from '~/lib/search-metrics'
@@ -43,31 +42,12 @@ export default function DifferentialExpressionPanel({
 
   const [checked, setChecked] = useState(initChecked(deGenes))
   const [deFileUrl, setDeFileUrl] = useState(null)
-  const [showDeModal, setShowDeModal] = useState(false)
 
   /** Check radio button such that changing group unchecks all buttons */
   function changeRadio(event) {
     const newChecked = initChecked(deGenes, event.target.value)
     setChecked(newChecked)
   }
-
-  const deModalContent = (
-    <div>
-      <p>These are exploratory results calculated automatically by SCP, not the study owner. Any discrepancies between
-        these results and an associated publication may be because it benefits from methods different from SCP's.
-        These results are intended purely as an aid in exploring this dataset.&nbsp;
-        <a href="https://singlecell.zendesk.com/hc/en-us/articles/6059411840027"
-           target="_blank" data-analytics-name="differential-expression-docs">
-          Learn more
-        </a> about how these results are computed.</p>
-    </div>
-  )
-
-  const deModalHelpLink = (
-    <a onClick={() => setShowDeModal(true)} data-analytics-name="de-info-help">
-      <FontAwesomeIcon className="action help-icon" icon={faInfoCircle} />
-    </a>
-  )
 
   return (
     <>
@@ -96,19 +76,7 @@ export default function DifferentialExpressionPanel({
             data-original-title="Download all DE genes data for this group"
           >
             <FontAwesomeIcon icon={faDownload}/></a> */}
-          { deModalHelpLink }
-          <Modal
-            id="de-info-modal"
-            show={showDeModal}
-            onHide={() => closeModal(setShowDeModal)}
-            animation={false}>
-            <Modal.Header>
-              <h4 className="text-center">Exploratory differential expression</h4>
-            </Modal.Header>
-            <Modal.Body>
-              { deModalContent }
-            </Modal.Body>
-          </Modal>
+          <DifferentialExpressionModal />
         </span>
         <table data-testid="differential-expression-table" className="table table-terra table-scp-compact">
           <thead>
