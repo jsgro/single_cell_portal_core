@@ -101,7 +101,6 @@ class FileParseService
         # gate ingest of AnnData using the feature flag 'ingest_anndata_file'
         do_anndata_file_ingest = FeatureFlaggable.feature_flags_for_instances(user, study)['ingest_anndata_file']
         if do_anndata_file_ingest == false
-          Rails.logger.info "Aborting parse of AnnData file 1 #{study_file}"
           Rails.logger.info "Aborting parse of AnnData file #{study_file.name} due to feature flag being #{do_anndata_file_ingest}"
         else
           # Currently assuming "Happy Path" and so the AnnData file will have clustering data
