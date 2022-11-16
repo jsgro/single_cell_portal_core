@@ -209,6 +209,8 @@ function RawScatterPlot({
     // Parse gene-specific plot configuration from image Exif metadata
     const ranges = JSON.parse(exifTags.ImageDescription.description)
 
+    console.log('ranges.x')
+    console.log(ranges.x)
     // For colorbar labels, and gridlines
     const expressionRange = ranges.expression
     const coordinateRanges = {
@@ -245,6 +247,8 @@ function RawScatterPlot({
     const scatter = updateScatterLayout(tmpScatterData)
     const layout = Object.assign({}, scatter.layout)
 
+    console.log('coordinateRanges.x')
+    console.log(coordinateRanges.x)
     // For gridlines and color bar
     layout.xaxis.range = coordinateRanges.x
     layout.yaxis.range = coordinateRanges.y
@@ -307,6 +311,8 @@ function RawScatterPlot({
 
   /** Process scatter plot data fetched from server */
   function processScatterPlot(clusterResponse=null) {
+    console.log('clusterResponse')
+    console.log(clusterResponse)
     let [scatter, perfTimes] =
       (clusterResponse ? clusterResponse : [scatterData, null])
 
@@ -356,6 +362,10 @@ function RawScatterPlot({
   useEffect(() => {
     setIsLoading(true)
 
+    let expressionArray
+
+    const fetchMethod = dataCache ? dataCache.fetchCluster : fetchCluster
+
     // use an image and/or data cache if one has been provided, otherwise query scp-api directly
     if (
       flags?.progressive_loading && isGeneExpression(genes, isCorrelatedScatter) && !isAnnotatedScatter &&
@@ -363,28 +373,58 @@ function RawScatterPlot({
     ) {
       const urlSafeCluster = cluster.replaceAll(' ', '_')
       const gene = genes[0]
-      const leaf = `${urlSafeCluster}/${gene}.webp`
-      const filePath = `_scp_internal/cache/expression_scatter/images/${leaf}`
-      fetchBucketFile(bucketId, filePath).then(async response => {
+      const stem = '_scp_internal/cache/expression_scatter/'
+      const leaf = `${urlSafeCluster}/${gene}`
+
+      const imagePath = `${stem}images/${leaf}.webp`
+      fetchBucketFile(bucketId, imagePath).then(async response => {
         renderImage(response)
       })
-    }
 
-    const fetchMethod = dataCache ? dataCache.fetchCluster : fetchCluster
-    fetchMethod({
-      studyAccession,
-      cluster,
-      annotation: annotation ? annotation : '',
-      subsample,
-      consensus,
-      genes,
-      isAnnotatedScatter,
-      isCorrelatedScatter
-    }).then(processScatterPlot).catch(err => {
-      setIsLoading(false)
-      setErrorContent([`${err}`])
-      setShowError(true)
-    })
+      console.log('dataCache')
+      console.log(dataCache)
+      const dataPath = `${stem}data/${leaf}.json`
+      fetchBucketFile(bucketId, dataPath).then(async response => {
+        const expressionArray = await response.json()
+        console.log('in fetchBucketFile  callback, expressionArray:')
+        console.log(expressionArray)
+        fetchMethod({
+          studyAccession,
+          cluster,
+          annotation: annotation ? annotation : '',
+          subsample,
+          consensus,
+          genes,
+          isAnnotatedScatter,
+          isCorrelatedScatter,
+          expressionArray
+        }).then(clusterResponse => {
+          console.log('before processScatterPlot, clusterResponse')
+          clusterResponse[0].data = { 'expression': expressionArray }
+          console.log(clusterResponse)
+          processScatterPlot(clusterResponse)
+        }).catch(error => {
+          setIsLoading(false)
+          setErrorContent([`${error}`])
+          setShowError(true)
+        })
+      })
+    } else {
+      fetchMethod({
+        studyAccession,
+        cluster,
+        annotation: annotation ? annotation : '',
+        subsample,
+        consensus,
+        genes,
+        isAnnotatedScatter,
+        isCorrelatedScatter
+      }).then(processScatterPlot).catch(error => {
+        setIsLoading(false)
+        setErrorContent([`${error}`])
+        setShowError(true)
+      })
+    }
   }, [cluster, annotation.name, subsample, consensus, genes.join(','), isAnnotatedScatter])
 
   useUpdateEffect(() => {
@@ -595,6 +635,8 @@ function getPlotlyTraces({
   isSplitLabelArrays,
   isRefGroup
 }) {
+  console.log('data.x')
+  console.log(data.x)
   const unfilteredTrace = {
     type: is3D ? 'scatter3d' : 'scattergl',
     mode: 'markers',
@@ -746,7 +788,8 @@ function get2DScatterProps({
   isCorrelatedScatter
 }) {
   const { titles } = axes
-
+  console.log('titles.x')
+  console.log(titles.x)
   const layout = {
     xaxis: { title: titles.x, range: axes?.ranges?.x },
     yaxis: { title: titles.y, range: axes?.ranges?.y }

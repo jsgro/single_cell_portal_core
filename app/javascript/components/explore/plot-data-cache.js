@@ -3,7 +3,7 @@ import { STEP_NOT_NEEDED } from '~/lib/metrics-perf'
 
 /**
   @fileoverview Transparent caching mechanism for calls to fetchCluster
-  For each call, it attempts to caches three separate things from the response:
+  For each call, it attempts to cache three separate things from the response:
     cellsAndCoords: the coordinates and cell names of the cluster
     annotations: an array of annotations
     expression: an array of expression values
@@ -54,6 +54,8 @@ const Fields = {
     putInEntry: (entry, cellsAndCoords) => entry.cellsAndCoords = cellsAndCoords,
     addFieldsOrPromise: (entry, fields, promises) => {
       const cachedCellsAndCoords = Fields.cellsAndCoords.getFromEntry(entry)
+      console.log('!cachedCellsAndCoords.x')
+      console.log(!cachedCellsAndCoords.x)
       if (cachedCellsAndCoords.then) {
         promises.push(cachedCellsAndCoords)
       } else if (!cachedCellsAndCoords.x) {
@@ -109,7 +111,10 @@ const Fields = {
   },
 
   expression: {
-    getFromEntry: (entry, genes, consensus) => {
+    getFromEntry: (entry, genes, consensus, expressionArray) => {
+      if (expressionArray) {
+        return expressionArray
+      }
       const key = getExpressionKey(genes, consensus)
       return entry.expression[key]
     },
@@ -119,10 +124,14 @@ const Fields = {
       entry.expression = {}
       entry.expression[key] = expression
     },
-    addFieldsOrPromise: (entry, fields, promises, genes, consensus) => {
-      const cachedExpression = Fields.expression.getFromEntry(entry, genes, consensus)
+    addFieldsOrPromise: (entry, fields, promises, genes, consensus, expressionArray) => {
+      const cachedExpression = Fields.expression.getFromEntry(entry, genes, consensus, expressionArray)
+      console.log('in expression addFieldsOrPromise, expressionArray')
+      console.log(expressionArray)
+      console.log('in expression addFieldsOrPromise, cachedExpression')
+      console.log(cachedExpression)
       if (!cachedExpression) {
-        fields.push('expression')
+        fields.push(expressionArray ? 'none' : 'expression')
       } else if (cachedExpression.then && !promises.includes(cachedExpression)) {
         promises.push(cachedExpression)
       }
@@ -167,11 +176,15 @@ export function createCache() {
   * returns a promise */
   cache.fetchCluster = ({
     studyAccession, cluster, annotation, subsample, consensus,
-    genes=[], isAnnotatedScatter=null, isCorrelatedScatter=null
+    genes=[], isAnnotatedScatter=null, isCorrelatedScatter=null,
+    expressionArray=null
   }) => {
     let apiCallPromise = null
+    console.log('in cache.fetchCluster, expressionArray:')
+    console.log(expressionArray)
     const { fields, promises } = cache._getFieldsToRequest({
-      studyAccession, cluster, annotation, subsample, consensus, genes, isAnnotatedScatter
+      studyAccession, cluster, annotation, subsample, consensus, genes, isAnnotatedScatter,
+      expressionArray
     })
 
     if (fields.length) {
@@ -217,6 +230,8 @@ export function createCache() {
     return Promise.all(promises).then(resultArray => {
       let mergedResult = null
       resultArray.forEach(result => {
+        console.log('in plot-data-cache resultArray.forEach, result:')
+        console.log(result)
         mergedResult = cache._mergeClusterResponse(studyAccession, result, cluster, annotation, subsample, genes)
       })
       return mergedResult
@@ -288,7 +303,8 @@ export function createCache() {
     * to fetchCluster in scp-api, and an array of promises for any in-flight requests relating to the needed data
      */
   cache._getFieldsToRequest = ({
-    studyAccession, cluster, annotation, subsample, consensus, genes, isAnnotatedScatter, isCorrelatedScatter
+    studyAccession, cluster, annotation, subsample, consensus, genes, isAnnotatedScatter, isCorrelatedScatter,
+    expressionArray
   }) => {
     const fields = []
     const promises = [] // API call promises
@@ -306,7 +322,7 @@ export function createCache() {
         Fields.cellsAndCoords.addFieldsOrPromise(cacheEntry, fields, promises)
         Fields.annotation.addFieldsOrPromise(cacheEntry, fields, promises, annotation.name, annotation.scope)
         if (genes.length) {
-          Fields.expression.addFieldsOrPromise(cacheEntry, fields, promises, genes, consensus)
+          Fields.expression.addFieldsOrPromise(cacheEntry, fields, promises, genes, consensus, expressionArray)
         }
       }
     } else {

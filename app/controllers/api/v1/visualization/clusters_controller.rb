@@ -11,7 +11,7 @@ module Api
         VALID_TYPE_VALUES = ['group', 'numeric']
         VALID_CONSENSUS_VALUES = ['mean', 'median']
 
-        DEFAULT_DATA_FIELDS = ['coordinates', 'expression', 'annotation', 'cells']
+        DEFAULT_DATA_FIELDS = ['coordinates', 'expression', 'annotation', 'cells',  'none']
 
         before_action :set_current_api_user!
         before_action :set_study
@@ -114,7 +114,7 @@ module Api
             parameter do
               key :name, :fields
               key :in, :query
-              key :description, 'Comma-delimited list of fields to include in response.  Valid fields: coordinates, expression, annotation, cells.  Blank returns all.'
+              key :description, 'Comma-delimited list of fields to include in response.  Valid fields: coordinates, expression, annotation, cells, none.  Blank returns all.'
               key :type, :string
             end
             response 200 do
@@ -166,6 +166,7 @@ module Api
           include_expression = data_fields.include?('expression')
           include_annotation = data_fields.include?('annotation')
           include_cells = data_fields.include?('cells')
+          include_none = data_fields.include?('none')
 
           is_annotated_scatter = !url_params[:is_annotated_scatter].blank?
           is_correlated_scatter = !url_params[:is_correlated_scatter].blank?
@@ -173,10 +174,11 @@ module Api
           titles = ClusterVizService.load_axis_labels(cluster)
           titles[:magnitude] = ExpressionVizService.load_expression_axis_title(study)
 
-          plot_data = nil
+          plot_data = {}
           genes = RequestUtils.get_genes_from_param(study, url_params[:gene])
-
-          if url_params[:gene].blank? || !include_expression
+          puts "***test 0"
+          if url_params[:gene].blank? || (!include_expression && !include_none)
+            puts "Getting plot_data"
             # For "Clusters" tab in default view of Explore tab
             plot_data = ClusterVizService.load_cluster_group_data_array_points(study, cluster, annotation, subsample, include_coords: include_coordinates, include_cells: include_cells)
           else
@@ -210,8 +212,8 @@ module Api
                 x: "#{gene_names.first} #{titles[:magnitude]}",
                 y: "#{gene_names.last} #{titles[:magnitude]}"
               }
-            else
-              # For "Scatter" tab
+            elsif !include_none
+              # For "Scatter" tab, i.e. expression scatter plot for 1 gene
               plot_data = ExpressionVizService.load_expression_data_array_points(study, genes, cluster, annotation, subsample,
                 consensus: consensus, include_coords: include_coordinates, include_annotation: include_annotation, include_cells: include_cells)
             end
