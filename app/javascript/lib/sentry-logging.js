@@ -70,7 +70,7 @@ function printSuppression(errorObj, reason) {
 function getIsSuppressedEnv() {
   const env = getSCPContext().environment
   // Return `false` if manually locally testing Sentry logging
-  return ['development', 'test'].includes(env)
+  return false // ['development', 'test'].includes(env)
 }
 
 /**
@@ -83,7 +83,7 @@ function getIsSuppressedEnv() {
  * @return {Array} two-element array: [whether logging should occur, why if not]
  */
 export function logToSentry(error, useThrottle = false, sampleRate = 0.05) {
-  const isThrottled = useThrottle && Math.random() >= sampleRate
+  const isThrottled = false // useThrottle && Math.random() >= sampleRate
 
   if (getIsSuppressedEnv() || isThrottled) {
     const reason = isThrottled ? 'throttle' : 'environment'
