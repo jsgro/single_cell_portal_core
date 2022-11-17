@@ -320,6 +320,9 @@ class PapiClient
       end
     when 'ingest_cluster'
       command_line += " --cluster-file #{study_file.gs_url} --ingest-cluster"
+    when 'ingest_anndata'
+      # extract cluster data from AnnData file, currently hardcoding the obsm-keys
+      command_line +=  " --ingest-anndata --anndata-file #{study_file.gs_url} --extract-cluster --obsm-keys ['X_umap','X_tsne']"
     when 'ingest_subsample'
       metadata_file = study.metadata_file
       command_line += " --cluster-file #{study_file.gs_url} --cell-metadata-file #{metadata_file.gs_url} --subsample"
@@ -328,9 +331,6 @@ class PapiClient
     when 'image_pipeline'
       # image_pipeline is node-based, so python command line to this point no longer applies
       command_line = 'node expression-scatter-plots.js'
-    when 'ingest_anndata'
-      # extract cluster data from AnnData file, currently hardcoding the obsm-keys
-      command_line +=  " --ingest-anndata --anndata-file #{study_file.gs_url} --extract-cluster --obsm-keys ['X_umap','X_tsne']"
     end
 
     # add optional command line arguments based on file type and action

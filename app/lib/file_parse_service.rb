@@ -100,9 +100,7 @@ class FileParseService
       when 'AnnData'
         # gate ingest of AnnData using the feature flag 'ingest_anndata_file'
         do_anndata_file_ingest = FeatureFlaggable.feature_flags_for_instances(user, study)['ingest_anndata_file']
-        if do_anndata_file_ingest == false
-          Rails.logger.info "Aborting parse of AnnData file #{study_file.name} due to feature flag being #{do_anndata_file_ingest}"
-        else
+        if do_anndata_file_ingest == true
           # Currently assuming "Happy Path" and so the AnnData file will have clustering data
           # extract and parse clustering data
           job = IngestJob.new(study: study, study_file: study_file, user: user, action: :ingest_anndata, reparse: reparse,
@@ -113,6 +111,8 @@ class FileParseService
           # TODO extract and parse Metadata (SCP-4708)
           # TODO extract and parse Processed Exp Data (SCP-4709)
           # TODO extract and parse Raw Exp Data (SCP-4710)
+        else
+          Rails.logger.info "Aborting parse of AnnData file #{study_file.name} due to feature flag being #{do_anndata_file_ingest}"
         end
 
       end

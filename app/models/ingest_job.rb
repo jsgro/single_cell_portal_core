@@ -14,7 +14,7 @@ class IngestJob
 
   # valid ingest actions to perform
   VALID_ACTIONS = %i[
-    ingest_expression ingest_cluster ingest_cell_metadata subsample differential_expression render_expression_arrays ingest_anndata
+    ingest_expression ingest_cluster ingest_cell_metadata ingest_anndata subsample differential_expression render_expression_arrays
   ].freeze
 
   # Mappings between actions & models (for cleaning up data on re-parses)
@@ -397,7 +397,7 @@ class IngestJob
       set_cluster_point_count
       set_study_default_options
       launch_subsample_jobs
-      # TODO (SCP-4708)(SCP-4709)(SCP-4710) will duplicate a lot more from above 
+      # TODO (SCP-4708, SCP-4709, SCP-4710) will duplicate a lot more from above 
     end
     set_study_initialized
   end
