@@ -13,6 +13,7 @@ class FileParseService
   def self.run_parse_job(study_file, study, user, reparse: false, persist_on_fail: false)
     logger = Rails.logger
     logger.info "#{Time.zone.now}: Parsing #{study_file.name} as #{study_file.file_type} in study #{study.name}"
+    do_anndata_file_ingest = FeatureFlaggable.feature_flags_for_instances(user, study)['ingest_anndata_file']
     if !study_file.parseable?
       return {
           status_code: 422,
@@ -99,7 +100,6 @@ class FileParseService
         end
       when 'AnnData'
         # gate ingest of AnnData using the feature flag 'ingest_anndata_file'
-        do_anndata_file_ingest = FeatureFlaggable.feature_flags_for_instances(user, study)['ingest_anndata_file']
         if do_anndata_file_ingest == true
           # Currently assuming "Happy Path" and so the AnnData file will have clustering data
           # extract and parse clustering data
@@ -116,7 +116,10 @@ class FileParseService
         end
 
       end
-      study_file.update(parse_status: 'parsing')
+      # If the AnnData ingest feature flag is false don't update the parse status since no ingest job was initiated
+      unless study_file.file_type == 'AnnData' && !do_anndata_file_ingest
+        study_file.update(parse_status: 'parsing')
+      end
       changes = ["Study file added: #{study_file.upload_file_name}"]
       if study.study_shares.any?
         SingleCellMailer.share_update_notification(study, changes, user).deliver_now
