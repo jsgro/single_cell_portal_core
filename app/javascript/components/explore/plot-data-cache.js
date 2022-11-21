@@ -202,6 +202,27 @@ export function createCache() {
       if (fields.includes('expression')) {
         Fields.expression.putInEntry(cacheEntry, genes, consensus, apiCallPromise)
       }
+    } else if (expressionArray) {
+      apiCallPromise = Promise.resolve([
+        {
+          genes,
+          consensus,
+          cluster,
+          subsample,
+          annotParams: annotation,
+          data: { expression: expressionArray },
+          allDataFromCache: true // set a flag indicating that no fresh request to the server was needed
+        }, {
+          url: fetchClusterUrl({
+            studyAccession, cluster, annotation,
+            subsample, consensus, genes, isAnnotatedScatter
+          }),
+          legacyBackend: STEP_NOT_NEEDED,
+          isClientCache: true,
+          parse: STEP_NOT_NEEDED,
+          requestStart: performance.now()
+        }
+      ])
     } else {
       apiCallPromise = Promise.resolve([
         {

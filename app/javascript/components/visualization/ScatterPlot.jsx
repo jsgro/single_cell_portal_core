@@ -400,12 +400,7 @@ function RawScatterPlot({
           isAnnotatedScatter,
           isCorrelatedScatter,
           expressionArray
-        }).then(clusterResponse => {
-          console.log('before processScatterPlot, clusterResponse')
-          clusterResponse[0].data = { 'expression': expressionArray }
-          console.log(clusterResponse)
-          processScatterPlot(clusterResponse)
-        }).catch(error => {
+        }).then(processScatterPlot).catch(error => {
           setIsLoading(false)
           setShowError(true)
           setError(error)
@@ -420,7 +415,8 @@ function RawScatterPlot({
         consensus,
         genes,
         isAnnotatedScatter,
-        isCorrelatedScatter
+        isCorrelatedScatter,
+        expressionArray
       }).then(processScatterPlot).catch(error => {
         setIsLoading(false)
         setShowError(true)
