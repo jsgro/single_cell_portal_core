@@ -53,7 +53,7 @@ function RawScatterPlot({
   const [scatterData, setScatterData] = useState(null)
   // array of trace names (strings) to show in the graph
   const [graphElementId] = useState(_uniqueId('study-scatter-'))
-  const { ErrorComponent, setShowError, setErrorContent } = useErrorMessage()
+  const { ErrorComponent, setShowError, setError } = useErrorMessage()
   const [activeTraceLabel, setActiveTraceLabel] = useState(null)
   // map of label name to color hex codes, for any labels the user has picked a color for
   const [editedCustomColors, setEditedCustomColors] = useState({})
@@ -101,7 +101,6 @@ function RawScatterPlot({
 
   /** updates whether pipe-delimited label values should be split */
   function updateIsSplitLabelArrays(value) {
-    // console.log('split the array', value)
     updateExploreParams({ isSplitLabelArrays: value })
   }
 
@@ -120,6 +119,7 @@ function RawScatterPlot({
 
   /** redraw the plot when editedCustomColors changes */
   useEffect(() => {
+    console.log('Object.keys(editedCustomColors)', Object.keys(editedCustomColors))
     if (editedCustomColors && Object.keys(editedCustomColors).length > 0) {
       const plotlyTraces = document.getElementById(graphElementId).data
       Plotly.react(graphElementId, plotlyTraces, scatterData.layout)
@@ -323,6 +323,8 @@ function RawScatterPlot({
 
     const startTime = performance.now()
 
+    console.log('atop processScatterPlot, genes', genes)
+
     if (flags?.progressive_loading && genes.length === 1 && document.querySelector(imageSelector)) {
       Plotly.newPlot(graphElementId, plotlyTraces, layout)
     } else {
@@ -405,8 +407,8 @@ function RawScatterPlot({
           processScatterPlot(clusterResponse)
         }).catch(error => {
           setIsLoading(false)
-          setErrorContent([`${error}`])
           setShowError(true)
+          setError(error)
         })
       })
     } else {
@@ -421,8 +423,8 @@ function RawScatterPlot({
         isCorrelatedScatter
       }).then(processScatterPlot).catch(error => {
         setIsLoading(false)
-        setErrorContent([`${error}`])
         setShowError(true)
+        setError(error)
       })
     }
   }, [cluster, annotation.name, subsample, consensus, genes.join(','), isAnnotatedScatter])
@@ -651,6 +653,8 @@ function getPlotlyTraces({
     unfilteredTrace.z = data.z
   }
 
+  console.log('above isGeneExpressionForColor, genes:', genes)
+
   const isGeneExpressionForColor = !isCorrelatedScatter && !isAnnotatedScatter && genes.length
 
   const [traces, countsByLabel, expRange] = filterTrace({
@@ -697,6 +701,8 @@ function getPlotlyTraces({
         color: colors,
         colorbar: { title, titleside: 'right' }
       })
+
+      console.log('above line 708, genes:', genes)
       // if expression values are all zero, set max/min manually so the zeros still look like zero
       // see SCP-2957
       if (genes.length && !colors.some(val => val !== 0)) {
@@ -725,6 +731,8 @@ function addHoverLabel(trace, annotName, annotType, genes, isAnnotatedScatter, i
   // use the 'meta' property so annotations are exposed to the hover template
   // see https://community.plotly.com/t/hovertemplate-does-not-show-name-property/36139
   trace.meta = trace.annotations
+
+  console.log('in addHoverLabel, genes:', genes)
   let groupHoverTemplate = '(%{x}, %{y})<br><b>%{text}</b><br>%{meta}<extra></extra>'
   if (isAnnotatedScatter) {
     // for annotated scatter, just show coordinates and cell name

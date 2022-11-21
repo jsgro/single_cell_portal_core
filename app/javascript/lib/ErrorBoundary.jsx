@@ -29,8 +29,6 @@ export default class ErrorBoundary extends Component {
 
   /** log an error, and then update the display to show the error */
   componentDidCatch(error, info) {
-    console.log('*** Caught error!')
-    console.log(error)
     console.error(error)
     // log error to Mixpanel
     logError(readableErrorMessage(error, info))
