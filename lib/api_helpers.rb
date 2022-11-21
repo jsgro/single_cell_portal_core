@@ -45,11 +45,11 @@ module ApiHelpers
   #
   # * *returns*
   #   - (Hash) => Hash of default HTTP headers, e.g. Authorization, Content-Type
-  def get_default_headers
+  def get_default_headers(content_override: nil)
     {
       'Authorization' => "Bearer #{self.valid_access_token['access_token']}",
-      'Accept' => 'application/json',
-      'Content-Type' => 'application/json',
+      'Accept' => content_override || 'application/json',
+      'Content-Type' => content_override || 'application/json',
       'x-app-id' => 'single-cell-portal',
       'x-domain-id' => "#{ENV['HOSTNAME']}"
     }
