@@ -54,8 +54,6 @@ const Fields = {
     putInEntry: (entry, cellsAndCoords) => entry.cellsAndCoords = cellsAndCoords,
     addFieldsOrPromise: (entry, fields, promises) => {
       const cachedCellsAndCoords = Fields.cellsAndCoords.getFromEntry(entry)
-      console.log('!cachedCellsAndCoords.x')
-      console.log(!cachedCellsAndCoords.x)
       if (cachedCellsAndCoords.then) {
         promises.push(cachedCellsAndCoords)
       } else if (!cachedCellsAndCoords.x) {
@@ -126,10 +124,6 @@ const Fields = {
     },
     addFieldsOrPromise: (entry, fields, promises, genes, consensus, expressionArray) => {
       const cachedExpression = Fields.expression.getFromEntry(entry, genes, consensus, expressionArray)
-      console.log('in expression addFieldsOrPromise, expressionArray')
-      console.log(expressionArray)
-      console.log('in expression addFieldsOrPromise, cachedExpression')
-      console.log(cachedExpression)
       if (!cachedExpression) {
         fields.push(expressionArray ? 'none' : 'expression')
       } else if (cachedExpression.then && !promises.includes(cachedExpression)) {
@@ -180,8 +174,6 @@ export function createCache() {
     expressionArray=null
   }) => {
     let apiCallPromise = null
-    console.log('in cache.fetchCluster, expressionArray:')
-    console.log(expressionArray)
     const { fields, promises } = cache._getFieldsToRequest({
       studyAccession, cluster, annotation, subsample, consensus, genes, isAnnotatedScatter,
       expressionArray
@@ -251,8 +243,6 @@ export function createCache() {
     return Promise.all(promises).then(resultArray => {
       let mergedResult = null
       resultArray.forEach(result => {
-        console.log('in plot-data-cache resultArray.forEach, result:')
-        console.log(result)
         mergedResult = cache._mergeClusterResponse(studyAccession, result, cluster, annotation, subsample, genes)
       })
       return mergedResult

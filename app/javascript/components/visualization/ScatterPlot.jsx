@@ -119,7 +119,6 @@ function RawScatterPlot({
 
   /** redraw the plot when editedCustomColors changes */
   useEffect(() => {
-    console.log('Object.keys(editedCustomColors)', Object.keys(editedCustomColors))
     if (editedCustomColors && Object.keys(editedCustomColors).length > 0) {
       const plotlyTraces = document.getElementById(graphElementId).data
       Plotly.react(graphElementId, plotlyTraces, scatterData.layout)
@@ -209,8 +208,6 @@ function RawScatterPlot({
     // Parse gene-specific plot configuration from image Exif metadata
     const ranges = JSON.parse(exifTags.ImageDescription.description)
 
-    console.log('ranges.x')
-    console.log(ranges.x)
     // For colorbar labels, and gridlines
     const expressionRange = ranges.expression
     const coordinateRanges = {
@@ -247,8 +244,6 @@ function RawScatterPlot({
     const scatter = updateScatterLayout(tmpScatterData)
     const layout = Object.assign({}, scatter.layout)
 
-    console.log('coordinateRanges.x')
-    console.log(coordinateRanges.x)
     // For gridlines and color bar
     layout.xaxis.range = coordinateRanges.x
     layout.yaxis.range = coordinateRanges.y
@@ -307,12 +302,13 @@ function RawScatterPlot({
     }
 
     concludeRender()
+    console.log(`Image render took ${ Date.now() - window.t0}`)
   }
 
   /** Process scatter plot data fetched from server */
   function processScatterPlot(clusterResponse=null) {
-    console.log('clusterResponse')
-    console.log(clusterResponse)
+    // console.log('clusterResponse')
+    // console.log(clusterResponse)
     let [scatter, perfTimes] =
       (clusterResponse ? clusterResponse : [scatterData, null])
 
@@ -323,10 +319,9 @@ function RawScatterPlot({
 
     const startTime = performance.now()
 
-    console.log('atop processScatterPlot, genes', genes)
-
     if (flags?.progressive_loading && genes.length === 1 && document.querySelector(imageSelector)) {
       Plotly.newPlot(graphElementId, plotlyTraces, layout)
+      console.log(`Interactive plot with bucket data took: ${ Date.now() - window.t0}`)
     } else {
       Plotly.react(graphElementId, plotlyTraces, layout)
     }
@@ -378,9 +373,14 @@ function RawScatterPlot({
       const stem = '_scp_internal/cache/expression_scatter/'
       const leaf = `${urlSafeCluster}/${gene}`
 
+      window.t0 = Date.now()
       const imagePath = `${stem}images/${leaf}.webp`
       fetchBucketFile(bucketId, imagePath).then(async response => {
-        renderImage(response)
+        if (response.ok) {
+          renderImage(response)
+        } else {
+          console.debug(`Image cache miss for: ${ gene}`)
+        }
       })
 
       console.log('dataCache')
@@ -388,8 +388,6 @@ function RawScatterPlot({
       const dataPath = `${stem}data/${leaf}.json`
       fetchBucketFile(bucketId, dataPath).then(async response => {
         const expressionArray = await response.json()
-        console.log('in fetchBucketFile  callback, expressionArray:')
-        console.log(expressionArray)
         fetchMethod({
           studyAccession,
           cluster,
@@ -633,8 +631,6 @@ function getPlotlyTraces({
   isSplitLabelArrays,
   isRefGroup
 }) {
-  console.log('data.x')
-  console.log(data.x)
   const unfilteredTrace = {
     type: is3D ? 'scatter3d' : 'scattergl',
     mode: 'markers',
@@ -648,8 +644,6 @@ function getPlotlyTraces({
   if (is3D) {
     unfilteredTrace.z = data.z
   }
-
-  console.log('above isGeneExpressionForColor, genes:', genes)
 
   const isGeneExpressionForColor = !isCorrelatedScatter && !isAnnotatedScatter && genes.length
 
@@ -698,7 +692,6 @@ function getPlotlyTraces({
         colorbar: { title, titleside: 'right' }
       })
 
-      console.log('above line 708, genes:', genes)
       // if expression values are all zero, set max/min manually so the zeros still look like zero
       // see SCP-2957
       if (genes.length && !colors.some(val => val !== 0)) {
@@ -728,7 +721,6 @@ function addHoverLabel(trace, annotName, annotType, genes, isAnnotatedScatter, i
   // see https://community.plotly.com/t/hovertemplate-does-not-show-name-property/36139
   trace.meta = trace.annotations
 
-  console.log('in addHoverLabel, genes:', genes)
   let groupHoverTemplate = '(%{x}, %{y})<br><b>%{text}</b><br>%{meta}<extra></extra>'
   if (isAnnotatedScatter) {
     // for annotated scatter, just show coordinates and cell name
@@ -792,8 +784,6 @@ function get2DScatterProps({
   isCorrelatedScatter
 }) {
   const { titles } = axes
-  console.log('titles.x')
-  console.log(titles.x)
   const layout = {
     xaxis: { title: titles.x, range: axes?.ranges?.x },
     yaxis: { title: titles.y, range: axes?.ranges?.y }
