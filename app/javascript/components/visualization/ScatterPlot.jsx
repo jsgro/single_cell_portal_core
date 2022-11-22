@@ -188,7 +188,7 @@ function RawScatterPlot({
     return traces
   }
 
-  /** Update UI to reflect successfully scatter plot rendering */
+  /** Update UI to reflect successful scatter plot rendering */
   function concludeRender(scatter) {
     if (scatter) {
       setScatterData(scatter)
@@ -302,13 +302,13 @@ function RawScatterPlot({
     }
 
     concludeRender()
-    console.log(`Image render took ${ Date.now() - window.t0}`)
+
+    // TODO (SCP-4839): Instrument more cache analytics, then remove console log below
+    // console.log(`Image render took ${ Date.now() - window.t0}`)
   }
 
   /** Process scatter plot data fetched from server */
   function processScatterPlot(clusterResponse=null) {
-    // console.log('clusterResponse')
-    // console.log(clusterResponse)
     let [scatter, perfTimes] =
       (clusterResponse ? clusterResponse : [scatterData, null])
 
@@ -321,7 +321,9 @@ function RawScatterPlot({
 
     if (flags?.progressive_loading && genes.length === 1 && document.querySelector(imageSelector)) {
       Plotly.newPlot(graphElementId, plotlyTraces, layout)
-      console.log(`Interactive plot with bucket data took: ${ Date.now() - window.t0}`)
+
+      // TODO (SCP-4839): Instrument more cache analytics, then remove console log below
+      // console.log(`Interactive plot with bucket data took: ${ Date.now() - window.t0}`)
     } else {
       Plotly.react(graphElementId, plotlyTraces, layout)
     }
@@ -373,7 +375,9 @@ function RawScatterPlot({
       const stem = '_scp_internal/cache/expression_scatter/'
       const leaf = `${urlSafeCluster}/${gene}`
 
-      window.t0 = Date.now()
+      // TODO (SCP-4839): Instrument more cache analytics, then remove line below
+      // window.t0 = Date.now()
+
       const imagePath = `${stem}images/${leaf}.webp`
       fetchBucketFile(bucketId, imagePath).then(async response => {
         if (response.ok) {
