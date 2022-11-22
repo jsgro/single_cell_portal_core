@@ -25,7 +25,8 @@ class PapiClient
     ingest_subsample: ['Cluster'],
     differential_expression: ['Cluster'],
     render_expression_arrays: ['Cluster'],
-    image_pipeline: ['Cluster']
+    image_pipeline: ['Cluster'],
+    ingest_anndata: ['AnnData']
   }.freeze
 
   # jobs that require custom virtual machine types (e.g. more RAM, CPU)
@@ -319,6 +320,9 @@ class PapiClient
       end
     when 'ingest_cluster'
       command_line += " --cluster-file #{study_file.gs_url} --ingest-cluster"
+    when 'ingest_anndata'
+      # extract cluster data from AnnData file, currently hardcoding the obsm-keys
+      command_line +=  " --ingest-anndata --anndata-file #{study_file.gs_url} --extract-cluster --obsm-keys ['X_umap','X_tsne']"
     when 'ingest_subsample'
       metadata_file = study.metadata_file
       command_line += " --cluster-file #{study_file.gs_url} --cell-metadata-file #{metadata_file.gs_url} --subsample"
