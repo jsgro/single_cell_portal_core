@@ -361,6 +361,26 @@ class IngestJob
     end
   end
 
+  # TODO (SCP-4709, SCP-4710) Processed and Raw expression files
+
+  # The base options for setting state state after ingest for cluster 
+  def base_cluster_otions 
+    set_cluster_point_count
+    set_study_default_options
+    launch_subsample_jobs
+  end
+
+  # The base options for setting state state after ingest for metadata 
+  def base_metadata_options
+    study.set_cell_count
+    set_study_default_options
+    launch_subsample_jobs
+    # update search facets if convention data
+    if study_file.use_metadata_convention
+      SearchFacet.delay.update_all_facet_filters
+    end
+  end
+
   # Set study state depending on what kind of file was just ingested
   # Does not return anything, but will set state and launch other jobs as needed
   #
@@ -369,21 +389,13 @@ class IngestJob
   def set_study_state_after_ingest
     case action
     when :ingest_cell_metadata
-      study.set_cell_count
-      set_study_default_options
-      launch_subsample_jobs
-      # update search facets if convention data
-      if study_file.use_metadata_convention
-        SearchFacet.delay.update_all_facet_filters
-      end
+      base_metadata_options
       launch_differential_expression_jobs
     when :ingest_expression
       study.delay.set_gene_count
       launch_differential_expression_jobs
     when :ingest_cluster
-      set_cluster_point_count
-      set_study_default_options
-      launch_subsample_jobs
+      base_cluster_otions
       launch_differential_expression_jobs
     when :ingest_subsample
       set_subsampling_flags
@@ -392,12 +404,10 @@ class IngestJob
     when :image_pipeline
       set_has_image_cache
     when :ingest_anndata
-      # currently extracting and ingesting only clustering data
+      # currently extracting and ingesting only clustering and metadata
       # this will likely error until the DB inserts ingest job is done
-      set_cluster_point_count
-      set_study_default_options
-      launch_subsample_jobs
-      # TODO (SCP-4708, SCP-4709, SCP-4710) will duplicate a lot more from above 
+      base_cluster_otions
+      base_metadata_options
     end
     set_study_initialized
   end
