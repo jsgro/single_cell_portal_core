@@ -125,7 +125,7 @@ const Fields = {
     addFieldsOrPromise: (entry, fields, promises, genes, consensus, expressionArray) => {
       const cachedExpression = Fields.expression.getFromEntry(entry, genes, consensus, expressionArray)
       if (!cachedExpression) {
-        fields.push(expressionArray ? 'none' : 'expression')
+        fields.push('expression')
       } else if (cachedExpression.then && !promises.includes(cachedExpression)) {
         promises.push(cachedExpression)
       }
