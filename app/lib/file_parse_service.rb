@@ -99,27 +99,25 @@ class FileParseService
           Rails.logger.info "Aborting parse of #{@study_file.name} as #{@study_file.file_type} in study #{@study.name}; not applicable"
         end
       when 'AnnData'
-        # gate ingest of AnnData using the feature flag 'ingest_anndata_file'
+        # gate full ingest of an AnnData file using the feature flag 'ingest_anndata_file'
         if do_anndata_file_ingest == true
           # Currently assuming "Happy Path" and so the AnnData file will have clustering data
           # extract and parse clustering data
           job = IngestJob.new(study: study, study_file: study_file, user: user, action: :ingest_anndata, reparse: reparse,
           persist_on_fail: persist_on_fail)
-          job.delay.push_remote_and_launch_ingest
-
           # Future consideration about whether to do all in one job likely in (SCP-4754)
           # TODO extract and parse Metadata (SCP-4708)
           # TODO extract and parse Processed Exp Data (SCP-4709)
           # TODO extract and parse Raw Exp Data (SCP-4710)
         else
-          Rails.logger.info "Aborting parse of AnnData file #{study_file.name} due to feature flag being #{do_anndata_file_ingest}"
+          # launch an ingest job for parsing a reference AnnData file
+          job = IngestJob.new(study: study, study_file: study_file, user: user, action: :ingest_anndata_reference, reparse: reparse,
+          persist_on_fail: persist_on_fail)
         end
+        job.delay.push_remote_and_launch_ingest
+      end
 
-      end
-      # If the AnnData ingest feature flag is false don't update the parse status since no ingest job was initiated
-      unless study_file.file_type == 'AnnData' && !do_anndata_file_ingest
-        study_file.update(parse_status: 'parsing')
-      end
+      study_file.update(parse_status: 'parsing')
       changes = ["Study file added: #{study_file.upload_file_name}"]
       if study.study_shares.any?
         SingleCellMailer.share_update_notification(study, changes, user).deliver_now
