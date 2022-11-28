@@ -198,8 +198,22 @@ function RawScatterPlot({
     setIsLoading(false)
   }
 
-  /** Display static image of gene expression scatter plot */
-  async function renderImage(response, fetchMethod, expressionParams, dataPath) {
+
+  /** Fetch cached data from bucket, use it to draw *interactive* gene expression scatter plot */
+  function renderBucketData(fetchMethod, expressionParams, dataPath) {
+    fetchBucketFile(bucketId, dataPath).then(async response => {
+      const expressionArray = await response.json()
+      expressionParams.expressionArray = expressionArray
+      fetchMethod(expressionParams).then(processScatterPlot).catch(error => {
+        setIsLoading(false)
+        setShowError(true)
+        setError(error)
+      })
+    })
+  }
+
+  /** Draw static image of gene expression scatter plot */
+  async function drawPlotImage(response) {
     const imageBuffer = await response.arrayBuffer()
     const exifTags = ExifReader.load(imageBuffer)
     const imageBlob = new Blob([imageBuffer])
@@ -302,15 +316,6 @@ function RawScatterPlot({
     }
 
     concludeRender()
-
-    fetchBucketFile(bucketId, dataPath).then(async response => {
-      const expressionArray = await response.json()
-      fetchMethod(expressionParams).then(processScatterPlot).catch(error => {
-        setIsLoading(false)
-        setShowError(true)
-        setError(error)
-      })
-    })
   }
 
   /** Process scatter plot data fetched from server */
@@ -395,15 +400,19 @@ function RawScatterPlot({
         consensus,
         genes,
         isAnnotatedScatter,
-        isCorrelatedScatter,
-        expressionArray
+        isCorrelatedScatter
       }
 
       fetchBucketFile(bucketId, imagePath).then(async response => {
         const imageCacheHit = response.ok
+
+        // Draw plot as static image first, if it's cached
         if (imageCacheHit) {
-          renderImage(response, fetchMethod, expressionParams, dataPath)
+          await drawPlotImage(response)
         }
+
+        // Then make it interactive, using gene expression scatter plot data array from GCS bucket
+        renderBucketData(fetchMethod, expressionParams, dataPath)
 
         // TODO (SCP-4839): Instrument more bucket cache analytics, then remove console log below
         // console.log(`Image render took ${ Date.now() - window.t0}`)
