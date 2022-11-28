@@ -134,7 +134,8 @@ async function makeExpressionScatterPlotImage(gene, page, context) {
   // without needing to call GCS client library's bucket.upload on each file.
   // Ideally there would be a GCS client library equivalent of those commands,
   // but brief research found none.
-  const toFilePath = `cache/expression_scatter/images/${debugNonce}${webpFileName}`
+  const stem = 'cache/expression_scatter/images/'
+  const toFilePath = `${stem}${context.cluster}/${debugNonce}${webpFileName}`
   uploadToBucket(imagePath, toFilePath, context)
 
   return
@@ -576,7 +577,7 @@ const nonce = `_${nonceName}${timestamp}`
 
 const storage = new Storage()
 
-const timeoutMinutes = 0.75
+const timeoutMinutes = 2
 
 const logFileWriteStream = createWriteStream('log.txt')
 
