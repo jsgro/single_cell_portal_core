@@ -339,6 +339,7 @@ class IngestJob
       log_error_messages
       log_to_mixpanel # log before queuing file for deletion to preserve properties
       # don't delete files or notify users if this is a 'special action', like DE or image pipeline jobs
+      subject = "Error: #{study_file.file_type} file: '#{study_file.upload_file_name}' parse has failed"
       unless special_action?
         create_study_file_copy
         study_file.update(parse_status: 'failed')
@@ -349,7 +350,6 @@ class IngestJob
             ApplicationController.firecloud_client.delete_workspace_file(study.bucket_id, bundled_file.bucket_location)
           end
         end
-        subject = "Error: #{study_file.file_type} file: '#{study_file.upload_file_name}' parse has failed"
         user_email_content = generate_error_email_body
         SingleCellMailer.notify_user_parse_fail(user.email, subject, user_email_content, study).deliver_now
       end
