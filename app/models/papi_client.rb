@@ -299,9 +299,14 @@ class PapiClient
   def get_command_line(study_file:, action:, user_metrics_uuid:, params_object: nil)
     validate_action_by_file(action, study_file)
     study = study_file.study
+    stringified_action = action.to_s
     command_line = "python ingest_pipeline.py --study-id #{study.id} --study-file-id #{study_file.id} " \
-                   "--user-metrics-uuid #{user_metrics_uuid} #{action}"
-    case action.to_s
+                   "--user-metrics-uuid #{user_metrics_uuid}"
+    unless stringified_action == 'ingest_anndata_reference'
+      command_line += " #{action}"
+    end
+
+    case stringified_action
     when 'ingest_expression'
       if study_file.file_type == 'Expression Matrix'
         command_line += " --matrix-file #{study_file.gs_url} --matrix-file-type dense"
@@ -325,8 +330,8 @@ class PapiClient
         # extract cluster data from AnnData file, currently hardcoding the obsm-keys
         command_line +=  " --ingest-anndata --anndata-file #{study_file.gs_url} --extract-cluster --obsm-keys ['X_umap','X_tsne']"
     when 'ingest_anndata_reference'
-        command_line = "python ingest_pipeline.py --study-id #{study.id} --study-file-id #{study_file.id} " \
-        "--user-metrics-uuid #{user_metrics_uuid} ingest_anndata --ingest-anndata --anndata-file #{study_file.gs_url}"
+      # ingest_anndata_reference is not a command that ingest pipeline recognizes so use ingest_anndata as the action
+        command_line += " ingest_anndata --ingest-anndata --anndata-file #{study_file.gs_url}"
     when 'ingest_subsample'
       metadata_file = study.metadata_file
       command_line += " --cluster-file #{study_file.gs_url} --cell-metadata-file #{metadata_file.gs_url} --subsample"
