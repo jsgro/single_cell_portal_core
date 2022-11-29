@@ -394,10 +394,11 @@ class IngestJob
     when :ingest_anndata
       # currently extracting and ingesting only clustering data
       # this will likely error until the DB inserts ingest job is done
+      set_anndata_file_info
       set_cluster_point_count
       set_study_default_options
       launch_subsample_jobs
-      # TODO (SCP-4708, SCP-4709, SCP-4710) will duplicate a lot more from above 
+      # TODO (SCP-4708, SCP-4709, SCP-4710) will duplicate a lot more from above
     end
     set_study_initialized
   end
@@ -541,6 +542,16 @@ class IngestJob
     Rails.logger.info "Setting image_pipeline flags in #{study.accession} for cluster: #{study_file.name}"
     cluster_group = ClusterGroup.find_by(study_id: study.id, study_file_id: study_file.id)
     cluster_group.update(has_image_cache: true) if cluster_group.present?
+  end
+
+  # set appropriate flags for AnnDataFileInfo entries
+  def set_anndata_file_info
+    study_file.build_ann_data_file_info if study_file.ann_data_file_info.nil?
+
+    study_file.ann_data_file_info.has_clusters = ClusterGroup.where(study:, study_file:).exists?
+    study_file.ann_data_file_info.has_metadata = CellMetadatum.where(study:, study_file:).exists?
+    study_file.ann_data_file_info.has_expression = Gene.where(study:, study_file:).exists?
+    study_file.save
   end
 
   # set corresponding is_differential_expression_enabled flags on annotations
@@ -688,7 +699,47 @@ class IngestJob
         }
       )
     when :ingest_anndata
-      # AnnData file analytics TODO
+      study_file.reload
+      if study_file.ann_data_file_info.has_clusters
+        cluster = ClusterGroup.find_by(study_id: study.id, study_file_id: study_file.id)
+        if cluster.present?
+          cluster_type = cluster.cluster_type
+          cluster_points = cluster.points
+          can_subsample = cluster.can_subsample?
+          job_props.merge!(
+            {
+              hasClusters: true,
+              clusterType: cluster_type,
+              numClusterPoints: cluster_points,
+              canSubsample: can_subsample
+            }
+          )
+        end
+      end
+      if study_file.ann_data_file_info.has_metadata
+        use_metadata_convention = study_file.use_metadata_convention
+        job_props.merge!({useMetadataConvention: use_metadata_convention})
+        if use_metadata_convention
+          project_name = 'alexandria_convention' # hard-coded is fine for now, consider implications if we get more projects
+          current_schema_version = get_latest_schema_version(project_name)
+          job_props.merge!(
+            {
+              hasMetadata: true,
+              metadataConvention: project_name,
+              schemaVersion: current_schema_version
+            }
+          )
+        end
+      end
+      if study_file.ann_data_file_info.has_expression || study_file.ann_data_file_info.has_raw_counts
+        cells = study.expression_matrix_cells(study_file)
+        cell_count = cells.present? ? cells.count : 0
+        job_props.merge!({ numCells: cell_count, is_raw_counts: study_file.is_raw_counts_file? })
+        unless study_file.is_raw_counts_file?
+          genes = Gene.where(study_id: study.id, study_file_id: study_file.id).count
+          job_props.merge!({ numGenes: genes, hasExpression: true })
+        end
+      end
     end
     job_props.with_indifferent_access
   end

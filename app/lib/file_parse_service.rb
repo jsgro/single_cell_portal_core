@@ -99,6 +99,10 @@ class FileParseService
           Rails.logger.info "Aborting parse of #{@study_file.name} as #{@study_file.file_type} in study #{@study.name}; not applicable"
         end
       when 'AnnData'
+        # create AnnDataFileInfo document so that it is present to be updated later on ingest completion
+        study_file.build_ann_data_file_info
+        study_file.save
+
         # gate ingest of AnnData using the feature flag 'ingest_anndata_file'
         if do_anndata_file_ingest == true
           # Currently assuming "Happy Path" and so the AnnData file will have clustering data
