@@ -270,7 +270,7 @@ async function processScatterPlotImages(genes, context) {
     '--no-sandbox'
   ]
   // Map staging domain name to staging internal IP address on PAPI
-  if (process.env?.IS_PAPI) {
+  if (!process.env?.IS_LOCAL) {
     const dnsEntry = `${stagingHost.domainName} ${stagingHost.ip}`
     pptrArgs.push(`--host-rules=MAP ${dnsEntry}`)
   }
@@ -412,7 +412,7 @@ async function parseCliArgs() {
   const origin = originsByEnvironment[environment]
 
   // Set origin for use in standalone fetch, which lacks Puppeteer host map
-  const isStagingPAPI = environment === 'staging' && process.env?.IS_PAPI
+  const isStagingPAPI = environment === 'staging' && !process.env?.IS_LOCAL
   const fetchOrigin = isStagingPAPI ? `https://${ stagingIP}` : origin
 
   return { values, numCPUs, origin, stagingHost, fetchOrigin }

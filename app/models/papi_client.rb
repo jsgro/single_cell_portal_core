@@ -212,7 +212,6 @@ class PapiClient
   #   - +GOOGLE_PROJECT_ID+: Name of the GCP project this pipeline is running in
   #   - +SENTRY_DSN+: Sentry Data Source Name (DSN); URL to send Sentry logs to
   #   - +BARD_HOST_URL+: URL for Bard host that proxies Mixpanel
-  #   - +IS_PAPI+: Denotes Pipelines API run (for :image_pipeline)
   #   - +NODE_TLS_REJECT_UNAUTHORIZED+: Configure node behavior for self-signed certificates (for :image_pipeline)
   #   - +STAGING_INTERNAL_IP+: Bypasses firewall for staging runs (for :image_pipeline)
   #
@@ -232,8 +231,6 @@ class PapiClient
     }
     if action == :image_pipeline
       vars.merge({
-        'IS_PAPI' => '1',
-
         # For staging runs
         'NODE_TLS_REJECT_UNAUTHORIZED' => 0,
 
