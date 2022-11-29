@@ -232,7 +232,7 @@ class PapiClient
     if action == :image_pipeline
       vars.merge({
         # For staging runs
-        'NODE_TLS_REJECT_UNAUTHORIZED' => 0,
+        'NODE_TLS_REJECT_UNAUTHORIZED' => '0',
 
         # For staging runs.  More context is in "Networking" section at:
         # https://github.com/broadinstitute/single_cell_portal_core/pull/1632
