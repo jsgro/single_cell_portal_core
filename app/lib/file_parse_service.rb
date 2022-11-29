@@ -100,7 +100,7 @@ class FileParseService
         end
       when 'AnnData'
         # gate full ingest of an AnnData file using the feature flag 'ingest_anndata_file'
-        if do_anndata_file_ingest == true
+        if do_anndata_file_ingest
           # Currently assuming "Happy Path" and so the AnnData file will have clustering data
           # extract and parse clustering data
           job = IngestJob.new(study: study, study_file: study_file, user: user, action: :ingest_anndata, reparse: reparse,
