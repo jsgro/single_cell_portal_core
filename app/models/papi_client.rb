@@ -214,6 +214,7 @@ class PapiClient
   #   - +BARD_HOST_URL+: URL for Bard host that proxies Mixpanel
   #   - +IS_PAPI+: Denotes Pipelines API run (for :image_pipeline)
   #   - +NODE_TLS_REJECT_UNAUTHORIZED+: Configure node behavior for self-signed certificates (for :image_pipeline)
+  #   - +STAGING_INTERNAL_IP+: Bypasses firewall for staging runs (for :image_pipeline)
   #
   # * *params*
   #   - +action+ (Symbol) => ingest action being performed
@@ -230,7 +231,16 @@ class PapiClient
       'BARD_HOST_URL' => Rails.application.config.bard_host_url
     }
     if action == :image_pipeline
-      vars.merge({ 'IS_PAPI' => '1', 'STAGING_INTERNAL_IP' => ENV['APP_INTERNAL_IP'] })
+      vars.merge({
+        'IS_PAPI' => '1',
+
+        # For staging runs
+        'NODE_TLS_REJECT_UNAUTHORIZED' => 0,
+
+        # For staging runs.  More context is in "Networking" section at:
+        # https://github.com/broadinstitute/single_cell_portal_core/pull/1632
+        'STAGING_INTERNAL_IP' => ENV['APP_INTERNAL_IP']
+      })
     else
       vars
     end
