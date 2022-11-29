@@ -364,7 +364,7 @@ class IngestJob
   # TODO (SCP-4709, SCP-4710) Processed and Raw expression files
 
   # The base options for setting state state after ingest for cluster 
-  def base_cluster_otions 
+  def base_cluster_options 
     set_cluster_point_count
     set_study_default_options
     launch_subsample_jobs
@@ -395,7 +395,7 @@ class IngestJob
       study.delay.set_gene_count
       launch_differential_expression_jobs
     when :ingest_cluster
-      base_cluster_otions
+      base_cluster_options
       launch_differential_expression_jobs
     when :ingest_subsample
       set_subsampling_flags
@@ -406,7 +406,7 @@ class IngestJob
     when :ingest_anndata
       # currently extracting and ingesting only clustering and metadata
       # this will likely error until the DB inserts ingest job is done
-      base_cluster_otions
+      base_cluster_options
       base_metadata_options
     end
     set_study_initialized
