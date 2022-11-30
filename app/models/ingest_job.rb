@@ -387,7 +387,7 @@ class IngestJob
       study.delay.set_gene_count
       launch_differential_expression_jobs
     when :ingest_cluster
-      set_cluster_point_count(study_file.file_type)
+      set_cluster_point_count
       set_study_default_options
       launch_subsample_jobs unless study_file.is_anndata?
       launch_differential_expression_jobs unless study_file.is_anndata?
@@ -414,15 +414,27 @@ class IngestJob
     when 'Metadata'
       set_default_annotation
     when 'Cluster'
-      set_default_cluster(study_file.name)
+      set_default_cluster
       set_default_annotation
     when 'AnnData'
-      set_default_cluster(params_object.name)
+      set_default_cluster
     end
     Rails.logger.info "Setting default options in #{study.name}: #{study.default_options}"
     study.save
     # warm all default caches for this study
     ClusterCacheService.delay(queue: :cache).cache_study_defaults(study)
+  end
+
+  # get the name of an associate ClusterGroup, if one was generated from this job
+  def cluster_name_by_file_type
+    case study_file.file_type
+    when 'Cluster'
+      study_file.name
+    when 'AnnData'
+      params_object.name
+    else
+      nil
+    end
   end
 
   # set the default annotation for the study, if not already set
@@ -451,23 +463,19 @@ class IngestJob
   end
 
   # set the default cluster for the study, if not already set
-  def set_default_cluster(cluster_name)
+  def set_default_cluster
     if study.default_options[:cluster].nil?
-      cluster = study.cluster_groups.by_name(cluster_name)
-      study.default_options[:cluster] = cluster.name
+      cluster = study.cluster_groups.by_name(cluster_name_by_file_type)
+      study.default_options[:cluster] = cluster.name if cluster.present?
     end
   end
 
   # set the point count on a cluster group after successful ingest
   #
-  # * *params*
-  #   - +file_type+ (String) => type of parent StudyFile, governs where name is set from
-  #
   # * *yields*
   #   - sets the :points attribute on a ClusterGroup
-  def set_cluster_point_count(file_type)
-    name = file_type == 'Cluster' ? study_file.name : params_object.name
-    cluster_group = ClusterGroup.find_by(study_id: study.id, study_file_id: study_file.id, name:)
+  def set_cluster_point_count
+    cluster_group = ClusterGroup.find_by(study_id: study.id, study_file_id: study_file.id, name: cluster_name_by_file_type)
     if cluster_group.present?
       cluster_group.set_point_count!
       Rails.logger.info "Point count on #{cluster_group.name}:#{cluster_group.id} set to #{cluster_group.points}"
@@ -531,7 +539,7 @@ class IngestJob
 
   # Set correct subsampling flags on a cluster after job completion
   def set_subsampling_flags
-    cluster_group = ClusterGroup.find_by(study_id: study.id, study_file_id: study_file.id)
+    cluster_group = ClusterGroup.find_by(study_id: study.id, study_file_id: study_file.id, name: cluster_name_by_file_type)
     if cluster_group.is_subsampling? && cluster_group.find_subsampled_data_arrays.any?
       Rails.logger.info "Setting subsampled flags for #{study_file.upload_file_name}:#{study_file.id} (#{cluster_group.name}) for visualization"
       cluster_group.update(subsampled: true, is_subsampling: false)
@@ -710,7 +718,7 @@ class IngestJob
         )
       end
     when :ingest_cluster, :ingest_subsample
-      cluster = ClusterGroup.find_by(study_id: study.id, study_file_id: study_file.id)
+      cluster = ClusterGroup.find_by(study_id: study.id, study_file_id: study_file.id, name: cluster_name_by_file_type)
       job_props.merge!({metadataFilePresent: study.metadata_file.present?})
       # must make sure cluster is present, as parse failures may result in no data having been stored
       if cluster.present?
@@ -740,48 +748,6 @@ class IngestJob
           numAnnotationValues: annotation[:values]&.size
         }
       )
-    when :ingest_anndata
-      study_file.reload
-      if study_file.ann_data_file_info.has_clusters
-        cluster = ClusterGroup.find_by(study_id: study.id, study_file_id: study_file.id)
-        if cluster.present?
-          cluster_type = cluster.cluster_type
-          cluster_points = cluster.points
-          can_subsample = cluster.can_subsample?
-          job_props.merge!(
-            {
-              hasClusters: true,
-              clusterType: cluster_type,
-              numClusterPoints: cluster_points,
-              canSubsample: can_subsample
-            }
-          )
-        end
-      end
-      if study_file.ann_data_file_info.has_metadata
-        use_metadata_convention = study_file.use_metadata_convention
-        job_props.merge!({useMetadataConvention: use_metadata_convention})
-        if use_metadata_convention
-          project_name = 'alexandria_convention' # hard-coded is fine for now, consider implications if we get more projects
-          current_schema_version = get_latest_schema_version(project_name)
-          job_props.merge!(
-            {
-              hasMetadata: true,
-              metadataConvention: project_name,
-              schemaVersion: current_schema_version
-            }
-          )
-        end
-      end
-      if study_file.ann_data_file_info.has_expression || study_file.ann_data_file_info.has_raw_counts
-        cells = study.expression_matrix_cells(study_file)
-        cell_count = cells.present? ? cells.count : 0
-        job_props.merge!({ numCells: cell_count, is_raw_counts: study_file.is_raw_counts_file? })
-        unless study_file.is_raw_counts_file?
-          genes = Gene.where(study_id: study.id, study_file_id: study_file.id).count
-          job_props.merge!({ numGenes: genes, hasExpression: true })
-        end
-      end
     end
     job_props.with_indifferent_access
   end
