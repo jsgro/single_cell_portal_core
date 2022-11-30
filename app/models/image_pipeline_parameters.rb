@@ -28,7 +28,8 @@ class ImagePipelineParameters
     @environment ||= Rails.env.to_s
     @docker_image ||= PARAM_DEFAULTS[:docker_image]
     @machine_type ||= PARAM_DEFAULTS[:machine_type]
-    @cores ||= machine_type_cores - 1
+    # @cores ||= machine_type_cores - 1
+    @cores = 4
   end
 
   # available cores by machine_type
