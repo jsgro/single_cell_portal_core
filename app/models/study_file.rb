@@ -1008,6 +1008,9 @@ class StudyFile
     !!expression_file_info&.is_raw_counts || !!ann_data_file_info&.has_raw_counts
   end
 
+  def is_anndata?
+    file_type == 'AnnData'
+  end
 
   ###
   #
