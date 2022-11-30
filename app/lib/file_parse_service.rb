@@ -100,14 +100,14 @@ class FileParseService
 
         # enable / disable full ingest of AnnData files using the feature flag 'ingest_anndata_file'
         if do_anndata_file_ingest
-          params_object = AnnDataIngestParameters(anndata_file: study_file.gs_url)
+          params_object = AnnDataIngestParameters.new(anndata_file: study_file.gs_url)
           # TODO extract and parse Metadata (SCP-4708)
           # TODO extract and parse Processed Exp Data (SCP-4709)
           # TODO extract and parse Raw Exp Data (SCP-4710)
         else
           # setting attributes to false/nil will omit them from the command line later
           # values are interchangeable but are more readable depending on parameter type
-          params_object = AnnDataIngestParameters(
+          params_object = AnnDataIngestParameters.new(
             anndata_file: study_file.gs_url, extract_cluster: false, obsm_keys: nil
           )
         end
