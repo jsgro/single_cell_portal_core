@@ -20,13 +20,13 @@ class PapiClient
    # List of scp-ingest-pipeline actions and their allowed file types
   FILE_TYPES_BY_ACTION = {
     ingest_expression: ['Expression Matrix', 'MM Coordinate Matrix'],
-    ingest_cluster: ['Cluster'],
+    ingest_cluster: %w[Cluster AnnData],
     ingest_cell_metadata: ['Metadata'],
     ingest_subsample: ['Cluster'],
     differential_expression: ['Cluster'],
     render_expression_arrays: ['Cluster'],
     image_pipeline: ['Cluster'],
-    ingest_anndata: ['AnnData'],
+    ingest_anndata: ['AnnData']
   }.freeze
 
   # jobs that require custom virtual machine types (e.g. more RAM, CPU)
@@ -395,7 +395,7 @@ class PapiClient
     ingest_attributes = AdminConfiguration.get_ingest_docker_image_attributes
     docker_image = ingest_attributes[:image_name]
     docker_tag = ingest_attributes[:tag]
-    machine_type = params_object&.machine_type || DEFAULT_MACHINE_TYPE
+    machine_type = params_object.respond_to?(:machine_type) ? params_object&.machine_type : DEFAULT_MACHINE_TYPE
     if params_object && params_object.respond_to?(:docker_image)
       image_attributes = params_object.docker_image.split('/').last
       docker_image, docker_tag = image_attributes.split(':')
