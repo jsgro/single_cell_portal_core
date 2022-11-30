@@ -55,7 +55,7 @@ class AnnDataIngestParameters
 
   # generate a GS URL to a derived fragment that was extracted from the parent AnnData file
   def fragment_file_gs_url(bucket_id, fragment_type, name)
-    "gs://#{bucket_id}/#{name}.#{fragment_type}.anndata_segment.tsv"
+    "gs://#{bucket_id}/_scp_internal/anndata_ingest/#{name}.#{fragment_type}.anndata_segment.tsv"
   end
 
   # convert a string value into an array of strings, like obsm_keys
