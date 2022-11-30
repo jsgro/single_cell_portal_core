@@ -389,6 +389,8 @@ class IngestJob
       set_subsampling_flags
     when :differential_expression
       create_differential_expression_results
+    when :render_expression_arrays
+      launch_image_pipeline_job
     when :image_pipeline
       set_has_image_cache
     when :ingest_anndata
@@ -397,7 +399,7 @@ class IngestJob
       set_cluster_point_count
       set_study_default_options
       launch_subsample_jobs
-      # TODO (SCP-4708, SCP-4709, SCP-4710) will duplicate a lot more from above 
+      # TODO (SCP-4708, SCP-4709, SCP-4710) will duplicate a lot more from above
     end
     set_study_initialized
   end
@@ -534,6 +536,12 @@ class IngestJob
       matrix_file_id: matrix_file.id
     )
     de_result.save
+  end
+
+  # launch an image pipeline job once :render_expression_arrays completes
+  def launch_image_pipeline_job
+    Rails.logger.info "Launching image_pipeline job in #{study.accession} for cluster file: #{study_file.name}"
+    ImagePipelineService.run_image_pipeline_job(study, study_file, user:)
   end
 
   # set flags to denote when a cluster has image data
