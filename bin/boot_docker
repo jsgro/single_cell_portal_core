@@ -60,7 +60,7 @@ GOOGLE_CLOUD_PROJECT=$GOOGLE_CLOUD_PROJECT
 DOCKER_IMAGE_NAME='gcr.io/broad-singlecellportal-staging/single-cell-portal'
 DOCKER_IMAGE_VERSION='development'
 
-while getopts "n:N:e:d:D:m:M:r:s:k:K:f:F:p:h:u:P:H:o:S:y:g:t:R:w:W:A:" OPTION; do
+while getopts "n:N:e:d:D:m:M:r:s:k:K:f:F:p:h:u:P:H:o:S:y:g:t:R:w:W:A:a" OPTION; do
 case $OPTION in
 	n)
 		CONTAINER_NAME="$OPTARG"
