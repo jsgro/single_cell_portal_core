@@ -423,7 +423,9 @@ async function run() {
   // Make directories for output images
   imagesDir = await makeLocalOutputDir('images')
 
-  const cluster = values.cluster
+  const rawCluster = values.cluster
+
+  const cluster = rawCluster.replaceAll('+', 'pos').replace(/\W/g, '_')
 
   const bucket = values.bucket
 
