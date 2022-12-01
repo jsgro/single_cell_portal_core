@@ -14,7 +14,7 @@ class IngestJob
 
   # valid ingest actions to perform
   VALID_ACTIONS = %i[
-    ingest_expression ingest_cluster ingest_cell_metadata subsample differential_expression render_expression_arrays
+    ingest_expression ingest_cluster ingest_cell_metadata ingest_anndata ingest_anndata_reference subsample differential_expression render_expression_arrays
   ].freeze
 
   # Mappings between actions & models (for cleaning up data on re-parses)
@@ -339,6 +339,7 @@ class IngestJob
       log_error_messages
       log_to_mixpanel # log before queuing file for deletion to preserve properties
       # don't delete files or notify users if this is a 'special action', like DE or image pipeline jobs
+      subject = "Error: #{study_file.file_type} file: '#{study_file.upload_file_name}' parse has failed"
       unless special_action?
         create_study_file_copy
         study_file.update(parse_status: 'failed')
@@ -349,7 +350,6 @@ class IngestJob
             ApplicationController.firecloud_client.delete_workspace_file(study.bucket_id, bundled_file.bucket_location)
           end
         end
-        subject = "Error: #{study_file.file_type} file: '#{study_file.upload_file_name}' parse has failed"
         user_email_content = generate_error_email_body
         SingleCellMailer.notify_user_parse_fail(user.email, subject, user_email_content, study).deliver_now
       end
@@ -391,6 +391,13 @@ class IngestJob
       create_differential_expression_results
     when :image_pipeline
       set_has_image_cache
+    when :ingest_anndata
+      # currently extracting and ingesting only clustering data
+      # this will likely error until the DB inserts ingest job is done
+      set_cluster_point_count
+      set_study_default_options
+      launch_subsample_jobs
+      # TODO (SCP-4708, SCP-4709, SCP-4710) will duplicate a lot more from above 
     end
     set_study_initialized
   end
@@ -680,6 +687,8 @@ class IngestJob
           numAnnotationValues: annotation[:values]&.size
         }
       )
+    when :ingest_anndata
+      # AnnData file analytics TODO
     end
     job_props.with_indifferent_access
   end
@@ -772,6 +781,8 @@ class IngestJob
       message << "Gene-level files created: #{genes}"
     when :image_pipeline
       message << "Image Pipeline image rendering completed for \"#{params_object.cluster}\""
+    when :ingest_anndata
+      message << "AnnData file ingest has completed"
     end
     message
   end
