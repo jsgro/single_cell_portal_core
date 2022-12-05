@@ -381,7 +381,7 @@ function RawScatterPlot({
       flags?.progressive_loading && isGeneExpression(genes, isCorrelatedScatter) && !isAnnotatedScatter &&
       !scatterData
     ) {
-      const urlSafeCluster = cluster.replaceAll(' ', '_')
+      const urlSafeCluster = cluster.replaceAll('+', 'pos').replace(/\W/g, '_')
       const gene = genes[0]
       const stem = '_scp_internal/cache/expression_scatter/'
       const leaf = `${urlSafeCluster}/${gene}`
