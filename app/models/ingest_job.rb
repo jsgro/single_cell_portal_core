@@ -631,7 +631,7 @@ class IngestJob
     # Event properties to log to Mixpanel.
     # Mixpanel uses camelCase for props; snake_case would degrade Mixpanel UX.
     job_props = {
-      perfTime: get_total_runtime_ms, # Latency in milliseconds
+      perfTime: job_perftime, # Latency in milliseconds
       fileName: study_file.name,
       fileType: file_type,
       fileSize: study_file.upload_file_size,
