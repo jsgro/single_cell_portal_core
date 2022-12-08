@@ -34,11 +34,13 @@ module Parameterizable
   def to_options_array
     options_array = []
     attributes.each do |attr_name, value|
-      # handling of flag-only options that have no value, like --extract-cluster
-      if value.to_s == '--flag-only'
+      next if value.blank?
+
+      # explicit check for == true to flag-only options that have no value, like --extract-cluster
+      if value == true
         options_array << Parameterizable.to_cli_opt(attr_name)
       else
-        options_array += [Parameterizable.to_cli_opt(attr_name), value.to_s] if value.present?
+        options_array += [Parameterizable.to_cli_opt(attr_name), value.to_s]
       end
     end
     options_array << self.class::PARAMETER_NAME if defined? self.class::PARAMETER_NAME

@@ -11,7 +11,7 @@ class AnnDataIngestParametersTest < ActiveSupport::TestCase
       ingest_anndata: false,
       extract_cluster: false,
       obsm_keys: nil,
-      ingest_cluster: '--flag-only',
+      ingest_cluster: true,
       cluster_file: 'gs://test_bucket/_scp_internal/anndata_ingest/X_umap.cluster.anndata_segment.tsv',
       name: 'X_umap',
       domain_ranges: '{}'
@@ -22,7 +22,7 @@ class AnnDataIngestParametersTest < ActiveSupport::TestCase
     extraction = AnnDataIngestParameters.new(@extract_params)
     assert extraction.valid?
     %i[ingest_anndata extract_cluster].each do |attr|
-      assert_equal '--flag-only', extraction.send(attr)
+      assert_equal true, extraction.send(attr)
     end
     %i[ingest_cluster cluster_file name domain_ranges].each do |attr|
       assert extraction.send(attr).blank?
@@ -31,7 +31,7 @@ class AnnDataIngestParametersTest < ActiveSupport::TestCase
     assert_equal cmd, extraction.to_options_array.join(' ')
     cluster_ingest = AnnDataIngestParameters.new(@ingest_cluster_params)
     assert cluster_ingest.valid?
-    assert_equal '--flag-only', cluster_ingest.ingest_cluster
+    assert_equal true, cluster_ingest.ingest_cluster
     %i[ingest_anndata extract_cluster anndata_file obsm_keys].each do |attr|
       assert cluster_ingest.send(attr).blank?
     end

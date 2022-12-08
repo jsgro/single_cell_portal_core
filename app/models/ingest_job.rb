@@ -595,7 +595,7 @@ class IngestJob
       params_object.attribute_as_array(:obsm_keys).each do |fragment|
         cluster_gs_url = params_object.fragment_file_gs_url(study.bucket_id, 'cluster', fragment)
         cluster_params = AnnDataIngestParameters.new(
-          ingest_cluster: '--flag-only', name: fragment, cluster_file: cluster_gs_url, domain_ranges: '{}',
+          ingest_cluster: true, name: fragment, cluster_file: cluster_gs_url, domain_ranges: '{}',
           ingest_anndata: false, extract_cluster: false, obsm_keys: nil
         )
         job = IngestJob.new(study:, study_file:, user:, action: :ingest_cluster, params_object: cluster_params)

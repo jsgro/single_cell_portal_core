@@ -2,7 +2,7 @@
 # usage patterns:
 # extract SCP files: AnnDataIngestParameters.new(anndata_file: study_file.gs_url)
 # parse extracted cluster file: AnnDataIngestParameters.new(
-#   ingest_anndata: false, extract_cluster: false, name: 'X_tsne', ingest_cluster: '--flag-only', domain_ranges: "{}"
+#   ingest_anndata: false, extract_cluster: false, name: 'X_tsne', ingest_cluster: true, domain_ranges: "{}"
 #   cluster_file: 'gs://bucket-id/X_tsne.cluster.anndata_segment.tsv', obsm_keys: nil
 # )
 class AnnDataIngestParameters
@@ -25,11 +25,11 @@ class AnnDataIngestParameters
             allow_blank: true
 
   # default values for parameters
-  # '--flag-only' attributes are passed to the command line as a standalone flag with no value, e.g. --extract-cluster
+  # attributes marked as true are passed to the command line as a standalone flag with no value, e.g. --extract-cluster
   # any parameters that are set to nil/false will not be passed to the command line
   PARAM_DEFAULTS = {
-    ingest_anndata: '--flag-only',
-    extract_cluster: '--flag-only',
+    ingest_anndata: true,
+    extract_cluster: true,
     obsm_keys: "['X_umap','X_tsne']",
     ingest_cluster: false,
     cluster_file: nil,
