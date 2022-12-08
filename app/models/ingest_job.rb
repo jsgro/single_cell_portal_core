@@ -389,6 +389,8 @@ class IngestJob
       set_subsampling_flags
     when :differential_expression
       create_differential_expression_results
+    when :render_expression_arrays
+      launch_image_pipeline_job
     when :image_pipeline
       set_has_image_cache
     when :ingest_anndata
@@ -397,7 +399,7 @@ class IngestJob
       set_cluster_point_count
       set_study_default_options
       launch_subsample_jobs
-      # TODO (SCP-4708, SCP-4709, SCP-4710) will duplicate a lot more from above 
+      # TODO (SCP-4708, SCP-4709, SCP-4710) will duplicate a lot more from above
     end
     set_study_initialized
   end
@@ -536,6 +538,12 @@ class IngestJob
     de_result.save
   end
 
+  # launch an image pipeline job once :render_expression_arrays completes
+  def launch_image_pipeline_job
+    Rails.logger.info "Launching image_pipeline job in #{study.accession} for cluster file: #{study_file.name}"
+    ImagePipelineService.run_image_pipeline_job(study, study_file, user:, data_cache_perftime: get_total_runtime_ms)
+  end
+
   # set flags to denote when a cluster has image data
   def set_has_image_cache
     Rails.logger.info "Setting image_pipeline flags in #{study.accession} for cluster: #{study_file.name}"
@@ -618,10 +626,12 @@ class IngestJob
 
     # retrieve pipeline metadata for VM information
     vm_info = metadata.dig('pipeline', 'resources', 'virtualMachine')
+
+    job_perftime = get_total_runtime_ms
     # Event properties to log to Mixpanel.
     # Mixpanel uses camelCase for props; snake_case would degrade Mixpanel UX.
     job_props = {
-      perfTime: get_total_runtime_ms, # Latency in milliseconds
+      perfTime: job_perftime, # Latency in milliseconds
       fileName: study_file.name,
       fileType: file_type,
       fileSize: study_file.upload_file_size,
@@ -685,6 +695,14 @@ class IngestJob
         {
           numCells: cluster&.points,
           numAnnotationValues: annotation[:values]&.size
+        }
+      )
+    when :image_pipeline
+      data_cache_perftime =  params_object.data_cache_perftime
+      job_props.merge!(
+        {
+          'perfTime:dataCache' => data_cache_perftime,
+          'perfTime:full' => data_cache_perftime + job_perftime
         }
       )
     when :ingest_anndata
@@ -780,7 +798,9 @@ class IngestJob
       message << "Image Pipeline data pre-rendering completed for \"#{params_object.cluster_name}\""
       message << "Gene-level files created: #{genes}"
     when :image_pipeline
+      complete_pipeline_runtime = TimeDifference.between(*get_image_pipeline_timestamps).humanize
       message << "Image Pipeline image rendering completed for \"#{params_object.cluster}\""
+      message << "Complete runtime (data cache & image rendering): #{complete_pipeline_runtime}"
     when :ingest_anndata
       message << "AnnData file ingest has completed"
     end
