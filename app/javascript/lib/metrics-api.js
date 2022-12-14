@@ -392,6 +392,13 @@ function getTabProperty() {
  * @param {Object} props
  */
 export function log(name, props = {}) {
+  let isDEEnabled // track DE globally
+  if ('isDEEnabled' in props) {
+    isDEEnabled = props.isDEEnabled
+  } else {
+    isDEEnabled = !!window.SCP?.isDEEnabled
+  }
+
   props = Object.assign(props, {
     appId: 'single-cell-portal',
     appPath: getAnalyticsPageName(),
@@ -399,6 +406,7 @@ export function log(name, props = {}) {
     env,
     logger: 'app-frontend',
     scpVersion: version,
+    isDEEnabled,
     isServiceWorkerCacheEnabled
   }, getDefaultProperties())
 

@@ -28,6 +28,8 @@ function RoutableExploreTab({ studyAccession }) {
   async function loadStudyData() {
     const exploreResponse = await fetchExplore(studyAccession)
     setExploreInfo(exploreResponse)
+    // set window.SCP.isDEEnabled so that we can track DE visibility globally
+    window.SCP.isDEEnabled = exploreResponse.differentialExpression.length > 0
     // after the explore info is received, fetch the user-specific study data, but do it
     // after a timeout to ensure the visualization data gets fetched first
     window.setTimeout(async () => {
