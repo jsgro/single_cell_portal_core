@@ -21,7 +21,7 @@ class PapiClient
   FILE_TYPES_BY_ACTION = {
     ingest_expression: ['Expression Matrix', 'MM Coordinate Matrix'],
     ingest_cluster: %w[Cluster AnnData],
-    ingest_cell_metadata: ['Metadata'],
+    ingest_cell_metadata: %w[Metadata AnnData],
     ingest_subsample: ['Cluster'],
     differential_expression: ['Cluster'],
     render_expression_arrays: ['Cluster'],
@@ -313,9 +313,11 @@ class PapiClient
                       " --gene-file #{genes_file.gs_url} --barcode-file #{barcodes_file.gs_url}"
       end
     when 'ingest_cell_metadata'
+      # skip if parent file is AnnData as params_object will format command line
+
       command_line += " --cell-metadata-file #{study_file.gs_url} --study-accession #{study.accession} " \
-                      "--ingest-cell-metadata"
-      if study_file.use_metadata_convention
+                      "--ingest-cell-metadata" unless study_file.is_anndata?
+      if study_file.use_metadata_convention && not study_file.is_anndata?
         command_line += " --validate-convention --bq-dataset #{CellMetadatum::BIGQUERY_DATASET} " \
                         "--bq-table #{CellMetadatum::BIGQUERY_TABLE}"
       end

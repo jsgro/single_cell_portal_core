@@ -108,7 +108,7 @@ class FileParseService
           # setting attributes to false/nil will omit them from the command line later
           # values are interchangeable but are more readable depending on parameter type
           params_object = AnnDataIngestParameters.new(
-            anndata_file: study_file.gs_url, extract_cluster: false, obsm_keys: nil
+            anndata_file: study_file.gs_url, extract_cluster: false, obsm_keys: nil, extract_metadata: false
           )
         end
         job = IngestJob.new(

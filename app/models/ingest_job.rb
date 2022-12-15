@@ -369,24 +369,6 @@ class IngestJob
 
   # TODO (SCP-4709, SCP-4710) Processed and Raw expression files
 
-  # The base options for setting state state after ingest for cluster 
-  def base_cluster_options 
-    set_cluster_point_count
-    set_study_default_options
-    launch_subsample_jobs
-  end
-
-  # The base options for setting state state after ingest for metadata 
-  def base_metadata_options
-    study.set_cell_count
-    set_study_default_options
-    launch_subsample_jobs
-    # update search facets if convention data
-    if study_file.use_metadata_convention
-      SearchFacet.delay.update_all_facet_filters
-    end
-  end
-
   # Set study state depending on what kind of file was just ingested
   # Does not return anything, but will set state and launch other jobs as needed
   #
@@ -395,8 +377,15 @@ class IngestJob
   def set_study_state_after_ingest
     case action
     when :ingest_cell_metadata
-      base_metadata_options
-      launch_differential_expression_jobs
+      study.set_cell_count
+      set_study_default_options
+      launch_subsample_jobs unless study_file.is_anndata?
+      # update search facets if convention data
+      if study_file.use_metadata_convention
+        SearchFacet.delay.update_all_facet_filters
+      end      
+      launch_differential_expression_jobs unless study_file.is_anndata?
+      set_anndata_file_info if study_file.is_anndata?
     when :ingest_expression
       study.delay.set_gene_count
       launch_differential_expression_jobs
