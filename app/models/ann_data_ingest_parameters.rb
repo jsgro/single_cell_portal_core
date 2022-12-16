@@ -3,7 +3,8 @@
 # extract SCP files: AnnDataIngestParameters.new(anndata_file: study_file.gs_url)
 # parse extracted cluster file: AnnDataIngestParameters.new(
 #   ingest_anndata: false, extract_cluster: false, name: 'X_tsne', ingest_cluster: true, domain_ranges: "{}"
-#   cluster_file: 'gs://bucket-id/X_tsne.cluster.anndata_segment.tsv', obsm_keys: nil
+#   cluster_file: 'gs://bucket-id/X_tsne.cluster.anndata_segment.tsv', obsm_keys: nil, extract_metadata: false,
+#   metadata_file: 'gs://bucket-id/name.metadata.anndata_segment.txt', ingest_metadata: true
 # )
 class AnnDataIngestParameters
   include ActiveModel::Model
@@ -17,10 +18,13 @@ class AnnDataIngestParameters
   # cluster_file: GS URL for extracted cluster file
   # name: name of ClusterGroup (from obsm_keys)
   # domain_ranges: domain ranges for ClusterGroup, if present
+  # extract_metadata: gate metadata file extraction
+  # metadata_file: GS URL for extracted metadata file
+  # ingest_metadata: gate ingesting an extracted metadata file
   attr_accessor :ingest_anndata, :anndata_file, :extract_cluster, :obsm_keys, :ingest_cluster, :cluster_file, :name,
                 :domain_ranges
 
-  validates :anndata_file, :cluster_file,
+  validates :anndata_file, :cluster_file, :metadata_file
             format: { with: Parameterizable::GS_URL_REGEXP, message: 'is not a valid GS url' },
             allow_blank: true
 
@@ -34,7 +38,10 @@ class AnnDataIngestParameters
     ingest_cluster: false,
     cluster_file: nil,
     name: nil,
-    domain_ranges: nil
+    domain_ranges: nil,
+    extract_metadata: true,
+    metadata_file: nil,
+    ingest_metadata: false
   }.freeze
 
   ARRAY_MATCHER = /[\[\]]/
@@ -49,7 +56,8 @@ class AnnDataIngestParameters
 
   def attributes
     {
-      ingest_anndata:, anndata_file:, extract_cluster:, obsm_keys:, ingest_cluster:, cluster_file:, name:, domain_ranges:
+      ingest_anndata:, anndata_file:, extract_cluster:, obsm_keys:, ingest_cluster:, cluster_file:,
+      name:, domain_ranges:, extract_metadata:, metadata_file:, ingest_metadata:
     }.with_indifferent_access
   end
 
