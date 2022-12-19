@@ -405,7 +405,6 @@ class IngestJob
       set_has_image_cache
     when :ingest_anndata
       launch_anndata_subparse_jobs
-      # TODO (SCP-4708, SCP-4709, SCP-4710) will duplicate a lot more from above
     end
     set_study_initialized
   end
@@ -423,6 +422,7 @@ class IngestJob
       set_default_annotation
     when 'AnnData'
       set_default_cluster
+      set_default_annotation
     end
     Rails.logger.info "Setting default options in #{study.name}: #{study.default_options}"
     study.save
@@ -612,6 +612,16 @@ class IngestJob
         job = IngestJob.new(study:, study_file:, user:, action: :ingest_cluster, params_object: cluster_params)
         job.delay.push_remote_and_launch_ingest
       end
+    end
+    #  TODO chat with Jon about this logic does each param obj need a ingest_anndata ?
+    # should these be wrapped into a single job launch ?
+    if params_object.extract_metadata.present?
+      metadata_params = AnnDataIngestParameters.new(
+        ingest_cell_metadata: true, name: '<TODO>', 
+        ingest_anndata: false, extract_cluster: false, obsm_keys: nil
+      )
+      job = IngestJob.new(study:, study_file:, user:, action: :ingest_cell_metadata, params_object: metadata_params)
+      job.delay.push_remote_and_launch_ingest
     end
   end
 
