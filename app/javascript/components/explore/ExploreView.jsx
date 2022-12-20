@@ -28,7 +28,7 @@ function RoutableExploreTab({ studyAccession }) {
   async function loadStudyData() {
     const exploreResponse = await fetchExplore(studyAccession)
     setExploreInfo(exploreResponse)
-    // set window.SCP.isDEEnabled so that we can track DE visibility globally
+    // set window.SCP.isDEEnabled so that we can track differential expression visibility globally
     if (window.SCP) {
       window.SCP.isDEEnabled = exploreResponse.differentialExpression.length > 0
     }

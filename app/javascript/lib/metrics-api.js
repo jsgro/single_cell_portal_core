@@ -392,7 +392,7 @@ function getTabProperty() {
  * @param {Object} props
  */
 export function log(name, props = {}) {
-  let isDEEnabled // track DE globally
+  let isDEEnabled // track differential expression visibility globally
   if ('isDEEnabled' in props) {
     isDEEnabled = props.isDEEnabled
   } else {
