@@ -49,7 +49,7 @@ class AnnDataIngestParametersTest < ActiveSupport::TestCase
     extraction = AnnDataIngestParameters.new(@extract_params)
     %w[X_umap X_tsne].each do |fragment|
       assert_equal "gs://test/_scp_internal/anndata_ingest/#{fragment}.cluster.anndata_segment.tsv",
-                   extraction.fragment_file_gs_url('test', 'cluster', fragment)
+                   extraction.fragment_file_gs_url('test', 'cluster', fragment, <fileid>) #TODO
     end
   end
 end

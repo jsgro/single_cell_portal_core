@@ -604,7 +604,7 @@ class IngestJob
   def launch_anndata_subparse_jobs
     if params_object.extract_cluster.present?
       params_object.attribute_as_array(:obsm_keys).each do |fragment|
-        cluster_gs_url = params_object.fragment_file_gs_url(study.bucket_id, 'cluster', fragment)
+        cluster_gs_url = params_object.fragment_file_gs_url(study.bucket_id, 'cluster', fragment, study_file.study_id)
         cluster_params = AnnDataIngestParameters.new(
           ingest_cluster: true, name: fragment, cluster_file: cluster_gs_url, domain_ranges: '{}',
           ingest_anndata: false, extract_cluster: false, obsm_keys: nil
@@ -613,11 +613,12 @@ class IngestJob
         job.delay.push_remote_and_launch_ingest
       end
     end
-    #  TODO chat with Jon about this logic does each param obj need a ingest_anndata ?
-    # should these be wrapped into a single job launch ?
+
     if params_object.extract_metadata.present?
+      metadata_gs_url = params_object.fragment_file_gs_url(study.bucket_id, 'metadata', study_file.study_id)
+
       metadata_params = AnnDataIngestParameters.new(
-        ingest_cell_metadata: true, name: '<TODO>', 
+        ingest_cell_metadata: true, name: '<TODO>', metadata_file: metadata_gs_url
         ingest_anndata: false, extract_cluster: false, obsm_keys: nil
       )
       job = IngestJob.new(study:, study_file:, user:, action: :ingest_cell_metadata, params_object: metadata_params)
