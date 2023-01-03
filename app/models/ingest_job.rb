@@ -618,7 +618,7 @@ class IngestJob
       metadata_gs_url = params_object.fragment_file_gs_url(study.bucket_id, 'metadata', study_file.study_id)
 
       metadata_params = AnnDataIngestParameters.new(
-        ingest_cell_metadata: true, name: '<TODO>', metadata_file: metadata_gs_url
+        ingest_cell_metadata: true, metadata_file: metadata_gs_url,
         ingest_anndata: false, extract_cluster: false, obsm_keys: nil
       )
       job = IngestJob.new(study:, study_file:, user:, action: :ingest_cell_metadata, params_object: metadata_params)

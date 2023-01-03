@@ -30,7 +30,7 @@ class AnnDataIngestParameters
   attr_accessor :ingest_anndata, :anndata_file, :extract_cluster, :obsm_keys, :ingest_cluster, :cluster_file, :name,
                 :domain_ranges, :extract_metadata, :metadata_file, :ingest_metadata
 
-  validates :anndata_file, :cluster_file, :metadata_file
+  validates :anndata_file, :cluster_file, :metadata_file,
             format: { with: Parameterizable::GS_URL_REGEXP, message: 'is not a valid GS url' },
             allow_blank: true
 
