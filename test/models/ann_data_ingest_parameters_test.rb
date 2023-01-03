@@ -12,7 +12,7 @@ class AnnDataIngestParametersTest < ActiveSupport::TestCase
       extract_cluster: false,
       obsm_keys: nil,
       ingest_cluster: true,
-      cluster_file: 'gs://test_bucket/_scp_internal/anndata_ingest/X_umap.cluster.anndata_segment.tsv',
+      cluster_file: 'gs://test_bucket/_scp_internal/anndata_ingest/h5ad_file_id/h5ad_frag.cluster.X_umap.tsv',
       name: 'X_umap',
       domain_ranges: '{}'
     }
@@ -36,7 +36,7 @@ class AnnDataIngestParametersTest < ActiveSupport::TestCase
       assert cluster_ingest.send(attr).blank?
     end
     cluster_cmd = '--ingest-cluster --cluster-file gs://test_bucket/_scp_internal/anndata_ingest/' \
-                  'X_umap.cluster.anndata_segment.tsv --name X_umap --domain-ranges {}'
+                  'h5ad_file_id/h5ad_frag.cluster.X_umap.tsv --name X_umap --domain-ranges {}'
     assert_equal cluster_cmd, cluster_ingest.to_options_array.join(' ')
   end
 
@@ -48,8 +48,8 @@ class AnnDataIngestParametersTest < ActiveSupport::TestCase
   test 'should set fragment filename for extracted files' do
     extraction = AnnDataIngestParameters.new(@extract_params)
     %w[X_umap X_tsne].each do |fragment|
-      assert_equal "gs://test/_scp_internal/anndata_ingest/#{fragment}.cluster.anndata_segment.tsv",
-                   extraction.fragment_file_gs_url('test', 'cluster', fragment, <fileid>) #TODO
+      assert_equal "gs://test_bucket/_scp_internal/anndata_ingest/h5ad_file_id/h5ad_frag.cluster.#{fragment}.tsv",
+                   extraction.fragment_file_gs_url('test', 'cluster', fragment, 'h5ad_file_id')
     end
   end
 end
