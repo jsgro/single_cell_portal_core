@@ -392,11 +392,11 @@ function getTabProperty() {
  * @param {Object} props
  */
 export function log(name, props = {}) {
-  let isDEEnabled // track differential expression visibility globally
-  if ('isDEEnabled' in props) {
-    isDEEnabled = props.isDEEnabled
+  let isDifferentialExpressionEnabled // track differential expression visibility globally
+  if ('isDifferentialExpressionEnabled' in props) {
+    isDifferentialExpressionEnabled = props.isDifferentialExpressionEnabled
   } else {
-    isDEEnabled = !!window.SCP?.isDEEnabled
+    isDifferentialExpressionEnabled = !!window.SCP?.isDifferentialExpressionEnabled
   }
 
   props = Object.assign(props, {
@@ -406,7 +406,7 @@ export function log(name, props = {}) {
     env,
     logger: 'app-frontend',
     scpVersion: version,
-    isDEEnabled,
+    isDifferentialExpressionEnabled,
     isServiceWorkerCacheEnabled
   }, getDefaultProperties())
 
