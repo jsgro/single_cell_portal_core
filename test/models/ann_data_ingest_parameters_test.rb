@@ -9,7 +9,7 @@ class AnnDataIngestParametersTest < ActiveSupport::TestCase
 
     @ingest_cluster_params = {
       ingest_anndata: false,
-      extract_cluster: false,
+      extract: nil,
       obsm_keys: nil,
       ingest_cluster: true,
       cluster_file: 'gs://test_bucket/_scp_internal/anndata_ingest/h5ad_file_id/h5ad_frag.cluster.X_umap.tsv',
@@ -21,18 +21,18 @@ class AnnDataIngestParametersTest < ActiveSupport::TestCase
   test 'should instantiate and validate params' do
     extraction = AnnDataIngestParameters.new(@extract_params)
     assert extraction.valid?
-    %i[ingest_anndata extract_cluster].each do |attr|
+    %i[ingest_anndata].each do |attr|
       assert_equal true, extraction.send(attr)
     end
     %i[ingest_cluster cluster_file name domain_ranges].each do |attr|
       assert extraction.send(attr).blank?
     end
-    cmd = "--ingest-anndata --anndata-file gs://test_bucket/test.h5ad --extract-cluster --obsm-keys ['X_umap','X_tsne']"
+    cmd = "--ingest-anndata --anndata-file gs://test_bucket/test.h5ad --extract ['cluster', 'metadata'] --obsm-keys ['X_umap','X_tsne']"
     assert_equal cmd, extraction.to_options_array.join(' ')
     cluster_ingest = AnnDataIngestParameters.new(@ingest_cluster_params)
     assert cluster_ingest.valid?
     assert_equal true, cluster_ingest.ingest_cluster
-    %i[ingest_anndata extract_cluster anndata_file obsm_keys].each do |attr|
+    %i[ingest_anndata extract anndata_file obsm_keys].each do |attr|
       assert cluster_ingest.send(attr).blank?
     end
     cluster_cmd = '--ingest-cluster --cluster-file gs://test_bucket/_scp_internal/anndata_ingest/' \
@@ -49,7 +49,7 @@ class AnnDataIngestParametersTest < ActiveSupport::TestCase
     extraction = AnnDataIngestParameters.new(@extract_params)
     %w[X_umap X_tsne].each do |fragment|
       assert_equal "gs://test_bucket/_scp_internal/anndata_ingest/h5ad_file_id/h5ad_frag.cluster.#{fragment}.tsv",
-                   extraction.fragment_file_gs_url('test', 'cluster', fragment, 'h5ad_file_id')
+                   extraction.fragment_file_gs_url('test_bucket', 'cluster', 'h5ad_file_id', fragment)
     end
   end
 end
