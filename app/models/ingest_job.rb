@@ -605,10 +605,10 @@ class IngestJob
     
     if params_object.attribute_as_array(:extract).include? 'cluster'
       params_object.attribute_as_array(:obsm_keys).each do |fragment|
-        cluster_gs_url = params_object.fragment_file_gs_url(study.bucket_id, 'cluster', fragment, study_file.study_id)
+        cluster_gs_url = params_object.fragment_file_gs_url(study.bucket_id, 'cluster', study_file.id, fragment)
         cluster_params = AnnDataIngestParameters.new(
           ingest_cluster: true, name: fragment, cluster_file: cluster_gs_url, domain_ranges: '{}',
-          ingest_anndata: false, extract: nil, obsm_keys: nil
+          ingest_anndata: false, extract: nil, obsm_keys: nil, study_accession: nil,
         )
         job = IngestJob.new(study:, study_file:, user:, action: :ingest_cluster, params_object: cluster_params)
         job.delay.push_remote_and_launch_ingest
@@ -616,11 +616,11 @@ class IngestJob
     end
 
     if params_object.attribute_as_array(:extract).include? 'metadata'
-      metadata_gs_url = params_object.fragment_file_gs_url(study.bucket_id, 'metadata', study_file.study_id)
+      metadata_gs_url = params_object.fragment_file_gs_url(study.bucket_id, 'metadata', study_file.id)
 
       metadata_params = AnnDataIngestParameters.new(
-        ingest_cell_metadata: true, metadata_file: metadata_gs_url,
-        ingest_anndata: false, extract: nil, obsm_keys: nil
+        ingest_cell_metadata: true, cell_metadata_file: metadata_gs_url,
+        ingest_anndata: false, extract: nil, obsm_keys: nil, study_accession: study.accession,
       )
       job = IngestJob.new(study:, study_file:, user:, action: :ingest_cell_metadata, params_object: metadata_params)
       job.delay.push_remote_and_launch_ingest
