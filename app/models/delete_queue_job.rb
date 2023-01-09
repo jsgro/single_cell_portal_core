@@ -219,7 +219,7 @@ class DeleteQueueJob < Struct.new(:object)
   # handle unsetting default_annotation for a study, if needed
   def reset_default_annotation(study:)
     current_default = study.default_annotation
-    annot_name, annot_type, annot_scope = current_default.split('--')
+    annot_name, annot_type, annot_scope = current_default&.split('--')
     case annot_scope
     when 'study'
       current_default = nil if study.cell_metadata.by_name_and_type(annot_name, annot_type).nil?
