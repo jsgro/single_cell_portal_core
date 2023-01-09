@@ -37,15 +37,11 @@ class DeleteQueueJob < Struct.new(:object)
       # now remove all child objects first to free them up to be re-used.
       case file_type
       when 'Cluster'
-        if study.default_cluster.present? &&
-            study.default_cluster.name == object.name
-          study.default_options[:cluster] = nil
-          study.default_options[:annotation] = nil
-          study.save
-        end
         delete_differential_expression_results(study: study, study_file: object)
         delete_parsed_data(object.id, study.id, ClusterGroup, DataArray)
         delete_user_annotations(study:, study_file: object)
+        reset_default_cluster(study:)
+        reset_default_annotation(study:)
       when 'Coordinate Labels'
         delete_parsed_data(object.id, study.id, DataArray)
         remove_file_from_bundle
@@ -82,12 +78,7 @@ class DeleteQueueJob < Struct.new(:object)
         delete_differential_expression_results(study: study, study_file: object)
         delete_parsed_data(object.id, study.id, CellMetadatum, DataArray)
         study.update(cell_count: 0)
-        # unset default annotation if it was study-based
-        if study.default_options[:annotation].present? &&
-            study.default_options[:annotation].end_with?('--study')
-          study.default_options[:annotation] = nil
-          study.save
-        end
+        reset_default_annotation(study:)
       when 'AnnData'
         delete_convention_data(study: study, metadata_file: object)
         # delete user annotations first as we lose associations later
@@ -97,8 +88,8 @@ class DeleteQueueJob < Struct.new(:object)
         study.reload
         study.cell_count = study.all_cells_array.size
         study.gene_count = study.unique_genes.size
-        study.default_options[:cluster] = nil
-        study.default_options[:annotation] = nil
+        reset_default_cluster(study:)
+        reset_default_annotation(study:)
         study.save
       when 'Gene List'
         delete_parsed_data(object.id, study.id, PrecomputedScore)
@@ -214,6 +205,34 @@ class DeleteQueueJob < Struct.new(:object)
         annot.user_annotation_shares.delete_all
       end
       user_annotations.delete_all
+    end
+  end
+
+  # handle unsetting default cluster for a study, if needed
+  def reset_default_cluster(study:)
+    if study.cluster_groups.by_name(study.default_options[:cluster]).nil?
+      study.default_options[:cluster] = nil
+      study.save
+    end
+  end
+
+  # handle unsetting default_annotation for a study, if needed
+  def reset_default_annotation(study:)
+    current_default = study.default_annotation
+    annot_name, annot_type, annot_scope = current_default.split('--')
+    case annot_scope
+    when 'study'
+      current_default = nil if study.cell_metadata.by_name_and_type(annot_name, annot_type).nil?
+    when 'cluster'
+      cluster = study.default_cluster
+      annotation = cluster&.cell_annotations&.detect { |ca| ca[:name] == annot_name && ca[:type] == annot_type }
+      current_default = nil if cluster.nil? || annotation.nil?
+    else
+      current_default = nil
+    end
+    if study.default_annotation != current_default
+      study.default_options[:annotation] = current_default
+      study.save
     end
   end
 end

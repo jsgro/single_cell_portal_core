@@ -143,7 +143,7 @@ FactoryBot.define do
         # cell_input is an array of all cell names
         # e.g.  ['cellA', 'cellB', 'cellC']
         cell_input { [] }
-        # coordinate_input is a array of hashes of axes and values where the key is the name of the cluster
+        # coordinate_input is an array of hashes of axes and values where the key is the name of the cluster
         # e.g. [ { tsne: { x: [1,2,3], y: [4,5,6] } }, { umap: ... }]
         # cell names are used from above
         coordinate_input { [] }
