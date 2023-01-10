@@ -130,4 +130,8 @@ class ExploreControllerTest < ActionDispatch::IntegrationTest
     execute_http_request(:get, cluster_options_api_v1_study_explore_path('SCP1234567'))
     assert_equal 404, response.status
   end
+
+  test 'should show AnnData files as visualizable' do
+
+  end
 end
