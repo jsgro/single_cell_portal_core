@@ -71,9 +71,10 @@ export default function DifferentialExpressionPanel({
       <>
         15 most DE genes
         <a className="de-download-button"
-          onClick={async () => { await downloadBucketFile(bucketId, deFilePath)}}
-          title="Download all DE genes data for this group"
+          onClick={async () => {await downloadBucketFile(bucketId, deFilePath)}}
           data-analytics-name="differential-expression-download"
+          data-toggle="tooltip"
+          data-original-title="Download all DE genes data for this group"
         >
           <FontAwesomeIcon icon={faDownload}/>
         </a>

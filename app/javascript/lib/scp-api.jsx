@@ -373,25 +373,23 @@ export async function downloadBucketFile(bucketId, filePath) {
   // Fetch the data from the bucket
   const data = await fetchBucketFile(bucketId, filePath)
 
-  console.log('filePath:', filePath)
-
-  // Convert data to a blob, necessary for non same origin downloads
+  // Convert data to a blob (standard for non-same-origin downloads)
   const dataBlob = await data.blob()
 
-  // Create an element with an anchor link
+  // Create an element with an anchor link and connect this to the blob
   const element = document.createElement('a')
-
-  // Connect the data blob url to the anchor link
   element.href = URL.createObjectURL(dataBlob)
 
+  // name the file and indicate it should download
   const filePathAsArr = filePath.split('/')
-
-  // name the file and indicate it should download not open in different tab
   element.download = `${filePathAsArr.pop()}`
 
   // Simulate clicking the link resulting in downloading the file
   document.body.appendChild(element)
   element.click()
+
+  // Cleanup
+  document.body.removeChild(element)
 }
 
 /**
