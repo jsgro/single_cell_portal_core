@@ -6,7 +6,7 @@ import DifferentialExpressionModal from '~/components/explore/DifferentialExpres
 
 import DifferentialExpressionGroupPicker from '~/components/visualization/controls/DifferentialExpressionGroupPicker'
 import { logSearchFromDifferentialExpression } from '~/lib/search-metrics'
-import { fetchBucketFile } from '~/lib/scp-api'
+import { downloadBucketFile } from '~/lib/scp-api'
 
 
 /** Return selected annotation object, including its `values` a.k.a. groups */
@@ -71,9 +71,7 @@ export default function DifferentialExpressionPanel({
       <>
         15 most DE genes
         <a className="de-download-button"
-          onClick={async () => {
-            await fetchBucketFile(bucketId, deFilePath)
-          }}
+          onClick={async () => { await downloadBucketFile(bucketId, deFilePath)}}
           title="Download all DE genes data for this group"
           data-analytics-name="differential-expression-download"
         >
