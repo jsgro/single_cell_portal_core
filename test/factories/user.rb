@@ -2,7 +2,6 @@
 # Rough performance timing in local (non-dockerized) development suggests that crating a user
 # using this factory takes ~0.1 seconds
 FactoryBot.define do
-  random_num = rand(1..100)
   factory :user do
     transient do
       random_seed { SecureRandom.alphanumeric(4).upcase }
@@ -11,14 +10,13 @@ FactoryBot.define do
       test_array { nil }
     end
     # https://github.com/thoughtbot/factory_bot/blob/main/GETTING_STARTED.md#sequences
-    sequence(:email, random_num) { |n| "test.user.#{n}@test.edu" }
+    sequence(:email) { |n| "test.user.#{n}@test.edu" }
     uid { rand(10000..99999) }
     password { "test_password" }
     metrics_uuid { SecureRandom.uuid }
     after(:create) do |user, evaluator|
       if evaluator.test_array
         evaluator.test_array.push(user)
-        puts "email: #{user.email}"
       end
       TosAcceptance.create(email: user.email)
     end
