@@ -382,7 +382,7 @@ export async function downloadBucketFile(bucketId, filePath) {
 
   // name the file and indicate it should download
   const filePathAsArr = filePath.split('/')
-  element.download = `${filePathAsArr.pop()}`
+  element.download = filePathAsArr.pop()
 
   // Simulate clicking the link resulting in downloading the file
   document.body.appendChild(element)
