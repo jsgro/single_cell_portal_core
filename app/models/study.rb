@@ -1040,7 +1040,7 @@ class Study
     has_analysis_outputs?('infercnv', 'ideogram.js') ||
     has_image_files? ||
     user && user.feature_flag_for('differential_expression_frontend') ||
-    self.feature_flag_for('differential_expression_frontend')
+    feature_flag_for('differential_expression_frontend')
   end
 
   # quick getter to return any cell metadata that can_visualize?
