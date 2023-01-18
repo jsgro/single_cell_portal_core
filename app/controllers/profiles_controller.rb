@@ -8,6 +8,7 @@ class ProfilesController < ApplicationController
   ##
 
   before_action :set_user
+  before_action :set_toggle_id, only: [:update, :update_study_subscription, :update_share_subscription]
   before_action do
     authenticate_user!
     check_profile_access
@@ -42,7 +43,7 @@ class ProfilesController < ApplicationController
     if @user.update(user_params)
       @notice = 'Account update successfully recorded.'
     else
-      @alert = "Unable to save account settings: #{@user.errors.map(&:full_messages).join(', ')}"
+      @alert = @user.errors.full_messages.join(', ')
     end
   end
 
@@ -53,8 +54,9 @@ class ProfilesController < ApplicationController
     if @study.update(default_options: opts.merge(deliver_emails: update))
       @notice = 'Study email subscription update successfully recorded.'
     else
-      @alert = "Unable to save study email subscription settings: #{@share.errors.map(&:full_messages).join(', ')}"
+      @alert = @share.errors.full_messages.join(', ')
     end
+    render action: :update
   end
 
   def update_share_subscription
@@ -63,8 +65,9 @@ class ProfilesController < ApplicationController
     if @share.update(deliver_emails: update)
       @notice = 'Study email subscription update successfully recorded.'
     else
-      @alert = "Unable to save study email subscription settings: #{@share.errors.map(&:full_messages).join(', ')}"
+      @alert = @share.errors.full_messages.join(', ')
     end
+    render action: :update
   end
 
   def update_firecloud_profile
@@ -116,6 +119,10 @@ class ProfilesController < ApplicationController
   # set the requested user account
   def set_user
     @user = User.find(params[:id])
+  end
+
+  def set_toggle_id
+    @toggle_id = params[:toggle_id]
   end
 
   # make sure the current user is the same as the requested profile

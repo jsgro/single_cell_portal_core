@@ -1,3 +1,15 @@
-if (<%= @alert.present? %>) {
-  alert('<%= @alert %>')
+if (<%= @notice.present? %>) {
+  // modal unnecessary as toggle has already changed
+  console.log('<%= @notice %>')
+} else {
+  // show error message
+  const errorMsg = '<%= @alert %>'
+  $('#generic-modal .modal-body').html(`<p class="text-danger text-center">${errorMsg}</p>`)
+  $('#generic-modal-spinner').remove('spinner-target')
+  $('#generic-modal-title').html('Unable to save profile settings')
+  $('#generic-modal-footer').remove()
+  $('#generic-modal').modal('show')
+  // reset toggle & form state
+  const toggleId = "<%= @toggle_id %>"
+  flipToggleSwitch($(`#${toggleId}`))
 }

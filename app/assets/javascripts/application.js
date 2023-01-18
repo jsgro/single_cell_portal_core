@@ -638,6 +638,26 @@ function validateCandidateUpload(formId, filename, classSelector) {
     return true;
 }
 
+// toggle inline switch and submit associated AJAX form
+function submitToggleForm(toggle) {
+    flipToggleSwitch(toggle)
+    const formId = $(toggle).data('form-id')
+    $(`#${formId}`).submit();
+}
+
+// change toggle display and update associated hidden form input
+function flipToggleSwitch(toggle) {
+    const inputId = $(toggle).data('input-id')
+    const formField = $(`#${inputId}`);
+    const enabled = formField.val() === 'true'
+    const toggleState = enabled ? 'off' : 'on'
+    const newValue = enabled ? 'false' : 'true';
+    formField.val(newValue);
+    const toggleText = enabled ? `${$(toggle).data('label-off')}` : `${$(toggle).data('label-on')}`
+    const newText = `${toggleText} <i class='fas fa-fw fa-toggle-${toggleState}'></i>`
+    $(toggle).html(newText)
+}
+
 // function to call Google Analytics whenever AJAX call is made
 // must be called manually from every AJAX success or js page render
 function gaTracker(id){
