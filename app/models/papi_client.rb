@@ -442,7 +442,7 @@ class PapiClient
     end
   end
 
-  # sanitizer for GCE label value (lowercase, alphanumeric with dash & underscore only, 64 characters)
+  # sanitizer for GCE label value (lowercase, alphanumeric with dash & underscore only, 63 characters)
   # see https://cloud.google.com/compute/docs/labeling-resources#requirements for more info
   #
   # * *params*
@@ -451,7 +451,7 @@ class PapiClient
   # * *returns*
   #   - (String) => lowercase label with invalid characters removed
   def sanitize_label(label)
-    label.to_s.gsub(LABEL_SANITIZER, '_').downcase[0...64]
+    label.to_s.gsub(LABEL_SANITIZER, '_').downcase[0...63]
   end
 
   private

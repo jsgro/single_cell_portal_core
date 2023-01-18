@@ -274,7 +274,7 @@ class PapiClientTest < ActiveSupport::TestCase
     # test length truncation
     long_label = SecureRandom.alphanumeric(128)
     sanitized_label = @client.sanitize_label(long_label)
-    assert_equal 64, sanitized_label.chars.size
-    assert_equal long_label.downcase.truncate(64, omission: ''), sanitized_label
+    assert_equal 63, sanitized_label.chars.size
+    assert_equal long_label.downcase.truncate(63, omission: ''), sanitized_label
   end
 end
