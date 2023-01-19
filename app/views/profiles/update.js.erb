@@ -1,4 +1,5 @@
-if (<%= @notice.present? %>) {
+const isNoticePresent = <%= @notice.present? %>
+if (isNoticePresent) {
   // modal unnecessary as toggle has already changed
   console.log('<%= @notice %>')
 } else {

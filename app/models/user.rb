@@ -131,7 +131,7 @@ class User
     user
   end
 
-  # overwrite Timeoutable module to check for "opt-in" short session of 15 minutes
+  # override Timeoutable module to check for "opt-in" short session of 15 minutes
   def timeout_in
     use_short_session ? SHORT_SESSION_LENGTH : self.class.timeout_in
   end
