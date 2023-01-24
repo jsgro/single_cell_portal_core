@@ -33,7 +33,7 @@ jobs:
           # this will require rebuilding the image locally as the downstream "test" image will fail otherwise
           # see https://github.com/marketplace/actions/changed-files for more info on this action
           echo "#### CHANGES DETECTED TO DOCKERFILE, REBUILDING IMAGE LOCALLY ####"
-          docker build $DOCKER_IMAGE_NAME:development -f Dockerfile .
+          docker build -t $DOCKER_IMAGE_NAME:development -f Dockerfile .
       - name: Load secrets and run tests
         env:
           VAULT_ADDR: ${{ secrets.VAULT_ADDR }}
