@@ -25,7 +25,8 @@ export function ClusteringUploadForm({
   addNewFile,
   updateFile,
   saveFile,
-  deleteFile
+  deleteFile,
+  isAnnDataExperience
 }) {
   const clusterFiles = formState.files.filter(clusterFileFilter)
 
@@ -88,7 +89,8 @@ export function ClusteringUploadForm({
         </div>
       </div>
     </div>
-    { clusterFiles.length > 1 && <AddFileButton addNewFile={addNewFile} newFileTemplate={DEFAULT_NEW_CLUSTER_FILE}/> }
+    { (!isAnnDataExperience && clusterFiles.length > 1) &&
+      <AddFileButton addNewFile={addNewFile} newFileTemplate={DEFAULT_NEW_CLUSTER_FILE}/> }
     { clusterFiles.map(file => {
       return <ClusteringFileForm
         key={file.oldId ? file.oldId : file._id}
@@ -99,8 +101,9 @@ export function ClusteringUploadForm({
         deleteFile={deleteFile}
         bucketName={formState.study.bucket_id}
         isInitiallyExpanded={clusterFiles.length === 1}
+        isAnnDataExperience={isAnnDataExperience}
       />
     })}
-    <AddFileButton addNewFile={addNewFile} newFileTemplate={DEFAULT_NEW_CLUSTER_FILE}/>
+    {!isAnnDataExperience && <AddFileButton addNewFile={addNewFile} newFileTemplate={DEFAULT_NEW_CLUSTER_FILE}/>}
   </div>
 }

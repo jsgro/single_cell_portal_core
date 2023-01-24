@@ -20,7 +20,8 @@ export default function ClusteringFileForm({
   associatedClusterFileOptions=[],
   updateCorrespondingClusters,
   bucketName,
-  isInitiallyExpanded
+  isInitiallyExpanded,
+  isAnnDataExperience
 }) {
   const spatialClusterAssocs = file.spatial_cluster_associations
     .map(id => associatedClusterFileOptions.find(opt => opt.value === id))
@@ -30,10 +31,18 @@ export default function ClusteringFileForm({
 
   return <ExpandableFileForm {...{
     file, allFiles, updateFile, saveFile,
-    allowedFileExts, deleteFile, validationMessages, bucketName, isInitiallyExpanded
+    allowedFileExts, deleteFile, validationMessages, bucketName, isInitiallyExpanded, isAnnDataExperience
   }}>
-    <TextFormField label="Name" fieldName="name" file={file} updateFile={updateFile}/>
-    { file.is_spatial &&
+    <div className="row">
+      <div className="col-md-6">
+        <TextFormField label="Name" fieldName="name" file={file} updateFile={updateFile}/>
+      </div>
+      <div className="col-md-6">
+        <TextFormField label="OBSM Key Name(s)" fieldName="obsm_key_names" file={file} updateFile={updateFile}/>
+      </div>
+    </div>
+
+    { (file.is_spatial && !isAnnDataExperience) &&
       <div className="form-group">
         <label className="labeled-select">Corresponding clusters
           <Select options={associatedClusterFileOptions}
@@ -49,10 +58,10 @@ export default function ClusteringFileForm({
       fieldName="description" file={file} updateFile={updateFile}/>
 
     <div className="row">
-      <div className="col-md-4">
+      <div className="col-md-3">
         <TextFormField label="X axis label" fieldName="x_axis_label" file={file} updateFile={updateFile}/>
       </div>
-      <div className="col-md-4">
+      <div className="col-md-3">
         <TextFormField label="Y axis label" fieldName="y_axis_label" file={file} updateFile={updateFile}/>
       </div>
     </div>

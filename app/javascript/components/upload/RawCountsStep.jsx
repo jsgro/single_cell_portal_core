@@ -34,7 +34,8 @@ function RawCountsUploadForm({
   addNewFile,
   updateFile,
   saveFile,
-  deleteFile
+  deleteFile,
+  isAnnDataExperience
 }) {
   const rawParentFiles = formState.files.filter(rawCountsFileFilter)
   const fileMenuOptions = serverState.menu_options
@@ -58,7 +59,8 @@ function RawCountsUploadForm({
         </div>
       </div>
     </div>
-    { rawParentFiles.length > 1 && <AddFileButton addNewFile={addNewFile} newFileTemplate={DEFAULT_NEW_RAW_COUNTS_FILE}/> }
+    { (!isAnnDataExperience && rawParentFiles.length > 1) &&
+      <AddFileButton addNewFile={addNewFile} newFileTemplate={DEFAULT_NEW_RAW_COUNTS_FILE}/> }
     { rawParentFiles.map(file => {
       return <ExpressionFileForm
         key={file.oldId ? file.oldId : file._id}
@@ -70,9 +72,10 @@ function RawCountsUploadForm({
         addNewFile={addNewFile}
         fileMenuOptions={fileMenuOptions}
         bucketName={formState.study.bucket_id}
-        isInitiallyExpanded={rawParentFiles.length === 1}/>
+        isInitiallyExpanded={rawParentFiles.length === 1}
+        isAnnDataExperience={isAnnDataExperience}/>
     })}
-    <AddFileButton addNewFile={addNewFile} newFileTemplate={DEFAULT_NEW_RAW_COUNTS_FILE}/>
+    {!isAnnDataExperience && <AddFileButton addNewFile={addNewFile} newFileTemplate={DEFAULT_NEW_RAW_COUNTS_FILE}/>}
   </div>
 }
 

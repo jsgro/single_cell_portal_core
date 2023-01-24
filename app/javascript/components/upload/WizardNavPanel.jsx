@@ -14,7 +14,7 @@ import LoadingSpinner from '~/lib/LoadingSpinner'
 /** renders a list of the steps and summary study information */
 function RawWizardNavPanel({
   formState, serverState, currentStep, setCurrentStep, studyAccession, steps, studyName,
-  mainSteps, supplementalSteps, nonVizSteps
+  mainSteps, supplementalSteps, nonVizSteps, isAnnDataExperience
 }) {
   const [othersExpanded, setOthersExpanded] = useState(true)
   const [supplementalExpanded, setSupplementalExpanded] = useState(true)
@@ -32,7 +32,7 @@ function RawWizardNavPanel({
           currentStep={currentStep}
           setCurrentStep={setCurrentStep}/>) }
     </ul>
-    <VisualizationStatuses serverState={serverState}/>
+    {!isAnnDataExperience && <VisualizationStatuses serverState={serverState}/>}
     <ul className="upload-wizard-steps" role="tablist" data-analytics-name="upload-wizard-secondary-steps">
       <li className="other-header" role="tab" >
         <button className="list-link" onClick={() => setOthersExpanded(!othersExpanded)} >

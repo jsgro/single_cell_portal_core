@@ -35,7 +35,8 @@ function ProcessedUploadForm({
   updateFile,
   saveFile,
   deleteFile,
-  setCurrentStep
+  setCurrentStep,
+  isAnnDataExperience
 }) {
   const processedParentFiles = formState.files.filter(processedFileFilter)
   const fileMenuOptions = serverState.menu_options
@@ -99,7 +100,8 @@ function ProcessedUploadForm({
             </div>
           </div>
         </div>
-        { processedParentFiles.length > 1 && <AddFileButton addNewFile={addNewFile} newFileTemplate={DEFAULT_NEW_PROCESSED_FILE}/> }
+        {(!isAnnDataExperience && processedParentFiles.length > 1) &&
+          <AddFileButton addNewFile={addNewFile} newFileTemplate={DEFAULT_NEW_PROCESSED_FILE}/> }
         { processedParentFiles.map(file => {
           return <ExpressionFileForm
             key={file.oldId ? file.oldId : file._id}
@@ -114,9 +116,10 @@ function ProcessedUploadForm({
             bucketName={formState.study.bucket_id}
             isInitiallyExpanded={processedParentFiles.length === 1}
             featureFlagState={featureFlagState}
+            isAnnDataExperience={isAnnDataExperience}
           />
         })}
-        <AddFileButton addNewFile={addNewFile} newFileTemplate={DEFAULT_NEW_PROCESSED_FILE}/>
+        {!isAnnDataExperience && <AddFileButton addNewFile={addNewFile} newFileTemplate={DEFAULT_NEW_PROCESSED_FILE}/>}
         { !isEnabled && <div className="file-upload-overlay" data-testid="processed-matrix-overlay"></div> }
       </div>
     </div>
