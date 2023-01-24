@@ -34,18 +34,18 @@ case $OPTION in
     VITE_FRONTEND_SERVICE_WORKER_CACHE="true"
     ;;
   h)
-  	echo "$usage"
-  	exit 0
-  	;;
+    echo "$usage"
+    exit 0
+    ;;
   i)
     echo "### SETTING GCR IMAGE TAG TO $OPTARG ###"
     IMAGE_TAG="$OPTARG"
     ;;
   *)
-  	echo "unrecognized option"
-  	echo "$usage"
-  	exit 1
-  	;;
+    echo "unrecognized option"
+    echo "$usage"
+    exit 1
+    ;;
   esac
 done
 export GCR_IMAGE="gcr.io/broad-singlecellportal-staging/single-cell-portal:$IMAGE_TAG"
