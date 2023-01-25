@@ -7,7 +7,6 @@
 usage=$(
 cat <<EOF
 $0 [OPTION]
--b   have Docker build specified image locally rather than pulling from GCR, can use -i to specify new tag
 -d   run docker-compose in detached mode (default is attatched to terminal STDOUT)
 -c   enable VITE_FRONTEND_SERVICE_WORKER_CACHE (default is disabled)
 -i IMAGE_TAG   override default GCR image tag of development
@@ -15,15 +14,11 @@ $0 [OPTION]
 EOF
 )
 
-BUILD_IMAGE="false"
 DETACHED=""
 VITE_FRONTEND_SERVICE_WORKER_CACHE="false"
 IMAGE_TAG="development"
-while getopts "bdchi:" OPTION; do
+while getopts "dchi:" OPTION; do
 case $OPTION in
-  b)
-    BUILD_IMAGE="true"
-    ;;
   d)
     echo "### SETTING DETACHED ###"
     DETACHED="--detach"
@@ -53,8 +48,11 @@ echo "### SETTING UP ENVIRONMENT ###"
 ./rails_local_setup.rb --docker-paths
 source config/secrets/.source_env.bash
 rm tmp/pids/*.pid
-if [[ "$BUILD_IMAGE" = "true" ]]; then
-  echo "### BUILDING $GCR_IMAGE LOCALLY ###"
+# determine if there are upstream changes that would require a rebuild of the Docker image
+LOCAL_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+CHANGED=$(git diff "$LOCAL_BRANCH" development --name-only -- Dockerfile)
+if [[ "$CHANGED" = "Dockerfile" ]]; then
+  echo "### DOCKERFILE CHANGES DETECTED, BUILDING $GCR_IMAGE LOCALLY ###"
   docker build -t "$GCR_IMAGE" .
 else
   echo "### PULLING UPDATED IMAGE FOR $GCR_IMAGE ###"
