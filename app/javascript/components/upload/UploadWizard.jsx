@@ -71,7 +71,7 @@ export function RawUploadWizard({ studyAccession, name }) {
   const [formState, setFormState] = useState(null)
 
   // used for toggling between traditional and AnnData experience of upload wizard
-  const [isAnnDataExperience, setIsAnnDataExperience] = useState(true)
+  const [isAnnDataExperience, setIsAnnDataExperience] = useState(false)
 
   // study attributes to pass to the StudyContext later for use throughout the RawUploadWizard component, if needed
   // use complete study object, rather than defaultStudyState so that any updates to study.rb will be reflected in
