@@ -29,18 +29,30 @@ export default function ClusteringFileForm({
     file, allFiles, allowedFileExts, requiredFields
   })
 
+  /**
+   * Configure the appropriate name form fields for Traditional or AnnData upload experience
+   */
+  function nameFields(isAnnDataExperience) {
+    if (isAnnDataExperience) {
+      return <div className="row">
+        <div className="col-md-6">
+          <TextFormField label="Name" fieldName="name" file={file} updateFile={updateFile}/>
+        </div>
+        <div className="col-md-6">
+          <TextFormField label="OBSM Key Name(s)" fieldName="obsm_key_names" file={file} updateFile={updateFile}/>
+        </div>
+      </div>
+    } else {
+      return <TextFormField label="Name" fieldName="name" file={file} updateFile={updateFile}/>
+    }
+  }
+
+
   return <ExpandableFileForm {...{
     file, allFiles, updateFile, saveFile,
     allowedFileExts, deleteFile, validationMessages, bucketName, isInitiallyExpanded, isAnnDataExperience
   }}>
-    <div className="row">
-      <div className="col-md-6">
-        <TextFormField label="Name" fieldName="name" file={file} updateFile={updateFile}/>
-      </div>
-      <div className="col-md-6">
-        <TextFormField label="OBSM Key Name(s)" fieldName="obsm_key_names" file={file} updateFile={updateFile}/>
-      </div>
-    </div>
+    {nameFields(isAnnDataExperience)}
 
     { (file.is_spatial && !isAnnDataExperience) &&
       <div className="form-group">
@@ -58,10 +70,10 @@ export default function ClusteringFileForm({
       fieldName="description" file={file} updateFile={updateFile}/>
 
     <div className="row">
-      <div className="col-md-3">
+      <div className="col-md-4">
         <TextFormField label="X axis label" fieldName="x_axis_label" file={file} updateFile={updateFile}/>
       </div>
-      <div className="col-md-3">
+      <div className="col-md-4">
         <TextFormField label="Y axis label" fieldName="y_axis_label" file={file} updateFile={updateFile}/>
       </div>
     </div>
