@@ -77,7 +77,7 @@ export default function ExpressionFileForm({
           &nbsp;Sparse matrix (.mtx)
       </label>
     </div>
-}
+    }
     { (!isAnnDataExperience && !isRawCountsFile) &&
       <div className="form-group">
         <label className="labeled-select">Associated raw counts files

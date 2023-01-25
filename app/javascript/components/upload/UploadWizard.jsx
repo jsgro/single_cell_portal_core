@@ -90,8 +90,7 @@ export function RawUploadWizard({ studyAccession, name }) {
     NON_VISUALIZABLE_STEPS = ALL_POSSIBLE_STEPS.slice(8, 10)
   } else {
     SUPPLEMENTAL_STEPS = ALL_POSSIBLE_STEPS.slice(4, 8)
-    NON_VISUALIZABLE_STEPS = ALL_POSSIBLE_STEPS.slice(8)
-
+    NON_VISUALIZABLE_STEPS = ALL_POSSIBLE_STEPS.slice(8, 11)
     if (allowReferenceImageUpload) {
       SUPPLEMENTAL_STEPS.splice(1, 0, ImageStep)
     }

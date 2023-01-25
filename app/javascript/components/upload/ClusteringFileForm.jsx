@@ -39,7 +39,7 @@ export default function ClusteringFileForm({
           <TextFormField label="Name" fieldName="name" file={file} updateFile={updateFile}/>
         </div>
         <div className="col-md-6">
-          <TextFormField label="OBSM Key Name(s)" fieldName="obsm_key_names" file={file} updateFile={updateFile}/>
+          <TextFormField label="OBSM Key Name(s) *" fieldName="obsm_key_names" file={file} updateFile={updateFile} placeholderText="x_tsne.."/>
         </div>
       </div>
     } else {
