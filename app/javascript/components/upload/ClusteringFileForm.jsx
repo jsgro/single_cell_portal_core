@@ -47,7 +47,6 @@ export default function ClusteringFileForm({
     }
   }
 
-
   return <ExpandableFileForm {...{
     file, allFiles, updateFile, saveFile,
     allowedFileExts, deleteFile, validationMessages, bucketName, isInitiallyExpanded, isAnnDataExperience

@@ -57,6 +57,7 @@ const ALL_POSSIBLE_STEPS = [
   ImageStep
 ]
 
+// These steps remain the same for both traditional and AnnData upload experiences
 const MAIN_STEPS = [
   RawCountsStep,
   ProcessedExpressionStep,
@@ -68,6 +69,7 @@ const MAIN_STEPS = [
 export function RawUploadWizard({ studyAccession, name }) {
   const [serverState, setServerState] = useState(null)
   const [formState, setFormState] = useState(null)
+
   // used for toggling between traditional and AnnData experience of upload wizard
   const [isAnnDataExperience, setIsAnnDataExperience] = useState(true)
 
@@ -78,12 +80,11 @@ export function RawUploadWizard({ studyAccession, name }) {
 
   const allowReferenceImageUpload = serverState?.feature_flags?.reference_image_upload
 
-  // set the steps to use based on traditional or AnnData experience
+  let STEPS = MAIN_STEPS
+  let SUPPLEMENTAL_STEPS
   let NON_VISUALIZABLE_STEPS
 
-  let STEPS_TO_USE = MAIN_STEPS
-  let SUPPLEMENTAL_STEPS
-
+  // set the additional steps to display, based on traditional or AnnData experience
   if (isAnnDataExperience) {
     SUPPLEMENTAL_STEPS = ALL_POSSIBLE_STEPS.slice(6, 7)
     NON_VISUALIZABLE_STEPS = ALL_POSSIBLE_STEPS.slice(8, 10)
@@ -95,16 +96,17 @@ export function RawUploadWizard({ studyAccession, name }) {
       SUPPLEMENTAL_STEPS.splice(1, 0, ImageStep)
     }
   }
-  STEPS_TO_USE = STEPS_TO_USE.concat(SUPPLEMENTAL_STEPS, NON_VISUALIZABLE_STEPS)
-  console.log('steps to use;', STEPS_TO_USE)
+
+  STEPS = STEPS.concat(SUPPLEMENTAL_STEPS, NON_VISUALIZABLE_STEPS)
+
   const routerLocation = useLocation()
   const queryParams = queryString.parse(routerLocation.search)
 
-  let currentStepIndex = STEPS_TO_USE.findIndex(step => step.name === queryParams.tab)
+  let currentStepIndex = STEPS.findIndex(step => step.name === queryParams.tab)
   if (currentStepIndex < 0) {
     currentStepIndex = 0
   }
-  const currentStep = STEPS_TO_USE[currentStepIndex]
+  const currentStep = STEPS[currentStepIndex]
 
   // go through the files and compute any relevant derived properties, notably 'isDirty'
   if (formState?.files) {
@@ -363,8 +365,8 @@ export function RawUploadWizard({ studyAccession, name }) {
     window.document.title = `Upload - Single Cell Portal`
   }, [studyAccession])
 
-  const nextStep = STEPS_TO_USE[currentStepIndex + 1]
-  const prevStep = STEPS_TO_USE[currentStepIndex - 1]
+  const nextStep = STEPS[currentStepIndex + 1]
+  const prevStep = STEPS[currentStepIndex - 1]
   return (
     <StudyContext.Provider value={studyObj}>
       <div className="upload-wizard-react">
