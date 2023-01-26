@@ -1,9 +1,10 @@
 
 import React, { useState } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faArrowLeft, faDownload } from '@fortawesome/free-solid-svg-icons'
-import DifferentialExpressionModal from '~/components/explore/DifferentialExpressionModal'
+import { faArrowLeft, faDownload, faSearch, faTimes } from '@fortawesome/free-solid-svg-icons'
+import Button from 'react-bootstrap/lib/Button'
 
+import DifferentialExpressionModal from '~/components/explore/DifferentialExpressionModal'
 import DifferentialExpressionGroupPicker from '~/components/visualization/controls/DifferentialExpressionGroupPicker'
 import { logSearchFromDifferentialExpression } from '~/lib/search-metrics'
 import { downloadBucketFile } from '~/lib/scp-api'
@@ -31,6 +32,19 @@ function initChecked(deGenes, checkedGene) {
   return checked
 }
 
+function DownloadButton({bucketId, deFilePath}) {
+  return (
+    <a className="de-download-button"
+      onClick={async () => {await downloadBucketFile(bucketId, deFilePath)}}
+      data-analytics-name="differential-expression-download"
+      data-toggle="tooltip"
+      data-original-title="Download all DE genes data for this group"
+    >
+      <FontAwesomeIcon icon={faDownload}/>
+    </a>
+  )
+}
+
 /** Differential expression panel shown at right in Explore tab */
 export default function DifferentialExpressionPanel({
   deGroup, deGenes, searchGenes,
@@ -42,6 +56,9 @@ export default function DifferentialExpressionPanel({
   const annotation = getAnnotationObject(exploreParamsWithDefaults, exploreInfo)
   const deObjects = exploreInfo?.differentialExpression
 
+  // filter text for searching the legend
+  const [searchedDEGene, setSearchedDEGene] = useState('')
+
   const [checked, setChecked] = useState(initChecked(deGenes))
   const [deFilePath, setDeFilePath] = useState(null)
 
@@ -49,6 +66,41 @@ export default function DifferentialExpressionPanel({
   function changeRadio(event) {
     const newChecked = initChecked(deGenes, event.target.value)
     setChecked(newChecked)
+  }
+
+  /** Handle a user pressing the 'x' to clear the field */
+  function handleClear() {
+    setSearchedDEGene('')
+  }
+
+  /** Only show clear button if text is entered in search box */
+  const showClear = searchedDEGene !== ''
+
+  function SearchButton() {
+    return (
+      <>
+        <span className='de-search-icon'>
+          <FontAwesomeIcon icon={faSearch} />
+        </span>
+        <input
+          id="filter"
+          data-analytics-name="differential-expression-search"
+          name="filter"
+          type="text"
+          className="no-border"
+          placeholder="Search gene"
+          value={searchedDEGene}
+          onChange={event => setSearchedDEGene(event.target.value)}
+        />
+        { showClear && <Button
+          type='button'
+          data-analytics-name='clear-de-search'
+          className='clear-search-icon'
+          onClick={handleClear} >
+          <FontAwesomeIcon icon={faTimes} />
+        </Button> }
+      </>
+    )
   }
 
   return (
@@ -70,14 +122,10 @@ export default function DifferentialExpressionPanel({
       {deGenes &&
       <>
         15 most DE genes
-        <a className="de-download-button"
-          onClick={async () => {await downloadBucketFile(bucketId, deFilePath)}}
-          data-analytics-name="differential-expression-download"
-          data-toggle="tooltip"
-          data-original-title="Download all DE genes data for this group"
-        >
-          <FontAwesomeIcon icon={faDownload}/>
-        </a>
+
+        <SearchButton />
+
+        <DownloadButton bucketId={bucketId} deFilePath={deFilePath} />
 
         <DifferentialExpressionModal />
 
