@@ -1,7 +1,7 @@
 services:
   app:
     container_name: single_cell
-    image: "${GCR_IMAGE}"
+    image: gcr.io/broad-singlecellportal-staging/single-cell-portal:development
     environment:
       VITE_RUBY_HOST: vite
     depends_on:
@@ -21,7 +21,7 @@ services:
         target: /home/app/webapp/node_modules
   vite:
     container_name: single_cell_vite
-    image: "${GCR_IMAGE}"
+    image: gcr.io/broad-singlecellportal-staging/single-cell-portal:development
     entrypoint: ./vite-dev-entrypoint.sh
     environment:
       RAILS_ENV: development
