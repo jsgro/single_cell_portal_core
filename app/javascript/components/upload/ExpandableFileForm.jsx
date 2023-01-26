@@ -17,7 +17,7 @@ export default function ExpandableFileForm({
 }) {
   const [expanded, setExpanded] = useState(isInitiallyExpanded || file.status === 'new')
 
-  const doNotShowFileUploadControls = displayFileUploadControls(isAnnDataExperience, allFiles)
+  const isUploadEnabled = getIsUploadEnabled(isAnnDataExperience, allFiles)
 
   /** handle a click on the header bar (not the expand button itself) */
   function handleDivClick(e) {
@@ -47,7 +47,7 @@ export default function ExpandableFileForm({
               <FontAwesomeIcon icon={expanded ? faChevronUp : faChevronDown} />
             </button>
           </div>
-          {!doNotShowFileUploadControls && <div className="flexbox">
+          {isUploadEnabled && <div className="flexbox">
             <FileUploadControl
               file={file}
               allFiles={allFiles}
@@ -56,7 +56,7 @@ export default function ExpandableFileForm({
               validationMessages={validationMessages}
               bucketName={bucketName} />
           </div>}
-          {!doNotShowFileUploadControls && <SaveDeleteButtons {...{ file, updateFile, saveFile, deleteFile, validationMessages }} /> }
+          {isUploadEnabled && <SaveDeleteButtons {...{ file, updateFile, saveFile, deleteFile, validationMessages }} /> }
         </div>
         {expanded && children}
         <SavingOverlay file={file} updateFile={updateFile} />
@@ -207,13 +207,13 @@ function DeleteButton({ file, deleteFile, setShowConfirmDeleteModal }) {
  * @param {array} allFiles
  * @returns {boolean} Whether to show upload control buttons or not
  */
-function displayFileUploadControls(isAnnDataExperience, allFiles) {
+function getIsUploadEnabled(isAnnDataExperience, allFiles) {
   const isClustering = allFiles.filter(clusterFileFilter)
   const isMeta = allFiles.filter(metadataFileFilter)
   const isProcessedMatrix = allFiles.filter(processedFileFilter)
   const isRawCount = allFiles.filter(rawCountsFileFilter)
 
-  return !!((isClustering || isMeta || isProcessedMatrix || isRawCount) && isAnnDataExperience)
+  return !((isClustering || isMeta || isProcessedMatrix || isRawCount) && isAnnDataExperience)
 }
 
 const parsingPopup = <Popover id="parsing-tooltip" className="tooltip-wide">

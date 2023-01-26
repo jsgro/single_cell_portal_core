@@ -26,7 +26,7 @@ function RawWizardNavPanel({
 
 
   return <div className="wizard-side-panel">
-    {mainStepsDisplay(formState, serverState, currentStep, setCurrentStep, mainSteps, isAnnDataExperience, annDataMainExpanded, setAnnDataMainExpanded, expansionIcon3)}
+    {MainStepsDisplay(formState, serverState, currentStep, setCurrentStep, mainSteps, isAnnDataExperience, annDataMainExpanded, setAnnDataMainExpanded, expansionIcon3)}
     <ul className="upload-wizard-steps" role="tablist" data-analytics-name="upload-wizard-secondary-steps">
       <li className="other-header" role="tab" >
         <button className="list-link" onClick={() => setOthersExpanded(!othersExpanded)} >
@@ -173,10 +173,10 @@ function clusteringHelpContent(isClusteringParsing) {
 /**
  * Return the appropriate display of the main steps based on traditional or AnnData upload experience
  */
-function mainStepsDisplay(formState, serverState, currentStep, setCurrentStep, mainSteps,
+function MainStepsDisplay(formState, serverState, currentStep, setCurrentStep, mainSteps,
   isAnnDataExperience, annDataMainExpanded, setAnnDataMainExpanded, expansionIcon) {
   if (isAnnDataExperience) {
-    return <ul className="upload-wizard-steps" role="tablist" data-analytics-name="upload-wizard-anndata-primary-steps">
+    return <ul className="upload-wizard-steps" role="tablist" data-analytics-name="upload-wizard-anndata-main-steps">
       <li className="other-header" role="tab" >
         <button className="list-link" onClick={() => setAnnDataMainExpanded(!annDataMainExpanded)} >
           <span className="step-number">
@@ -201,7 +201,7 @@ function mainStepsDisplay(formState, serverState, currentStep, setCurrentStep, m
     </ul>
   } else {
     return <span>
-      <ul className="upload-wizard-steps" role="tablist" data-analytics-name="upload-wizard-primary-steps">
+      <ul className="upload-wizard-steps" role="tablist" data-analytics-name="upload-wizard-main-steps">
         { mainSteps.map((step, index) =>
           <StepTabHeader key={index}
             step={step}
