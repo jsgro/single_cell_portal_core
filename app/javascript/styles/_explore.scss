@@ -167,7 +167,7 @@
 
 .study-explore .view-options {
   // leave room for the 'view options' toggle
-	margin-top: 3em;
+  margin-top: 3em;
 }
 
 .render-controls {
@@ -198,23 +198,3 @@
   }
 }
 
-.de-modal-row-wrapper {
-  position: relative;
-  top: -15px;
-    .de-modal-row {
-	  a.de-info-help-icon {
-		  margin-left: 10px;
-		  vertical-align: middle;
-	  }
-  }
-}
-
-.de-download-button{
-  margin-right: 0.5em;
-  margin-left: 1em;
-  display: inline-block;
-  vertical-align: middle;
-  padding: 2px 5px;
-  border-radius: 4px;
-}
-  
