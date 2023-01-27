@@ -73,6 +73,7 @@ export default function DifferentialExpressionPanel({
   /** Handle a user pressing the 'x' to clear the field */
   function handleClear() {
     setSearchedGene('')
+    setGenesToShow(deGenes.slice(0, numRows))
   }
 
   window.deGenes = deGenes
@@ -81,9 +82,7 @@ export default function DifferentialExpressionPanel({
 
   /** Update genes in table based on what user searches */
   useEffect(() => {
-    console.log('in DifferentialExpressionPanel useEffect, deGenes:')
-    console.log(deGenes)
-    let filteredGenes = null
+    let filteredGenes
     if (searchedGene === '') {
       filteredGenes = deGenes
     } else {
@@ -92,9 +91,8 @@ export default function DifferentialExpressionPanel({
     }
 
     if (deGenes) filteredGenes = filteredGenes.slice(0, numRows)
-
     setGenesToShow(filteredGenes)
-  }, [searchedGene])
+  }, [deGenes, searchedGene])
 
   function SearchButton() {
     return (
