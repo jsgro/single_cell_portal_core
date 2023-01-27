@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faArrowLeft, faDownload, faSearch, faTimes } from '@fortawesome/free-solid-svg-icons'
 import Button from 'react-bootstrap/lib/Button'
@@ -49,15 +49,17 @@ function DownloadButton({bucketId, deFilePath}) {
 export default function DifferentialExpressionPanel({
   deGroup, deGenes, searchGenes,
   exploreInfo, exploreParamsWithDefaults, setShowDeGroupPicker, setDeGenes, setDeGroup,
-  countsByLabel
+  countsByLabel, numRows=15
 }) {
+  console.log('0 begin DifferentialExpressionPanel, deGenes:', deGenes)
   const clusterName = exploreParamsWithDefaults?.cluster
   const bucketId = exploreInfo?.bucketId
   const annotation = getAnnotationObject(exploreParamsWithDefaults, exploreInfo)
   const deObjects = exploreInfo?.differentialExpression
 
   // filter text for searching the legend
-  const [searchedDEGene, setSearchedDEGene] = useState('')
+  const [genesToShow, setGenesToShow] = useState(deGenes)
+  const [searchedGene, setSearchedGene] = useState('')
 
   const [checked, setChecked] = useState(initChecked(deGenes))
   const [deFilePath, setDeFilePath] = useState(null)
@@ -70,11 +72,29 @@ export default function DifferentialExpressionPanel({
 
   /** Handle a user pressing the 'x' to clear the field */
   function handleClear() {
-    setSearchedDEGene('')
+    setSearchedGene('')
   }
 
+  window.deGenes = deGenes
   /** Only show clear button if text is entered in search box */
-  const showClear = searchedDEGene !== ''
+  const showClear = searchedGene !== ''
+
+  /** Update genes in table based on what user searches */
+  useEffect(() => {
+    console.log('in DifferentialExpressionPanel useEffect, deGenes:')
+    console.log(deGenes)
+    let filteredGenes = null
+    if (searchedGene === '') {
+      filteredGenes = deGenes
+    } else {
+      const lowerCaseSearchedGene = searchedGene.toLowerCase()
+      filteredGenes = deGenes.filter(d => d.name.toLowerCase().includes(lowerCaseSearchedGene))
+    }
+
+    if (deGenes) filteredGenes = filteredGenes.slice(0, numRows)
+
+    setGenesToShow(filteredGenes)
+  }, [searchedGene])
 
   function SearchButton() {
     return (
@@ -89,13 +109,13 @@ export default function DifferentialExpressionPanel({
           type="text"
           className="no-border"
           placeholder="Search gene"
-          value={searchedDEGene}
-          onChange={event => setSearchedDEGene(event.target.value)}
+          value={searchedGene}
+          onChange={event => setSearchedGene(event.target.value)}
         />
         { showClear && <Button
-          type='button'
-          data-analytics-name='clear-de-search'
-          className='clear-search-icon'
+          type="button"
+          data-analytics-name="clear-de-search"
+          className="clear-search-icon"
           onClick={handleClear} >
           <FontAwesomeIcon icon={faTimes} />
         </Button> }
@@ -119,7 +139,7 @@ export default function DifferentialExpressionPanel({
         setDeFilePath={setDeFilePath}
       />
 
-      {deGenes &&
+      {genesToShow &&
       <>
         15 most DE genes
 
@@ -146,7 +166,7 @@ export default function DifferentialExpressionPanel({
             </tr>
           </thead>
           <tbody>
-            {deGenes.map((deGene, i) => {
+            {genesToShow.map((deGene, i) => {
               return (
                 <tr key={i}>
                   <td>
