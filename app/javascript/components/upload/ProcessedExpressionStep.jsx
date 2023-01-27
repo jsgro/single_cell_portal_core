@@ -1,7 +1,7 @@
 import React, { useEffect, useContext } from 'react'
 
 import ExpressionFileForm from './ExpressionFileForm'
-import { rawCountsFileFilter, expressionFileStructureHelp, getExpressionFileInfoMessage } from './RawCountsStep'
+import { rawCountsFileFilter, getExpressionFileInfoMessage } from './RawCountsStep'
 import { AddFileButton } from './form-components'
 
 const DEFAULT_NEW_PROCESSED_FILE = {
@@ -88,14 +88,7 @@ function ProcessedUploadForm({
     }
     <div className="row">
       <div className="col-md-12">
-        <div className="row">
-          <div className="col-md-12">
-            <div className="form-terra">
-              {getExpressionFileInfoMessage(isAnnDataExperience, 'Processed')}
-              {!isAnnDataExperience && expressionFileStructureHelp }
-            </div>
-          </div>
-        </div>
+        {getExpressionFileInfoMessage(isAnnDataExperience, 'Processed')}
         {(!isAnnDataExperience && processedParentFiles.length > 1) &&
           <AddFileButton addNewFile={addNewFile} newFileTemplate={DEFAULT_NEW_PROCESSED_FILE}/> }
         { processedParentFiles.map(file => {
