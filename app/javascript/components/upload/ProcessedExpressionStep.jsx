@@ -1,7 +1,7 @@
 import React, { useEffect, useContext } from 'react'
 
 import ExpressionFileForm from './ExpressionFileForm'
-import { rawCountsFileFilter, expressionFileStructureHelp } from './RawCountsStep'
+import { rawCountsFileFilter, expressionFileStructureHelp, getExpressionFileInfoMessage } from './RawCountsStep'
 import { AddFileButton } from './form-components'
 
 const DEFAULT_NEW_PROCESSED_FILE = {
@@ -58,7 +58,7 @@ function ProcessedUploadForm({
   }, [processedParentFiles.length])
 
   return <div>
-    { !isEnabled &&
+    { !isAnnDataExperience && !isEnabled &&
       <div className="row">
         <div className="col-md-12 padded">
           <p className="left-margin">
@@ -91,12 +91,8 @@ function ProcessedUploadForm({
         <div className="row">
           <div className="col-md-12">
             <div className="form-terra">
-              <div className="row">
-                <div className="col-md-12">
-                  <p>Processed matrix data is used to support gene expression visualizations. Gene expression scores can be uploaded in either of two file types:</p>
-                </div>
-              </div>
-              { expressionFileStructureHelp }
+              {getExpressionFileInfoMessage(isAnnDataExperience, 'Processed')}
+              {!isAnnDataExperience && expressionFileStructureHelp }
             </div>
           </div>
         </div>
