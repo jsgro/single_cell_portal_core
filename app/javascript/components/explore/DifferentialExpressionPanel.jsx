@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faArrowLeft, faDownload, faSearch, faTimes } from '@fortawesome/free-solid-svg-icons'
 import Button from 'react-bootstrap/lib/Button'
@@ -115,6 +115,8 @@ export default function DifferentialExpressionPanel({
   const annotation = getAnnotationObject(exploreParamsWithDefaults, exploreInfo)
   const deObjects = exploreInfo?.differentialExpression
 
+  const inputRef = useRef(null)
+
   // filter text for searching the legend
   const [genesToShow, setGenesToShow] = useState(deGenes)
   const [searchedGene, setSearchedGene] = useState('')
@@ -152,13 +154,15 @@ export default function DifferentialExpressionPanel({
     setGenesToShow(filteredGenes)
   }, [deGenes, searchedGene])
 
-  function SearchButton() {
+  function SearchButton({inputRef}) {
     return (
       <>
         <span className='de-search-icon'>
           <FontAwesomeIcon icon={faSearch} />
         </span>
         <input
+          ref={inputRef}
+          autoFocus={inputRef.current === document.activeElement}
           id="de-search-box"
           name="de-search-box"
           type="text"
@@ -199,7 +203,7 @@ export default function DifferentialExpressionPanel({
       <>
         15 most DE genes
 
-        <SearchButton />
+        <SearchButton inputRef={inputRef}/>
 
         <DownloadButton bucketId={bucketId} deFilePath={deFilePath} />
 
