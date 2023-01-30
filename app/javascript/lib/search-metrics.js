@@ -175,7 +175,6 @@ export function logSearch(type, searchParams, perfTimes, searchResults) {
   )
 }
 
-
 /** log a search from the study explore tab */
 export function logStudyGeneSearch(genes, trigger, speciesList, otherProps) {
   // Properties logged for all gene searches from Study Overview
@@ -291,6 +290,26 @@ export function logSelectSearchResult(study, logProps={}) {
   delete refinedLogProps[`results:facets`] // Refactor as part of SCP-4256
 
   log('select-search-result', refinedLogProps)
+}
+
+/**
+ * Log search of the differential expression table, to find genes in it.
+ *
+ * While we call this "Search" in the UI / product docs (and thus
+ * refer to it with that term in these analytics, which are often used by product
+ * folks), these searches do not trigger a new scatter plot.
+ */
+export function logDifferentialExpressionTableSearch(genes, speciesList, otherProps) {
+  const props = Object.assign({
+    type: 'gene',
+    context: 'differential-expression-table',
+    trigger: 'change',
+    genes,
+    numGenes: genes.length,
+    speciesList
+  }, otherProps)
+
+  log('search', props)
 }
 
 /** Log study gene search triggered by selection in differential expression panel */

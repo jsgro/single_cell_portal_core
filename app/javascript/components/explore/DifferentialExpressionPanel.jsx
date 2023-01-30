@@ -6,7 +6,10 @@ import Button from 'react-bootstrap/lib/Button'
 
 import DifferentialExpressionModal from '~/components/explore/DifferentialExpressionModal'
 import DifferentialExpressionGroupPicker from '~/components/visualization/controls/DifferentialExpressionGroupPicker'
-import { logSearchFromDifferentialExpression } from '~/lib/search-metrics'
+import {
+  logDifferentialExpressionTableSearch,
+  logSearchFromDifferentialExpression
+} from '~/lib/search-metrics'
 import { downloadBucketFile } from '~/lib/scp-api'
 
 
@@ -45,7 +48,7 @@ function DownloadButton({bucketId, deFilePath}) {
   )
 }
 
-function DifferentialExpressionTable({genesToShow, searchGenes, checked, exploreInfo, changeRadio}) {
+function DifferentialExpressionTable({genesToShow, searchGenes, checked, species, changeRadio}) {
   return (
     <>
     <table data-testid="differential-expression-table" className="table table-terra table-scp-compact">
@@ -80,10 +83,9 @@ function DifferentialExpressionTable({genesToShow, searchGenes, checked, explore
                       searchGenes([deGene.name])
 
                       // Log this search to Mixpanel
-                      const speciesList = exploreInfo?.taxonNames
                       const rank = i
                       logSearchFromDifferentialExpression(
-                        event, deGene, speciesList, rank,
+                        event, deGene, species, rank,
                         clusterName, annotation.name
                       )
 
@@ -109,13 +111,16 @@ export default function DifferentialExpressionPanel({
   exploreInfo, exploreParamsWithDefaults, setShowDeGroupPicker, setDeGenes, setDeGroup,
   countsByLabel, numRows=15
 }) {
-  console.log('0 begin DifferentialExpressionPanel, deGenes:', deGenes)
+  // console.log('0 begin DifferentialExpressionPanel, deGenes:', deGenes)
   const clusterName = exploreParamsWithDefaults?.cluster
   const bucketId = exploreInfo?.bucketId
   const annotation = getAnnotationObject(exploreParamsWithDefaults, exploreInfo)
   const deObjects = exploreInfo?.differentialExpression
 
+  // Used to preserve input focus across parent re-renders
   const inputRef = useRef(null)
+
+  const delayedDETableLogTimeout = useRef(null)
 
   // filter text for searching the legend
   const [genesToShow, setGenesToShow] = useState(deGenes)
@@ -123,6 +128,8 @@ export default function DifferentialExpressionPanel({
 
   const [checked, setChecked] = useState(initChecked(deGenes))
   const [deFilePath, setDeFilePath] = useState(null)
+
+  const species = exploreInfo?.taxonNames
 
   /** Check radio button such that changing group unchecks all buttons */
   function changeRadio(event) {
@@ -132,13 +139,29 @@ export default function DifferentialExpressionPanel({
 
   /** Handle a user pressing the 'x' to clear the field */
   function handleClear() {
-    setSearchedGene('')
+    updateSearchedGene('')
     setGenesToShow(deGenes.slice(0, numRows))
   }
 
   window.deGenes = deGenes
   /** Only show clear button if text is entered in search box */
   const showClear = searchedGene !== ''
+
+  function updateSearchedGene(newSearchedGene) {
+    setSearchedGene(newSearchedGene)
+
+    // Log search on DE table after 1 second since last change
+    // This prevents logging "searches" on "P", "T", "E", and "N" if
+    // the string "PTEN" is typed in a speed plausible for someone who
+    // knows they want to search PTEN, without stopping to explore interstitial
+    // results in the DE table.
+    clearTimeout(delayedDETableLogTimeout.current)
+    delayedDETableLogTimeout.current = setTimeout(() => {
+      const otherProps = {}
+      const genes = [newSearchedGene]
+      logDifferentialExpressionTableSearch(genes, species, otherProps)
+    }, 1000)
+  }
 
   /** Update genes in table based on what user searches */
   useEffect(() => {
@@ -169,7 +192,7 @@ export default function DifferentialExpressionPanel({
           className="no-border"
           placeholder="Search gene"
           value={searchedGene}
-          onChange={event => setSearchedGene(event.target.value)}
+          onChange={event => updateSearchedGene(event.target.value)}
           data-analytics-name="differential-expression-search"
         />
         { showClear && <Button
@@ -213,7 +236,7 @@ export default function DifferentialExpressionPanel({
           genesToShow={genesToShow}
           searchGenes={searchGenes}
           checked={checked}
-          exploreInfo={exploreInfo}
+          species={species}
           changeRadio={changeRadio}
         />
       </>
