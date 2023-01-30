@@ -101,14 +101,14 @@ export default function DifferentialExpressionPanel({
           <FontAwesomeIcon icon={faSearch} />
         </span>
         <input
-          id="filter"
-          data-analytics-name="differential-expression-search"
-          name="filter"
+          id="de-search-box"
+          name="de-search-box"
           type="text"
           className="no-border"
           placeholder="Search gene"
           value={searchedGene}
           onChange={event => setSearchedGene(event.target.value)}
+          data-analytics-name="differential-expression-search"
         />
         { showClear && <Button
           type="button"
