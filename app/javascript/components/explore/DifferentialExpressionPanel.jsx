@@ -177,19 +177,18 @@ export default function DifferentialExpressionPanel({
     setGenesToShow(filteredGenes)
   }, [deGenes, searchedGene])
 
-  function SearchButton({inputRef}) {
+  function SearchBox({inputRef}) {
     return (
-      <>
-        <span className='de-search-icon'>
+      <div class="de-search-box">
+        <span className="de-search-icon">
           <FontAwesomeIcon icon={faSearch} />
         </span>
         <input
           ref={inputRef}
           autoFocus={inputRef.current === document.activeElement}
-          id="de-search-box"
-          name="de-search-box"
+          className="de-search-input no-border"
+          name="de-search-input"
           type="text"
-          className="no-border"
           placeholder="Search gene"
           value={searchedGene}
           onChange={event => updateSearchedGene(event.target.value)}
@@ -198,11 +197,11 @@ export default function DifferentialExpressionPanel({
         { showClear && <Button
           type="button"
           data-analytics-name="clear-de-search"
-          className="clear-search-icon"
+          className="clear-de-search-icon"
           onClick={handleClear} >
           <FontAwesomeIcon icon={faTimes} />
         </Button> }
-      </>
+      </div>
     )
   }
 
@@ -224,13 +223,12 @@ export default function DifferentialExpressionPanel({
 
       {genesToShow &&
       <>
-        15 most DE genes
+        <SearchBox inputRef={inputRef}/>
 
-        <SearchButton inputRef={inputRef}/>
-
-        <DownloadButton bucketId={bucketId} deFilePath={deFilePath} />
-
-        <DifferentialExpressionModal />
+        <div className="de-table-buttons">
+          <DownloadButton bucketId={bucketId} deFilePath={deFilePath} />
+          <DifferentialExpressionModal />
+        </div>
 
         <DifferentialExpressionTable
           genesToShow={genesToShow}
