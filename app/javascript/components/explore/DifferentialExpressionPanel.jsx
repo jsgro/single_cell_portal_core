@@ -45,6 +45,64 @@ function DownloadButton({bucketId, deFilePath}) {
   )
 }
 
+function DifferentialExpressionTable({genesToShow, searchGenes, checked, exploreInfo, changeRadio}) {
+  return (
+    <>
+    <table data-testid="differential-expression-table" className="table table-terra table-scp-compact">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>
+            <span className="glossary" data-toggle="tooltip" data-original-title="Log (base 2) of fold change">
+              log<sub>2</sub>(FC)
+            </span>
+          </th>
+          <th>
+            <span className="glossary" data-toggle="tooltip" data-original-title="p-value adjusted with Benjamini-Hochberg FDR correction">
+              Adj. p-value
+            </span>
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        {genesToShow.map((deGene, i) => {
+          return (
+            <tr key={i}>
+              <td>
+                <label
+                  title="Click to view gene expression.  Arrow down (↓) and up (↑) to quickly scan."
+                ><input
+                    type="radio"
+                    checked={checked[deGene.name]}
+                    data-analytics-name="selected-gene-differential-expression"
+                    value={deGene.name}
+                    onClick={event => {
+                      searchGenes([deGene.name])
+
+                      // Log this search to Mixpanel
+                      const speciesList = exploreInfo?.taxonNames
+                      const rank = i
+                      logSearchFromDifferentialExpression(
+                        event, deGene, speciesList, rank,
+                        clusterName, annotation.name
+                      )
+
+                      changeRadio(event)
+                    }}/>
+                  {deGene.name}</label></td>
+              <td>{deGene.log2FoldChange}</td>
+              <td>{deGene.pvalAdj}</td>
+            </tr>)
+        })}
+      </tbody>
+    </table>
+    <a href="https://forms.gle/qPGH5J9oFkurpbD76" target="_blank" title="Take a 1 minute survey">
+      Help improve this new feature
+    </a>
+  </>
+  )
+}
+
 /** Differential expression panel shown at right in Explore tab */
 export default function DifferentialExpressionPanel({
   deGroup, deGenes, searchGenes,
@@ -147,57 +205,13 @@ export default function DifferentialExpressionPanel({
 
         <DifferentialExpressionModal />
 
-        <table data-testid="differential-expression-table" className="table table-terra table-scp-compact">
-          <thead>
-            <tr>
-              <th>Name</th>
-              <th>
-                <span className="glossary" data-toggle="tooltip" data-original-title="Log (base 2) of fold change">
-                  log<sub>2</sub>(FC)
-                </span>
-              </th>
-              <th>
-                <span className="glossary" data-toggle="tooltip" data-original-title="p-value adjusted with Benjamini-Hochberg FDR correction">
-                  Adj. p-value
-                </span>
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {genesToShow.map((deGene, i) => {
-              return (
-                <tr key={i}>
-                  <td>
-                    <label
-                      title="Click to view gene expression.  Arrow down (↓) and up (↑) to quickly scan."
-                    ><input
-                        type="radio"
-                        checked={checked[deGene.name]}
-                        data-analytics-name="selected-gene-differential-expression"
-                        value={deGene.name}
-                        onClick={event => {
-                          searchGenes([deGene.name])
-
-                          // Log this search to Mixpanel
-                          const speciesList = exploreInfo?.taxonNames
-                          const rank = i
-                          logSearchFromDifferentialExpression(
-                            event, deGene, speciesList, rank,
-                            clusterName, annotation.name
-                          )
-
-                          changeRadio(event)
-                        }}/>
-                      {deGene.name}</label></td>
-                  <td>{deGene.log2FoldChange}</td>
-                  <td>{deGene.pvalAdj}</td>
-                </tr>)
-            })}
-          </tbody>
-        </table>
-        <a href="https://forms.gle/qPGH5J9oFkurpbD76" target="_blank" title="Take a 1 minute survey">
-          Help improve this new feature
-        </a>
+        <DifferentialExpressionTable
+          genesToShow={genesToShow}
+          searchGenes={searchGenes}
+          checked={checked}
+          exploreInfo={exploreInfo}
+          changeRadio={changeRadio}
+        />
       </>
       }
     </>
