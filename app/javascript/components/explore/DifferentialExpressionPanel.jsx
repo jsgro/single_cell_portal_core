@@ -6,6 +6,8 @@ import Button from 'react-bootstrap/lib/Button'
 
 import DifferentialExpressionModal from '~/components/explore/DifferentialExpressionModal'
 import DifferentialExpressionGroupPicker from '~/components/visualization/controls/DifferentialExpressionGroupPicker'
+import ControlledInput from '~/components/visualization/controls/ControlledInput'
+
 import {
   logDifferentialExpressionTableSearch,
   logSearchFromDifferentialExpression
@@ -117,9 +119,6 @@ export default function DifferentialExpressionPanel({
   const annotation = getAnnotationObject(exploreParamsWithDefaults, exploreInfo)
   const deObjects = exploreInfo?.differentialExpression
 
-  // Used to preserve input focus across parent re-renders
-  const inputRef = useRef(null)
-
   const delayedDETableLogTimeout = useRef(null)
 
   // filter text for searching the legend
@@ -175,34 +174,11 @@ export default function DifferentialExpressionPanel({
 
     if (deGenes) filteredGenes = filteredGenes.slice(0, numRows)
     setGenesToShow(filteredGenes)
+
   }, [deGenes, searchedGene])
 
-  function SearchBox({inputRef}) {
-    return (
-      <div class="de-search-box">
-        <span className="de-search-icon">
-          <FontAwesomeIcon icon={faSearch} />
-        </span>
-        <input
-          ref={inputRef}
-          autoFocus={inputRef.current === document.activeElement}
-          className="de-search-input no-border"
-          name="de-search-input"
-          type="text"
-          placeholder="Search gene"
-          value={searchedGene}
-          onChange={event => updateSearchedGene(event.target.value)}
-          data-analytics-name="differential-expression-search"
-        />
-        { showClear && <Button
-          type="button"
-          data-analytics-name="clear-de-search"
-          className="clear-de-search-icon"
-          onClick={handleClear} >
-          <FontAwesomeIcon icon={faTimes} />
-        </Button> }
-      </div>
-    )
+  function handleChange(event) {
+    updateSearchedGene(event.target.value)
   }
 
   return (
@@ -223,7 +199,29 @@ export default function DifferentialExpressionPanel({
 
       {genesToShow &&
       <>
-        <SearchBox inputRef={inputRef}/>
+        <div className="de-search-box">
+          <span className="de-search-icon">
+            <FontAwesomeIcon icon={faSearch} />
+          </span>
+          <ControlledInput
+            // ref={inputRef}
+            // autoFocus={inputRef.current === document.activeElement}
+            className="de-search-input no-border"
+            name="de-search-input"
+            type="text"
+            placeholder="Search gene"
+            value={searchedGene}
+            onChange={handleChange}
+            data-analytics-name="differential-expression-search"
+          />
+          { showClear && <Button
+            type="button"
+            data-analytics-name="clear-de-search"
+            className="clear-de-search-icon"
+            onClick={handleClear} >
+            <FontAwesomeIcon icon={faTimes} />
+          </Button> }
+        </div>
 
         <div className="de-table-buttons">
           <DownloadButton bucketId={bucketId} deFilePath={deFilePath} />
