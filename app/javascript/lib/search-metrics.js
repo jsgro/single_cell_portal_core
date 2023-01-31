@@ -294,10 +294,6 @@ export function logSelectSearchResult(study, logProps={}) {
 
 /**
  * Log search of the differential expression table, to find genes in it.
- *
- * While we call this "Search" in the UI / product docs (and thus
- * refer to it with that term in these analytics, which are often used by product
- * folks), these searches do not trigger a new scatter plot.
  */
 export function logDifferentialExpressionTableSearch(genes, speciesList, otherProps) {
   const props = Object.assign({

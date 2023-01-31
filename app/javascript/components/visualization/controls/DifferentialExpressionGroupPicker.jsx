@@ -43,7 +43,6 @@ function parseDeFile(tsvText) {
     deGenes.push(deGene)
   }
 
-  console.log('in parseDeFile, deGenes: ', deGenes)
   return deGenes
 }
 
