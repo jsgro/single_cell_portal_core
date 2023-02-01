@@ -1,5 +1,9 @@
+/**
+ * @fileoverview Tests for differential expression (DE) functionality
+ */
+
 import React from 'react'
-import { render, screen } from '@testing-library/react'
+import { render, fireEvent } from '@testing-library/react'
 import '@testing-library/jest-dom/extend-expect'
 
 import DifferentialExpressionPanel from 'components/explore/DifferentialExpressionPanel'
@@ -30,7 +34,6 @@ describe('Differential expression panel', () => {
     ]
 
     const searchGenes = function() {}
-
 
     const exploreParamsWithDefaults = {
       'cluster': 'Epithelial Cells UMAP',
@@ -64,7 +67,7 @@ describe('Differential expression panel', () => {
       'KRT high lactocytes 2': 1728
     }
 
-    render((
+    const {container} = render((
       <DifferentialExpressionPanel
         deGroup={deGroup}
         deGenes={deGenes}
@@ -81,7 +84,12 @@ describe('Differential expression panel', () => {
       />
     ))
 
-    const deTable = await screen.findByTestId('differential-expression-table')
+    const deTable = container.querySelector('.de-table')
     expect(deTable).toHaveTextContent('ANXA1')
+
+    const deSearchBox = container.querySelector('.de-search-box')
+    const input = deSearchBox.querySelector('input')
+    fireEvent.change(input, { target: { value: 'SO' } })
+    expect(deTable.querySelectorAll('.de-gene-row')).toHaveLength(1)
   })
 })

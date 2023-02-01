@@ -54,7 +54,7 @@ function DifferentialExpressionTable({
 }) {
   return (
     <>
-    <table data-testid="differential-expression-table" className="table table-terra table-scp-compact">
+    <table className="de-table table table-terra table-scp-compact">
       <thead>
         <tr>
           <th>Name</th>
@@ -73,7 +73,7 @@ function DifferentialExpressionTable({
       <tbody>
         {genesToShow.map((deGene, i) => {
           return (
-            <tr key={i}>
+            <tr className="de-gene-row" key={i}>
               <td>
                 <label
                   title="Click to view gene expression.  Arrow down (↓) and up (↑) to quickly scan."
