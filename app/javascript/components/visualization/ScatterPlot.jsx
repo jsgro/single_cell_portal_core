@@ -199,19 +199,16 @@ function RawScatterPlot({
 
 
   /** Fetch cached data from bucket, use it to draw *interactive* gene expression scatter plot */
-  async function renderBucketData(fetchMethod, expressionParams, dataPath) {
-    try {
-      const bucketFileDataResp = await fetchBucketFile(bucketId, dataPath)
-      const expressionArray = await bucketFileDataResp.json()
+  function renderBucketData(fetchMethod, expressionParams, dataPath) {
+    fetchBucketFile(bucketId, dataPath).then(async response => {
+      const expressionArray = await response.json()
       expressionParams.expressionArray = expressionArray
-
-      const response = await fetchMethod(expressionParams)
-      processScatterPlot(response)
-    } catch (error) {
-      setIsLoading(false)
-      setShowError(true)
-      setError(error)
-    }
+      fetchMethod(expressionParams).then(processScatterPlot).catch(error => {
+        setIsLoading(false)
+        setShowError(true)
+        setError(error)
+      })
+    })
   }
 
   /** Draw static image of gene expression scatter plot */
@@ -324,12 +321,10 @@ function RawScatterPlot({
   function processScatterPlot(clusterResponse=null) {
     let [scatter, perfTimes] =
       (clusterResponse ? clusterResponse : [scatterData, null])
-    // debugger
     scatter = updateScatterLayout(scatter)
     const layout = scatter.layout
 
     const plotlyTraces = updateCountsAndGetTraces(scatter)
-    console.log('plotlyTraces:', plotlyTraces)
 
     const startTime = performance.now()
 
@@ -386,7 +381,6 @@ function RawScatterPlot({
         flags?.progressive_loading && isGeneExpression(genes, isCorrelatedScatter) && !isAnnotatedScatter &&
         !scatterData
       ) {
-        console.log('inside this if')
         const urlSafeCluster = cluster.replaceAll('+', 'pos').replace(/\W/g, '_')
         const gene = genes[0]
         const stem = '_scp_internal/cache/expression_scatter/'
@@ -438,10 +432,8 @@ function RawScatterPlot({
             isCorrelatedScatter,
             expressionArray
           })
-          console.log('respData[0]?.data.annotations?.length:', respData1[0]?.data.annotations?.length)
           // check that the data contains annotations needed for processing scatterplot
           if (respData1[0]?.data?.annotations?.length) {
-            console.log('in if')
             processScatterPlot(respData1)
           } else {
             // if the cache data was missing the necessary info make an api call
@@ -467,83 +459,6 @@ function RawScatterPlot({
     }
     getData()
   }, [cluster, annotation.name, subsample, genes.join(','), isAnnotatedScatter, consensus])
-
-  // Fetches plot data then draws it, upon load or change of any data parameter
-  useEffect(() => {
-    /** */
-    async function getData() {
-      setIsLoading(true)
-
-      let expressionArray
-
-      const fetchMethod = dataCache ? dataCache.fetchCluster : fetchCluster
-
-      // use an image and/or data cache if one has been provided, otherwise query scp-api directly
-      if (
-        flags?.progressive_loading && isGeneExpression(genes, isCorrelatedScatter) && !isAnnotatedScatter &&
-        !scatterData
-      ) {
-        console.log('inside this if')
-        const urlSafeCluster = cluster.replaceAll('+', 'pos').replace(/\W/g, '_')
-        const gene = genes[0]
-        const stem = '_scp_internal/cache/expression_scatter/'
-        const leaf = `${urlSafeCluster}/${gene}`
-
-        // TODO (SCP-4839): Instrument more bucket cache analytics, then remove line below
-        // window.t0 = Date.now()
-
-        const imagePath = `${stem}images/${leaf}.webp`
-        const dataPath = `${stem}data/${leaf}.json`
-
-        const expressionParams = {
-          studyAccession,
-          cluster,
-          annotation: annotation ? annotation : '',
-          subsample,
-          consensus,
-          genes,
-          isAnnotatedScatter,
-          isCorrelatedScatter
-        }
-
-        fetchBucketFile(bucketId, imagePath).then(async response => {
-          const imageCacheHit = response.ok
-
-          // Draw plot as static image first, if it's cached
-          if (imageCacheHit) {
-            await drawPlotImage(response)
-          }
-
-          // Then make it interactive, using gene expression scatter plot data array from GCS bucket
-          await renderBucketData(fetchMethod, expressionParams, dataPath)
-
-          // TODO (SCP-4839): Instrument more bucket cache analytics, then remove console log below
-          // console.log(`Image render took ${ Date.now() - window.t0}`)
-          // Add imageCacheHit boolean to perfTime object here
-        })
-      } else {
-        try {
-          const respData = await fetchMethod({
-            studyAccession,
-            cluster,
-            annotation: annotation ? annotation : '',
-            subsample,
-            consensus,
-            genes,
-            isAnnotatedScatter,
-            isCorrelatedScatter,
-            expressionArray
-          })
-          processScatterPlot(respData)
-        } catch (error) {
-          setIsLoading(false)
-          setShowError(true)
-          setError(error)
-        }
-      }
-    }
-    getData()
-  }, [cluster, annotation.name, subsample, genes.join(','), isAnnotatedScatter])
 
   useUpdateEffect(() => {
     // Don't update if graph hasn't loaded
