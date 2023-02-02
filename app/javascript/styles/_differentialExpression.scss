@@ -31,6 +31,10 @@
   display: inline-block;
 }
 
+.de-search-box:focus-within {
+  border: 1px solid #AAA;
+}
+
 .de-search-icon {
   color: $action-color;
   margin: 0 5px 0 5px;

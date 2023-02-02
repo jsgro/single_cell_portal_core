@@ -138,14 +138,14 @@ export default function DifferentialExpressionPanel({
 
   /** Handle a user pressing the 'x' to clear the field */
   function handleClear() {
-    updateSearchedGene('')
+    updateSearchedGene('', 'clear')
     setGenesToShow(deGenes.slice(0, numRows))
   }
 
   /** Only show clear button if text is entered in search box */
   const showClear = searchedGene !== ''
 
-  function updateSearchedGene(newSearchedGene) {
+  function updateSearchedGene(newSearchedGene, trigger) {
     setSearchedGene(newSearchedGene)
 
     // Log search on DE table after 1 second since last change
@@ -155,7 +155,7 @@ export default function DifferentialExpressionPanel({
     // results in the DE table.
     clearTimeout(delayedDETableLogTimeout.current)
     delayedDETableLogTimeout.current = setTimeout(() => {
-      const otherProps = {}
+      const otherProps = {trigger}
       const genes = [newSearchedGene]
       logDifferentialExpressionTableSearch(genes, species, otherProps)
     }, 1000)
@@ -205,7 +205,7 @@ export default function DifferentialExpressionPanel({
             autoComplete="off"
             placeholder="Find gene"
             value={searchedGene}
-            onChange={(event) => updateSearchedGene(event.target.value)}
+            onChange={(event) => updateSearchedGene(event.target.value, 'keydown')}
             data-analytics-name="differential-expression-search"
           />
           { showClear && <Button
