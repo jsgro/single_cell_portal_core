@@ -399,6 +399,9 @@ export function log(name, props = {}) {
     isDifferentialExpressionEnabled = !!window.SCP?.isDifferentialExpressionEnabled
   }
 
+  // track A/B feature test assignments on all events
+  const aBFeatureTests = window.SCP?.aBFeatureTests || []
+
   props = Object.assign(props, {
     appId: 'single-cell-portal',
     appPath: getAnalyticsPageName(),
@@ -407,7 +410,8 @@ export function log(name, props = {}) {
     logger: 'app-frontend',
     scpVersion: version,
     isDifferentialExpressionEnabled,
-    isServiceWorkerCacheEnabled
+    isServiceWorkerCacheEnabled,
+    aBFeatureTests
   }, getDefaultProperties())
 
   const tab = getTabProperty()

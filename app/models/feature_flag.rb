@@ -42,8 +42,10 @@ class FeatureFlag
   # load A/B test session assignments for all enabled feature_flags for a given metrics_uuid
   # filter out any instances where the FeatureFlagOption is set as this will skew results
   def self.load_ab_test_sessions(metrics_uuid)
+    return [] if metrics_uuid.nil?
+
     where(enable_ab_test: true).map do |feature_flag|
       AbTestSession.find_or_create_by(feature_flag:, metrics_uuid:)
-    end.reject(&:flag_override?)
+    end.reject(&:flag_override?).map(&:session_tag)
   end
 end
