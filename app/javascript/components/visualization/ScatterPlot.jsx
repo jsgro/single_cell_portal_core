@@ -181,13 +181,9 @@ function RawScatterPlot({
       isSplitLabelArrays: isSplitLabelArrays ?? scatter.isSplitLabelArrays,
       isRefGroup: isRG
     })
-    // debugger
     if (isRG) {
       setCountsByLabel(labelCounts)
     }
-
-    //EMiLY the traces here are legit and coming thru not undefined in teh debug
-
     return traces
   }
 
@@ -212,10 +208,9 @@ function RawScatterPlot({
       const response = await fetchMethod(expressionParams)
       processScatterPlot(response)
     } catch (error) {
-      debugger
       setIsLoading(false)
-      // setShowError(true)
-      // setError(error)
+      setShowError(true)
+      setError(error)
     }
   }
 
@@ -329,7 +324,7 @@ function RawScatterPlot({
   function processScatterPlot(clusterResponse=null) {
     let [scatter, perfTimes] =
       (clusterResponse ? clusterResponse : [scatterData, null])
-      debugger
+    // debugger
     scatter = updateScatterLayout(scatter)
     const layout = scatter.layout
 
@@ -384,7 +379,7 @@ function RawScatterPlot({
 
       let expressionArray
 
-      // const fetchMethod = dataCache ? dataCache.fetchCluster : fetchCluster
+      const fetchMethod = dataCache ? dataCache.fetchCluster : fetchCluster
 
       // use an image and/or data cache if one has been provided, otherwise query scp-api directly
       if (
@@ -431,7 +426,8 @@ function RawScatterPlot({
         })
       } else {
         try {
-          const respData = await fetchCluster({
+          // attempt to fetch the data using the cache if that exists
+          const respData1 = await fetchMethod({
             studyAccession,
             cluster,
             annotation: annotation ? annotation : '',
@@ -442,9 +438,27 @@ function RawScatterPlot({
             isCorrelatedScatter,
             expressionArray
           })
-          processScatterPlot(respData)
+          console.log('respData[0]?.data.annotations?.length:', respData1[0]?.data.annotations?.length)
+          // check that the data contains annotations needed for processing scatterplot
+          if (respData1[0]?.data?.annotations?.length) {
+            console.log('in if')
+            processScatterPlot(respData1)
+          } else {
+            // if the cache data was missing the necessary info make an api call
+            const respData = await fetchCluster({
+              studyAccession,
+              cluster,
+              annotation: annotation ? annotation : '',
+              subsample,
+              consensus,
+              genes,
+              isAnnotatedScatter,
+              isCorrelatedScatter,
+              expressionArray
+            })
+            processScatterPlot(respData)
+          }
         } catch (error) {
-          debugger
           setIsLoading(false)
           setShowError(true)
           setError(error)
@@ -522,7 +536,6 @@ function RawScatterPlot({
           })
           processScatterPlot(respData)
         } catch (error) {
-          debugger
           setIsLoading(false)
           setShowError(true)
           setError(error)
@@ -532,14 +545,7 @@ function RawScatterPlot({
     getData()
   }, [cluster, annotation.name, subsample, genes.join(','), isAnnotatedScatter])
 
-
-
-
-
   useUpdateEffect(() => {
-    debugger
-//EMILY would be surprised if it's in here
-
     // Don't update if graph hasn't loaded
     if (scatterData && !isLoading) {
       scatterData.customColors = customColors
