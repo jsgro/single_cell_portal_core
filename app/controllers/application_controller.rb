@@ -19,6 +19,7 @@ class ApplicationController < ActionController::Base
   # For APIs, you may want to use :null_session instead.
   protect_from_forgery with: :exception
 
+  before_action :check_terra_tos_acceptance
   before_action :get_download_quota
   before_action :get_deployment_notification
   before_action :set_selected_branding_group
@@ -163,6 +164,14 @@ class ApplicationController < ActionController::Base
   def set_selected_branding_group
     if params[:scpbr].present?
       @selected_branding_group = BrandingGroup.find_by(name_as_id: params[:scpbr])
+    end
+  end
+
+  # Kludge to fix problem with signed-in users not having accepted Terra Terms of Service
+  # Details: https://broadworkbench.atlassian.net/browse/SCP-4929
+  def check_terra_tos_acceptance
+    if user_signed_in? && current_user.must_accept_terra_tos? && request.path != exceptions_terra_tos_path
+      redirect_to exceptions_terra_tos_path and return
     end
   end
 
