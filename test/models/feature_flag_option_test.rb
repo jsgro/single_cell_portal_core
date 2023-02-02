@@ -13,6 +13,7 @@ class FeatureFlagOptionTest < ActiveSupport::TestCase
 
   teardown do
     FeatureFlagOption.destroy_all
+    @feature_flag.update(enable_ab_test: false)
   end
 
   test 'should validate & persist feature_flag_option' do
@@ -60,5 +61,13 @@ class FeatureFlagOptionTest < ActiveSupport::TestCase
       feature_flaggable_id: @user.id.to_s
     }.with_indifferent_access
     assert_equal expected_attributes, option.form_attributes
+  end
+
+  test 'should remove user from A/B test if override is present' do
+    @feature_flag.update(enable_ab_test: true)
+    sessions = FeatureFlag.load_ab_test_sessions(@user.metrics_uuid)
+    assert_equal 1, sessions.size
+    @user.set_flag_option(@feature_flag.name, true)
+    assert_empty FeatureFlag.load_ab_test_sessions(@user.metrics_uuid)
   end
 end

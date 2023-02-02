@@ -11,9 +11,11 @@ class FeatureFlag
   field :name, type: String
   field :default_value, type: Boolean, default: false
   field :description, type: String
+  field :enable_ab_test, type: Boolean, default: false
 
   # pointer to all per-model feature_flag_options, will delete all if this flag is removed
   has_many :feature_flag_options, dependent: :delete_all, primary_key: :name, foreign_key: :name
+  has_many :ab_test_sessions, dependent: :delete_all
 
   validates_uniqueness_of :name
 
@@ -35,5 +37,13 @@ class FeatureFlag
     # this has better performance than allowing the destroy callback to remove feature_flag_option instances
     feature_flag.feature_flag_options.delete_all
     feature_flag.destroy
+  end
+
+  # load A/B test session assignments for all enabled feature_flags for a given metrics_uuid
+  # filter out any instances where the FeatureFlagOption is set as this will skew results
+  def self.load_ab_test_sessions(metrics_uuid)
+    where(enable_ab_test: true).map do |feature_flag|
+      AbTestSession.find_or_create_by(feature_flag:, metrics_uuid:)
+    end.reject(&:flag_override?)
   end
 end
