@@ -203,7 +203,7 @@ export default function DifferentialExpressionPanel({
             name="de-search-input"
             type="text"
             autoComplete="off"
-            placeholder="Find gene" // Consensus per demo, to distinguish from main "Search genes" in same UI
+            placeholder="Find a gene" // Consensus per demo, to distinguish from main "Search genes" in same UI
             value={searchedGene}
             onChange={(event) => updateSearchedGene(event.target.value, 'keydown')}
             data-analytics-name="differential-expression-search"
