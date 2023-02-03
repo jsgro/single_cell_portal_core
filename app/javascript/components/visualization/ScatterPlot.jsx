@@ -368,7 +368,7 @@ function RawScatterPlot({
 
   // Fetches plot data then draws it, upon load or change of any data parameter
   useEffect(() => {
-    /** */
+    /** retrieve and process data */
     async function getData() {
       setIsLoading(true)
 
