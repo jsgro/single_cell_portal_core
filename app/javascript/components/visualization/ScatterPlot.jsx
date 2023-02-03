@@ -420,7 +420,7 @@ function RawScatterPlot({
         })
       } else {
         try {
-          // attempt to fetch the data using the cache if that exists
+          // attempt to fetch the data, this will use the cache if available
           const respData1 = await fetchMethod({
             studyAccession,
             cluster,
@@ -436,7 +436,7 @@ function RawScatterPlot({
           if (respData1[0]?.data?.annotations?.length) {
             processScatterPlot(respData1)
           } else {
-            // if the cache data was missing the necessary info make an api call
+            // if the data was missing the necessary info, make an api call
             const respData = await fetchCluster({
               studyAccession,
               cluster,
