@@ -167,8 +167,9 @@ class ApplicationController < ActionController::Base
     end
   end
 
-  # Kludge to fix problem with signed-in users not having accepted Terra Terms of Service
-  # Details: https://broadworkbench.atlassian.net/browse/SCP-4929
+  # Temporary sub-optimal fix for signed-in users not having accepted Terra Terms of Service
+  # Context: https://broadworkbench.atlassian.net/browse/SCP-4929
+  # TODO (SCP-4971): intercept API calls that need end-user credentials, and handle this at that level
   def check_terra_tos_acceptance
     if user_signed_in? && current_user.must_accept_terra_tos? && request.path != exceptions_terra_tos_path
       redirect_to exceptions_terra_tos_path and return
