@@ -15,7 +15,7 @@ class FeatureFlag
 
   # pointer to all per-model feature_flag_options, will delete all if this flag is removed
   has_many :feature_flag_options, dependent: :delete_all, primary_key: :name, foreign_key: :name
-  has_many :ab_test_sessions, dependent: :delete_all
+  has_many :ab_test_assignments, dependent: :delete_all
 
   validates_uniqueness_of :name
 
