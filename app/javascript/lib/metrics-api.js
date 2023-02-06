@@ -400,7 +400,7 @@ export function log(name, props = {}) {
   }
 
   // track A/B feature test assignments on all events
-  const aBFeatureTests = window.SCP?.aBFeatureTests || []
+  const abTests = window.SCP?.abTests || []
 
   props = Object.assign(props, {
     appId: 'single-cell-portal',
@@ -411,7 +411,7 @@ export function log(name, props = {}) {
     scpVersion: version,
     isDifferentialExpressionEnabled,
     isServiceWorkerCacheEnabled,
-    aBFeatureTests
+    abTests
   }, getDefaultProperties())
 
   const tab = getTabProperty()

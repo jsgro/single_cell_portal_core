@@ -33,7 +33,7 @@ class MetricsServiceTest < ActiveSupport::TestCase
       env: "test",
       authenticated: true,
       registeredForTerra: true,
-      aBFeatureTests: []
+      abTests: []
     })
 
     # As input into RestClient::Request.execute.
@@ -202,7 +202,7 @@ class MetricsServiceTest < ActiveSupport::TestCase
         authenticated: false,
         registeredForTerra: false,
         distinct_id: unregistered_user.metrics_uuid,
-        aBFeatureTests: []
+        abTests: []
       }
     )
 

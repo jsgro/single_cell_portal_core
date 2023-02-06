@@ -36,7 +36,7 @@
       window.SCP.userAccessToken = '<%= get_user_access_token(current_user) %>';
       window.SCP.userSignedIn = <%= user_signed_in? %>;
       window.SCP.environment = '<%= Rails.env %>';
-      window.SCP.aBFeatureTests = <%= raw @ab_test_sessions %>
+      window.SCP.abTests = <%= raw @ab_test_sessions %>
 
       window.SCP.hasLoggedPageView = false;
 

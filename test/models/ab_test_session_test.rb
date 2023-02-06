@@ -21,7 +21,7 @@ class AbTestSessionTest < ActiveSupport::TestCase
   end
 
   # we can't prove true random assignment, only that over a reasonable amount of iterations we would see a roughly
-  # equal distribution (±2%); for reference, SCP had ~2.5K unique Study overview events/week in 2022
+  # equal distribution (±2%); for reference, SCP had ~2.5K unique Study overview users/week in 2022
   test 'should distribute group assignments equally' do
     groups = []
     n = 2_500
