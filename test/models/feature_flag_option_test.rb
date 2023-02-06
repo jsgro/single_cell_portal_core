@@ -65,9 +65,9 @@ class FeatureFlagOptionTest < ActiveSupport::TestCase
 
   test 'should remove user from A/B test if override is present' do
     @feature_flag.update(enable_ab_test: true)
-    sessions = FeatureFlag.load_ab_test_sessions(@user.metrics_uuid)
+    sessions = FeatureFlag.load_ab_test_assignments(@user.metrics_uuid)
     assert_equal 1, sessions.size
     @user.set_flag_option(@feature_flag.name, true)
-    assert_empty FeatureFlag.load_ab_test_sessions(@user.metrics_uuid)
+    assert_empty FeatureFlag.load_ab_test_assignments(@user.metrics_uuid)
   end
 end

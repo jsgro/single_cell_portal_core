@@ -1,11 +1,11 @@
 require 'test_helper'
 
-class AbTestSessionTest < ActiveSupport::TestCase
+class AbTestAssignmentTest < ActiveSupport::TestCase
 
   before(:all) do
     @user = FactoryBot.create(:user, test_array: @@users_to_clean)
     @feature_flag = FeatureFlag.find_or_create_by!(name: 'explore_tab_default')
-    @session = AbTestSession.create(feature_flag: @feature_flag, user: @user)
+    @session = AbTestAssignment.create(feature_flag: @feature_flag, user: @user)
   end
 
   after(:all) do
@@ -16,7 +16,7 @@ class AbTestSessionTest < ActiveSupport::TestCase
     assert_equal @user.metrics_uuid, @session.metrics_uuid
     assert_equal @user.id, @session.user.id
     assert_raise Mongoid::Errors::Validations do
-      AbTestSession.create!(feature_flag: @feature_flag, metrics_uuid: @user.metrics_uuid)
+      AbTestAssignment.create!(feature_flag: @feature_flag, metrics_uuid: @user.metrics_uuid)
     end
   end
 
@@ -27,9 +27,9 @@ class AbTestSessionTest < ActiveSupport::TestCase
     n = 2_500
     distribution = (0.48..0.52)
     n.times do
-      groups << AbTestSession.random_group
+      groups << AbTestAssignment.random_group
     end
-    AbTestSession::GROUP_NAMES.map do |group|
+    AbTestAssignment::GROUP_NAMES.map do |group|
       percentage = groups.tally[group] / n.to_f
       assert distribution.include?(percentage), "#{group}: #{percentage} was outside the ±2% distribution"
     end
@@ -37,6 +37,6 @@ class AbTestSessionTest < ActiveSupport::TestCase
 
   test 'should set session tag' do
     expected_name = "explore-tab-default-group-#{@session.group_name}"
-    assert_equal expected_name, @session.session_tag
+    assert_equal expected_name, @session.tag
   end
 end

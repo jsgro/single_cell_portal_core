@@ -191,12 +191,12 @@ class FeatureFlagTest < ActiveSupport::TestCase
   end
 
   test 'should load A/B test sessions if enabled' do
-    assert_empty FeatureFlag.load_ab_test_sessions(@user.metrics_uuid)
+    assert_empty FeatureFlag.load_ab_test_assignments(@user.metrics_uuid)
     @feature_flag.update(enable_ab_test: true)
-    sessions = FeatureFlag.load_ab_test_sessions(@user.metrics_uuid)
+    sessions = FeatureFlag.load_ab_test_assignments(@user.metrics_uuid)
     assert_equal 1, sessions.size
     # confirm no new entries are created when reloading sessions
-    new_sessions = FeatureFlag.load_ab_test_sessions(@user.metrics_uuid)
+    new_sessions = FeatureFlag.load_ab_test_assignments(@user.metrics_uuid)
     assert_equal sessions.size, new_sessions.size
     assert_equal sessions.first, new_sessions.first
   end

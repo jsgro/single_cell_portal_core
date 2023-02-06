@@ -1,5 +1,5 @@
 # reference document to map a user/metrics_uuid to a feature_flag A/B test group
-class AbTestSession
+class AbTestAssignment
   include Mongoid::Document
   include Mongoid::Timestamps
 
@@ -19,7 +19,7 @@ class AbTestSession
     rand.round.zero? ? GROUP_NAMES.first : GROUP_NAMES.last
   end
 
-  def session_tag
+  def tag
     "#{feature_flag.name.dasherize}-group-#{group_name}".downcase
   end
 

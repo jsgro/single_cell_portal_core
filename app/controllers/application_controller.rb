@@ -23,7 +23,7 @@ class ApplicationController < ActionController::Base
   before_action :get_deployment_notification
   before_action :set_selected_branding_group
   before_action :check_tos_acceptance
-  before_action :set_ab_test_sessions
+  before_action :set_ab_test_assignments
 
   rescue_from ActionController::InvalidAuthenticityToken, with: :invalid_csrf
 
@@ -176,8 +176,8 @@ class ApplicationController < ActionController::Base
   end
 
   # load any enabled A/B test sessions for the current_user
-  def set_ab_test_sessions
-    @ab_test_sessions = FeatureFlag.load_ab_test_sessions(request.cookies['user_id'])
+  def set_ab_test_assignments
+    @ab_test_assignments = FeatureFlag.load_ab_test_assignments(request.cookies['user_id'])
   end
 
   # merge in extra parameters on redirects as necessary
