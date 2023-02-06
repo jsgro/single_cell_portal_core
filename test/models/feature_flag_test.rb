@@ -198,6 +198,6 @@ class FeatureFlagTest < ActiveSupport::TestCase
     # confirm no new entries are created when reloading sessions
     new_sessions = FeatureFlag.load_ab_test_sessions(@user.metrics_uuid)
     assert_equal sessions.size, new_sessions.size
-    assert_equal sessions.first.id, new_sessions.first.id
+    assert_equal sessions.first, new_sessions.first
   end
 end
