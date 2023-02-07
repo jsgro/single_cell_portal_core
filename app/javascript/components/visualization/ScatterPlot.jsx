@@ -369,7 +369,7 @@ function RawScatterPlot({
   // Fetches plot data then draws it, upon load or change of any data parameter
   useEffect(() => {
     /** retrieve and process data */
-    async function getData() {
+    async function fetchData() {
       setIsLoading(true)
 
       let expressionArray
@@ -457,7 +457,7 @@ function RawScatterPlot({
         }
       }
     }
-    getData()
+    fetchData()
   }, [cluster, annotation.name, subsample, genes.join(','), isAnnotatedScatter, consensus])
 
   useUpdateEffect(() => {
