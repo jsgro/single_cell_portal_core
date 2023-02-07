@@ -6,7 +6,7 @@ class AbTestAssignment
   # use declarative labels so reports are clear what each group saw
   GROUP_NAMES = %w[control intervention].freeze
   belongs_to :feature_flag
-  belongs_to :user, optional: true, foreign_key: :metrics_uuid, primary_key: :metrics_uuid, dependent: :delete_all
+  belongs_to :user, optional: true, foreign_key: :metrics_uuid, primary_key: :metrics_uuid
 
   field :metrics_uuid, type: String
   field :group_name, type: String
