@@ -1,10 +1,11 @@
-name: Delete feature branch after merge
+name: Delete hot-fix branch after merging/pushing to development branch
 
 # Controls when the workflow will run
 on:
-  pull_request:
-    types: [ closed ]
-
+  push:
+    branches:
+    - 'development'
+    
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
   
@@ -18,8 +19,8 @@ jobs:
     # from the github actions marketplace repo here: https://github.com/pabio/delete-merged-action
       uses: koj-co/delete-merged-action@master
       with:
-      # do not delete master, development, or hot-fix-release branches
+      # only delete branches that start with 'hotfix' or 'hot-fix'
       # https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#filter-pattern-cheat-sheet
-        branches: "!master, !development, !hot-fix*, !hotfix*, *"
+        branches: "hotfix*, 'hot-fix*'"
       env:
         GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
