@@ -35,8 +35,10 @@ import MiscellaneousStep from './MiscellaneousStep'
 import SequenceFileStep from './SequenceFileStep'
 import GeneListStep from './GeneListStep'
 import LoadingSpinner from '~/lib/LoadingSpinner'
-import AnnDataStep from './AnnDataStep'
+import AnnDataStep, {AnnDataFileFilter} from './AnnDataStep'
+import AnnDataUploadStep from './AnnDataUploadStep'
 import SeuratStep from './SeuratStep'
+import UploadExperienceSplitter from './UploadExperienceSplitter'
 
 
 const POLLING_INTERVAL = 10 * 1000 // 10 seconds between state updates
@@ -47,6 +49,7 @@ const ALL_POSSIBLE_STEPS = [
   ProcessedExpressionStep,
   MetadataStep,
   ClusteringStep,
+  AnnDataUploadStep,
   SpatialStep,
   CoordinateLabelStep,
   SequenceFileStep,
@@ -58,11 +61,20 @@ const ALL_POSSIBLE_STEPS = [
 ]
 
 // These steps remain the same for both traditional and AnnData upload experiences
-const MAIN_STEPS = [
+const MAIN_STEPS_TRADITIONAL = [
   RawCountsStep,
   ProcessedExpressionStep,
   MetadataStep,
   ClusteringStep
+]
+
+// These steps remain the same for both traditional and AnnData upload experiences
+const MAIN_STEPS_ANNDATA = [
+  RawCountsStep,
+  ProcessedExpressionStep,
+  MetadataStep,
+  ClusteringStep,
+  AnnDataUploadStep
 ]
 
 /** shows the upload wizard */
@@ -70,33 +82,39 @@ export function RawUploadWizard({ studyAccession, name }) {
   const [serverState, setServerState] = useState(null)
   const [formState, setFormState] = useState(null)
 
-  // used for toggling between traditional and AnnData experience of upload wizard
-  const [isAnnDataExperience, setIsAnnDataExperience] = useState(false)
-
   // study attributes to pass to the StudyContext later for use throughout the RawUploadWizard component, if needed
   // use complete study object, rather than defaultStudyState so that any updates to study.rb will be reflected in
   // this context
   const studyObj = serverState?.study
+  console.log('serverState.files:', serverState?.files)
+  const studyFiles = serverState?.files
+  const hasAnnDataFile = studyFiles?.filter(AnnDataFileFilter)?.length
+
+  // used for toggling between traditional and AnnData experience of upload wizard
+  const [isAnnDataExperience, setIsAnnDataExperience] = useState(hasAnnDataFile)
+  const [showSplitterStep, setShowSplitterStep] = useState(studyFiles?.length)
 
   const allowReferenceImageUpload = serverState?.feature_flags?.reference_image_upload
 
-  let STEPS = MAIN_STEPS
+  let MAIN_STEPS
   let SUPPLEMENTAL_STEPS
   let NON_VISUALIZABLE_STEPS
 
   // set the additional steps to display, based on traditional or AnnData experience
   if (isAnnDataExperience) {
+    MAIN_STEPS = MAIN_STEPS_ANNDATA
     SUPPLEMENTAL_STEPS = ALL_POSSIBLE_STEPS.slice(6, 7)
     NON_VISUALIZABLE_STEPS = ALL_POSSIBLE_STEPS.slice(8, 10)
   } else {
+    MAIN_STEPS = MAIN_STEPS_TRADITIONAL
+
     SUPPLEMENTAL_STEPS = ALL_POSSIBLE_STEPS.slice(4, 8)
     NON_VISUALIZABLE_STEPS = ALL_POSSIBLE_STEPS.slice(8, 11)
     if (allowReferenceImageUpload) {
       SUPPLEMENTAL_STEPS.splice(1, 0, ImageStep)
     }
   }
-
-  STEPS = STEPS.concat(SUPPLEMENTAL_STEPS, NON_VISUALIZABLE_STEPS)
+  const STEPS = MAIN_STEPS.concat(SUPPLEMENTAL_STEPS, NON_VISUALIZABLE_STEPS)
 
   const routerLocation = useLocation()
   const queryParams = queryString.parse(routerLocation.search)
@@ -368,11 +386,19 @@ export function RawUploadWizard({ studyAccession, name }) {
   const prevStep = STEPS[currentStepIndex - 1]
   return (
     <StudyContext.Provider value={studyObj}>
-      <div className="upload-wizard-react">
+      {showSplitterStep && <UploadExperienceSplitter {...{ isAnnDataExperience, setIsAnnDataExperience, setShowSplitterStep }}/>}
+      {(!showSplitterStep) && <div className="upload-wizard-react">
         <div className="row">
           <div className="col-md-12 wizard-top-bar no-wrap-ellipsis">
             <a href={`/single_cell/study/${studyAccession}`}>View study</a> / &nbsp;
             <span title="{serverState?.study?.name}">{serverState?.study?.name}</span>
+            <button className="btn terra-tertiary-btn"
+              onClick={() => {
+                setShowSplitterStep(true)
+              }
+              }>
+                  Back
+            </button>
           </div>
         </div>
         <div className="row wizard-content">
@@ -417,7 +443,7 @@ export function RawUploadWizard({ studyAccession, name }) {
           </div>
         </div>
         <MessageModal/>
-      </div>
+      </div>}
     </StudyContext.Provider>
   )
 }

@@ -2,24 +2,23 @@ import React, { useEffect } from 'react'
 
 import AnnDataFileForm from './AnnDataFileForm'
 import { AddFileButton } from './form-components'
+import { AnnDataFileFilter } from './AnnDataStep'
 
 const DEFAULT_NEW_ANNDATA_FILE = {
   file_type: 'AnnData',
   options: {}
 }
 
-export const AnnDataFileFilter = file => ['AnnData'].includes(file.file_type)
-
 export default {
-  title: 'AnnData (.h5ad)',
-  header: 'AnnData files',
-  name: 'AnnData',
-  component: AnnDataForm,
+  title: 'AnnData (.h5ad) 2',
+  header: 'AnnData file',
+  name: 'AnnData 2',
+  component: AnnDataUploadStep,
   fileFilter: AnnDataFileFilter
 }
 
 /** Renders a form for uploading one or more AnnData files */
-function AnnDataForm({
+function AnnDataUploadStep({
   formState,
   addNewFile,
   updateFile,
@@ -41,8 +40,6 @@ function AnnDataForm({
           <a href="https://anndata.readthedocs.io" target="_blank" rel="noreferrer">
             See reference documentation
           </a>.
-          <br></br>
-          These files will not be used to power visualizations, but will be available for users to download.
         </p>
       </div>
     </div>

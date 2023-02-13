@@ -7,4 +7,6 @@ class AnnDataFileInfo
   field :has_metadata, type: Boolean, default: false
   field :has_raw_counts, type: Boolean, default: false
   field :has_expression, type: Boolean, default: false
+  # add obsm here probs
+  #  add more stuff in here as needed too
 end
