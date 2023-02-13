@@ -1,4 +1,4 @@
-name: Selective delete feature branch after merge to master
+name: Selectively delete feature branch after merge to master
 
 # Only run the workflow when a PR that targets master is closed
 on:
