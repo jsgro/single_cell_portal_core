@@ -13,6 +13,7 @@ class AbTestTest < ActiveSupport::TestCase
 
   teardown do
     @ab_test.update(enabled: false)
+    @ab_test.reload
     @user.feature_flag_options.destroy_all
   end
 
@@ -41,10 +42,37 @@ class AbTestTest < ActiveSupport::TestCase
 
   test 'should load assignments for enabled tests' do
     assert_empty AbTest.load_assignments(@user.metrics_uuid)
-    @ab_test.update(enabled: true)
+    @ab_test.update!(enabled: true)
     assert_equal 1, AbTest.load_assignments(@user.metrics_uuid).size
     # confirm flag override removes from groups
     @user.set_flag_option(@feature_flag.name, true)
     assert_empty AbTest.load_assignments(@user.metrics_uuid)
+  end
+
+  test 'should enforce at least two groups' do
+    @ab_test.group_names = %w[foo]
+    assert_not @ab_test.valid?
+  end
+
+  test 'should enforce no spaces in group names' do
+    @ab_test.group_names << 'has spaces'
+    assert_not @ab_test.valid?
+  end
+
+  test 'should unassign orphaned groups' do
+    new_group = 'extra-group'
+    @ab_test.group_names << new_group
+    @ab_test.save!
+    5.times do
+      AbTestAssignment.create!(
+        ab_test: @ab_test, feature_flag: @feature_flag, metrics_uuid: SecureRandom.uuid, group_name: new_group
+      )
+    end
+    assert_equal 5, AbTestAssignment.where(
+      ab_test: @ab_test, feature_flag: @feature_flag, group_name: new_group
+    ).count
+    @ab_test.group_names.pop # remove last group
+    @ab_test.save!
+    assert_not AbTestAssignment.where(ab_test: @ab_test, feature_flag: @feature_flag, group_name: new_group).any?
   end
 end

@@ -12,7 +12,7 @@ class AbTestAssignment
 
   validates :metrics_uuid, uniqueness: { scope: :feature_flag_id }, presence: true
   validates :group_name, presence: true
-  before_validation :assign_group, on: :create
+  before_validation :assign_group, on: :create, if: proc { group_name.blank? }
 
   delegate :random_group, to: :ab_test
 
