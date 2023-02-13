@@ -21,7 +21,7 @@ jobs:
     # from the github actions marketplace repo here: https://github.com/pabio/delete-merged-action
       uses: koj-co/delete-merged-action@master
       with:
-      # do not delete master, development, or hot-fix-release branches
-        branches: "!master, !development, !hot-fix*, !hotfix*, *"
+      # do not delete master, development, or hotfix-release branches
+        branches: "!master, !development, !*hotfix*, *"
       env:
         GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
