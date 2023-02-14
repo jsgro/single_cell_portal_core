@@ -25,7 +25,7 @@ class AbTestsControllerTest < ActionDispatch::IntegrationTest
     post create_feature_flag_ab_test_path(name: @feature_flag.name)
     follow_redirect!
     assert_equal edit_feature_flag_ab_test_path(name: @feature_flag.name), path
-    assert @feature_flag.ab_test.present?
+    assert AbTest.find_by(feature_flag: @feature_flag).present?
   end
 
   test 'should update A/B test' do

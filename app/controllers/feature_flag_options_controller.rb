@@ -30,7 +30,7 @@ class FeatureFlagOptionsController < ApplicationController
       info.merge!({
                     default_value: feature_flag.default_value,
                     description: feature_flag.description,
-                    ab_test:,
+                    ab_test:
                   })
       @feature_flag_info[feature_flag.name] = info
     end

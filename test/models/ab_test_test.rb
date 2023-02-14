@@ -54,12 +54,15 @@ class AbTestTest < ActiveSupport::TestCase
     assert_not @ab_test.valid?
   end
 
-  test 'should enforce no spaces in group names' do
+  test 'should sanitize group names' do
+    existing_groups = @ab_test.group_names.dup
     @ab_test.group_names << 'has spaces'
-    assert_not @ab_test.valid?
+    expected = existing_groups << 'hasspaces'
+    @ab_test.valid?
+    assert_equal expected, @ab_test.group_names
   end
 
-  test 'should unassign orphaned groups' do
+  test 'should migrate renamed groups and unassign orphaned groups' do
     new_group = 'extra-group'
     @ab_test.group_names << new_group
     @ab_test.save!
@@ -70,6 +73,14 @@ class AbTestTest < ActiveSupport::TestCase
     end
     assert_equal 5, AbTestAssignment.where(
       ab_test: @ab_test, feature_flag: @feature_flag, group_name: new_group
+    ).count
+    # rename group
+    idx = @ab_test.group_names.index(new_group)
+    renamed_group = 'renamed-group'
+    @ab_test.group_names[idx] = renamed_group
+    @ab_test.save!
+    assert_equal 5, AbTestAssignment.where(
+      ab_test: @ab_test, feature_flag: @feature_flag, group_name: renamed_group
     ).count
     @ab_test.group_names.pop # remove last group
     @ab_test.save!

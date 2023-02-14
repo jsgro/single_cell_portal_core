@@ -9,12 +9,15 @@ class AbTest
 
   DEFAULT_GROUP_NAMES = %w[control intervention].freeze
 
+  # regexp for sanitizing group names, all non-word characters except dashes
+  NAME_SANITIZER = /[^a-zA-Z0-9_-]/
+
   field :group_names, type: Array, default: DEFAULT_GROUP_NAMES
   field :enabled, type: Boolean, default: false
 
-  validate :no_spaces_in_group_names
+  before_validation :sanitize_group_names
   validate :two_groups?
-  after_save :unset_orphaned_groups
+  after_validation :migrate_assignments, on: :update
 
   def random_group
     group_names.sample
@@ -38,12 +41,9 @@ class AbTest
 
   private
 
-  def no_spaces_in_group_names
-    invalid_names = group_names.map { |name| name.match(/\s/) }.compact
-    if invalid_names.any?
-      errors.add(:group_names,
-                 "cannot contain values with spaces: #{invalid_names.map {|n| "'#{n.string}'"}.join(',')}")
-    end
+  # ensure consistent group name formatting - all lowercase word characters (plus dashes)
+  def sanitize_group_names
+    group_names.map! { |name| name.gsub(NAME_SANITIZER, '').downcase }.reject!(&:blank?)
   end
 
   def two_groups?
@@ -52,13 +52,20 @@ class AbTest
     end
   end
 
-  # remove any assignments to groups that have been removed
-  # users will automatically get reassigned to a new group on page load
-  def unset_orphaned_groups
-    assigned_groups = ab_test_assignments.pluck(:group_name).uniq
-    orphaned_groups = assigned_groups - group_names
-    if orphaned_groups.any?
-      ab_test_assignments.where(:group_name.in => orphaned_groups).delete_all
+  # move any assignments from one group to another if a group is renamed
+  # if a group is deleted it will unset all matching assignments and allow them to be randomly reassigned
+  def migrate_assignments
+    if group_names_changed?
+      changes = group_names - group_names_was
+      changes.each do |new_group|
+        index = group_names.index(new_group)
+        old_group = group_names_was[index]
+        if old_group
+          ab_test_assignments.where(group_name: old_group).update_all(group_name: new_group)
+        else
+          ab_test_assignments.where(group_name: old_group).delete_all
+        end
+      end
     end
   end
 end
