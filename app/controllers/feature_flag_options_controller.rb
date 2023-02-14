@@ -23,17 +23,14 @@ class FeatureFlagOptionsController < ApplicationController
       options = feature_flag.feature_flag_options
       types = SEARCH_FIELDS_BY_MODEL.keys.map(&:classify)
       info = types.map { |name| { name => options.where(feature_flaggable_type: name).count } }.reduce({}, :merge)
-      ab_test = 'N/A'
-      ab_test_class = 'label-default'
+      ab_test = nil
       if feature_flag.ab_test.present?
-        ab_test = feature_flag.ab_test_enabled? ? 'Enabled' : 'Disabled'
-        ab_test_class = feature_flag.ab_test_enabled? ? 'label-success' : 'label-danger'
+        ab_test = feature_flag.ab_test_enabled?
       end
       info.merge!({
                     default_value: feature_flag.default_value,
                     description: feature_flag.description,
                     ab_test:,
-                    ab_test_class:
                   })
       @feature_flag_info[feature_flag.name] = info
     end

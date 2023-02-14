@@ -53,7 +53,7 @@
               <td><%= data[:BrandingGroup] %></td>
               <td>
                 <%= link_to "<i class='fas fa-cog'></i>".html_safe, edit_feature_flag_ab_test_path(name: flag_name), class: 'btn btn-default btn-xs' %>
-                <span class="label <%= data[:ab_test_class] %>"><%= data[:ab_test] %></span>
+                <%= get_boolean_label data[:ab_test] %>
               </td>
             </tr>
           <% end %>
