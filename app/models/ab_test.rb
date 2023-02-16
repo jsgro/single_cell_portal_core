@@ -50,7 +50,7 @@ class AbTest
   # will consider flag default state, possible user overrides, and A/B test state
   #
   # * *params*
-  #   - +flag_name+ (String)      => name of feature_flag
+  #   - +flag_name+ (String)     => name of feature_flag
   #   - +metrics_uuid+ (UUID)    => value of cookies['user_id'] for current user
   #   - +groups+ (Array<String>) => array of groups that qualify to override UX (default: 'intervention')
   #
