@@ -154,7 +154,7 @@ class IngestJob
       # expression matrices currently cannot be ingested in parallel due to constraints around validating cell names
       # this block ensures that all other matrices have all cell names ingested and at least one gene entry, which
       # ensures the matrix has validated
-      other_matrix_files = study.expression_matrices.where(:id.ne => study_file.id)
+      other_matrix_files = StudyFile.where(study_id: study.id, file_type: /Matrix/, :id.ne => study_file.id)
       # only check other matrix files of the same type, as this is what will be checked when validating
       similar_matrix_files = other_matrix_files.select {|matrix| matrix.is_raw_counts_file? == study_file.is_raw_counts_file?}
       similar_matrix_files.each do |matrix_file|
@@ -271,6 +271,22 @@ class IngestJob
     events.map {|event| event['description']}
   end
 
+  # Get the exit code for the pipeline, if present
+  #
+  # * *returns*
+  #   - (Integer or Nil::NilClass) => integer status code or nil (if still running)
+  def exit_code
+    return nil unless done?
+
+    events.each do |event|
+      status = event.dig('details', 'exitStatus')
+      return status.to_i if status
+    end
+    nil # catch-all
+  end
+
+
+
   # Reconstruct the command line from the pipeline actions
   #
   # * *returns*
@@ -383,7 +399,7 @@ class IngestJob
       # update search facets if convention data
       if study_file.use_metadata_convention
         SearchFacet.delay.update_all_facet_filters
-      end
+      end      
       launch_differential_expression_jobs unless study_file.is_anndata?
       set_anndata_file_info if study_file.is_anndata?
     when :ingest_expression
@@ -602,7 +618,7 @@ class IngestJob
 
   # launch appropriate downstream jobs once an AnnData file successfully extracts "fragment" files
   def launch_anndata_subparse_jobs
-
+    
     params_object.attribute_as_array(:extract).each do |extract|
       case extract
       when 'cluster'
@@ -716,7 +732,8 @@ class IngestJob
       trigger: trigger,
       jobStatus: failed? ? 'failed' : 'success',
       machineType: vm_info['machineType'],
-      bootDiskSizeGb: vm_info['bootDiskSizeGb']
+      bootDiskSizeGb: vm_info['bootDiskSizeGb'],
+      exitStatus: exit_code #takes integer value from exit_code method
     }
 
     case action
