@@ -154,7 +154,7 @@ class IngestJob
       # expression matrices currently cannot be ingested in parallel due to constraints around validating cell names
       # this block ensures that all other matrices have all cell names ingested and at least one gene entry, which
       # ensures the matrix has validated
-      other_matrix_files = StudyFile.where(study_id: study.id, file_type: /Matrix/, :id.ne => study_file.id)
+      other_matrix_files = study.expression_matrices.where(:id.ne => study_file.id)
       # only check other matrix files of the same type, as this is what will be checked when validating
       similar_matrix_files = other_matrix_files.select {|matrix| matrix.is_raw_counts_file? == study_file.is_raw_counts_file?}
       similar_matrix_files.each do |matrix_file|
