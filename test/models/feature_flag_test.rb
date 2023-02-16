@@ -19,7 +19,7 @@ class FeatureFlagTest < ActiveSupport::TestCase
     FeatureFlagOption.destroy_all
     @user.reload
     @branding_group.reload
-    @feature_flag.update(enable_ab_test: false)
+    @feature_flag.ab_test&.destroy
   end
 
   after(:all) do
@@ -190,14 +190,9 @@ class FeatureFlagTest < ActiveSupport::TestCase
     assert_equal '1', updated_params[FeatureFlaggable::NESTED_FORM_KEY]['0'][:_destroy]
   end
 
-  test 'should load A/B test sessions if enabled' do
-    assert_empty FeatureFlag.load_ab_test_assignments(@user.metrics_uuid)
-    @feature_flag.update(enable_ab_test: true)
-    sessions = FeatureFlag.load_ab_test_assignments(@user.metrics_uuid)
-    assert_equal 1, sessions.size
-    # confirm no new entries are created when reloading sessions
-    new_sessions = FeatureFlag.load_ab_test_assignments(@user.metrics_uuid)
-    assert_equal sessions.size, new_sessions.size
-    assert_equal sessions.first, new_sessions.first
+  test 'should find enabled A/B test' do
+    assert_not @feature_flag.ab_test_enabled?
+    AbTest.create(feature_flag: @feature_flag, enabled: true)
+    assert @feature_flag.ab_test_enabled?
   end
 end
