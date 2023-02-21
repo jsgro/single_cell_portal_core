@@ -14,6 +14,37 @@ if (performance.setResourceTimingBufferSize) {
   performance.setResourceTimingBufferSize(500)
 }
 
+/**
+ * Log fast (beforeUpdate) and some slow (beforeFull) reloads to Mixpanel
+ *
+ * This helps assess if / why frontend development iteration is slow.
+ */
+function logFrontendIteration(name, event) {
+  const logEvent = {type: event.type}
+  if ('updates' in event) {
+    logEvent.path = event.updates[0].path
+  }
+  log(name, logEvent)
+}
+
+// Log hot module replacement (HMR) to Mixpanel
+// This helps measure "cache hit rate" for fast reload.
+if (import.meta.hot) {
+  const eventNames = [
+    'vite:beforeUpdate',
+    // 'vite:afterUpdate', // This and other disabled events might help later
+    'vite:beforeFullReload',
+    // 'vite:beforePrune',
+    // 'vite:invalidate',
+    // 'vite:error'
+  ]
+  eventNames.forEach(eventName => {
+    import.meta.hot.on(eventName, (event) => {
+      logFrontendIteration(eventName, event)
+    })
+  })
+}
+
 /** Client device memory, # CPUs, and Internet connection speed. */
 export const hardwareStats = getHardwareStats()
 /** we record the time taken by unexecuted steps as a very small negative number to make cumulative
