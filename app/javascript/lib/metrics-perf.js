@@ -20,9 +20,9 @@ if (performance.setResourceTimingBufferSize) {
  * This helps assess if / why frontend development iteration is slow.
  */
 function logFrontendIteration(name, event) {
-  const logEvent = {type: event.type}
+  const logEvent = {'vite:type': event.type}
   if ('updates' in event) {
-    logEvent.path = event.updates[0].path
+    logEvent['vite:path'] = event.updates[0].path
   }
   log(name, logEvent)
 }
