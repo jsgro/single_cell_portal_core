@@ -39,6 +39,35 @@ class AbTest
     where(enabled: true).map { |ab_test| ab_test.assignment(metrics_uuid) }.reject(&:flag_override?).map(&:tag)
   end
 
+  # determine if assignment for metrics_uuid qualifies for showing an updated feature
+  def override_feature?(metrics_uuid, groups: [])
+    return false unless enabled
+
+    groups.include? assignment(metrics_uuid).group_name
+  end
+
+  # determine what state a potential feature_flag and metrics_uuid combine to show
+  # will consider flag default state, possible user overrides, and A/B test state
+  #
+  # * *params*
+  #   - +flag_name+ (String)     => name of feature_flag
+  #   - +metrics_uuid+ (UUID)    => value of cookies['user_id'] for current user
+  #   - +groups+ (Array<String>) => array of groups that qualify to override UX (default: 'intervention')
+  #
+  # * *returns*
+  #   - (Boolean) => T/F if current merged state constitutes an updated UX
+  def self.override_for_feature?(flag_name, metrics_uuid, groups: %w[intervention])
+    user = User.find_by(metrics_uuid:)
+    feature_flag = FeatureFlag.find_by(name: flag_name)
+    # return false if flag isn't found or A/B test is not enabled
+    return false if feature_flag.blank? || !feature_flag.ab_test_enabled?
+
+    # FeatureFlaggable#merged_value_for will check the state of feature_flag default and any user overrides
+    # if that is false, then fall back to checking if user group assignment constitutes an override to the normal UX
+    ab_test = feature_flag.ab_test
+    FeatureFlaggable.merged_value_for(feature_flag.name, user) || ab_test.override_feature?(metrics_uuid, groups:)
+  end
+
   private
 
   # ensure consistent group name formatting - all lowercase word characters (plus dashes)
