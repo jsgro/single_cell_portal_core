@@ -15,7 +15,7 @@ if (performance.setResourceTimingBufferSize) {
 }
 
 /**
- * Log fast (beforeUpdate) and some slow (beforeFull) reloads to Mixpanel
+ * Log fast (beforeUpdate) and some slow (beforeFullReload) reloads to Mixpanel
  *
  * This helps assess if / why frontend development iteration is slow.
  */
