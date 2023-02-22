@@ -39,6 +39,7 @@ let pendingEvents = [] // eslint-disable-line
 let bardDomain = ''
 const scpContext = getSCPContext()
 const env = scpContext.environment
+const devMode = scpContext.devMode
 const version = scpContext.version
 const isServiceWorkerCacheEnabled = scpContext.isServiceWorkerCacheEnabled
 let userId = ''
@@ -455,6 +456,12 @@ export function log(name, props = {}) {
     delete init['headers']['Authorization']
   } else {
     props['authenticated'] = true
+  }
+
+  if (env === 'development') {
+    // Log if developer is in Docker ("docker-compose").
+    // Helps analyze factors of local SCP page speed.
+    props['devMode'] = devMode
   }
 
   const body = {
