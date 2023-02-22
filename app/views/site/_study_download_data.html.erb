@@ -259,7 +259,7 @@
                 <% end %>
               </td>
               <td>
-                <% if file.file_type == 'BAM' %>
+                <% if file.file_type == 'BAM' && file.has_completed_bundle? %>
                   <%= render partial: '/site/genome/browse_igv_link', locals: {study_file: file} %>
                 <% end %>
               </td>
