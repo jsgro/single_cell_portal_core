@@ -4,7 +4,15 @@
 
 import { getTTFB, getFCP, getLCP, getFID, getCLS } from 'web-vitals'
 
+
 import { log } from './metrics-api'
+
+import { getSCPContext } from '~/providers/SCPContextProvider'
+const env = getSCPContext().environment
+
+// Jest breaks on `import.meta.hot`, so only import it in dev env
+const imhModule = env === 'development' ? await import('~/vite/import-meta-hot') : null
+const importMetaHot = imhModule ? imhModule.default : function() {return false}
 
 // Ensure we get perfTime metrics.  The number of `performance` browser API
 // entries can be low enough by default to cause some entries to be
@@ -29,7 +37,7 @@ function logFrontendIteration(name, event) {
 
 // Log hot module replacement (HMR) to Mixpanel
 // This helps measure "cache hit rate" for fast reload.
-if (import.meta.hot) {
+if (importMetaHot()) {
   const eventNames = [
     'vite:beforeUpdate',
     // 'vite:afterUpdate', // This and other disabled events might help later
@@ -39,11 +47,12 @@ if (import.meta.hot) {
     // 'vite:error'
   ]
   eventNames.forEach(eventName => {
-    import.meta.hot.on(eventName, (event) => {
+    importMetaHot().on(eventName, (event) => {
       logFrontendIteration(eventName, event)
     })
   })
 }
+
 
 /** Client device memory, # CPUs, and Internet connection speed. */
 export const hardwareStats = getHardwareStats()
