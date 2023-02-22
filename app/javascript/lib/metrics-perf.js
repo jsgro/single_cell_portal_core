@@ -4,15 +4,8 @@
 
 import { getTTFB, getFCP, getLCP, getFID, getCLS } from 'web-vitals'
 
-
 import { log } from './metrics-api'
-
-import { getSCPContext } from '~/providers/SCPContextProvider'
-const env = getSCPContext().environment
-
-// Jest breaks on `import.meta.hot`, so only import it in dev env
-const imhModule = env === 'development' ? await import('~/vite/import-meta-hot') : null
-const importMetaHot = imhModule ? imhModule.default : function() {return false}
+import importMetaHot from '~/vite/import-meta-hot'
 
 // Ensure we get perfTime metrics.  The number of `performance` browser API
 // entries can be low enough by default to cause some entries to be
