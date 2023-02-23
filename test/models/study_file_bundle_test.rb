@@ -105,6 +105,6 @@ class StudyFileBundleTest < ActiveSupport::TestCase
   test 'should generate file list' do
     files = [@matrix, @genes, @barcodes]
     expected = files.map { |file| { name: file.name, file_type: file.file_type }.with_indifferent_access }
-    assert_equal expected, StudyFileBundle.generate_file_list(files)
+    assert_equal expected, StudyFileBundle.generate_file_list(*files)
   end
 end
