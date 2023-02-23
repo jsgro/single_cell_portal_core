@@ -110,7 +110,11 @@ export function findBundleChildren(file, files) {
 /** return a new FormData based on the given file object, formatted as the api endpoint expects,
     cleaning out any excess params */
 export function formatFileForApi(file, chunkStart, chunkEnd) {
+  //emily here
+  // study_file[type] sort of thing
+  debugger
   const data = new FormData()
+  console.log('data:', data)
   Object.keys(file).filter(key => !PROPERTIES_NOT_TO_SEND.includes(key)).forEach(key => {
     addObjectPropertyToForm(file, key, data)
   })
@@ -124,9 +128,20 @@ export function formatFileForApi(file, chunkStart, chunkEnd) {
   }
   if (file.options) {
     Object.keys(file.options).forEach(key => {
+      debugger
       data.append(`study_file[options][${key}]`, file.options[key])
     })
   }
+  //     if (saveFile.studyFileData.get('study_file[expression_file_info_attributes][raw_counts_associations][]')) {
+
+  if (file.other_form_fields_info) {
+    debugger
+    Object.keys(file.other_form_fields_info).forEach(key => {
+      debugger
+      data.append(`study_file[other_form_fields_info][${key}]`, file.other_form_fields_info[key])
+    })
+  }
+
   return data
 }
 
@@ -205,6 +220,7 @@ function validateNameUniqueness(file, allFiles, validationMessages) {
     */
 export function addObjectPropertyToForm(obj, propertyName, formData, nested) {
   let propString = `study_file[${propertyName}]`
+  debugger
   if (nested) {
     propString = `study_file[${nested}_attributes][${propertyName}]`
   }

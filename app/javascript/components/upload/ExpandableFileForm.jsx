@@ -6,7 +6,7 @@ import { Popover, OverlayTrigger } from 'react-bootstrap'
 import { clusterFileFilter } from './ClusteringStep'
 import { metadataFileFilter } from './MetadataStep'
 import { rawCountsFileFilter } from './RawCountsStep'
-import { processedFileFilter } from './ProcessedExpressionStep'
+import { processedFileFilter } from './AnnDataExpressionStep'
 import LoadingSpinner from '~/lib/LoadingSpinner'
 import FileUploadControl from './FileUploadControl'
 
@@ -17,8 +17,9 @@ export default function ExpandableFileForm({
 }) {
   const [expanded, setExpanded] = useState(isInitiallyExpanded || file.status === 'new')
 
-  const isUploadEnabled = getIsUploadEnabled(isAnnDataExperience, allFiles)
-
+  const isUploadEnabled = true
+  // getIsUploadEnabled(isAnnDataExperience, allFiles)
+  console.log('isuploaenableD:', isUploadEnabled)
   /** handle a click on the header bar (not the expand button itself) */
   function handleDivClick(e) {
     // if the panel is closed, and this didn't come from a link/button, toggle the header expansion
@@ -54,7 +55,8 @@ export default function ExpandableFileForm({
               updateFile={updateFile}
               allowedFileExts={allowedFileExts}
               validationMessages={validationMessages}
-              bucketName={bucketName} />
+              bucketName={bucketName}
+              isAnnDataExperience={isAnnDataExperience} />
           </div>}
           {isUploadEnabled && <SaveDeleteButtons {...{ file, updateFile, saveFile, deleteFile, validationMessages }} /> }
         </div>
@@ -141,6 +143,7 @@ export function SaveDeleteButtons({ file, saveFile, deleteFile, validationMessag
 
 /** renders a save button for a given file */
 function SaveButton({ file, saveFile, validationMessages = {} }) {
+  console.log('file in save button:', file)
   const saveDisabled = Object.keys(validationMessages).length > 0
   let saveButton = <button
     style={{ pointerEvents: saveDisabled ? 'none' : 'auto' }}
@@ -212,6 +215,10 @@ function getIsUploadEnabled(isAnnDataExperience, allFiles) {
   const isMeta = allFiles.filter(metadataFileFilter)
   const isProcessedMatrix = allFiles.filter(processedFileFilter)
   const isRawCount = allFiles.filter(rawCountsFileFilter)
+  console.log('isClustering:', isClustering)
+  console.log('isMeta:', isMeta)
+  console.log('isProcessedMatrix:', isProcessedMatrix)
+  console.log('isRawCount:', isRawCount)
 
   return !((isClustering || isMeta || isProcessedMatrix || isRawCount) && isAnnDataExperience)
 }

@@ -69,7 +69,7 @@ function RawCountsUploadForm({
 }
 
 /**
- * Retrieve the expression file info message for when in traditional upload mode
+ * Retrieve the expression file info message for when in classic upload mode
 */
 export function getExpressionFileInfoMessage(isAnnDataExperience, expressionType) {
   if (!isAnnDataExperience) {

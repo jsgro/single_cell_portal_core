@@ -1,11 +1,16 @@
-import React, { useEffect } from 'react'
+import React, { useEffect, useState } from 'react'
 
 import AnnDataFileForm from './AnnDataFileForm'
 import { AddFileButton } from './form-components'
 import { AnnDataFileFilter } from './AnnDataStep'
+import { clusterFileFilter } from './ClusteringStep'
+import { metadataFileFilter } from './MetadataStep'
+import { processedFileFilter } from './ProcessedExpressionStep'
+
 
 const DEFAULT_NEW_ANNDATA_FILE = {
   file_type: 'AnnData',
+  other_form_fields_info: {},
   options: {}
 }
 
@@ -23,14 +28,33 @@ function AnnDataUploadStep({
   addNewFile,
   updateFile,
   saveFile,
-  deleteFile
+  deleteFile,
+  isAnnDataExperience,
+  deleteFileFromForm
 }) {
-  const AnnDataFiles = formState.files.filter(AnnDataFileFilter)
+  const AnnDataFile = formState.files.filter(AnnDataFileFilter)
+
   useEffect(() => {
-    if (AnnDataFiles.length === 0) {
+    // const other_form_fields_info = {}
+    // formState.files.forEach(file => {
+    //   if (file.file_type !== 'AnnData') {
+    //     other_form_fields_info[file.file_type] = file
+    //     deleteFileFromForm(file._id)
+    //     console.log('deleted: ', file.file_type )
+    //   }
+    // })
+
+    // const defAnnNew = {
+    //   file_type: 'AnnData',
+    //   other_form_fields_info
+    //   // options: {}
+    // }
+
+    if (AnnDataFile.length === 0) {
       addNewFile(DEFAULT_NEW_ANNDATA_FILE)
     }
-  }, [AnnDataFiles.length])
+    // debugger
+  }, [AnnDataFile.length])
 
   return <div>
     <div className="row">
@@ -43,7 +67,7 @@ function AnnDataUploadStep({
         </p>
       </div>
     </div>
-    { AnnDataFiles.map(file => {
+    { AnnDataFile.map(file => {
       return <AnnDataFileForm
         key={file.oldId ? file.oldId : file._id}
         file={file}
@@ -53,8 +77,8 @@ function AnnDataUploadStep({
         deleteFile={deleteFile}
         annDataFileTypes={['AnnData']}
         bucketName={formState.study.bucket_id}
-        isInitiallyExpanded={AnnDataFiles.length === 1}/>
+        isInitiallyExpanded={true}
+        isAnnDataExperience={isAnnDataExperience}/>
     })}
-    <AddFileButton addNewFile={addNewFile} newFileTemplate={DEFAULT_NEW_ANNDATA_FILE}/>
   </div>
 }

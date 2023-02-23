@@ -57,7 +57,7 @@ export default function ClusteringFileForm({
   }
 
   /**
-   * Configure the appropriate name form fields for Traditional or AnnData upload experience
+   * Configure the appropriate name form fields for Classic or AnnData upload experience
    */
   function nameFields(isAnnDataExperience) {
     if (isAnnDataExperience) {

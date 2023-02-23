@@ -171,7 +171,7 @@ function clusteringHelpContent(isClusteringParsing) {
 }
 
 /**
- * Return the appropriate display of the main steps based on traditional or AnnData upload experience
+ * Return the appropriate display of the main steps based on classic or AnnData upload experience
  */
 function MainStepsDisplay(formState, serverState, currentStep, setCurrentStep, mainSteps,
   isAnnDataExperience, annDataMainExpanded, setAnnDataMainExpanded, expansionIcon) {

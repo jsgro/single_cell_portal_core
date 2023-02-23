@@ -16,11 +16,13 @@ export default function FileUploadControl({
   file, allFiles, updateFile,
   allowedFileExts=['*'],
   validationIssues={},
-  bucketName
+  bucketName,
+  isAnnDataExperience=false
 }) {
   const [fileValidation, setFileValidation] = useState({
     validating: false, issues: {}, fileName: null
   })
+  console.log('allFiles in fileuploadcontrol:', allFiles)
   const inputId = `file-input-${file._id}`
 
   const study = useContext(StudyContext)
@@ -28,6 +30,8 @@ export default function FileUploadControl({
   /** handle user interaction with the file input */
   async function handleFileSelection(e) {
     const selectedFile = e.target.files[0]
+    console.log('selectedFile:', selectedFile)
+
 
     let newName = selectedFile.name
 
@@ -44,6 +48,23 @@ export default function FileUploadControl({
         upload_file_name: selectedFile.name,
         name: newName
       })
+
+      // if (isAnnDataExperience) {
+      // // Add the form field info from other main step files to AnnData file object
+      //   console.log('isAnnDataExperience:', isAnnDataExperience)
+      //   const a = {}
+      //   const newAllFiles = []
+      //   console.log('allFiles before:', file.allFiles)
+      //   allFiles.forEach(file => {
+      //     if (file.file_type !== 'AnnData') {
+      //       a[file.file_type] = file
+      //     } else {
+      //       newAllFiles.push(file)
+      //     }
+      //   })
+      //   updateFile(file._id, { options: a })
+      //   allFiles = newAllFiles
+      // }
     }
   }
   const isFileChosen = !!file.upload_file_name

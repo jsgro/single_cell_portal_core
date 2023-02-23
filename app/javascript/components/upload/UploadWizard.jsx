@@ -35,10 +35,11 @@ import MiscellaneousStep from './MiscellaneousStep'
 import SequenceFileStep from './SequenceFileStep'
 import GeneListStep from './GeneListStep'
 import LoadingSpinner from '~/lib/LoadingSpinner'
-import AnnDataStep, {AnnDataFileFilter} from './AnnDataStep'
+import AnnDataStep, { AnnDataFileFilter } from './AnnDataStep'
 import AnnDataUploadStep from './AnnDataUploadStep'
 import SeuratStep from './SeuratStep'
 import UploadExperienceSplitter from './UploadExperienceSplitter'
+import AnnDataExpressionStep from './AnnDataExpressionStep'
 
 
 const POLLING_INTERVAL = 10 * 1000 // 10 seconds between state updates
@@ -60,18 +61,16 @@ const ALL_POSSIBLE_STEPS = [
   ImageStep
 ]
 
-// These steps remain the same for both traditional and AnnData upload experiences
-const MAIN_STEPS_TRADITIONAL = [
+// These steps remain the same for both classic and AnnData upload experiences
+const MAIN_STEPS_CLASSIC = [
   RawCountsStep,
   ProcessedExpressionStep,
   MetadataStep,
   ClusteringStep
 ]
 
-// These steps remain the same for both traditional and AnnData upload experiences
 const MAIN_STEPS_ANNDATA = [
-  RawCountsStep,
-  ProcessedExpressionStep,
+  AnnDataExpressionStep,
   MetadataStep,
   ClusteringStep,
   AnnDataUploadStep
@@ -82,15 +81,16 @@ export function RawUploadWizard({ studyAccession, name }) {
   const [serverState, setServerState] = useState(null)
   const [formState, setFormState] = useState(null)
 
+  const [parentAnnDataFile, setParentAnnDataFile] = useState({})
+
   // study attributes to pass to the StudyContext later for use throughout the RawUploadWizard component, if needed
   // use complete study object, rather than defaultStudyState so that any updates to study.rb will be reflected in
   // this context
   const studyObj = serverState?.study
-  console.log('serverState.files:', serverState?.files)
   const studyFiles = serverState?.files
-  const hasAnnDataFile = studyFiles?.filter(AnnDataFileFilter)?.length
+  const hasAnnDataFile = !!studyFiles?.filter(AnnDataFileFilter)?.length
 
-  // used for toggling between traditional and AnnData experience of upload wizard
+  // used for toggling between classic and AnnData experience of upload wizard
   const [isAnnDataExperience, setIsAnnDataExperience] = useState(hasAnnDataFile)
   const [showSplitterStep, setShowSplitterStep] = useState(studyFiles?.length)
 
@@ -100,16 +100,15 @@ export function RawUploadWizard({ studyAccession, name }) {
   let SUPPLEMENTAL_STEPS
   let NON_VISUALIZABLE_STEPS
 
-  // set the additional steps to display, based on traditional or AnnData experience
+  // set the additional steps to display, based on classic or AnnData experience
   if (isAnnDataExperience) {
     MAIN_STEPS = MAIN_STEPS_ANNDATA
     SUPPLEMENTAL_STEPS = ALL_POSSIBLE_STEPS.slice(6, 7)
     NON_VISUALIZABLE_STEPS = ALL_POSSIBLE_STEPS.slice(8, 10)
   } else {
-    MAIN_STEPS = MAIN_STEPS_TRADITIONAL
-
-    SUPPLEMENTAL_STEPS = ALL_POSSIBLE_STEPS.slice(4, 8)
-    NON_VISUALIZABLE_STEPS = ALL_POSSIBLE_STEPS.slice(8, 11)
+    MAIN_STEPS = MAIN_STEPS_CLASSIC
+    SUPPLEMENTAL_STEPS = ALL_POSSIBLE_STEPS.slice(5, 9)
+    NON_VISUALIZABLE_STEPS = ALL_POSSIBLE_STEPS.slice(9, 12)
     if (allowReferenceImageUpload) {
       SUPPLEMENTAL_STEPS.splice(1, 0, ImageStep)
     }
@@ -161,6 +160,7 @@ export function RawUploadWizard({ studyAccession, name }) {
       window.setTimeout(() => scroll({ top: document.body.scrollHeight, behavior: 'smooth' }), 100)
     }
   }
+
 
   /** handle response from server after an upload by updating the serverState with the updated file response */
   function handleSaveResponse(response, uploadingMoreChunks, requestCanceller) {
@@ -258,7 +258,24 @@ export function RawUploadWizard({ studyAccession, name }) {
 
   /** save the given file and perform an upload if a selected file is present */
   async function saveFile(file) {
+    console.log('file:', file)
     let studyFileId = file._id
+    let updatedFile = file
+
+
+    if (isAnnDataExperience && file.file_type === 'AnnData') {
+      formState.files.forEach(fileobj => {
+        if (fileobj.file_type !== 'AnnData') {
+          file['other_form_fields_info'][fileobj.file_type] = fileobj
+          deleteFileFromForm(fileobj._id)
+          console.log('deleted: ', fileobj.file_type)
+        }
+      })
+
+      updateFile(studyFileId, other_form_fields_info)
+      debugger
+    }
+
 
     const fileSize = file.uploadSelection?.size
     const isChunked = fileSize > CHUNK_SIZE
@@ -266,6 +283,11 @@ export function RawUploadWizard({ studyAccession, name }) {
     let chunkEnd = Math.min(CHUNK_SIZE, fileSize)
 
     const studyFileData = formatFileForApi(file, chunkStart, chunkEnd)
+    console.log('studyFileData:')
+    for (const pair of studyFileData.entries()) {
+      console.log(`${pair[0] }, ${ pair[1]}`)
+    }
+    debugger
     try {
       let response
       const requestCanceller = new RequestCanceller(studyFileId)
@@ -386,7 +408,7 @@ export function RawUploadWizard({ studyAccession, name }) {
   const prevStep = STEPS[currentStepIndex - 1]
   return (
     <StudyContext.Provider value={studyObj}>
-      {showSplitterStep && <UploadExperienceSplitter {...{ isAnnDataExperience, setIsAnnDataExperience, setShowSplitterStep }}/>}
+      {showSplitterStep && <UploadExperienceSplitter {...{ isAnnDataExperience, setIsAnnDataExperience, setShowSplitterStep, addNewFile }}/>}
       {(!showSplitterStep) && <div className="upload-wizard-react">
         <div className="row">
           <div className="col-md-12 wizard-top-bar no-wrap-ellipsis">
@@ -421,6 +443,7 @@ export function RawUploadWizard({ studyAccession, name }) {
                 { nextStep && <button
                   className="btn terra-tertiary-btn"
                   onClick={() => setCurrentStep(nextStep)}>
+                  {/* emily here */}
                   Next <FontAwesomeIcon icon={faChevronRight}/>
                 </button> }
               </div>
@@ -438,6 +461,7 @@ export function RawUploadWizard({ studyAccession, name }) {
                 saveFile={saveFile}
                 addNewFile={addNewFile}
                 isAnnDataExperience={isAnnDataExperience}
+                deleteFileFromForm={deleteFileFromForm}
               />
             </div> }
           </div>
