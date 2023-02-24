@@ -169,12 +169,23 @@ export default function ExploreDisplayTabs({
   const [, setShowDeGroupPicker] = useState(false)
   const [deGenes, setDeGenes] = useState(null)
   const [deGroup, setDeGroup] = useState(null)
-  const [showDifferentialExpressionPanel, setShowDifferentialExpressionPanel] = useState(deGenes !== null)
-  const [showUpstreamDifferentialExpressionPanel, setShowUpstreamDifferentialExpressionPanel] = useState(deGenes !== null)
+  const [showDifferentialExpressionPanel, setShowDifferentialExpressionPanel] = useState(deGenes !== null || exploreParams.pickDeGroup)
+  const [showUpstreamDifferentialExpressionPanel, setShowUpstreamDifferentialExpressionPanel] = useState(deGenes !== null || !exploreParams.pickDeGroup)
 
   const studyHasDe = exploreInfo?.differentialExpression.length > 0
 
   const clusterHasDe = getClusterHasDe(exploreInfo, exploreParams)
+
+
+  // if (exploreParams.pickDeGroup) {
+  //   console.log('')
+  //   console.log('pickDeGroup is true!')
+  //   setShowUpstreamDifferentialExpressionPanel(false)
+  //   setShowDifferentialExpressionPanel(true)
+  //   setShowDeGroupPicker(true)
+  // }
+  console.log('showDifferentialExpressionPanel', showDifferentialExpressionPanel)
+  console.log('showUpstreamDifferentialExpressionPanel', showUpstreamDifferentialExpressionPanel)
 
   console.log('studyHasDe', studyHasDe)
   console.log('clusterHasDe', clusterHasDe)
@@ -269,6 +280,8 @@ export default function ExploreDisplayTabs({
     // also, unset any gene lists as we're about to re-render the explore tab and having gene list selected will show
     // the wrong tabs
     const updateParams = { geneList: '', ideogramFileId: '' }
+
+    if (newParams.pickDeGroup) updateParams.pickDeGroup = true
     const clusterParamNames = ['cluster', 'annotation', 'subsample', 'spatialGroups']
     clusterParamNames.forEach(param => {
       updateParams[param] = param in newParams ? newParams[param] : exploreParamsWithDefaults[param]
@@ -285,6 +298,7 @@ export default function ExploreDisplayTabs({
       updateParams.hiddenTraces = []
     }
 
+    console.log('updateParams', updateParams)
     updateExploreParams(updateParams)
   }
 

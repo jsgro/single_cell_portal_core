@@ -86,7 +86,9 @@ export default function AnnotationControl({
             data-analytics-name="annotation-select"
             getOptionLabel={annotation => annotation.name}
             getOptionValue={annotation => annotation.scope + annotation.name + annotation.cluster_name}
-            onChange={newAnnotation => updateClusterParams({ annotation: newAnnotation })}
+            onChange={newAnnotation => {
+              updateClusterParams({ annotation: newAnnotation, pickDeGroup: true })
+            }}
             styles={clusterSelectStyle}/>
         }
       </label>

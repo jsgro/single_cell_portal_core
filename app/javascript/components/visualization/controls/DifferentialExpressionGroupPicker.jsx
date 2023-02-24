@@ -89,6 +89,11 @@ export default function DifferentialExpressionGroupPicker({
   countsByLabel, deObjects, setDeFilePath
 }) {
   let groups = getLegendSortedLabels(countsByLabel)
+
+  console.log('deObjects', deObjects)
+  console.log('groups', groups)
+  console.log('clusterName', clusterName)
+  console.log('annotation', annotation)
   groups = groups.filter(group => {
     const deOption = getMatchingDeOption(deObjects, group, clusterName, annotation)
     return deOption !== undefined
