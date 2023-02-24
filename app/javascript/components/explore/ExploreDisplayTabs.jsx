@@ -545,6 +545,7 @@ export default function ExploreDisplayTabs({
                 setDeGroup={setDeGroup}
                 setShowDifferentialExpressionPanel={setShowDifferentialExpressionPanel}
                 setShowUpstreamDifferentialExpressionPanel={setShowUpstreamDifferentialExpressionPanel}
+                isUpstream={showUpstreamDifferentialExpressionPanel}
               />
             }
           </div>

@@ -112,7 +112,6 @@ export default function DifferentialExpressionGroupPicker({
     setDeGenes(deGenes)
   }
 
-  console.log('deGroup', deGroup)
   return (
     <>
       {!deGenes &&

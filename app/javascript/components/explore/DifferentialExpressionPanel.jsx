@@ -245,7 +245,7 @@ export function DifferentialExpressionPanelHeader({
   setDeGenes, setDeGroup, setShowDifferentialExpressionPanel, setShowUpstreamDifferentialExpressionPanel, isUpstream
 }) {
 
-  const title = isUpstream ? 'Differentially expressed genes' : 'Datasets with DE results'
+  const title = isUpstream ? 'Find differential expression' : 'Differential expression'
   return (
     <>
       <span>{title}</span>
