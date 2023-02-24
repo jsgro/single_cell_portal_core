@@ -114,6 +114,9 @@ export default function DifferentialExpressionPanel({
   exploreInfo, exploreParamsWithDefaults, setShowDeGroupPicker, setDeGenes, setDeGroup,
   countsByLabel, numRows=15
 }) {
+
+  console.log('exploreInfo', exploreInfo)
+  console.log('exploreParamsWithDefaults', exploreParamsWithDefaults)
   const clusterName = exploreParamsWithDefaults?.cluster
   const bucketId = exploreInfo?.bucketId
   const annotation = getAnnotationObject(exploreParamsWithDefaults, exploreInfo)

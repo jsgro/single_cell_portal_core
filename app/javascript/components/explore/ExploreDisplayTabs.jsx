@@ -51,13 +51,34 @@ const tabList = [
   { key: 'images', label: 'Images' }
 ]
 
+/** Determine if currently selected cluster has differential expression outputs available */
+function getClusterHasDe(exploreInfo, exploreParams) {
+  if (!exploreInfo) return false
+  let clusterHasDe = false
+  const annotList = exploreInfo.annotationList
+  let selectedCluster
+  if (exploreParams?.cluster) {
+    selectedCluster = exploreParams.cluster
+  } else {
+    selectedCluster = annotList.default_cluster
+  }
+
+  clusterHasDe = exploreInfo.differentialExpression.some(deItem => {
+    return (
+      deItem.cluster_name === selectedCluster
+    )
+  })
+
+  return clusterHasDe
+}
+
 /** Determine if currently selected annotation has differential expression outputs available */
-function annotHasDe(exploreInfo, exploreParams) {
+function getAnnotHasDe(exploreInfo, exploreParams) {
   const flags = getFeatureFlagsWithDefaults()
   if (!flags?.differential_expression_frontend || !exploreInfo) {
-    // set isDifferentialExpressionEnabled to false as user cannot see DE results, even if present for annotation
+    // set annotHasDe to false as user cannot see DE results, even if present for annotation
     if (window.SCP) {
-      window.SCP.isDifferentialExpressionEnabled = false
+      window.SCP.annotHasDe = false
     }
     return false
   }
@@ -103,6 +124,8 @@ export default function ExploreDisplayTabs({
   studyAccession, exploreInfo, setExploreInfo, exploreParams, updateExploreParams,
   clearExploreParams, exploreParamsWithDefaults, routerLocation
 }) {
+  console.log('exploreInfo', exploreInfo)
+  console.log('exploreParams', exploreParams)
   const [, setRenderForcer] = useState({})
   const [dataCache] = useState(createCache())
   // tracks whether the view options controls are open or closed
@@ -113,11 +136,20 @@ export default function ExploreDisplayTabs({
   const [currentPointsSelected, setCurrentPointsSelected] = useState(null)
 
   // Differential expression settings
-  const isDifferentialExpressionEnabled = annotHasDe(exploreInfo, exploreParams)
+  const annotHasDe = getAnnotHasDe(exploreInfo, exploreParams)
   const [, setShowDeGroupPicker] = useState(false)
   const [deGenes, setDeGenes] = useState(null)
   const [deGroup, setDeGroup] = useState(null)
   const [showDifferentialExpressionPanel, setShowDifferentialExpressionPanel] = useState(deGenes !== null)
+  const [showUpstreamDifferentialExpressionPanel, setShowUpstreamDifferentialExpressionPanel] = useState(deGenes !== null)
+
+  const studyHasDe = exploreInfo?.differentialExpression.length > 0
+
+  const clusterHasDe = getClusterHasDe(exploreInfo, exploreParams)
+
+  console.log('studyHasDe', studyHasDe)
+  console.log('clusterHasDe', clusterHasDe)
+  console.log('annotHasDe', annotHasDe)
 
   // Hash of trace label names to the number of points in that trace
   const [countsByLabel, setCountsByLabel] = useState(null)
@@ -487,7 +519,7 @@ export default function ExploreDisplayTabs({
             }
           </div>
 
-          {!showDifferentialExpressionPanel &&
+          {!showDifferentialExpressionPanel && !showUpstreamDifferentialExpressionPanel &&
           <>
             <div>
               <div className={showClusterControls ? '' : 'hidden'}>
@@ -519,15 +551,19 @@ export default function ExploreDisplayTabs({
                   setAnnotationList={setAnnotationList}
                   studyAccession={studyAccession}/>
                 }
-                {isDifferentialExpressionEnabled &&
+                {studyHasDe &&
                 <>
                   <div className="row de-modal-row-wrapper">
                     <div className="col-xs-12 de-modal-row">
                       <button
                         className="btn btn-primary"
                         onClick={() => {
-                          setShowDifferentialExpressionPanel(true)
-                          setShowDeGroupPicker(true)
+                          if (annotHasDe) {
+                            setShowDifferentialExpressionPanel(true)
+                            setShowDeGroupPicker(true)
+                          } else if (clusterHasDe) {
+                            setShowUpstreamDifferentialExpressionPanel(true)
+                          }
                         }}
                       >Differential expression</button>
                       <DifferentialExpressionModal />
@@ -596,6 +632,30 @@ export default function ExploreDisplayTabs({
               setDeGroup={setDeGroup}
               countsByLabel={countsByLabel}
             />
+          </>
+          }
+          {showUpstreamDifferentialExpressionPanel &&
+          <>
+            {!clusterHasDe &&
+            <>
+              <ClusterSelector
+                annotationList={annotationList}
+                cluster={exploreParamsWithDefaults.cluster}
+                annotation={exploreParamsWithDefaults.annotation}
+                updateClusterParams={updateClusterParams}
+                spatialGroups={exploreInfo ? exploreInfo.spatialGroups : []}/>
+              {hasSpatialGroups &&
+              <SpatialSelector allSpatialGroups={exploreInfo.spatialGroups}
+                spatialGroups={exploreParamsWithDefaults.spatialGroups}
+                updateSpatialGroups={spatialGroups => updateClusterParams({ spatialGroups })}/>
+              }
+            </>
+            }
+            <AnnotationSelector
+              annotationList={annotationList}
+              cluster={exploreParamsWithDefaults.cluster}
+              annotation={exploreParamsWithDefaults.annotation}
+              updateClusterParams={updateClusterParams}/>
           </>
           }
         </div>
