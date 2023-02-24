@@ -72,6 +72,35 @@ function getClusterHasDe(exploreInfo, exploreParams) {
   return clusterHasDe
 }
 
+function getAnnotationsWithDE(exploreInfo, exploreParams) {
+  if (!exploreInfo) return false
+
+  let annotsWithDe = []
+  const annotList = exploreInfo.annotationList
+  let selectedCluster
+  if (exploreParams?.cluster) {
+    selectedCluster = exploreParams.cluster
+  } else {
+    selectedCluster = annotList.default_cluster
+  }
+
+  annotsWithDe = exploreInfo.differentialExpression.filter(deItem => {
+    return (
+      deItem.cluster_name === selectedCluster
+    )
+  }).map(annot => {
+    return {
+      cluster_name: annot.cluster_name,
+      name: annot.annotation_name,
+      scope: annot.annotation_scope,
+      type: 'group'
+    }
+  })
+
+  console.log('annotsWithDe', annotsWithDe)
+  return {annotations: annotsWithDe}
+}
+
 /** Determine if currently selected annotation has differential expression outputs available */
 function getAnnotHasDe(exploreInfo, exploreParams) {
   const flags = getFeatureFlagsWithDefaults()
@@ -499,7 +528,7 @@ export default function ExploreDisplayTabs({
         </div>
         <div className={showViewOptionsControls ? 'col-md-2 ' : 'hidden'}>
           <div className="view-options-toggle">
-            {!showDifferentialExpressionPanel &&
+            {!showDifferentialExpressionPanel && !showUpstreamDifferentialExpressionPanel &&
               <>
                 <FontAwesomeIcon className="fa-lg" icon={faCog}/> OPTIONS
                 <button className="action"
@@ -510,11 +539,12 @@ export default function ExploreDisplayTabs({
                 </button>
               </>
             }
-            {showDifferentialExpressionPanel &&
+            {(showDifferentialExpressionPanel || showUpstreamDifferentialExpressionPanel) &&
               <DifferentialExpressionPanelHeader
                 setDeGenes={setDeGenes}
                 setDeGroup={setDeGroup}
                 setShowDifferentialExpressionPanel={setShowDifferentialExpressionPanel}
+                setShowUpstreamDifferentialExpressionPanel={setShowUpstreamDifferentialExpressionPanel}
               />
             }
           </div>
@@ -652,10 +682,11 @@ export default function ExploreDisplayTabs({
             </>
             }
             <AnnotationSelector
-              annotationList={annotationList}
+              annotationList={getAnnotationsWithDE(exploreInfo, exploreParams)}
               cluster={exploreParamsWithDefaults.cluster}
-              annotation={exploreParamsWithDefaults.annotation}
-              updateClusterParams={updateClusterParams}/>
+              annotation={null}
+              updateClusterParams={updateClusterParams}
+              hasSelection={false}/>
           </>
           }
         </div>

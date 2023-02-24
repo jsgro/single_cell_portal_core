@@ -242,16 +242,19 @@ export default function DifferentialExpressionPanel({
 
 /** Top matter for differential expression panel shown at right in Explore tab */
 export function DifferentialExpressionPanelHeader({
-  setDeGenes, setDeGroup, setShowDifferentialExpressionPanel
+  setDeGenes, setDeGroup, setShowDifferentialExpressionPanel, setShowUpstreamDifferentialExpressionPanel, isUpstream
 }) {
+
+  const title = isUpstream ? 'Differentially expressed genes' : 'Datasets with DE results'
   return (
     <>
-      <span>Differentially expressed genes</span>
+      <span>{title}</span>
       <button className="action fa-lg"
         onClick={() => {
           setDeGenes(null)
           setDeGroup(null)
           setShowDifferentialExpressionPanel(false)
+          setShowUpstreamDifferentialExpressionPanel(false)
         }}
         title="Exit differential expression panel"
         data-analytics-name="differential-expression-panel-exit">
