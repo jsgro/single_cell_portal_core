@@ -153,8 +153,6 @@ export default function ExploreDisplayTabs({
   studyAccession, exploreInfo, setExploreInfo, exploreParams, updateExploreParams,
   clearExploreParams, exploreParamsWithDefaults, routerLocation
 }) {
-  console.log('exploreInfo', exploreInfo)
-  console.log('exploreParams', exploreParams)
   const [, setRenderForcer] = useState({})
   const [dataCache] = useState(createCache())
   // tracks whether the view options controls are open or closed
@@ -169,27 +167,12 @@ export default function ExploreDisplayTabs({
   const [, setShowDeGroupPicker] = useState(false)
   const [deGenes, setDeGenes] = useState(null)
   const [deGroup, setDeGroup] = useState(null)
-  const [showDifferentialExpressionPanel, setShowDifferentialExpressionPanel] = useState(deGenes !== null || exploreParams.pickDeGroup)
-  const [showUpstreamDifferentialExpressionPanel, setShowUpstreamDifferentialExpressionPanel] = useState(deGenes !== null || !exploreParams.pickDeGroup)
+  const [showDifferentialExpressionPanel, setShowDifferentialExpressionPanel] = useState(deGenes !== null)
+  const [showUpstreamDifferentialExpressionPanel, setShowUpstreamDifferentialExpressionPanel] = useState(deGenes !== null)
 
   const studyHasDe = exploreInfo?.differentialExpression.length > 0
 
   const clusterHasDe = getClusterHasDe(exploreInfo, exploreParams)
-
-
-  // if (exploreParams.pickDeGroup) {
-  //   console.log('')
-  //   console.log('pickDeGroup is true!')
-  //   setShowUpstreamDifferentialExpressionPanel(false)
-  //   setShowDifferentialExpressionPanel(true)
-  //   setShowDeGroupPicker(true)
-  // }
-  console.log('showDifferentialExpressionPanel', showDifferentialExpressionPanel)
-  console.log('showUpstreamDifferentialExpressionPanel', showUpstreamDifferentialExpressionPanel)
-
-  console.log('studyHasDe', studyHasDe)
-  console.log('clusterHasDe', clusterHasDe)
-  console.log('annotHasDe', annotHasDe)
 
   // Hash of trace label names to the number of points in that trace
   const [countsByLabel, setCountsByLabel] = useState(null)
@@ -281,7 +264,6 @@ export default function ExploreDisplayTabs({
     // the wrong tabs
     const updateParams = { geneList: '', ideogramFileId: '' }
 
-    if (newParams.pickDeGroup) updateParams.pickDeGroup = true
     const clusterParamNames = ['cluster', 'annotation', 'subsample', 'spatialGroups']
     clusterParamNames.forEach(param => {
       updateParams[param] = param in newParams ? newParams[param] : exploreParamsWithDefaults[param]
@@ -298,7 +280,6 @@ export default function ExploreDisplayTabs({
       updateParams.hiddenTraces = []
     }
 
-    console.log('updateParams', updateParams)
     updateExploreParams(updateParams)
   }
 
@@ -662,7 +643,7 @@ export default function ExploreDisplayTabs({
             </button>
           </>
           }
-          {showDifferentialExpressionPanel && countsByLabel &&
+          {showDifferentialExpressionPanel && countsByLabel && annotHasDe &&
           <>
             <DifferentialExpressionPanel
               deGroup={deGroup}
@@ -701,7 +682,10 @@ export default function ExploreDisplayTabs({
               cluster={exploreParamsWithDefaults.cluster}
               annotation={null}
               updateClusterParams={updateClusterParams}
-              hasSelection={false}/>
+              hasSelection={false}
+              setShowDifferentialExpressionPanel={setShowDifferentialExpressionPanel}
+              setShowUpstreamDifferentialExpressionPanel={setShowUpstreamDifferentialExpressionPanel}
+            />
           </>
           }
         </div>

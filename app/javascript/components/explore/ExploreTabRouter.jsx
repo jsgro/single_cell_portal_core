@@ -43,7 +43,6 @@ function updateExploreParams(newOptions, wasUserSpecified=true) {
   const search = location.search
   const currentParams = buildExploreParamsFromQuery(search)
   const mergedOpts = Object.assign({}, currentParams, newOptions)
-  console.log('mergedOpts', mergedOpts)
   if (wasUserSpecified) {
     // this is just default params being fetched from the server, so don't change the url
     Object.keys(newOptions).forEach(key => {
@@ -98,7 +97,6 @@ function buildExploreParamsFromQuery(query) {
   } else {
     exploreParams.spatialGroups = queryParams.spatialGroups ? queryParams.spatialGroups.split(',') : []
   }
-  exploreParams.pickDeGroup = queryParams.pickDeGroup === 'true' ? true : null
   exploreParams.genes = geneParamToArray(queryParams.genes)
   exploreParams.geneList = queryParams.geneList ? queryParams.geneList : ''
   exploreParams.heatmapRowCentering = queryParams.heatmapRowCentering ?
@@ -131,7 +129,6 @@ function buildQueryFromParams(exploreParams) {
     cluster: exploreParams.cluster,
     annotation: getIdentifierForAnnotation(exploreParams.annotation),
     subsample: exploreParams.subsample,
-    pickDeGroup: exploreParams.pickDeGroup,
     genes: geneArrayToParam(exploreParams.genes),
     consensus: exploreParams.consensus,
     geneList: exploreParams.geneList,

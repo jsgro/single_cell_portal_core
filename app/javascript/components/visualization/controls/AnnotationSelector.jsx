@@ -44,7 +44,9 @@ export default function AnnotationControl({
   cluster,
   annotation,
   updateClusterParams,
-  hasSelection=true
+  hasSelection=true,
+  setShowDifferentialExpressionPanel,
+  setShowUpstreamDifferentialExpressionPanel
 }) {
   if (!annotationList) {
     annotationList = { default_cluster: null, default_annotation: null, annotations: [] }
@@ -87,7 +89,9 @@ export default function AnnotationControl({
             getOptionLabel={annotation => annotation.name}
             getOptionValue={annotation => annotation.scope + annotation.name + annotation.cluster_name}
             onChange={newAnnotation => {
-              updateClusterParams({ annotation: newAnnotation, pickDeGroup: true })
+              updateClusterParams({ annotation: newAnnotation })
+              setShowDifferentialExpressionPanel(true)
+              setShowUpstreamDifferentialExpressionPanel(false)
             }}
             styles={clusterSelectStyle}/>
         }

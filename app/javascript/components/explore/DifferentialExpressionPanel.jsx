@@ -246,6 +246,7 @@ export function DifferentialExpressionPanelHeader({
 }) {
 
   const title = isUpstream ? 'Find differential expression' : 'Differential expression'
+  console.log('isUpstream', isUpstream)
   return (
     <>
       <span>{title}</span>
