@@ -733,7 +733,7 @@ class IngestJob
       jobStatus: failed? ? 'failed' : 'success',
       machineType: vm_info['machineType'],
       bootDiskSizeGb: vm_info['bootDiskSizeGb'],
-      exitStatus: exit_code #takes integer value from exit_code method
+      exitStatus: exit_code # integer exit code from PAPI, e.g. `137` for out of memory (OOM)
     }
 
     case action
