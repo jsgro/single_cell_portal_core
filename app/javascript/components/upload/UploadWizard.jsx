@@ -261,28 +261,18 @@ export function RawUploadWizard({ studyAccession, name }) {
     let studyFileId = file._id
 
     if (isAnnDataExperience) {
-      formState.files.forEach(o => {
-        if (o.file_type === 'Cluster') {
-          file['ann_data_cluster_form_info'] = {
-            'file_type': o.file_type,
-            'heatmap_file_info': o.heatmap_file_info,
-            'name': o.name,
-            'obsm_key_names': o.obsm_key_names
-          }
-          deleteFileFromForm(o._id)
+      formState.files.forEach(fileFormData => {
+        if (fileFormData.file_type === 'Cluster') {
+          file['cluster_form_info'] = fileFormData
+          deleteFileFromForm(fileFormData._id)
         }
-        if (o.file_type === 'Expression Matrix') {
-          file['ann_data_expression_form_info'] = {
-            'file_type': o.file_type,
-            'heatmap_file_info': o.heatmap_file_info,
-            'name': o.name,
-            'expression_file_info': o.expression_file_info
-          }
-          deleteFileFromForm(o._id)
+        if (fileFormData.file_type === 'Expression Matrix') {
+          file['extra_expression_form_info'] = fileFormData
+          deleteFileFromForm(fileFormData._id)
         }
-        if (o.file_type === 'Metadata') {
-          file['ann_data_metadata_form_info'] = o
-          deleteFileFromForm(o._id)
+        if (fileFormData.file_type === 'Metadata') {
+          file['metadata_form_info'] = fileFormData
+          deleteFileFromForm(fileFormData._id)
         }
       })
     }

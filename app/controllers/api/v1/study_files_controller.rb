@@ -695,7 +695,7 @@ module Api
                                            expression_file_info_attributes: [:id, :_destroy, :library_preparation_protocol, :units,
                                                                              :biosample_input_type, :modality, :is_raw_counts, raw_counts_associations: []],
                                            heatmap_file_info_attributes: [:id, :_destroy, :custom_scaling, :color_min, :color_max, :legend_label],
-                                           ann_data_cluster_form_info: [], ann_data_metadata_form_info: [], ann_data_expression_form_info: []
+                                           cluster_form_info: [], metadata_form_info: [], extra_expression_form_info: []
                                            )
       end
     end

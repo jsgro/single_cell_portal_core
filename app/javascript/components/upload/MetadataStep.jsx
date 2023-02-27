@@ -48,19 +48,11 @@ function MetadataForm({
     allowedFileExts: FileTypeExtensions.plainText,
     requiredFields: []
   }) : []
-  console.log('formsate:', formState)
 
   useEffect(() => {
-    if (!file ) {
+    if (!file) {
       addNewFile(DEFAULT_NEW_METADATA_FILE)
-      console.log('formState.', formState)
     }
-    // if (isAnnDataExperience) {
-    //   // emily to do here
-    //   const annDataParentFile = formState.files.find(file => file.file_type === 'AnnData')
-    //   console.log('formState.allFiles', formState.allFiles)
-    //   updateFile(annDataParentFile._id, { other_form_fields_info:{file_type: 'Metadata' }})
-    // }
   }, [file?._id])
 
   return <div>
