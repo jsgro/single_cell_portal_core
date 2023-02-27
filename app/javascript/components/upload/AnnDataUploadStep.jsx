@@ -10,7 +10,6 @@ import { processedFileFilter } from './ProcessedExpressionStep'
 
 const DEFAULT_NEW_ANNDATA_FILE = {
   file_type: 'AnnData',
-  other_form_fields_info: {},
   options: {}
 }
 
@@ -35,25 +34,9 @@ function AnnDataUploadStep({
   const AnnDataFile = formState.files.filter(AnnDataFileFilter)
 
   useEffect(() => {
-    // const other_form_fields_info = {}
-    // formState.files.forEach(file => {
-    //   if (file.file_type !== 'AnnData') {
-    //     other_form_fields_info[file.file_type] = file
-    //     deleteFileFromForm(file._id)
-    //     console.log('deleted: ', file.file_type )
-    //   }
-    // })
-
-    // const defAnnNew = {
-    //   file_type: 'AnnData',
-    //   other_form_fields_info
-    //   // options: {}
-    // }
-
     if (AnnDataFile.length === 0) {
       addNewFile(DEFAULT_NEW_ANNDATA_FILE)
     }
-    // debugger
   }, [AnnDataFile.length])
 
   return <div>

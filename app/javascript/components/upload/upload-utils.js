@@ -112,7 +112,7 @@ export function findBundleChildren(file, files) {
 export function formatFileForApi(file, chunkStart, chunkEnd) {
   //emily here
   // study_file[type] sort of thing
-  debugger
+  
   const data = new FormData()
   console.log('data:', data)
   Object.keys(file).filter(key => !PROPERTIES_NOT_TO_SEND.includes(key)).forEach(key => {
@@ -128,17 +128,7 @@ export function formatFileForApi(file, chunkStart, chunkEnd) {
   }
   if (file.options) {
     Object.keys(file.options).forEach(key => {
-      debugger
       data.append(`study_file[options][${key}]`, file.options[key])
-    })
-  }
-  //     if (saveFile.studyFileData.get('study_file[expression_file_info_attributes][raw_counts_associations][]')) {
-
-  if (file.other_form_fields_info) {
-    debugger
-    Object.keys(file.other_form_fields_info).forEach(key => {
-      debugger
-      data.append(`study_file[other_form_fields_info][${key}]`, file.other_form_fields_info[key])
     })
   }
 
@@ -151,7 +141,7 @@ export function formatFileForApi(file, chunkStart, chunkEnd) {
  * requiredFields is array objects with label and propertyName:  e.g. [{label: 'species', propertyName: 'taxon_id'}]
  * it validates the propertyName is specified (propertyName can include '.' for nested properties), and
  * uses the label in the validation message returned if the property is not specified. */
-export function validateFile({ file, allFiles, allowedFileExts=[], requiredFields=[] }) {
+export function validateFile({ file, allFiles, allowedFileExts=[], requiredFields=[], isAnnDataExperience=false }) {
   if (!file) {
     // edge case where the form is rendered but hook to add an empty file has not yet finished
     return { file: 'File not yet initialized' }
@@ -220,7 +210,7 @@ function validateNameUniqueness(file, allFiles, validationMessages) {
     */
 export function addObjectPropertyToForm(obj, propertyName, formData, nested) {
   let propString = `study_file[${propertyName}]`
-  debugger
+  
   if (nested) {
     propString = `study_file[${nested}_attributes][${propertyName}]`
   }

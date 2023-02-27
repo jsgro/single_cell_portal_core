@@ -19,10 +19,10 @@ export default function AnnDataFileForm({
   isAnnDataExperience
 }) {
   
-  const validationMessages = validateFile({ file, allFiles, allowedFileExts })
+  // const validationMessages = validateFile({ file, allFiles, allowedFileExts })
   return <ExpandableFileForm {...{
     file, allFiles, updateFile, saveFile,
-    allowedFileExts, deleteFile, validationMessages, bucketName, isInitiallyExpanded, isAnnDataExperience
+    allowedFileExts, deleteFile, bucketName, isInitiallyExpanded, isAnnDataExperience
   }}>
     <TextFormField label="Description" fieldName="description" file={file} updateFile={updateFile}/>
   </ExpandableFileForm>

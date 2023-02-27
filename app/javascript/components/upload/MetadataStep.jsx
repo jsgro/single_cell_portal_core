@@ -42,12 +42,12 @@ function MetadataForm({
   const conventionRequired = featureFlagState && featureFlagState.convention_required
 
   const file = formState.files.find(metadataFileFilter)
-  const validationMessages = validateFile({
+  const validationMessages = !isAnnDataExperience ? validateFile({
     file,
     allFiles: formState.files,
     allowedFileExts: FileTypeExtensions.plainText,
     requiredFields: []
-  })
+  }) : []
   console.log('formsate:', formState)
 
   useEffect(() => {

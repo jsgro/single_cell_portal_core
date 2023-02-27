@@ -258,24 +258,34 @@ export function RawUploadWizard({ studyAccession, name }) {
 
   /** save the given file and perform an upload if a selected file is present */
   async function saveFile(file) {
-    console.log('file:', file)
     let studyFileId = file._id
-    let updatedFile = file
 
-
-    if (isAnnDataExperience && file.file_type === 'AnnData') {
-      formState.files.forEach(fileobj => {
-        if (fileobj.file_type !== 'AnnData') {
-          file['other_form_fields_info'][fileobj.file_type] = fileobj
-          deleteFileFromForm(fileobj._id)
-          console.log('deleted: ', fileobj.file_type)
+    if (isAnnDataExperience) {
+      formState.files.forEach(o => {
+        if (o.file_type === 'Cluster') {
+          file['ann_data_cluster_form_info'] = {
+            'file_type': o.file_type,
+            'heatmap_file_info': o.heatmap_file_info,
+            'name': o.name,
+            'obsm_key_names': o.obsm_key_names
+          }
+          deleteFileFromForm(o._id)
+        }
+        if (o.file_type === 'Expression Matrix') {
+          file['ann_data_expression_form_info'] = {
+            'file_type': o.file_type,
+            'heatmap_file_info': o.heatmap_file_info,
+            'name': o.name,
+            'expression_file_info': o.expression_file_info
+          }
+          deleteFileFromForm(o._id)
+        }
+        if (o.file_type === 'Metadata') {
+          file['ann_data_metadata_form_info'] = o
+          deleteFileFromForm(o._id)
         }
       })
-
-      updateFile(studyFileId, other_form_fields_info)
-      debugger
     }
-
 
     const fileSize = file.uploadSelection?.size
     const isChunked = fileSize > CHUNK_SIZE
@@ -283,11 +293,9 @@ export function RawUploadWizard({ studyAccession, name }) {
     let chunkEnd = Math.min(CHUNK_SIZE, fileSize)
 
     const studyFileData = formatFileForApi(file, chunkStart, chunkEnd)
-    console.log('studyFileData:')
-    for (const pair of studyFileData.entries()) {
-      console.log(`${pair[0] }, ${ pair[1]}`)
-    }
-    debugger
+    // for (const pair of studyFileData.entries()) {
+    //   console.log(`${pair[0] }, ${ pair[1]}`)
+    // }
     try {
       let response
       const requestCanceller = new RequestCanceller(studyFileId)

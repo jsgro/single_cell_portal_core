@@ -78,7 +78,7 @@ class ExpressionFileInfo
   validate :unset_units_unless_raw_counts
   validate :enforce_units_on_raw_counts
   validate :enforce_raw_counts_associations, unless: proc { |attributes| attributes[:is_raw_counts] }
-
+                              # todo unless is AnnData
   private
 
   # remove invalid StudyFile ids, as well as nil/empty string values

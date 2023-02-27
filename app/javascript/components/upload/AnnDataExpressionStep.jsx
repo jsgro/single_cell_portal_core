@@ -8,19 +8,7 @@ const DEFAULT_NEW_PROCESSED_FILE = {
   expression_file_info: {
     is_raw_counts: false,
     biosample_input_type: 'Whole cell',
-    modality: 'Transcriptomic: unbiased',
-    raw_counts_associations: []
-  },
-  file_type: 'Expression Matrix'
-}
-
-const DEFAULT_NEW_RAW_COUNTS_FILE = {
-  is_spatial: false,
-  expression_file_info: {
-    is_raw_counts: true,
-    biosample_input_type: 'Whole cell',
-    modality: 'Transcriptomic: unbiased',
-    raw_counts_associations: []
+    modality: 'Transcriptomic: unbiased'
   },
   file_type: 'Expression Matrix'
 }
@@ -49,10 +37,6 @@ function ExpressionUploadForm({
 }) {
   const processedParentFiles = formState.files.filter(processedFileFilter)
   const fileMenuOptions = serverState.menu_options
-  const rawCountsFiles = formState.files.filter(rawCountsFileFilter).filter(
-    f => f.status != 'new' && f.is_complete
-  )
-  const rawCountsOptions = rawCountsFiles.map(rf => ({ label: rf.name, value: rf._id }))
 
   const featureFlagState = serverState.feature_flags
   // const rawCountsRequired = featureFlagState && featureFlagState.raw_counts_required_frontend
@@ -71,18 +55,6 @@ function ExpressionUploadForm({
     // }
   }, [processedParentFiles.length])
 
-
-  const rawParentFiles = formState.files.filter(rawCountsFileFilter)
-
-  useEffect(() => {
-    if (rawParentFiles.length === 0) {
-      addNewFile(DEFAULT_NEW_RAW_COUNTS_FILE)
-    }
-  }, [rawParentFiles.length])
-
-  const parentFiles = rawParentFiles.concat(processedParentFiles)
-
-  
   return <div>
     <div className="row">
       <div className="col-md-12">
@@ -96,10 +68,10 @@ function ExpressionUploadForm({
             saveFile={saveFile}
             deleteFile={deleteFile}
             addNewFile={addNewFile}
-            rawCountsOptions={rawCountsOptions}
             fileMenuOptions={fileMenuOptions}
             bucketName={formState.study.bucket_id}
             isInitiallyExpanded={true}
+            isRawCountsFile={true}
             featureFlagState={featureFlagState}
             isAnnDataExperience={isAnnDataExperience}/>
         })}
