@@ -71,8 +71,8 @@ export default function ClusterSelector({
       {!hasSelection &&
         <Select
           menuIsOpen={true}
+          placeholder="Select..."
           options={clusterOptions}
-          value={{ label: 'Select cluster...', value: 'Select cluster...' }}
           data-analytics-name="cluster-select-differential-expression"
           onChange={newCluster => {
             updateClusterParams({
