@@ -98,7 +98,12 @@ function getAnnotationsWithDE(exploreInfo, exploreParams) {
   const clustersWithDe = Array.from(new Set(annotsWithDe.map(a => a.cluster_name)))
 
   console.log('annotsWithDe', annotsWithDe)
-  return {clusters: clustersWithDe, annotations: annotsWithDe}
+
+  return {
+    clusters: clustersWithDe,
+    annotations: annotsWithDe,
+    subsample_thresholds: exploreInfo.annotationList.subsample_thresholds
+  }
 }
 
 /** Determine if currently selected annotation has differential expression outputs available */
@@ -679,7 +684,8 @@ export default function ExploreDisplayTabs({
                 spatialGroups={exploreInfo ? exploreInfo.spatialGroups : []}/>
             </>
             }
-            <AnnotationSelector
+            {clusterHasDe &&
+              <AnnotationSelector
               annotationList={getAnnotationsWithDE(exploreInfo, exploreParams)}
               cluster={exploreParamsWithDefaults.cluster}
               annotation={null}
@@ -688,6 +694,7 @@ export default function ExploreDisplayTabs({
               setShowDifferentialExpressionPanel={setShowDifferentialExpressionPanel}
               setShowUpstreamDifferentialExpressionPanel={setShowUpstreamDifferentialExpressionPanel}
             />
+          }
           </>
           }
         </div>

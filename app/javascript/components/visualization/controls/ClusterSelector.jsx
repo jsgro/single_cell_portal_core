@@ -79,15 +79,17 @@ export default function ClusterSelector({
           options={clusterOptions}
           value={{ label: 'Select cluster...', value: 'Select cluster...' }}
           data-analytics-name="cluster-select-differential-expression"
-          onChange={newCluster => updateClusterParams({
-            annotation: annotationKeyProperties(getDefaultAnnotationForCluster(
-              annotationList,
-              newCluster.value,
-              annotation
-            )),
-            cluster: newCluster.value,
-            subsample: getDefaultSubsampleForCluster(annotationList, newCluster.value)
-        })}
+          onChange={newCluster => {
+            updateClusterParams({
+              annotation: annotationKeyProperties(getDefaultAnnotationForCluster(
+                annotationList,
+                newCluster.value,
+                annotation
+              )),
+              cluster: newCluster.value,
+              subsample: getDefaultSubsampleForCluster(annotationList, newCluster.value)
+            })
+          }}
         styles={clusterSelectStyle}
       />
       }
