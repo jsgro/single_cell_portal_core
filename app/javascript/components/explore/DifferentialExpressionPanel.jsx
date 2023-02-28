@@ -250,6 +250,15 @@ export function DifferentialExpressionPanelHeader({
   return (
     <>
       <span>{title}</span>
+      {isUpstream &&
+        <>
+        <br/><br/>
+        <p className="de-nondefault-explainer">
+          That clustering and annotation have no DE results.
+          Select an option below to explore differential expression.
+        </p>
+        </>
+      }
       <button className="action fa-lg"
         onClick={() => {
           setDeGenes(null)
