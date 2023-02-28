@@ -40,7 +40,8 @@ export default function ClusterSelector({
   spatialGroups,
   cluster,
   annotation,
-  updateClusterParams
+  updateClusterParams,
+  hasSelection=true
 }) {
   if (!annotationList) {
     annotationList = { default_cluster: null, default_annotation: null, annotations: [] }
@@ -48,12 +49,36 @@ export default function ClusterSelector({
 
   const clusterOptions = getClusterOptions(annotationList, spatialGroups)
 
+  console.log('in ClusterSelector, annotationList')
+  console.log(annotationList)
+  console.log('in ClusterSelector, clusterOptions')
+  console.log(clusterOptions)
+
   return (
     <div className="form-group">
       <label className="labeled-select">Clustering
-        <Select options={clusterOptions}
-          value={{ label: cluster, value: cluster }}
-          data-analytics-name="cluster-select"
+        {hasSelection &&
+          <Select options={clusterOptions}
+            value={{ label: cluster, value: cluster }}
+            data-analytics-name="cluster-select"
+            onChange={newCluster => updateClusterParams({
+              annotation: annotationKeyProperties(getDefaultAnnotationForCluster(
+                annotationList,
+                newCluster.value,
+                annotation
+              )),
+              cluster: newCluster.value,
+              subsample: getDefaultSubsampleForCluster(annotationList, newCluster.value)
+            })}
+            styles={clusterSelectStyle}
+          />
+      }
+      {!hasSelection &&
+        <Select
+          menuIsOpen={true}
+          options={clusterOptions}
+          value={{ label: 'Select cluster...', value: 'Select cluster...' }}
+          data-analytics-name="cluster-select-differential-expression"
           onChange={newCluster => updateClusterParams({
             annotation: annotationKeyProperties(getDefaultAnnotationForCluster(
               annotationList,
@@ -62,9 +87,10 @@ export default function ClusterSelector({
             )),
             cluster: newCluster.value,
             subsample: getDefaultSubsampleForCluster(annotationList, newCluster.value)
-          })}
-          styles={clusterSelectStyle}
-        />
+        })}
+        styles={clusterSelectStyle}
+      />
+      }
       </label>
     </div>
   )

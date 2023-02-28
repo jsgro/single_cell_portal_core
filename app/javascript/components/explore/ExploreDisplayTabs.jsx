@@ -85,9 +85,7 @@ function getAnnotationsWithDE(exploreInfo, exploreParams) {
   }
 
   annotsWithDe = exploreInfo.differentialExpression.filter(deItem => {
-    return (
-      deItem.cluster_name === selectedCluster
-    )
+    return deItem
   }).map(annot => {
     return {
       cluster_name: annot.cluster_name,
@@ -97,8 +95,10 @@ function getAnnotationsWithDE(exploreInfo, exploreParams) {
     }
   })
 
+  const clustersWithDe = Array.from(new Set(annotsWithDe.map(a => a.cluster_name)))
+
   console.log('annotsWithDe', annotsWithDe)
-  return {annotations: annotsWithDe}
+  return {clusters: clustersWithDe, annotations: annotsWithDe}
 }
 
 /** Determine if currently selected annotation has differential expression outputs available */
@@ -131,6 +131,8 @@ function getAnnotHasDe(exploreInfo, exploreParams) {
       deItem.annotation_scope === selectedAnnot.scope
     )
   })
+
+  console.log('in getAnnotHasDe, annotHasDe', annotHasDe)
 
   return annotHasDe
 }
@@ -173,6 +175,7 @@ export default function ExploreDisplayTabs({
   const studyHasDe = exploreInfo?.differentialExpression.length > 0
 
   const clusterHasDe = getClusterHasDe(exploreInfo, exploreParams)
+  console.log('clusterHasDe', clusterHasDe)
 
   // Hash of trace label names to the number of points in that trace
   const [countsByLabel, setCountsByLabel] = useState(null)
@@ -227,6 +230,9 @@ export default function ExploreDisplayTabs({
   if (exploreInfo) {
     hasSpatialGroups = exploreInfo.spatialGroups.length > 0
   }
+
+  console.log('annotHasDe', annotHasDe)
+  console.log('countsByLabel', countsByLabel)
 
   /** in the event a component takes an action which updates the list of annotations available
     * e.g. by creating a user annotation, this updates the list */
@@ -587,7 +593,7 @@ export default function ExploreDisplayTabs({
                           if (annotHasDe) {
                             setShowDifferentialExpressionPanel(true)
                             setShowDeGroupPicker(true)
-                          } else if (clusterHasDe) {
+                          } else if (studyHasDe) {
                             setShowUpstreamDifferentialExpressionPanel(true)
                           }
                         }}
@@ -665,16 +671,12 @@ export default function ExploreDisplayTabs({
             {!clusterHasDe &&
             <>
               <ClusterSelector
-                annotationList={annotationList}
-                cluster={exploreParamsWithDefaults.cluster}
-                annotation={exploreParamsWithDefaults.annotation}
+                annotationList={getAnnotationsWithDE(exploreInfo, exploreParams)}
+                cluster={""}
+                annotation={""}
                 updateClusterParams={updateClusterParams}
+                hasSelection={false}
                 spatialGroups={exploreInfo ? exploreInfo.spatialGroups : []}/>
-              {hasSpatialGroups &&
-              <SpatialSelector allSpatialGroups={exploreInfo.spatialGroups}
-                spatialGroups={exploreParamsWithDefaults.spatialGroups}
-                updateSpatialGroups={spatialGroups => updateClusterParams({ spatialGroups })}/>
-              }
             </>
             }
             <AnnotationSelector

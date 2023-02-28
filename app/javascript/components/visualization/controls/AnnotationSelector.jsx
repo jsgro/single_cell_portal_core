@@ -83,9 +83,9 @@ export default function AnnotationControl({
         }
         {!hasSelection &&
           <Select
-            menuIsOpen={!hasSelection}
+            menuIsOpen={true}
             options={annotationOptions}
-            data-analytics-name="annotation-select"
+            data-analytics-name="annotation-select-differential-expression"
             getOptionLabel={annotation => annotation.name}
             getOptionValue={annotation => annotation.scope + annotation.name + annotation.cluster_name}
             onChange={newAnnotation => {
