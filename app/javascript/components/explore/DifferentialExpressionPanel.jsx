@@ -242,23 +242,14 @@ export default function DifferentialExpressionPanel({
 
 /** Top matter for differential expression panel shown at right in Explore tab */
 export function DifferentialExpressionPanelHeader({
-  setDeGenes, setDeGroup, setShowDifferentialExpressionPanel, setShowUpstreamDifferentialExpressionPanel, isUpstream
+  setDeGenes, setDeGroup, setShowDifferentialExpressionPanel, setShowUpstreamDifferentialExpressionPanel, isUpstream,
+  cluster, annotation
 }) {
 
-  const title = isUpstream ? 'Find differential expression' : 'Differential expression'
-  console.log('isUpstream', isUpstream)
+  const title = 'Differential expression'
   return (
     <>
       <span>{title}</span>
-      {isUpstream &&
-        <>
-        <br/><br/>
-        <p className="de-nondefault-explainer">
-          That clustering and annotation have no DE results.
-          Select an option below to explore differential expression.
-        </p>
-        </>
-      }
       <button className="action fa-lg"
         onClick={() => {
           setDeGenes(null)
@@ -270,6 +261,27 @@ export function DifferentialExpressionPanelHeader({
         data-analytics-name="differential-expression-panel-exit">
         <FontAwesomeIcon icon={faArrowLeft}/>
       </button>
+      {isUpstream &&
+        <>
+        <div className="de-nondefault-explainer">
+          No DE results for:
+          <br/><br/>
+          <ul className="no-de-summary">
+            <li>
+              <span className="bold">Clustering</span><br/>
+              {cluster}
+            </li>
+            <br/>
+            <li>
+              <span className="bold">Annotation</span><br/>
+              {annotation.name}
+            </li>
+          </ul>
+          <br/>
+          Explore DE results in:
+        </div>
+        </>
+      }
     </>
   )
 }

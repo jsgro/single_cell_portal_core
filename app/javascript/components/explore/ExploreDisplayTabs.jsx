@@ -544,6 +544,8 @@ export default function ExploreDisplayTabs({
                 setShowDifferentialExpressionPanel={setShowDifferentialExpressionPanel}
                 setShowUpstreamDifferentialExpressionPanel={setShowUpstreamDifferentialExpressionPanel}
                 isUpstream={showUpstreamDifferentialExpressionPanel}
+                cluster={exploreParamsWithDefaults.cluster}
+                annotation={exploreParamsWithDefaults.annotation}
               />
             }
           </div>
