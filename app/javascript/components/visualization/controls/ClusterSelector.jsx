@@ -49,11 +49,6 @@ export default function ClusterSelector({
 
   const clusterOptions = getClusterOptions(annotationList, spatialGroups)
 
-  console.log('in ClusterSelector, annotationList')
-  console.log(annotationList)
-  console.log('in ClusterSelector, clusterOptions')
-  console.log(clusterOptions)
-
   return (
     <div className="form-group">
       <label className="labeled-select">Clustering

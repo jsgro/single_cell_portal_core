@@ -229,7 +229,11 @@ export function logClickLink(target) {
  * Log click on button, e.g. for pagination, "Apply", etc.
  */
 function logClickButton(target) {
-  const props = { text: getNameForClickTarget(target) }
+  const props = {
+    text: getNameForClickTarget(target),
+    classList: getClassListAsArray(target),
+    id: target.id
+  }
   const { eventName, updatedProps } = getEventPropsWithTabsApplied(target, props, 'click:button')
   log(eventName, updatedProps)
 
