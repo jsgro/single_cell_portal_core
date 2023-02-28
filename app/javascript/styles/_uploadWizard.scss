@@ -167,7 +167,7 @@
   background: #fff;
   padding: 1em;
   border-radius: 5px;
-  text-algin:center;
+  text-align: center;
   label {
     font-weight: normal
   }
@@ -181,7 +181,8 @@
     font-weight: normal
   }
   display: flex;
-  justify-content: space-between
+  justify-content: space-between;
+  flex-direction: column;
 }
 
 .splitter-info-inside {
@@ -194,15 +195,26 @@ width: 100%;
   border-color: #2e6da4;
 }
 
-
 .flex-grid {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
 }
+
+.flex-cols {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-evenly;
+  width: 50%;
+  padding: 0px 10px;
+}
+
 .col {
   padding: 10px;
 }
 
-.infee {
-  font-size: 18px
+.split-title {
+  font-size: 20px;
+  text-align: center;
+  padding: 5px;
 }

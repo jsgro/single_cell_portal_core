@@ -81,18 +81,18 @@ export function RawUploadWizard({ studyAccession, name }) {
   const [serverState, setServerState] = useState(null)
   const [formState, setFormState] = useState(null)
 
-  const [parentAnnDataFile, setParentAnnDataFile] = useState({})
-
   // study attributes to pass to the StudyContext later for use throughout the RawUploadWizard component, if needed
   // use complete study object, rather than defaultStudyState so that any updates to study.rb will be reflected in
   // this context
   const studyObj = serverState?.study
   const studyFiles = serverState?.files
   const hasAnnDataFile = !!studyFiles?.filter(AnnDataFileFilter)?.length
+  console.log('studyFiles', studyFiles)
 
   // used for toggling between classic and AnnData experience of upload wizard
   const [isAnnDataExperience, setIsAnnDataExperience] = useState(hasAnnDataFile)
-  const [showSplitterStep, setShowSplitterStep] = useState(studyFiles?.length)
+  console.log('studyFiles', !!studyFiles?.length)
+  const [showSplitterStep, setShowSplitterStep] = useState(!!studyFiles?.length)
 
   const allowReferenceImageUpload = serverState?.feature_flags?.reference_image_upload
 

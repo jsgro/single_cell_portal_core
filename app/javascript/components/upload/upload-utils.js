@@ -110,11 +110,7 @@ export function findBundleChildren(file, files) {
 /** return a new FormData based on the given file object, formatted as the api endpoint expects,
     cleaning out any excess params */
 export function formatFileForApi(file, chunkStart, chunkEnd) {
-  //emily here
-  // study_file[type] sort of thing
-  
   const data = new FormData()
-  console.log('data:', data)
   Object.keys(file).filter(key => !PROPERTIES_NOT_TO_SEND.includes(key)).forEach(key => {
     addObjectPropertyToForm(file, key, data)
   })
@@ -131,7 +127,6 @@ export function formatFileForApi(file, chunkStart, chunkEnd) {
       data.append(`study_file[options][${key}]`, file.options[key])
     })
   }
-
   return data
 }
 

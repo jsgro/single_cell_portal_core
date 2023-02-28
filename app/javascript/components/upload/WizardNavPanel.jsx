@@ -184,7 +184,7 @@ function MainStepsDisplay(formState, serverState, currentStep, setCurrentStep, m
           </span>
           <span>
             <a className="action link" role="link">
-            AnnData <FontAwesomeIcon icon={expansionIcon}/>
+            AnnData <sup>BETA</sup><FontAwesomeIcon icon={expansionIcon}/>
             </a>
           </span>
         </button>
