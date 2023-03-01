@@ -1,12 +1,7 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect } from 'react'
 
 import AnnDataFileForm from './AnnDataFileForm'
-import { AddFileButton } from './form-components'
 import { AnnDataFileFilter } from './AnnDataStep'
-import { clusterFileFilter } from './ClusteringStep'
-import { metadataFileFilter } from './MetadataStep'
-import { processedFileFilter } from './ProcessedExpressionStep'
-
 
 const DEFAULT_NEW_ANNDATA_FILE = {
   file_type: 'AnnData',
@@ -34,10 +29,16 @@ function AnnDataUploadStep({
   const AnnDataFile = formState.files.filter(AnnDataFileFilter)
 
   useEffect(() => {
-    if (AnnDataFile.length === 0) {
+    if (!AnnDataFile) {
       addNewFile(DEFAULT_NEW_ANNDATA_FILE)
     }
-  }, [AnnDataFile.length])
+  }, [[AnnDataFile?._id]])
+
+  // useEffect(() => {
+  //   if (AnnDataFile.length === 0) {
+  //     addNewFile(DEFAULT_NEW_ANNDATA_FILE)
+  //   }
+  // }, [AnnDataFile.length])
 
   return <div>
     <div className="row">

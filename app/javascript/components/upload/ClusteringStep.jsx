@@ -29,19 +29,13 @@ export function ClusteringUploadForm({
   isAnnDataExperience
 }) {
   const clusterFiles = formState.files.filter(clusterFileFilter)
-  console.log('formsate:', formState)
 
   useEffect(() => {
     if (clusterFiles.length === 0) {
       addNewFile(DEFAULT_NEW_CLUSTER_FILE)
     }
-    // if (isAnnDataExperience) {
-    //   // emily to do here
-    //   const annDataParentFile = formState.files.find(file => file.file_type === 'AnnData')
-    //   console.log('formState.allFiles', formState.allFiles)
-    //   updateFile(annDataParentFile._id, { other_form_fields_info:{ file_type: 'Cluster' }} )
-    // }
   }, [clusterFiles.length])
+
   return <div>
     {!isAnnDataExperience && <span>
       <div className="row">

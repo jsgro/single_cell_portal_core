@@ -14,45 +14,40 @@ function RawUploadExperienceSplitter({
   return <div className="top-margin left-margin">
     <div className="row">
       <div >
-        <h1 className='splitter-info-inside'>
+        <h1>
         Introducing AnnData file upload to power visualizations
         </h1>
         <div className="splitter-info-outside ">
-        <div className='split-title'>
-          Choose how to upload data
+          <div className='split-title'>
+          Choose how to upload expression, conventional metadata, and cluster data
           </div>
           <div className='flex-grid'>
             <div className='flex-cols'>
 
-              <div className='col'>
-              Classic upload supports multiple individual files, like a metadata file, expression files, and cluster files.
-              </div>
               <a
                 className="btn splitter-info-buttons"
                 onClick={() => {
                   setIsAnnDataExperience(false)
                   setShowSplitterStep(false)
-                }
-                }>
-                Classic
+                }}> Classic
               </a>
-            </div>
-
-            <div className='flex-cols'>
               <div className='col'>
-            AnnData upload supports one AnnData (.h5ad) file per study, containing expression, metadata, and cluster data.
-                Metadata Convention compliance is still needed for visualization, and other files types are still uploaded separately.
+                Upload multiple files in SCP format
               </div>
+            </div>
+            <div className='flex-cols'>
+
               <a
-                className="btn terra-secondary-btn"
+                className="btn splitter-info-buttons"
                 onClick={() => {
                   setIsAnnDataExperience(true)
                   setShowSplitterStep(false)
                   addNewFile(DEFAULT_NEW_ANNDATA_FILE)
-                }
-                }>
-                AnnData <sup>BETA</sup>
+                }}> AnnData <sup>BETA</sup>
               </a>
+              <div className='col'>
+                Upload one AnnData (.h5ad) file
+              </div>
             </div>
           </div>
         </div>

@@ -175,18 +175,13 @@
 
 .splitter-info-outside {
   background: #fff;
-  padding: 2em;
+  padding: 2.5em;
   border-radius: 5px;
   label {
     font-weight: normal
   }
   display: flex;
-  justify-content: space-between;
   flex-direction: column;
-}
-
-.splitter-info-inside {
-width: 100%;
 }
 
 .splitter-info-buttons {
@@ -197,16 +192,14 @@ width: 100%;
 
 .flex-grid {
   display: flex;
-  flex-direction: row;
 }
 
 .flex-cols {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: space-evenly;
   width: 50%;
-  padding: 0px 10px;
+  padding: 15px;
 }
 
 .col {
@@ -215,6 +208,6 @@ width: 100%;
 
 .split-title {
   font-size: 20px;
+  padding-bottom: 25px;
   text-align: center;
-  padding: 5px;
 }
