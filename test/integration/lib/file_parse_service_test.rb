@@ -69,7 +69,8 @@ class FileParseServiceTest < ActiveSupport::TestCase
     cluster_bundle = cluster.study_file_bundle
     assert cluster_bundle.present?, "Did not create study file bundle for cluster file w/ coordinate labels present"
     assert cluster_bundle.completed?, "Did not mark cluster bundle completed"
-    assert cluster_bundle.bundled_files.first == coordinate_labels, "Did not correctly return labels file from bundle"
+    assert cluster_bundle.bundled_file_by_type('Coordinate Labels') == coordinate_labels,
+           'Did not correctly return labels file from bundle'
   end
 
   test 'should clean up ingest artifacts after one month' do

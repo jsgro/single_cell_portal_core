@@ -191,7 +191,7 @@ class ApplicationController < ActionController::Base
 
   # load any enabled A/B test sessions for the current_user
   def set_ab_test_assignments
-    @ab_test_assignments = FeatureFlag.load_ab_test_assignments(request.cookies['user_id'])
+    @ab_test_assignments = AbTest.load_assignments(request.cookies['user_id'])
   end
 
   # merge in extra parameters on redirects as necessary

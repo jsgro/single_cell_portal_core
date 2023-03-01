@@ -114,7 +114,7 @@ class MetricsService
     end
 
     # global tracking of A/B feature test groups
-    props.merge!({ abTests: FeatureFlag.load_ab_test_assignments(distinct_id) })
+    props.merge!({ abTests: AbTest.load_assignments(distinct_id) })
 
     post_body = {'event' => name, 'properties' => props}.to_json
 
