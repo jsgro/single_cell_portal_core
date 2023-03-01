@@ -1636,7 +1636,7 @@ class Study
   # will compress plain text files before uploading to reduce storage/egress charges
   def send_to_firecloud(file)
     begin
-      Rails.logger.info "Uploading #{file.bucket_location}:#{file.id} to FireCloud workspace: #{firecloud_workspace}"
+      Rails.logger.info "Uploading #{file.bucket_location}:#{file.id} to Terra workspace: #{firecloud_workspace}"
       was_gzipped = FileParseService.compress_file_for_upload(file)
       opts = was_gzipped ? { content_encoding: 'gzip' } : {}
       remote_file = ApplicationController.firecloud_client.execute_gcloud_method(
