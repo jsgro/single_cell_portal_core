@@ -1638,9 +1638,7 @@ class Study
     begin
       Rails.logger.info "Uploading #{file.bucket_location}:#{file.id} to FireCloud workspace: #{firecloud_workspace}"
       was_gzipped = FileParseService.compress_file_for_upload(file)
-      if was_gzipped
-        opts.merge!(content_encoding: 'gzip')
-      end
+      opts = was_gzipped ? { content_encoding: 'gzip' } : {}
       remote_file = ApplicationController.firecloud_client.execute_gcloud_method(
         :create_workspace_file, 0, bucket_id, file.upload.path, file.bucket_location, opts
       )

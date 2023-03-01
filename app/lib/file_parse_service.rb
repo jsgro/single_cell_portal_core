@@ -219,7 +219,8 @@ class FileParseService
         true
       else
         # log that file is already compressed
-        Rails.logger.info "#{study_file.upload_file_name}:#{study_file.id} is already compressed, direct uploading"
+        log_message = "skipping gzip (file_type: #{study_file.file_type}, is_gzipped: #{study_file.gzipped?})"
+        Rails.logger.info "#{study_file.upload_file_name}:#{study_file.id} #{log_message}, direct uploading"
         false
       end
     rescue ArgumentError => e
