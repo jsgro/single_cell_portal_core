@@ -36,6 +36,8 @@ import OverlayTrigger from 'react-bootstrap/lib/OverlayTrigger'
 import Tooltip from 'react-bootstrap/lib/Tooltip'
 import DifferentialExpressionModal from '~/components/explore/DifferentialExpressionModal'
 
+const flags = getFeatureFlagsWithDefaults()
+
 const tabList = [
   { key: 'loading', label: 'loading...' },
   { key: 'scatter', label: 'Scatter' },
@@ -53,7 +55,7 @@ const tabList = [
 
 /** Determine if currently selected cluster has differential expression outputs available */
 function getClusterHasDe(exploreInfo, exploreParams) {
-  if (!exploreInfo) return false
+  if (!flags?.differential_expression_frontend || !exploreInfo) return false
   let clusterHasDe = false
   const annotList = exploreInfo.annotationList
   let selectedCluster
@@ -106,11 +108,10 @@ function getAnnotationsWithDE(exploreInfo, exploreParams) {
 
 /** Determine if currently selected annotation has differential expression outputs available */
 function getAnnotHasDe(exploreInfo, exploreParams) {
-  const flags = getFeatureFlagsWithDefaults()
   if (!flags?.differential_expression_frontend || !exploreInfo) {
-    // set annotHasDe to false as user cannot see DE results, even if present for annotation
+    // set isDifferentialExpressionEnabled to false as user cannot see DE results, even if present for annotation
     if (window.SCP) {
-      window.SCP.annotHasDe = false
+      window.SCP.isDifferentialExpressionEnabled = false
     }
     return false
   }
@@ -166,16 +167,16 @@ export default function ExploreDisplayTabs({
   const [currentPointsSelected, setCurrentPointsSelected] = useState(null)
 
   // Differential expression settings
+
+  const studyHasDe = flags?.differential_expression_frontend && exploreInfo?.differentialExpression.length > 0
   const annotHasDe = getAnnotHasDe(exploreInfo, exploreParams)
+  const clusterHasDe = getClusterHasDe(exploreInfo, exploreParams)
+
   const [, setShowDeGroupPicker] = useState(false)
   const [deGenes, setDeGenes] = useState(null)
   const [deGroup, setDeGroup] = useState(null)
   const [showDifferentialExpressionPanel, setShowDifferentialExpressionPanel] = useState(deGenes !== null)
   const [showUpstreamDifferentialExpressionPanel, setShowUpstreamDifferentialExpressionPanel] = useState(deGenes !== null)
-
-  const studyHasDe = exploreInfo?.differentialExpression.length > 0
-
-  const clusterHasDe = getClusterHasDe(exploreInfo, exploreParams)
 
   // Hash of trace label names to the number of points in that trace
   const [countsByLabel, setCountsByLabel] = useState(null)

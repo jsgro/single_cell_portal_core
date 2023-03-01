@@ -114,9 +114,6 @@ export default function DifferentialExpressionPanel({
   exploreInfo, exploreParamsWithDefaults, setShowDeGroupPicker, setDeGenes, setDeGroup,
   countsByLabel, numRows=15
 }) {
-
-  console.log('exploreInfo', exploreInfo)
-  console.log('exploreParamsWithDefaults', exploreParamsWithDefaults)
   const clusterName = exploreParamsWithDefaults?.cluster
   const bucketId = exploreInfo?.bucketId
   const annotation = getAnnotationObject(exploreParamsWithDefaults, exploreInfo)
@@ -246,10 +243,9 @@ export function DifferentialExpressionPanelHeader({
   cluster, annotation
 }) {
 
-  const title = 'Differential expression'
   return (
     <>
-      <span>{title}</span>
+      <span>Differential expression</span>
       <button className="action fa-lg"
         onClick={() => {
           setDeGenes(null)
