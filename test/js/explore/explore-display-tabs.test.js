@@ -18,7 +18,8 @@ jest.mock('components/visualization/InferCNVIdeogram', () => {
 })
 
 import React from 'react'
-import { render, fireEvent } from '@testing-library/react'
+import { render } from '@testing-library/react'
+import * as UserProvider from '~/providers/UserProvider'
 import ExploreDisplayTabs, { getEnabledTabs } from 'components/explore/ExploreDisplayTabs'
 import {
   exploreInfo as exploreInfoDe,
@@ -290,6 +291,12 @@ describe('explore tabs are activated based on study info and parameters', () => 
   })
 
   it('shows "Differential expression" button when clustering (but not current annotation) has DE results', async () => {
+    jest
+      .spyOn(UserProvider, 'getFeatureFlagsWithDefaults')
+      .mockReturnValue({
+        differential_expression_frontend: true
+      })
+
     const {container} = render((
       <ExploreDisplayTabs
         studyAccession={"SCP123"}

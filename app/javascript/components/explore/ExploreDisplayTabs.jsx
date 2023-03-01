@@ -36,8 +36,6 @@ import OverlayTrigger from 'react-bootstrap/lib/OverlayTrigger'
 import Tooltip from 'react-bootstrap/lib/Tooltip'
 import DifferentialExpressionModal from '~/components/explore/DifferentialExpressionModal'
 
-const flags = getFeatureFlagsWithDefaults()
-
 const tabList = [
   { key: 'loading', label: 'loading...' },
   { key: 'scatter', label: 'Scatter' },
@@ -55,6 +53,7 @@ const tabList = [
 
 /** Determine if currently selected cluster has differential expression outputs available */
 function getClusterHasDe(exploreInfo, exploreParams) {
+  const flags = getFeatureFlagsWithDefaults()
   if (!flags?.differential_expression_frontend || !exploreInfo) return false
   let clusterHasDe = false
   const annotList = exploreInfo.annotationList
@@ -108,6 +107,7 @@ function getAnnotationsWithDE(exploreInfo, exploreParams) {
 
 /** Determine if currently selected annotation has differential expression outputs available */
 function getAnnotHasDe(exploreInfo, exploreParams) {
+  const flags = getFeatureFlagsWithDefaults()
   if (!flags?.differential_expression_frontend || !exploreInfo) {
     // set isDifferentialExpressionEnabled to false as user cannot see DE results, even if present for annotation
     if (window.SCP) {
@@ -167,7 +167,7 @@ export default function ExploreDisplayTabs({
   const [currentPointsSelected, setCurrentPointsSelected] = useState(null)
 
   // Differential expression settings
-
+  const flags = getFeatureFlagsWithDefaults()
   const studyHasDe = flags?.differential_expression_frontend && exploreInfo?.differentialExpression.length > 0
   const annotHasDe = getAnnotHasDe(exploreInfo, exploreParams)
   const clusterHasDe = getClusterHasDe(exploreInfo, exploreParams)
