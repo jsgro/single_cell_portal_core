@@ -1531,10 +1531,12 @@ class Study
     bams = []
 
     bam_files.each do |bam_file|
+      next unless bam_file.has_completed_bundle?
+
       bams << {
           'name' => bam_file.name,
           'url' => bam_file.api_url,
-          'indexUrl' => bam_file.bundled_files.first.api_url,
+          'indexUrl' => bam_file.study_file_bundle.bundled_file_by_type('BAM Index')&.api_url,
           'genomeAssembly' => bam_file.genome_assembly_name,
           'genomeAnnotation' => bam_file.genome_annotation
       }
