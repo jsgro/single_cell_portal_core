@@ -4,29 +4,40 @@ Developing on SCP without a Docker container, while less robust, opens up some f
 live css/js reloading, faster build times, and byebug debugging in rails.
 
 ## SETUP
-
-1. Run `ruby -v` to ensure Ruby 3.1.2 is installed on your local machine.  If not, [install rbenv](https://github.com/rbenv/rbenv#installation) 
-(via `brew install rbenv` if on macOS) then `rbenv init` to set up rbenv in your shell. Then close out terminal and reopen 
-and run `rbenv install 3.1.2`. (version is current as of 08/09/2022)
-2. Run `bundler -v` to ensure Bundler is installed.  If not, `gem install bundler`.
-3. Run `node -v` to ensure Node is installed. If not, install via https://nodejs.org/en/download/
-4. Run `yarn -v` to ensure Yarn is installed. If not, install via `brew install yarn`
-5. `cd` to where you have the `single_cell_portal_core` Git repo checked out.
-6. Run `bundle install`
-7. Run `yarn install`
-8. Run `./rails_local_setup.rb` to will write out required variables into an shell env file (using your Broad username 
+Commands below assume your CPU is Apple Silicon / M1, not Intel.
+1. Run `rbenv -v`.  If it is not found, `brew install rbenv`, then `rbenv init` to set up rbenv in your shell, then close terminal and reopen it.
+2. Run `ruby -v` to ensure Ruby 3.1.3 is installed on your local machine.  Then close out terminal and reopen 
+and run `rbenv install 3.1.3`. (version is current [as of 2023-01-26](https://github.com/broadinstitute/single_cell_portal_core/pull/1713))
+3. Run `ruby -ropenssl -e 'puts OpenSSL::OPENSSL_VERSION'`.  
+  - If it outputs contains "OpenSSL 1.1.1", go to Step 4.  
+  - Else, if output contains something like "OpenSSL 3.0.7", install the needed version of OpenSSL, and install Ruby so that it compiles with the needed version of OpenSSL:
+     - Run `brew install openssl@1.1`
+     - Run `rbenv uninstall 3.1.3`
+     - Run `LDFLAGS="-L/opt/homebrew/opt/openssl@1.1/lib" CPPFLAGS="-I/opt/homebrew/opt/openssl@1.1/include" CONFIGURE_OPTS="--with-openssl-dir=$(brew --prefix openssl@1.1)" RUBY_CONFIGURE_OPTS="--with-openssl-dir=$(brew --prefix openssl@1.1)" rbenv install 3.1.3`
+     - Run `ruby -v` to ensure Ruby 3.1.3 is installed
+4. Run `bundler -v` to ensure Bundler is installed.  If not, `gem install bundler`.
+5. Run `node -v` to ensure Node is installed. If not, install via https://nodejs.org/en/download/
+6. Run `yarn -v` to ensure Yarn is installed. If not, install via `brew install yarn`
+7. `cd` to where you have the `single_cell_portal_core` Git repo checked out.
+8. Run `bundle install`
+  - That might fail with a message that contains "An error occurred while installing bson_ext"
+  - If so, follow steps from https://stackoverflow.com/a/64248633, noting that:
+  - The path in that answer won't work if you're using rbenv (as you should) for Ruby version management.  Instead of that path in that StackOverflow answer, use a path like cd /Users/$(whoami)/.rbenv/versions/3.1.3/lib/ruby/gems/3.1.0/gems/bson_ext-1.5.1
+9. Run `yarn install`
+10. Run `./rails_local_setup.rb` to will write out required variables into an shell env file (using your Broad username 
 to determine which `vault` paths to read from).
-9. Run the source command the script outputs -- this will export those needed variables into the current shell
-10. Add `config/local_ssl/localhost.crt` to your system's trusted certificates. On macOS, you can drag this file into the 
+11. Run the source command the script outputs -- this will export those needed variables into the current shell
+12. Add `config/local_ssl/localhost.crt` to your system's trusted certificates. On macOS, you can drag this file into the 
 keychain access app, use the "System" keychain, and the "Certificates" category. Then you will likely need to open the 
 newly added certificate in the keychain access app and update the "Trust" setting to be "Always Trust" rather than "Use 
 System Defaults".
-11. Run `rails s`
-12. If you're developing JS, for hot module replacement and live reload, in a separate terminal, run `bin/vite dev`
-13. If you are working on functionality that involves delayed jobs, like uploading data:
+12. Run `rails s`
+13. If you're developing JS, for hot module replacement and live reload, in a separate terminal, run `bin/vite dev`
+14. If you are working on functionality that involves delayed jobs, like uploading data:
     * In another terminal, run the source command output in step 7
     * run `rails jobs:work`
-14. You're all set!  You can now go to https://localhost:3000 and see the website.
+15. You're all set!  You can now go to https://localhost:3000 and see the website.
+16. Confirm you can sign in and upload a file
 
 ## REGULAR DEVELOPMENT
 Adding `source <<path-to-single-cell-portal-core>>/config/secrets/.source_env.bash` to your .bash_profile will source the 
