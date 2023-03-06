@@ -1,7 +1,7 @@
 import React from 'react'
 
 import { withErrorBoundary } from '~/lib/ErrorBoundary'
-import { Router, useLocation, navigate } from '@reach/router'
+import { navigate } from '@reach/router'
 
 /** renders a list of the steps and summary study information */
 function RawUploadExperienceSplitter({
@@ -23,16 +23,13 @@ function RawUploadExperienceSplitter({
           </div>
           <div className='flex-grid'>
             <div className='flex-cols'>
-
               <a
                 className="btn splitter-info-buttons"
                 onClick={() => {
-                  debugger
                   setIsAnnDataExperience(false)
                   // setShowSplitterStep(false)
                   setChoiceMade(true)
                   // setCurrentStep('?tab=rawCounts')
-
                 }}> Classic
               </a>
               <div className='col'>
@@ -40,14 +37,12 @@ function RawUploadExperienceSplitter({
               </div>
             </div>
             <div className='flex-cols'>
-
               <a
                 className="btn splitter-info-buttons"
                 onClick={() => {
                   setIsAnnDataExperience(true)
                   // setShowSplitterStep(false)
                   setChoiceMade(true)
-
                   // setCurrentStep('?tab=combined%20expression%20matrices')
                 }}> AnnData <sup>BETA</sup>
               </a>

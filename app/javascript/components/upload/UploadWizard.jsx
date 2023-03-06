@@ -6,8 +6,6 @@
  */
 
 import React, { useState, useEffect } from 'react'
-import { useUpdateEffect } from '~/hooks/useUpdate'
-import { faLink, faArrowLeft, faCog, faTimes, faUndo } from '@fortawesome/free-solid-svg-icons'
 
 import _cloneDeep from 'lodash/cloneDeep'
 import _isMatch from 'lodash/isMatch'
@@ -88,16 +86,12 @@ export function RawUploadWizard({ studyAccession, name }) {
   // use complete study object, rather than defaultStudyState so that any updates to study.rb will be reflected in
   // this context
   const studyObj = serverState?.study
-  const studyFiles = serverState?.files
-  // const hasAnnDataFile = !!studyFiles?.filter(AnnDataFileFilter)?.length
 
   // used for toggling between classic and AnnData experience of upload wizard
   const [isAnnDataExperience, setIsAnnDataExperience] = useState(formState?.files?.filter(AnnDataFileFilter)?.length > 0)
 
-  // const [showSplitterStep, setShowSplitterStep] = useState(!!studyFiles?.length)
-  // const [showSplitterStep, setShowSplitterStep] = useState(true)
+  // used for toggling between the split view for the upload experiences
   const [choiceMade, setChoiceMade] = useState(false)
-  // console.log('serverState?.files?.length:', serverState?.files?.length)
   const allowReferenceImageUpload = serverState?.feature_flags?.reference_image_upload
 
   let MAIN_STEPS
@@ -144,13 +138,12 @@ export function RawUploadWizard({ studyAccession, name }) {
 
   /** move the wizard to the given step tab */
   function setCurrentStep(newStep) {
-    // debugger
-    // debugger
     // for steps in the upload process
     if (newStep.name) {
       navigate(`?tab=${newStep.name}`)
       window.scrollTo(0, 0)
     }
+    // emily here
     // for the upload data split view
     else {
       navigate(newStep)
@@ -297,9 +290,6 @@ export function RawUploadWizard({ studyAccession, name }) {
     let chunkEnd = Math.min(CHUNK_SIZE, fileSize)
 
     const studyFileData = formatFileForApi(file, chunkStart, chunkEnd)
-    // for (const pair of studyFileData.entries()) {
-    //   console.log(`${pair[0] }, ${ pair[1]}`)
-    // }
     try {
       let response
       const requestCanceller = new RequestCanceller(studyFileId)
@@ -347,6 +337,7 @@ export function RawUploadWizard({ studyAccession, name }) {
 
   /** delete the file from the form, and also the server if it exists there */
   async function deleteFile(file) {
+    // Emily consider in here
     const fileId = file._id
     if (file.status === 'new' || file?.serverFile?.parse_status === 'failed') {
       deleteFileFromForm(fileId)
@@ -410,95 +401,78 @@ export function RawUploadWizard({ studyAccession, name }) {
   useEffect(() => {
     fetchStudyFileInfo(studyAccession).then(response => {
       response.files.forEach(file => formatFileFromServer(file))
-      console.log('response.files:', response.files)
       setServerState(response)
       setFormState(_cloneDeep(response))
       setTimeout(pollServerState, POLLING_INTERVAL)
       setIsAnnDataExperience(response.files?.filter(AnnDataFileFilter)?.length > 0)
-
     })
-    
-    // console.log('form:', formState?.files)
-    // console.log('server:', serverState?.files)
 
-    // formState?.files?.filter(AnnDataFileFilter)?.length > 0
     window.document.title = `Upload - Single Cell Portal`
   }, [studyAccession])
 
-
-  // // on initial load, load all the details of the study and study files
-  // useEffect(() => {
-  //   setIsAnnDataExperience(formState?.files?.filter(AnnDataFileFilter)?.length > 0)
-  //   setShowSplitterStep(!formState?.files.length)
-  //   // debugger
-  // }, [serverState])
-
-
   const nextStep = STEPS[currentStepIndex + 1]
   const prevStep = STEPS[currentStepIndex - 1]
-  // console.log('formState:', formState)
 
-
-function whichWizardShow(formState){
-  if(!formState?.files.length && !choiceMade){
-    return <UploadExperienceSplitter {...{ setIsAnnDataExperience, studyAccession, setCurrentStep, setChoiceMade }}/>
-  } 
-  else if (choiceMade || formState?.files.length){
-    return <> <div className="row wizard-content">
-    <div>
-      <WizardNavPanel {...{
-        formState, serverState, currentStep, setCurrentStep, studyAccession, mainSteps: MAIN_STEPS,
-        supplementalSteps: SUPPLEMENTAL_STEPS, nonVizSteps: NON_VISUALIZABLE_STEPS, studyName: name, isAnnDataExperience
-      }} />
-    </div>
-    <div id="overflow-x-scroll">
-      <div className="flexbox-align-center top-margin left-margin">
-        <h4>{currentStep.header}</h4>
-        <div className="prev-next-buttons">
-          { prevStep && <button
-            className="btn terra-tertiary-btn margin-right"
-
-            onClick={() => setCurrentStep(prevStep)}>
-            <FontAwesomeIcon icon={faChevronLeft}/> Previous
-          </button> }
-          { nextStep && <button
-            className="btn terra-tertiary-btn"
-            onClick={() => setCurrentStep(nextStep)}>
-            Next <FontAwesomeIcon icon={faChevronRight}/>
-          </button> }
+  /**
+   * Returns the appropriate content to display for the UploadWizard
+   * @param  formState
+   * @returns The content for the upload wizard, either the steps for upload or the split view for choosing the data upload experience
+   */
+  function getWizardContent(formState) {
+    if (!formState?.files.length && !choiceMade) {
+      return <UploadExperienceSplitter {...{ setIsAnnDataExperience, studyAccession, setCurrentStep, setChoiceMade }}/>
+    } else if (choiceMade || formState?.files.length) {
+      return <> <div className="row wizard-content">
+        <div>
+          <WizardNavPanel {...{
+            formState, serverState, currentStep, setCurrentStep, studyAccession, mainSteps: MAIN_STEPS,
+            supplementalSteps: SUPPLEMENTAL_STEPS, nonVizSteps: NON_VISUALIZABLE_STEPS, studyName: name, isAnnDataExperience
+          }} />
         </div>
-      </div>
-      { !formState && <div className="padded text-center">
-        <LoadingSpinner testId="upload-wizard-spinner"/>
-      </div> }
-      {/* { !!formState?.files.length && <div> */}
-      { <div>
+        <div id="overflow-x-scroll">
+          <div className="flexbox-align-center top-margin left-margin">
+            <h4>{currentStep.header}</h4>
+            <div className="prev-next-buttons">
+              { prevStep && <button
+                className="btn terra-tertiary-btn margin-right"
 
-        <currentStep.component
-          setCurrentStep={setCurrentStep}
-          formState={formState}
-          serverState={serverState}
-          deleteFile={deleteFile}
-          updateFile={updateFile}
+                onClick={() => setCurrentStep(prevStep)}>
+                <FontAwesomeIcon icon={faChevronLeft}/> Previous
+              </button> }
+              { nextStep && <button
+                className="btn terra-tertiary-btn"
+                onClick={() => setCurrentStep(nextStep)}>
+            Next <FontAwesomeIcon icon={faChevronRight}/>
+              </button> }
+            </div>
+          </div>
+          { !formState && <div className="padded text-center">
+            <LoadingSpinner testId="upload-wizard-spinner"/>
+          </div> }
+          <div>
+            <currentStep.component
+              setCurrentStep={setCurrentStep}
+              formState={formState}
+              serverState={serverState}
+              deleteFile={deleteFile}
+              updateFile={updateFile}
               saveFile={saveFile}
               addNewFile={addNewFile}
               isAnnDataExperience={isAnnDataExperience}
               deleteFileFromForm={deleteFileFromForm}
             />
-          </div> }
+          </div>
         </div>
       </div></>
     }
-  
   }
-
 
   return (
     <StudyContext.Provider value={studyObj}>
+      {/* If the formState hasn't loaded show a spinner */}
       {!formState &&
              <LoadingSpinner className="de" testId="initial-wizard-spinner"/>
       }
-
       {!!formState &&
       <div className="upload-wizard-react">
         <div className="row">
@@ -506,12 +480,10 @@ function whichWizardShow(formState){
             <a href={`/single_cell/study/${studyAccession}`}>View study</a> / &nbsp;
             <span title="{serverState?.study?.name}">{serverState?.study?.name}</span>
           </div>
-          {whichWizardShow(formState)}
-
+          {getWizardContent(formState)}
         </div>
         <MessageModal/>
       </div>}
-
     </StudyContext.Provider>
   )
 }
