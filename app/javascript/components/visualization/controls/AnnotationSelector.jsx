@@ -7,21 +7,21 @@ import { annotationKeyProperties, getMatchedAnnotation, clusterSelectStyle } fro
 /** takes the server response and returns annotation options suitable for react-select */
 function getAnnotationOptions(annotationList, clusterName) {
   return [{
-    label: 'Study Wide',
+    label: 'Study wide',
     options: annotationList.annotations
       .filter(annot => annot.scope === 'study').map(annot => annotationKeyProperties(annot))
   }, {
-    label: 'Cluster-Based',
+    label: 'Cluster-based',
     options: annotationList.annotations
       .filter(annot => annot.cluster_name === clusterName && annot.scope === 'cluster')
       .map(annot => annotationKeyProperties(annot))
   }, {
-    label: 'User-Based',
+    label: 'User-based',
     options: annotationList.annotations
       .filter(annot => annot.cluster_name === clusterName && annot.scope === 'user')
       .map(annot => annotationKeyProperties(annot))
   }, {
-    label: 'Cannot Display',
+    label: 'Cannot display',
     options: annotationList.annotations
       .filter(annot => annot.scope === 'invalid' && (annot.cluster_name == clusterName || !annot.cluster_name))
       .map(annot => annotationKeyProperties(annot))
