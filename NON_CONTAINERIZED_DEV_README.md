@@ -22,7 +22,7 @@ Commands below assume your CPU is Apple Silicon / M1, not Intel.
   - That might fail with a message that contains "An error occurred while installing bson_ext"
   - If so, follow steps from https://stackoverflow.com/a/64248633, i.e.:
     - Run `cd /Users/$(whoami)/.rbenv/versions/3.1.3/lib/ruby/gems/3.1.0/gems/bson_ext-1.5.1/ext/cbson`
-    - Insert one line, near to the top of the file:
+    - Insert one line, near to the top of the file, `bson_buffer.h`:
 
 ```
 /* A buffer */
