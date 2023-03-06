@@ -1,8 +1,7 @@
 import React from 'react'
-import _clone from 'lodash/clone'
 
 import Select from '~/lib/InstrumentedSelect'
-import { annotationKeyProperties, getMatchedAnnotation, clusterSelectStyle } from '~/lib/cluster-utils'
+import { annotationKeyProperties, clusterSelectStyle } from '~/lib/cluster-utils'
 
 /** takes the server response and returns annotation options suitable for react-select */
 function getAnnotationOptions(annotationList, clusterName) {
@@ -40,7 +39,7 @@ function getAnnotationOptions(annotationList, clusterName) {
 export default function AnnotationControl({
   annotationList,
   cluster,
-  annotation,
+  shownAnnotation,
   updateClusterParams,
   hasSelection=true,
   setShowDifferentialExpressionPanel,
@@ -51,19 +50,6 @@ export default function AnnotationControl({
   }
 
   const annotationOptions = getAnnotationOptions(annotationList, cluster)
-
-  let shownAnnotation
-  if (hasSelection) {
-    shownAnnotation = _clone(annotation)
-    // for user annotations, we have to match the given id to a name to show the name in the dropdown
-    if (annotation && annotation.scope === 'user') {
-      const matchedAnnotation = getMatchedAnnotation(annotation, annotationList)
-      if (matchedAnnotation) {
-        shownAnnotation.name = matchedAnnotation.name
-        shownAnnotation.id = matchedAnnotation.id
-      }
-    }
-  }
 
   return (
     <div className="form-group">

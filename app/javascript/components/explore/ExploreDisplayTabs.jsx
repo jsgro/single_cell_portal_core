@@ -24,7 +24,7 @@ import Heatmap from '~/components/visualization/Heatmap'
 import GeneListHeatmap from '~/components/visualization/GeneListHeatmap'
 import GenomeView from './GenomeView'
 import ImageTab from './ImageTab'
-import { getAnnotationValues, getDefaultSpatialGroupsForCluster } from '~/lib/cluster-utils'
+import { getAnnotationValues, getShownAnnotation, getDefaultSpatialGroupsForCluster } from '~/lib/cluster-utils'
 import RelatedGenesIdeogram from '~/components/visualization/RelatedGenesIdeogram'
 import InferCNVIdeogram from '~/components/visualization/InferCNVIdeogram'
 import useResizeEffect from '~/hooks/useResizeEffect'
@@ -54,7 +54,7 @@ const tabList = [
 /** Determine if currently selected cluster has differential expression outputs available */
 function getClusterHasDe(exploreInfo, exploreParams) {
   const flags = getFeatureFlagsWithDefaults()
-  if (!flags?.differential_expression_frontend || !exploreInfo) return false
+  if (!flags?.differential_expression_frontend || !exploreInfo) {return false}
   let clusterHasDe = false
   const annotList = exploreInfo.annotationList
   let selectedCluster
@@ -74,7 +74,7 @@ function getClusterHasDe(exploreInfo, exploreParams) {
 }
 
 function getAnnotationsWithDE(exploreInfo, exploreParams) {
-  if (!exploreInfo) return false
+  if (!exploreInfo) {return false}
 
   let annotsWithDe = []
   const annotList = exploreInfo.annotationList
@@ -231,6 +231,8 @@ export default function ExploreDisplayTabs({
   if (exploreInfo) {
     hasSpatialGroups = exploreInfo.spatialGroups.length > 0
   }
+
+  const shownAnnotation = getShownAnnotation(exploreParamsWithDefaults.annotation, annotationList)
 
   /** in the event a component takes an action which updates the list of annotations available
     * e.g. by creating a user annotation, this updates the list */
@@ -546,7 +548,7 @@ export default function ExploreDisplayTabs({
                 setShowUpstreamDifferentialExpressionPanel={setShowUpstreamDifferentialExpressionPanel}
                 isUpstream={showUpstreamDifferentialExpressionPanel}
                 cluster={exploreParamsWithDefaults.cluster}
-                annotation={exploreParamsWithDefaults.annotation}
+                annotation={shownAnnotation}
               />
             }
           </div>
@@ -569,7 +571,7 @@ export default function ExploreDisplayTabs({
                 <AnnotationSelector
                   annotationList={annotationList}
                   cluster={exploreParamsWithDefaults.cluster}
-                  annotation={exploreParamsWithDefaults.annotation}
+                  shownAnnotation={shownAnnotation}
                   updateClusterParams={updateClusterParams}/>
                 { shownTab === 'scatter' && <CreateAnnotation
                   isSelecting={isCellSelecting}
@@ -659,7 +661,7 @@ export default function ExploreDisplayTabs({
               exploreParamsWithDefaults={exploreParamsWithDefaults}
               exploreInfo={exploreInfo}
               clusterName={exploreParamsWithDefaults.cluster}
-              annotation={exploreParamsWithDefaults.annotation}
+              annotation={shownAnnotation}
               setShowDeGroupPicker={setShowDeGroupPicker}
               setDeGenes={setDeGenes}
               setDeGroup={setDeGroup}
@@ -673,8 +675,8 @@ export default function ExploreDisplayTabs({
             <>
               <ClusterSelector
                 annotationList={getAnnotationsWithDE(exploreInfo, exploreParams)}
-                cluster={""}
-                annotation={""}
+                cluster={''}
+                annotation={''}
                 updateClusterParams={updateClusterParams}
                 hasSelection={false}
                 spatialGroups={exploreInfo ? exploreInfo.spatialGroups : []}/>
@@ -682,15 +684,15 @@ export default function ExploreDisplayTabs({
             }
             {clusterHasDe &&
               <AnnotationSelector
-              annotationList={getAnnotationsWithDE(exploreInfo, exploreParams)}
-              cluster={exploreParamsWithDefaults.cluster}
-              annotation={null}
-              updateClusterParams={updateClusterParams}
-              hasSelection={false}
-              setShowDifferentialExpressionPanel={setShowDifferentialExpressionPanel}
-              setShowUpstreamDifferentialExpressionPanel={setShowUpstreamDifferentialExpressionPanel}
-            />
-          }
+                annotationList={getAnnotationsWithDE(exploreInfo, exploreParams)}
+                cluster={exploreParamsWithDefaults.cluster}
+                shownAnnotation={shownAnnotation}
+                updateClusterParams={updateClusterParams}
+                hasSelection={false}
+                setShowDifferentialExpressionPanel={setShowDifferentialExpressionPanel}
+                setShowUpstreamDifferentialExpressionPanel={setShowUpstreamDifferentialExpressionPanel}
+              />
+            }
           </>
           }
         </div>
