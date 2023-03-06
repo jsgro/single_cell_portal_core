@@ -20,8 +20,36 @@ Commands below assume your CPU is Apple Silicon / M1, not Intel.
 7. `cd` to where you have the `single_cell_portal_core` Git repo checked out.
 8. Run `bundle install`
   - That might fail with a message that contains "An error occurred while installing bson_ext"
-  - If so, follow steps from https://stackoverflow.com/a/64248633, noting that:
-  - The path in that answer won't work if you're using rbenv (as you should) for Ruby version management.  Instead of that path in that StackOverflow answer, use a path like cd /Users/$(whoami)/.rbenv/versions/3.1.3/lib/ruby/gems/3.1.0/gems/bson_ext-1.5.1
+  - If so, follow steps from https://stackoverflow.com/a/64248633, i.e.:
+    - Run `cd /Users/$(whoami)/.rbenv/versions/3.1.3/lib/ruby/gems/3.1.0/gems/bson_ext-1.5.1/ext/cbson`
+    - Insert one line, near to the top of the file:
+
+```
+/* A buffer */
+typedef struct bson_buffer* bson_buffer_t;
+/* A position in the buffer */
+typedef int bson_buffer_position;
+
+/***** THE FOLLOWING IS THE LINE YOU NEED TO INSERT ****/
+int bson_buffer_get_max_size(bson_buffer_t buffer); 
+
+ /* Allocate and return a new buffer.
+ * Return NULL on allocation failure. */
+bson_buffer_t bson_buffer_new(void);
+```
+
+  - Run `pwd`, confirm you are still in `/Users/$(whoami)/.rbenv/versions/3.1.3/lib/ruby/gems/3.1.0/gems/bson_ext-1.5.1/ext/cbson`
+  - Run `make`, which will output warnings you can ignore
+  - Run `cd ../..`, i.e., go to the `bson_ext-1.5.1` directory
+  - Run `gem spec ../../cache/bson_ext-1.5.1.gem --ruby > ../../specifications/bson_ext-1.5.1.gemspec`
+  - Run `gem list bson_ext`, and confirm it outputs:
+
+```
+*** LOCAL GEMS ***
+bson_ext (1.5.1)
+```
+
+  - Change directories back to `single_cell_portal_core`
 9. Run `yarn install`
 10. Run `./rails_local_setup.rb` to will write out required variables into an shell env file (using your Broad username 
 to determine which `vault` paths to read from).
