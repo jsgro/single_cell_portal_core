@@ -54,7 +54,7 @@ bson_ext (1.5.1)
 10. Run `./rails_local_setup.rb` to will write out required variables into an shell env file (using your Broad username 
 to determine which `vault` paths to read from).
 11. Run the source command the script outputs -- this will export those needed variables into the current shell
-12. Add `config/local_ssl/localhost.crt` to your system's trusted certificates. On macOS, you can drag this file into the 
+12. Add `config/certs/localhost.crt` to your system's trusted certificates. On macOS, you can drag this file into the 
 keychain access app, use the "System" keychain, and the "Certificates" category. Then you will likely need to open the 
 newly added certificate in the keychain access app and update the "Trust" setting to be "Always Trust" rather than "Use 
 System Defaults".
