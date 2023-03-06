@@ -37,19 +37,19 @@ int bson_buffer_get_max_size(bson_buffer_t buffer);
  * Return NULL on allocation failure. */
 bson_buffer_t bson_buffer_new(void);
 ```
-
-  - Run `pwd`, confirm you are still in `/Users/$(whoami)/.rbenv/versions/3.1.3/lib/ruby/gems/3.1.0/gems/bson_ext-1.5.1/ext/cbson`
-  - Run `make`, which will output warnings you can ignore
-  - Run `cd ../..`, i.e., go to the `bson_ext-1.5.1` directory
-  - Run `gem spec ../../cache/bson_ext-1.5.1.gem --ruby > ../../specifications/bson_ext-1.5.1.gemspec`
-  - Run `gem list bson_ext`, and confirm it outputs:
+  -
+    - Run `pwd`, confirm you are still in `/Users/$(whoami)/.rbenv/versions/3.1.3/lib/ruby/gems/3.1.0/gems/bson_ext-1.5.1/ext/cbson`
+    - Run `make`, which will output warnings you can ignore
+    - Run `cd ../..`, i.e., go to the `bson_ext-1.5.1` directory
+    - Run `gem spec ../../cache/bson_ext-1.5.1.gem --ruby > ../../specifications/bson_ext-1.5.1.gemspec`
+    - Run `gem list bson_ext`, and confirm it outputs:
 
 ```
 *** LOCAL GEMS ***
 bson_ext (1.5.1)
 ```
-
-  - Change directories back to `single_cell_portal_core`
+  -
+    - Change directories back to `single_cell_portal_core`
 9. Run `yarn install`
 10. Run `./rails_local_setup.rb` to will write out required variables into an shell env file (using your Broad username 
 to determine which `vault` paths to read from).
