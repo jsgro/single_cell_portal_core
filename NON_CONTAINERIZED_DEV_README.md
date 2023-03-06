@@ -6,8 +6,7 @@ live css/js reloading, faster build times, and byebug debugging in rails.
 ## SETUP
 Commands below assume your CPU is Apple Silicon / M1, not Intel.
 1. Run `rbenv -v`.  If it is not found, `brew install rbenv`, then `rbenv init` to set up rbenv in your shell, then close terminal and reopen it.
-2. Run `ruby -v` to ensure Ruby 3.1.3 is installed on your local machine.  Then close out terminal and reopen 
-and run `rbenv install 3.1.3`. (version is current [as of 2023-01-26](https://github.com/broadinstitute/single_cell_portal_core/pull/1713))
+2. Run `ruby -v` to ensure Ruby 3.1.3 is installed on your local machine.  If not, run `rbenv install 3.1.3` (current [as of 2023-01-26](https://github.com/broadinstitute/single_cell_portal_core/pull/1713)) then `rbenv global 3.1.3`.
 3. Run `ruby -ropenssl -e 'puts OpenSSL::OPENSSL_VERSION'`.  
   - If it outputs contains "OpenSSL 1.1.1", go to Step 4.  
   - Else, if output contains something like "OpenSSL 3.0.7", install the needed version of OpenSSL, and install Ruby so that it compiles with the needed version of OpenSSL:
