@@ -37,8 +37,8 @@ function RawCountsUploadForm({
   deleteFile,
   isAnnDataExperience
 }) {
-  const rawParentFiles = formState.files.filter(rawCountsFileFilter)
-  const fileMenuOptions = serverState.menu_options
+  const rawParentFiles = formState?.files.filter(rawCountsFileFilter)
+  const fileMenuOptions = serverState?.menu_options
 
   useEffect(() => {
     if (rawParentFiles.length === 0) {

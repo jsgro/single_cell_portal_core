@@ -9,7 +9,7 @@ const DEFAULT_NEW_ANNDATA_FILE = {
 }
 
 export default {
-  title: 'AnnData (.h5ad) 2',
+  title: 'AnnData',
   header: 'AnnData file',
   name: 'AnnData 2',
   component: AnnDataUploadStep,
@@ -27,18 +27,11 @@ function AnnDataUploadStep({
   deleteFileFromForm
 }) {
   const AnnDataFile = formState.files.filter(AnnDataFileFilter)
-
   useEffect(() => {
-    if (!AnnDataFile) {
+    if (AnnDataFile.length === 0) {
       addNewFile(DEFAULT_NEW_ANNDATA_FILE)
     }
   }, [[AnnDataFile?._id]])
-
-  // useEffect(() => {
-  //   if (AnnDataFile.length === 0) {
-  //     addNewFile(DEFAULT_NEW_ANNDATA_FILE)
-  //   }
-  // }, [AnnDataFile.length])
 
   return <div>
     <div className="row">

@@ -44,11 +44,11 @@ export default function ExpressionFileForm({
 
   const allowedFileExts = isMtxFile ? FileTypeExtensions.mtx : FileTypeExtensions.plainText
   let requiredFields = showRawCountsUnits ? RAW_COUNTS_REQUIRED_FIELDS : REQUIRED_FIELDS
-  const rawCountsRequired = !isAnnDataExperience && (featureFlagState && featureFlagState.raw_counts_required_frontend)
+  const rawCountsRequired = featureFlagState && featureFlagState.raw_counts_required_frontend
   if (rawCountsRequired && !isRawCountsFile ) {
     requiredFields = requiredFields.concat(PROCESSED_ASSOCIATION_FIELD)
   }
-  const validationMessages = !isAnnDataExperience ? validateFile({ file, allFiles, allowedFileExts, requiredFields, isAnnDataExperience }) :[]
+  const validationMessages = validateFile({ file, allFiles, allowedFileExts, requiredFields, isAnnDataExperience })
 
   const associatedRawCounts = !isAnnDataExperience && file.expression_file_info.raw_counts_associations.map(id => ({
     label: rawCountsOptions.find(rf => rf.value == id)?.label,
