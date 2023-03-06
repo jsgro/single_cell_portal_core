@@ -4,8 +4,6 @@ import _clone from 'lodash/clone'
 import Select from '~/lib/InstrumentedSelect'
 import { annotationKeyProperties, getMatchedAnnotation, clusterSelectStyle } from '~/lib/cluster-utils'
 
-const noneSelected = 'Select annotation'
-
 /** takes the server response and returns annotation options suitable for react-select */
 function getAnnotationOptions(annotationList, clusterName) {
   return [{
