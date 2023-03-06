@@ -7,7 +7,7 @@ live css/js reloading, faster build times, and byebug debugging in rails.
 Commands below assume your CPU is Apple Silicon / M1, not Intel.
 1. Run `rbenv -v`.  If it is not found, `brew install rbenv`, then `rbenv init` to set up rbenv in your shell, then close terminal and reopen it.
 2. Run `ruby -ropenssl -e 'puts OpenSSL::OPENSSL_VERSION'`.  
-  - If it outputs contains "OpenSSL 1.1.1", go to Step 4.  
+  - If it outputs contains "OpenSSL 1.1.1", go to Step 3.  
   - Else, if output contains something like "OpenSSL 3.0.7", install the needed version of OpenSSL, and install Ruby so that it compiles with the needed version of OpenSSL:
      - Run `brew install openssl@1.1`
      - Run `rbenv uninstall 3.1.3`
