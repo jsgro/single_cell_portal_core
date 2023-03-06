@@ -16,8 +16,7 @@ export default function FileUploadControl({
   file, allFiles, updateFile,
   allowedFileExts=['*'],
   validationIssues={},
-  bucketName,
-  isAnnDataExperience=false
+  bucketName
 }) {
   const [fileValidation, setFileValidation] = useState({
     validating: false, issues: {}, fileName: null

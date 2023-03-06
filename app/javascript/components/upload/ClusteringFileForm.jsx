@@ -29,9 +29,9 @@ export default function ClusteringFileForm({
   const spatialClusterAssocs = file.spatial_cluster_associations
     .map(id => associatedClusterFileOptions.find(opt => opt.value === id))
 
-  const validationMessages = !isAnnDataExperience ? validateFile({
+  const validationMessages = validateFile({
     file, allFiles, allowedFileExts, requiredFields
-  }) : []
+  })
 
 
   /** create the tooltip and message for the .obsm key names section */

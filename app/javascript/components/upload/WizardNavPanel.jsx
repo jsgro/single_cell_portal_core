@@ -175,7 +175,6 @@ function clusteringHelpContent(isClusteringParsing) {
  */
 function MainStepsDisplay(formState, serverState, currentStep, setCurrentStep, mainSteps,
   isAnnDataExperience, annDataMainExpanded, setAnnDataMainExpanded, expansionIcon) {
-    console.log('isAnnDAta:', isAnnDataExperience)
   if (isAnnDataExperience) {
     return <ul className="upload-wizard-steps" role="tablist" data-analytics-name="upload-wizard-anndata-main-steps">
       <li className="other-header" role="tab" >

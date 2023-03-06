@@ -27,7 +27,6 @@ function AnnDataForm({
   deleteFile
 }) {
   const AnnDataFiles = formState.files.filter(AnnDataFileFilter)
-  debugger
   useEffect(() => {
     if (AnnDataFiles.length === 0) {
       addNewFile(DEFAULT_NEW_ANNDATA_FILE)
