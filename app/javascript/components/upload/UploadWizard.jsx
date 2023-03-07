@@ -268,15 +268,15 @@ export function RawUploadWizard({ studyAccession, name }) {
     if (isAnnDataExperience) {
       formState.files.forEach(fileFormData => {
         if (fileFormData.file_type === 'Cluster') {
-          file['cluster_form_info'] = fileFormData
+          file['cluster_form_info_attributes'] = fileFormData
           deleteFileFromForm(fileFormData._id)
         }
         if (fileFormData.file_type === 'Expression Matrix') {
-          file['extra_expression_form_info'] = fileFormData
+          file['extra_expression_form_info_attributes'] = fileFormData
           deleteFileFromForm(fileFormData._id)
         }
         if (fileFormData.file_type === 'Metadata') {
-          file['metadata_form_info'] = fileFormData
+          file['metadata_form_info_attributes'] = fileFormData
           deleteFileFromForm(fileFormData._id)
         }
       })

@@ -34,14 +34,14 @@ export default function ClusteringFileForm({
   })
 
 
-  /** create the tooltip and message for the .obsm key names section */
+  /** create the tooltip and message for the .obsm key name section */
   function ObsmKeyNameMessage() {
     const obsmKeyNameToolTip = <span>
       <OverlayTrigger
         trigger={['hover', 'focus']}
         rootClose placement="top"
         overlay={ObsmKeyNameHelpContent()}>
-        <span> .obsm key names <FontAwesomeIcon icon={faQuestionCircle}/></span>
+        <span> .obsm key name <FontAwesomeIcon icon={faQuestionCircle}/></span>
       </OverlayTrigger>
     </span>
 
@@ -53,7 +53,7 @@ export default function ClusteringFileForm({
   /** gets the popup message to describe .obsm keys */
   function ObsmKeyNameHelpContent() {
     return <Popover id="cluster-obsm-key-name-popover" className="tooltip-wide">
-      <div> Multi-dimensional observations annotations .obsm (attribute) keys names for clusterings </div>
+      <div> Multi-dimensional observations annotations .obsm (attribute) key names for clusterings </div>
     </Popover>
   }
 
@@ -67,8 +67,8 @@ export default function ClusteringFileForm({
           <TextFormField label="Name" fieldName="name" file={file} updateFile={updateFile}/>
         </div>
         <div className="col-md-6">
-          <TextFormField label= {ObsmKeyNameMessage()} fieldName="obsm_key_names" file={file}
-            updateFile={updateFile} placeholderText='E.g. "x_tsne, x_umap"'/>
+          <TextFormField label= {ObsmKeyNameMessage()} fieldName="obsm_key_name" file={file}
+            updateFile={updateFile} placeholderText='E.g. "x_tsne"'/>
         </div>
       </div>
     } else {

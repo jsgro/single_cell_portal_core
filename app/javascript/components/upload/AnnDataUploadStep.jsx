@@ -11,7 +11,7 @@ const DEFAULT_NEW_ANNDATA_FILE = {
 export default {
   title: 'AnnData',
   header: 'AnnData file',
-  name: 'AnnData 2',
+  name: 'AnnData file',
   component: AnnDataUploadStep,
   fileFilter: AnnDataFileFilter
 }
