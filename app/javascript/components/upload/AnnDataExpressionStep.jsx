@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react'
 
 import ExpressionFileForm from './ExpressionFileForm'
-import { rawCountsFileFilter, getExpressionFileInfoMessage } from './RawCountsStep'
+import { getExpressionFileInfoMessage } from './RawCountsStep'
 
 const DEFAULT_NEW_PROCESSED_FILE = {
   is_spatial: false,
@@ -39,20 +39,11 @@ function ExpressionUploadForm({
   const fileMenuOptions = serverState.menu_options
 
   const featureFlagState = serverState.feature_flags
-  // const rawCountsRequired = featureFlagState && featureFlagState.raw_counts_required_frontend
-
-  // const hasRawCounts = !!rawCountsFiles.filter(file => file.status === 'uploaded').length
 
   useEffect(() => {
     if (processedParentFiles.length === 0) {
       addNewFile(DEFAULT_NEW_PROCESSED_FILE)
     }
-    // if (isAnnDataExperience) {
-    //   // emily to do here
-    //   const annDataParentFile = formState.files.find(file => file.file_type === 'AnnData')
-    //   console.log('formState.allFiles', formState.allFiles)
-    //   // updateFile(annDataParentFile._id, { other_form_fields_info: { file_type: 'Expression Matrix', DEFAULT_NEW_RAW_COUNTS_FILE } })
-    // }
   }, [processedParentFiles.length])
 
   return <div>
