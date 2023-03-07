@@ -11,7 +11,7 @@ function RawUploadExperienceSplitter({
 
   return <div className="top-margin left-margin">
     <div className="row">
-      <div >
+      <div className="col-md-12">
         <h1>
         Introducing AnnData file upload to power visualizations
         </h1>
