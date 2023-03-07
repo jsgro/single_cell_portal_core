@@ -116,6 +116,18 @@ class FileParseServiceTest < ActiveSupport::TestCase
     assert_nil @coordinate_file.study_file_bundle
   end
 
+  test 'should gzip file before uploading' do
+    cluster_path = Rails.root.join('test/test_data/cluster_example.txt')
+    cluster_file = StudyFile.create!(
+      study: @basic_study,
+      upload: File.open(cluster_path),
+      file_type: 'Cluster',
+      name: 'cluster_example.txt'
+    )
+    assert FileParseService.compress_file_for_upload(cluster_file)
+    assert cluster_file.gzipped?
+  end
+
   # TODO: once SCP-2765 is completed, test that all genes/values are parsed from mtx bundle
   # this will replace the deprecated 'should parse valid mtx bundle' from study_validation_test.rb
   test 'should store all genes and expression values from mtx parse' do
