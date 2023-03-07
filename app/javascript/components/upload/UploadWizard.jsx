@@ -87,12 +87,12 @@ export function RawUploadWizard({ studyAccession, name }) {
   // this context
   const studyObj = serverState?.study
 
-  // used for toggling between classic and AnnData experience of upload wizard
-  const [isAnnDataExperience, setIsAnnDataExperience] = useState(formState?.files?.filter(AnnDataFileFilter)?.length > 0)
 
   // used for toggling between the split view for the upload experiences
   const [choiceMade, setChoiceMade] = useState(false)
   const allowReferenceImageUpload = serverState?.feature_flags?.reference_image_upload
+  // used for toggling between classic and AnnData experience of upload wizard
+  const [isAnnDataExperience, setIsAnnDataExperience] = useState(formState?.files?.filter(AnnDataFileFilter)?.length > 0 && serverState?.feature_flags?.ingest_anndata_file)
 
   let MAIN_STEPS
   let SUPPLEMENTAL_STEPS
@@ -398,10 +398,10 @@ export function RawUploadWizard({ studyAccession, name }) {
   useEffect(() => {
     fetchStudyFileInfo(studyAccession).then(response => {
       response.files.forEach(file => formatFileFromServer(file))
+      setIsAnnDataExperience(response.files?.filter(AnnDataFileFilter)?.length > 0 && response.feature_flags?.ingest_anndata_file)
       setServerState(response)
       setFormState(_cloneDeep(response))
       setTimeout(pollServerState, POLLING_INTERVAL)
-      setIsAnnDataExperience(response.files?.filter(AnnDataFileFilter)?.length > 0)
     })
 
     window.document.title = `Upload - Single Cell Portal`
@@ -467,7 +467,7 @@ export function RawUploadWizard({ studyAccession, name }) {
   return (
     <StudyContext.Provider value={studyObj}>
       {/* If the formState hasn't loaded show a spinner */}
-      {!formState && <LoadingSpinner testId="initial-wizard-spinner"/>
+      {(!formState && !serverState) && <LoadingSpinner testId="initial-wizard-spinner"/>
       }
       {!!formState &&
       <div className="upload-wizard-react">
