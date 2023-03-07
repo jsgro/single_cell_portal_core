@@ -415,10 +415,10 @@ export function RawUploadWizard({ studyAccession, name }) {
    * @param  formState
    * @returns The content for the upload wizard, either the steps for upload or the split view for choosing the data upload experience
    */
-  function getWizardContent(formState) {
-    if (!formState?.files.length && !choiceMade) {
+  function getWizardContent(formState, serverState) {
+    if (!formState?.files.length && !choiceMade && serverState?.feature_flags?.ingest_anndata_file) {
       return <UploadExperienceSplitter {...{ setIsAnnDataExperience, setChoiceMade }}/>
-    } else if (choiceMade || formState?.files.length) {
+    } else if (choiceMade || formState?.files.length || !serverState?.feature_flags?.ingest_anndata_file) {
       return <> <div className="row wizard-content">
         <div>
           <WizardNavPanel {...{
@@ -443,9 +443,6 @@ export function RawUploadWizard({ studyAccession, name }) {
               </button> }
             </div>
           </div>
-          { !formState && <div className="padded text-center">
-            <LoadingSpinner testId="upload-wizard-spinner"/>
-          </div> }
           <div>
             <currentStep.component
               setCurrentStep={setCurrentStep}
@@ -467,7 +464,7 @@ export function RawUploadWizard({ studyAccession, name }) {
   return (
     <StudyContext.Provider value={studyObj}>
       {/* If the formState hasn't loaded show a spinner */}
-      {(!formState && !serverState) && <LoadingSpinner testId="initial-wizard-spinner"/>
+      {(!formState && !serverState) && <LoadingSpinner testId="upload-wizard-spinner"/>
       }
       {!!formState &&
       <div className="upload-wizard-react">
@@ -476,7 +473,7 @@ export function RawUploadWizard({ studyAccession, name }) {
             <a href={`/single_cell/study/${studyAccession}`}>View study</a> / &nbsp;
             <span title="{serverState?.study?.name}">{serverState?.study?.name}</span>
           </div>
-          {getWizardContent(formState)}
+          {getWizardContent(formState, serverState)}
         </div>
         <MessageModal/>
       </div>}
