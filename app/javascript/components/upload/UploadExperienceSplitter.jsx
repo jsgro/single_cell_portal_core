@@ -5,10 +5,8 @@ import { navigate } from '@reach/router'
 
 /** renders a list of the steps and summary study information */
 function RawUploadExperienceSplitter({
-  setIsAnnDataExperience, studyAccession,
-  setCurrentStep, setChoiceMade
+  setIsAnnDataExperience, setChoiceMade
 }) {
-
   navigate('?tab=fileuploadchoice')
 
   return <div className="top-margin left-margin">
@@ -27,9 +25,7 @@ function RawUploadExperienceSplitter({
                 className="btn splitter-info-buttons"
                 onClick={() => {
                   setIsAnnDataExperience(false)
-                  // setShowSplitterStep(false)
                   setChoiceMade(true)
-                  // setCurrentStep('?tab=rawCounts')
                 }}> Classic
               </a>
               <div className='col'>
@@ -41,9 +37,7 @@ function RawUploadExperienceSplitter({
                 className="btn splitter-info-buttons"
                 onClick={() => {
                   setIsAnnDataExperience(true)
-                  // setShowSplitterStep(false)
                   setChoiceMade(true)
-                  // setCurrentStep('?tab=combined%20expression%20matrices')
                 }}> AnnData <sup>BETA</sup>
               </a>
               <div className='col'>

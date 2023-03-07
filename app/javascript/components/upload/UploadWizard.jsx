@@ -143,11 +143,9 @@ export function RawUploadWizard({ studyAccession, name }) {
       navigate(`?tab=${newStep.name}`)
       window.scrollTo(0, 0)
     }
-    // emily here
     // for the upload data split view
     else {
       navigate(newStep)
-      // setShowSplitterStep(true)
     }
   }
 
@@ -337,7 +335,6 @@ export function RawUploadWizard({ studyAccession, name }) {
 
   /** delete the file from the form, and also the server if it exists there */
   async function deleteFile(file) {
-    // Emily consider in here
     const fileId = file._id
     if (file.status === 'new' || file?.serverFile?.parse_status === 'failed') {
       deleteFileFromForm(fileId)
@@ -420,7 +417,7 @@ export function RawUploadWizard({ studyAccession, name }) {
    */
   function getWizardContent(formState) {
     if (!formState?.files.length && !choiceMade) {
-      return <UploadExperienceSplitter {...{ setIsAnnDataExperience, studyAccession, setCurrentStep, setChoiceMade }}/>
+      return <UploadExperienceSplitter {...{ setIsAnnDataExperience, setChoiceMade }}/>
     } else if (choiceMade || formState?.files.length) {
       return <> <div className="row wizard-content">
         <div>
@@ -470,8 +467,7 @@ export function RawUploadWizard({ studyAccession, name }) {
   return (
     <StudyContext.Provider value={studyObj}>
       {/* If the formState hasn't loaded show a spinner */}
-      {!formState &&
-             <LoadingSpinner className="de" testId="initial-wizard-spinner"/>
+      {!formState && <LoadingSpinner testId="initial-wizard-spinner"/>
       }
       {!!formState &&
       <div className="upload-wizard-react">
