@@ -265,3 +265,7 @@ export const FileTypeExtensions = {
   annData: annDataExtensions,
   seurat: seuratExtensions
 }
+
+export function explainAnnDataUploadIsAtEnd() {
+
+}
