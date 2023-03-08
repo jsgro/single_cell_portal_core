@@ -92,7 +92,10 @@ export function RawUploadWizard({ studyAccession, name }) {
   const [choiceMade, setChoiceMade] = useState(false)
   const allowReferenceImageUpload = serverState?.feature_flags?.reference_image_upload
   // used for toggling between classic and AnnData experience of upload wizard
-  const [isAnnDataExperience, setIsAnnDataExperience] = useState(formState?.files?.filter(AnnDataFileFilter)?.length > 0 && serverState?.feature_flags?.ingest_anndata_file)
+  const [isAnnDataExperience, setIsAnnDataExperience] = useState(
+    formState?.files?.filter(AnnDataFileFilter)?.length > 0 &&
+    serverState?.feature_flags?.ingest_anndata_file
+  )
 
   let MAIN_STEPS
   let SUPPLEMENTAL_STEPS
@@ -398,7 +401,9 @@ export function RawUploadWizard({ studyAccession, name }) {
   useEffect(() => {
     fetchStudyFileInfo(studyAccession).then(response => {
       response.files.forEach(file => formatFileFromServer(file))
-      setIsAnnDataExperience(response.files?.filter(AnnDataFileFilter)?.length > 0 && response.feature_flags?.ingest_anndata_file)
+      setIsAnnDataExperience(
+        response.files?.filter(AnnDataFileFilter)?.length > 0 &&
+        response.feature_flags?.ingest_anndata_file)
       setServerState(response)
       setFormState(_cloneDeep(response))
       setTimeout(pollServerState, POLLING_INTERVAL)
@@ -412,7 +417,6 @@ export function RawUploadWizard({ studyAccession, name }) {
 
   /**
    * Returns the appropriate content to display for the UploadWizard
-   * @param  formState
    * @returns The content for the upload wizard, either the steps for upload or the split view for choosing the data upload experience
    */
   function getWizardContent(formState, serverState) {
