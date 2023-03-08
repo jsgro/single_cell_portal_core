@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faChevronDown, faChevronUp, faCheck, faQuestionCircle } from '@fortawesome/free-solid-svg-icons'
+import { faChevronDown, faChevronUp, faCheck, faQuestionCircle, faLink} from '@fortawesome/free-solid-svg-icons'
 
 import StepTabHeader from './StepTabHeader'
 import { withErrorBoundary } from '~/lib/ErrorBoundary'
@@ -72,7 +72,12 @@ function RawWizardNavPanel({
           serverState={serverState}
           currentStep={currentStep}
           setCurrentStep={setCurrentStep}/>) }
+
     </ul>
+    {/* isAnnDataExperience && */}
+    { <span className='margin-left-30'><a href="https://forms.gle/dRUVSh7WAz9Dh6Ag8" target="_blank" title="Take a brief survey on AnnData data upload">
+      Data upload feedback <FontAwesomeIcon icon={faLink}/> 
+      </a> </span>}
   </div>
 }
 
