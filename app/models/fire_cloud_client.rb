@@ -1622,6 +1622,6 @@ class FireCloudClient
   def extract_status_code(error)
     return 500 if error.is_a?(RuntimeError)
 
-    error.status_code || error.code || 500
+    error&.status_code || error&.code || 500
   end
 end
