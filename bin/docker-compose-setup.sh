@@ -7,12 +7,12 @@
 usage=$(
 cat <<EOF
 $0 [OPTION]
--d   run docker-compose in detached mode (default is attatched to terminal STDOUT)
--c   enable VITE_FRONTEND_SERVICE_WORKER_CACHE (default is disabled)
--i IMAGE_TAG   override default GCR image tag of development
--p PORTAL_RAM_GB   set the amount of RAM in GB for the portal container
--v VITE_RAM_GB   set the amount of RAM in GB for the vite container
--h   print this text
+-d  run docker-compose in detached mode (default is attatched to terminal STDOUT)
+-c  enable VITE_FRONTEND_SERVICE_WORKER_CACHE (default is disabled)
+-i  {IMAGE_TAG}  override default GCR image tag of development
+-p  {PORTAL_RAM_GB}  specify as integer the amount of RAM in GB for the single_cell container
+-v  {VITE_RAM_GB}  specify as integer the amount of RAM in GB for the single_cell_vite container
+-h  print this text
 EOF
 )
 

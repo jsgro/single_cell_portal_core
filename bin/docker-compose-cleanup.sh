@@ -6,8 +6,8 @@
 
 # suppress 'variable is not set' warning, actual values are irrelevant
 export GCR_IMAGE="gcr.io/broad-singlecellportal-staging/single-cell-portal:development"
-export PORTAL_RAM_GB="6gb"
-export VITE_RAM_GB="2gb"
+export PORTAL_RAM_GB="6"
+export VITE_RAM_GB="2"
 echo "### REMOVING CONTAINERS/VOLUMES ###"
 # set VITE_FRONTEND_SERVICE_WORKER_CACHE to silence warnings from docker-compose
 VITE_FRONTEND_SERVICE_WORKER_CACHE="$VITE_FRONTEND_SERVICE_WORKER_CACHE" \
