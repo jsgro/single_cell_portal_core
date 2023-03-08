@@ -1,13 +1,8 @@
-import React from 'react'
-import { render, screen, fireEvent } from '@testing-library/react'
+import { screen, fireEvent } from '@testing-library/react'
 import '@testing-library/jest-dom/extend-expect'
-import { UserContext } from 'providers/UserProvider'
 
-import MockRouter from '../lib/MockRouter'
-import { RawUploadWizard } from 'components/upload/UploadWizard'
 import { renderWizardWithStudy } from './upload-wizard-test-utils'
 import * as ScpApi from 'lib/scp-api'
-import { render, screen, waitForElementToBeRemoved } from '@testing-library/react'
 
 
 describe('it allows navigating between steps', () => {
@@ -40,15 +35,14 @@ describe('it allows navigating between steps', () => {
 
   it('sets initial tab based on url params', async () => {
     jest.spyOn(ScpApi, 'fetchStudyFileInfo').mockImplementation(() => {return new Promise(() => {})})
-    
-    render(
-      <UserContext.Provider value={{ featureFlagsWithDefaults: { ingest_anndata_file: false } }}>
-        <MockRouter initialSearch={'?tab=clustering'}>
-          <RawUploadWizard studyAccession="SCP1" name="Chicken study"/>
-        </MockRouter>
-      </UserContext.Provider> )
-
-    await waitForElementToBeRemoved(() => screen.getByTestId('upload-wizard-spinner'))
+    await renderWizardWithStudy(
+      {
+        featureFlags: { raw_counts_required_frontend: true, ingest_anndata_file: false },
+        initialSearch: '?tab=clustering',
+        studyAccession: 'SCP1',
+        studyName: 'Chicken study'
+      }
+    )
 
     expect(screen.getByRole('heading', { level: 4 })).toHaveTextContent('Clustering')
   })

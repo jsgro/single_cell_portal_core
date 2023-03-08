@@ -9,7 +9,7 @@ function RawUploadExperienceSplitter({
 }) {
   navigate('?tab=fileuploadchoice')
 
-  return <div className="top-margin left-margin">
+  return <div className="top-margin left-margin ">
     <div className="row">
       <div className="col-md-12">
         <h1>
