@@ -368,6 +368,11 @@ export function RawUploadWizard({ studyAccession, name }) {
   const prevStep = STEPS[currentStepIndex - 1]
   return (
     <StudyContext.Provider value={studyObj}>
+      {/* If the formState hasn't loaded show a spinner */}
+      { (!formState && !serverState)  && <div >
+        <LoadingSpinner className="spinner-full-page" testId="upload-wizard-spinner"/> </div>
+      }
+      {!!formState &&
       <div className="upload-wizard-react">
         <div className="row">
           <div className="col-md-12 wizard-top-bar no-wrap-ellipsis">
@@ -417,7 +422,7 @@ export function RawUploadWizard({ studyAccession, name }) {
           </div>
         </div>
         <MessageModal/>
-      </div>
+      </div>}
     </StudyContext.Provider>
   )
 }
