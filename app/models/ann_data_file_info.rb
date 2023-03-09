@@ -72,21 +72,25 @@ class AnnDataFileInfo
   # merge in form fragments and finalize data for saving
   def merge_form_fragments(form_data, fragments)
     fragments.each do |fragment|
-      existing_frag = find_existing_fragment(fragment)
+      matcher = { name: fragment[:name], obsm_key_name: fragment[:obsm_key_name] }.reject { |_, v| v.blank? }
+      existing_frag = find_fragment(fragment[:data_type], **matcher)
       idx = existing_frag ? data_fragments.index(existing_frag) : data_fragments.size
       form_data[:data_fragments].insert(idx, fragment)
     end
     form_data
   end
 
-  # find an existing data_fragment based on data_type/names
-  # allows updating items in place if names/descriptions change
-  def find_existing_fragment(fragment)
-    data_fragments.detect do |frag|
-      frag[:data_type] == fragment[:data_type] &&
-        frag[:name] == fragment[:name] &&
-        frag[:obsm_key_name] == fragment[:obsm_key_name]
+  # find a data_fragment of a given type based on arbitrary key/value pairs
+  def find_fragment(data_type, **kwargs)
+    fragments = data_fragments.select { |f| f[:data_type] == data_type }
+    return fragments.first if fragments.size == 1
+
+    fragments.each do |fragment|
+      if { **kwargs }.map { |k, v| fragment[k] == v }.uniq == [true]
+        return fragment
+      end
     end
+    nil # fallback to prevent returning last item
   end
 
   # mirror of study_file.get_cluster_domain_ranges for data_fragment

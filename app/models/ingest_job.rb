@@ -622,10 +622,13 @@ class IngestJob
       case extract
       when 'cluster'
         params_object.obsm_keys.each do |fragment|
+          cluster_data_fragment = study_file.ann_data_file_info.find_fragment(:cluster, obsm_key_name: fragment)
+          name = cluster_data_fragment&.[](:name) || fragment # fallback if we can't find data_fragment
           cluster_gs_url = params_object.fragment_file_gs_url(study.bucket_id, 'cluster', study_file.id, fragment)
+          domain_ranges = study_file.ann_data_file_info.get_cluster_domain_ranges(fragment)
           cluster_params = AnnDataIngestParameters.new(
-            ingest_cluster: true, name: fragment, cluster_file: cluster_gs_url, domain_ranges: '{}',
-            ingest_anndata: false, extract: nil, obsm_keys: nil, study_accession: nil,
+            ingest_cluster: true, name:, cluster_file: cluster_gs_url, domain_ranges:, ingest_anndata: false,
+            extract: nil, obsm_keys: nil
           )
           job = IngestJob.new(study:, study_file:, user:, action: :ingest_cluster, params_object: cluster_params)
           job.delay.push_remote_and_launch_ingest
@@ -634,7 +637,7 @@ class IngestJob
         metadata_gs_url = params_object.fragment_file_gs_url(study.bucket_id, 'metadata', study_file.id)
         metadata_params = AnnDataIngestParameters.new(
           ingest_cell_metadata: true, cell_metadata_file: metadata_gs_url,
-          ingest_anndata: false, extract: nil, obsm_keys: nil, study_accession: study.accession,
+          ingest_anndata: false, extract: nil, obsm_keys: nil, study_accession: study.accession
         )
         job = IngestJob.new(study:, study_file:, user:, action: :ingest_cell_metadata, params_object: metadata_params)
         job.delay.push_remote_and_launch_ingest

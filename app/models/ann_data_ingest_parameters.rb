@@ -4,7 +4,7 @@
 # parse extracted cluster file: AnnDataIngestParameters.new(
 #   ingest_anndata: false, extract: nil, name: 'X_tsne', ingest_cluster: true, domain_ranges: "{}",
 #   cluster_file: 'gs://bucket-id/_scp_internal/anndata_ingest/<study_file_ID_of_h5ad_file>/h5ad_frag.cluster.X_tsne.tsv',
-#   obsm_keys: nil, cell_metadata_file: nil, ingest_cell_metadata: false, study_accession: nil
+#   obsm_keys: %w[X_tsne]
 # )
 # parse extracted metadata file: AnnDataIngestParameters.new(
 #   ingest_anndata: false, extract: nil, name: 'X_tsne', ingest_cluster: false, domain_ranges: nil
