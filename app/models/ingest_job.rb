@@ -399,7 +399,7 @@ class IngestJob
       # update search facets if convention data
       if study_file.use_metadata_convention
         SearchFacet.delay.update_all_facet_filters
-      end      
+      end
       launch_differential_expression_jobs unless study_file.is_anndata?
       set_anndata_file_info if study_file.is_anndata?
     when :ingest_expression
@@ -618,11 +618,10 @@ class IngestJob
 
   # launch appropriate downstream jobs once an AnnData file successfully extracts "fragment" files
   def launch_anndata_subparse_jobs
-    
-    params_object.attribute_as_array(:extract).each do |extract|
+    params_object.extract.each do |extract|
       case extract
       when 'cluster'
-        params_object.attribute_as_array(:obsm_keys).each do |fragment|
+        params_object.obsm_keys.each do |fragment|
           cluster_gs_url = params_object.fragment_file_gs_url(study.bucket_id, 'cluster', study_file.id, fragment)
           cluster_params = AnnDataIngestParameters.new(
             ingest_cluster: true, name: fragment, cluster_file: cluster_gs_url, domain_ranges: '{}',

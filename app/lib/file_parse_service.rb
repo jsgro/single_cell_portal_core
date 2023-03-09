@@ -96,7 +96,6 @@ class FileParseService
       when 'AnnData'
         # create AnnDataFileInfo document so that it is present to be updated later on ingest completion
         if study_file.ann_data_file_info.nil?
-          Rails.logger.info "building ann_data_file_info!"
           study_file.build_ann_data_file_info
           study_file.save
         end
@@ -104,8 +103,9 @@ class FileParseService
         # enable / disable full ingest of AnnData files using the feature flag 'ingest_anndata_file'
         # will ignore reference AnnData files (includes previously uploaded files)
         if do_anndata_file_ingest && !study_file.is_reference_anndata?
-          obsm_keys = study_file.ann_data_file_info.obsm_key_names
-          params_object = AnnDataIngestParameters.new(anndata_file: study_file.gs_url, obsm_keys:)
+          params_object = AnnDataIngestParameters.new(
+            anndata_file: study_file.gs_url, obsm_keys: study_file.ann_data_file_info.obsm_key_names.to_s
+          )
           # TODO extract and parse Processed Exp Data (SCP-4709)
           # TODO extract and parse Raw Exp Data (SCP-4710)
         else
@@ -115,11 +115,10 @@ class FileParseService
             anndata_file: study_file.gs_url, extract: nil, obsm_keys: nil
           )
         end
-        Rails.logger.info "params: #{params_object.inspect}"
-        # job = IngestJob.new(
-        #   study:, study_file:, user:, action: :ingest_anndata, reparse:, persist_on_fail:, params_object:
-        # )
-        # job.delay.push_remote_and_launch_ingest
+        job = IngestJob.new(
+          study:, study_file:, user:, action: :ingest_anndata, reparse:, persist_on_fail:, params_object:
+        )
+        job.delay.push_remote_and_launch_ingest
       end
 
       study_file.update(parse_status: 'parsing')

@@ -38,19 +38,16 @@ class AnnDataIngestParameters
   # any parameters that are set to nil/false will not be passed to the command line
   PARAM_DEFAULTS = {
     ingest_anndata: true,
-    obsm_keys: "['X_umap','X_tsne']",
+    obsm_keys: %w[X_umap X_tsne],
     ingest_cluster: false,
     cluster_file: nil,
     name: nil,
     domain_ranges: nil,
-    extract: "['cluster', 'metadata']",
+    extract: %w[cluster metadata],
     cell_metadata_file: nil,
     ingest_cell_metadata: false,
     study_accession: nil
   }.freeze
-
-  ARRAY_MATCHER = /[\[\]]/
-  QUOTE_MATCHER = /["']/
 
   def initialize(attributes = {})
     PARAM_DEFAULTS.each do |attribute_name, default|
@@ -71,23 +68,12 @@ class AnnDataIngestParameters
   #   file_type = cluster|metadata|matrix
   #   file_type_detail [optional] = cluster name (for cluster files), raw|processed (for matrix files)
   def fragment_file_gs_url(bucket_id, fragment_type, h5ad_file_id, file_type_detail = "")
-    url =  "gs://#{bucket_id}/_scp_internal/anndata_ingest/#{h5ad_file_id}/h5ad_frag.#{fragment_type}"
-
+    url = "gs://#{bucket_id}/_scp_internal/anndata_ingest/#{h5ad_file_id}/h5ad_frag.#{fragment_type}"
     if file_type_detail.present?
       url += ".#{file_type_detail}.tsv"
     else
       url += ".tsv"
     end
-
-    return url
-
-  end
-
-  # convert a string value into an array of strings, like obsm_keys
-  def attribute_as_array(attr)
-    return [] if attributes[attr].blank?
-
-    stripped_value = attributes[attr].gsub(ARRAY_MATCHER, '')
-    stripped_value.split(',').map { |substr| substr.gsub(QUOTE_MATCHER, '').strip }
+    url
   end
 end
