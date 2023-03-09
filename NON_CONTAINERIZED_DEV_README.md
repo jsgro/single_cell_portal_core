@@ -20,7 +20,8 @@ Commands below assume your CPU is Apple Silicon / M1, not Intel.
 7. `cd` to where you have the `single_cell_portal_core` Git repo checked out.
 8. Run `bundle install`
   - That might fail with a message that contains "An error occurred while installing bson_ext"
-  - If so, follow steps from https://stackoverflow.com/a/64248633, i.e.:
+  - If so, run: ``gem install bson_ext -v '1.5.1' --source 'https://rubygems.org/' -- --with-cflags="-Wno-error=implicit-function-declaration"``
+  - If that fails, follow steps from https://stackoverflow.com/a/64248633, i.e.:
     - Run `cd /Users/$(whoami)/.rbenv/versions/3.1.3/lib/ruby/gems/3.1.0/gems/bson_ext-1.5.1/ext/cbson`
     - Insert one line, near to the top of the file, `bson_buffer.h`:
 
@@ -67,7 +68,7 @@ to determine which `vault` paths to read from).
 
 ## REGULAR DEVELOPMENT
 Adding `source <<path-to-single-cell-portal-core>>/config/secrets/.source_env.bash` to your .bash_profile will source the 
-secrets read from vault to each new shell, saving you the trouble of rerunning the setup process every time you open a 
+secrets read from Vault to each new shell, saving you the trouble of rerunning the setup process every time you open a 
 new shell.  
 
 NOTE: If you ever use the `bin/run_tests.sh` script locally, this will write out and delete any shell env files 
@@ -79,8 +80,9 @@ after completion.  You will need to run `./ruby_local_setup.rb` again to repopul
    * if this error occurs when trying to deploy in the container, fix it by deleting the `node-modules/node-sass` folder, and then rerunning the load_env_secrets process
    * if the error is when you're trying to run locally, fix it by running `npm rebuild node-sass`
 
-## TROUBLE SHOOTING
+## TROUBLESHOOTING
+If the content below doesn't answer your question, try searching.  Beyond Google and Stack Overflow, searching this repo's issues, commits, and other files can help.  Searching in Broad Institute's Slack instance, especially #scp-implementation can also help -- e.g. enter "<your query> in:#scp-implementation" in the Slack search box.
 1. If the version you specified for Ruby is not the same as the version returned from running `ruby -v`, run `which ruby` to find out what path to Ruby is being used. The path should be something like: `<user>/.rbenv/shims/ruby`. If it is not, try adding `export PATH="$HOME/.rbenv/shims:$PATH"` to your `~/.bash_profile` to point it at the correct path. 
-2. If, after adding your certificate as a trusted certificate, `localhost:3000` still claims that the certificate is not trusted you might need to update your system default configuration to "Always Trust". On MacOS this can be done in the keychain access app by clicking on the localhost cert and then in the Trust dropdown choosing "Always Trust".
+2. If, after adding your certificate as a trusted certificate, `localhost:3000` still claims that the certificate is not trusted, then ensure you followed the SETUP steps that mention certificates.
 3. If you need to download Xcode for your rbenv install be aware that it can take a very long time (multiple hours) and if you are a Broad employee it is recommended you download through `selfservice` from BITS.
-4. If when trying to run `bundle install` you get an error like `An error occurred while installing bson_ext (1.5.1), and Bundler cannot continue...` you can try `gem install bson_ext -v '1.5.1' --source 'https://rubygems.org/' -- --with-cflags="-Wno-error=implicit-function-declaration"`
+4. If when trying to run `bundle install` you get an error like `An error occurred while installing bson_ext (1.5.1), and Bundler cannot continue...`, see steps above that mention bson_ext.
