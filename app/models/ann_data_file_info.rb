@@ -73,9 +73,9 @@ class AnnDataFileInfo
   def merge_form_fragments(form_data, fragments)
     fragments.each do |fragment|
       matcher = {
-        name: fragment[:name], obsm_key_name: fragment[:obsm_key_name]
+        data_type: fragment[:data_type], name: fragment[:name], obsm_key_name: fragment[:obsm_key_name]
       }.reject { |_, v| v.blank? }
-      existing_frag = find_fragment(fragment[:data_type], **matcher)
+      existing_frag = find_fragment(**matcher)
       idx = existing_frag ? data_fragments.index(existing_frag) : data_fragments.size
       form_data[:data_fragments].insert(idx, fragment)
     end
@@ -83,21 +83,15 @@ class AnnDataFileInfo
   end
 
   # find a data_fragment of a given type based on arbitrary key/value pairs
-  def find_fragment(data_type, **attrs)
-    fragments = data_fragments.select { |f| f[:data_type] == data_type }
-    return fragments.first if fragments.size == 1
-
-    fragments.each do |fragment|
-      unless { **attrs }.map { |k, v| fragment[k] == v }.include?(false)
-        return fragment
-      end
+  def find_fragment(**attrs)
+    data_fragments.detect do |fragment|
+      !{ **attrs }.map { |k, v| fragment[k] == v }.include?(false)
     end
-    nil # fallback to prevent returning last item
   end
 
   # mirror of study_file.get_cluster_domain_ranges for data_fragment
   def get_cluster_domain_ranges(name)
-    fragment = find_fragment(:cluster, name:)
+    fragment = find_fragment(data_type: :cluster, name:)
     axes = %i[x_axis_min x_axis_max y_axis_min y_axis_max z_axis_min z_axis_max]
     domain_ranges = {}
     axes.each do |axis|

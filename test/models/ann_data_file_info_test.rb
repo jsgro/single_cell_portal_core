@@ -9,13 +9,13 @@ class AnnDataFileInfoTest < ActiveSupport::TestCase
         { data_type: :expression, y_axis_title: 'log(TPM) expression' }
       ]
     )
-    cluster_fragment = anndata_info.data_fragments.first
-    exp_fragment = anndata_info.data_fragments.last
-    assert_equal cluster_fragment, anndata_info.find_fragment(:cluster, obsm_key_name: 'X_umap')
-    assert_equal cluster_fragment,
-                 anndata_info.find_fragment(:cluster, name: 'UMAP', obsm_key_name: 'X_umap')
-    assert_equal exp_fragment, anndata_info.find_fragment(:expression, y_axis_title: 'log(TPM) expression')
-    assert_nil anndata_info.find_fragment(:cluster, obsm_key_name: 'foo')
+    anndata_info.data_fragments.each do |fragment|
+      assert_equal fragment, anndata_info.find_fragment(**fragment)
+      # remove random key and assert we still get a match (result would still be unique)
+      matcher = fragment.deep_dup
+      matcher.delete(fragment.keys.sample)
+      assert_equal fragment, anndata_info.find_fragment(**matcher)
+    end
   end
 
   test 'should get cluster domain ranges from fragment' do

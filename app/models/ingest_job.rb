@@ -622,7 +622,8 @@ class IngestJob
       case extract
       when 'cluster'
         params_object.obsm_keys.each do |fragment|
-          cluster_data_fragment = study_file.ann_data_file_info.find_fragment(:cluster, obsm_key_name: fragment)
+          matcher = { data_type: :cluster, obsm_key_name: fragment }
+          cluster_data_fragment = study_file.ann_data_file_info.find_fragment(**matcher)
           name = cluster_data_fragment&.[](:name) || fragment # fallback if we can't find data_fragment
           cluster_gs_url = params_object.fragment_file_gs_url(study.bucket_id, 'cluster', study_file.id, fragment)
           domain_ranges = study_file.ann_data_file_info.get_cluster_domain_ranges(fragment)
