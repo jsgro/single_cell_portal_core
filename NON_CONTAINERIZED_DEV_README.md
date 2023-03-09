@@ -4,20 +4,21 @@ Developing on SCP natively, i.e. outside a Docker container, is less robust but 
 
 ## SETUP
 Commands below assume your CPU is Apple Silicon / M1, not Intel.
-1. Run `rbenv -v`.  If it is not found, `brew install rbenv`, then `rbenv init` to set up rbenv in your shell, then close terminal and reopen it.
-2. Run `ruby -ropenssl -e 'puts OpenSSL::OPENSSL_VERSION'`.  
-  - If it outputs contains "OpenSSL 1.1.1", go to Step 3.  
+1. Append `CFLAGS="-Wno-error=implicit-function-declaration"` to your `~/.zshrc` (if using Z shell macOS default in Terminal, or `~/.bash_profile` if Bash), then run `source ~/.zschrc`
+2. Run `rbenv -v`.  If it is not found, `brew install rbenv`, then `rbenv init` to set up rbenv in your shell, then close terminal and reopen it.
+3. Run `ruby -ropenssl -e 'puts OpenSSL::OPENSSL_VERSION'`.  
+  - If it outputs contains "OpenSSL 1.1.1", go to Step 4.  
   - Else, if output contains something like "OpenSSL 3.0.7", install the needed version of OpenSSL, and install Ruby so that it compiles with the needed version of OpenSSL:
      - Run `brew install openssl@1.1`
      - Run `rbenv uninstall 3.1.3`
      - Run `LDFLAGS="-L/opt/homebrew/opt/openssl@1.1/lib" CPPFLAGS="-I/opt/homebrew/opt/openssl@1.1/include" CONFIGURE_OPTS="--with-openssl-dir=$(brew --prefix openssl@1.1)" RUBY_CONFIGURE_OPTS="--with-openssl-dir=$(brew --prefix openssl@1.1)" rbenv install 3.1.3`
      - Run `ruby -v` to ensure Ruby 3.1.3 is installed
-3. Run `ruby -v` to ensure Ruby 3.1.3 is installed on your local machine.  If not, run `rbenv install 3.1.3` (current [as of 2023-01-26](https://github.com/broadinstitute/single_cell_portal_core/pull/1713)) then `rbenv global 3.1.3`.
-4. Run `bundler -v` to ensure Bundler is installed.  If not, `gem install bundler`.
-5. Run `node -v` to ensure Node is installed. If not, install via https://nodejs.org/en/download/
-6. Run `yarn -v` to ensure Yarn is installed. If not, install via `brew install yarn`
-7. `cd` to where you have the `single_cell_portal_core` Git repo checked out.
-8. Run `bundle install`
+4. Run `ruby -v` to ensure Ruby 3.1.3 is installed on your local machine.  If not, run `rbenv install 3.1.3` (current [as of 2023-01-26](https://github.com/broadinstitute/single_cell_portal_core/pull/1713)) then `rbenv global 3.1.3`.
+5. Run `bundler -v` to ensure Bundler is installed.  If not, `gem install bundler`.
+6. Run `node -v` to ensure Node is installed. If not, install via https://nodejs.org/en/download/
+7. Run `yarn -v` to ensure Yarn is installed. If not, install via `brew install yarn`
+8. `cd` to where you have the `single_cell_portal_core` Git repo checked out.
+9. Run `bundle install`
   - That might fail with a message that contains "An error occurred while installing bson_ext"
   - If so, run: ``gem install bson_ext -v '1.5.1' --source 'https://rubygems.org/' -- --with-cflags="-Wno-error=implicit-function-declaration"``
   - If that fails, follow steps from https://stackoverflow.com/a/64248633, i.e.:
@@ -50,23 +51,23 @@ bson_ext (1.5.1)
 ```
   -
     - Change directories back to `single_cell_portal_core`
-9. Run `yarn install`
-10. Run `./rails_local_setup.rb` to will write out required variables into an shell env file (using your Broad username 
+10. Run `yarn install`
+11. Run `./rails_local_setup.rb` to will write out required variables into an shell env file (using your Broad username 
 to determine which `vault` paths to read from).
-11. Run the source command the script outputs -- this will export those needed variables into the current shell
-12. Add `config/certs/localhost.crt` to your system's trusted certificates. 
+12. Run the source command the script outputs -- this will export those needed variables into the current shell
+13. Add `config/certs/localhost.crt` to your system's trusted certificates. 
   -  Automatic route (preferred), run `sudo security add-trusted-cert -d -r trustAsRoot -k /Library/Keychains/System.keychain config/certs/localhost.crt`
   - Manual route (alternative): On macOS, drag the certificate file into the Keychain Access app, use the "System" keychain, and the "Certificates" category. Then left click on the newly added certificate in the Keychain Access app, click "Get Info", then toggle open the "Trust" section, then set "When using this certificate" to "Always Trust" rather than "Use System Defaults"; and ensure "Always Trust" also gets set on all other drop-down menus in the "Trust" section.
-12. Run `rails s`
-13. If you're developing JS, for hot module replacement and live reload, in a separate terminal, run `bin/vite dev`
-14. If you are working on functionality that involves delayed jobs, like uploading data:
+14. Run `rails s`
+15. If you're developing JS, for hot module replacement and live reload, in a separate terminal, run `bin/vite dev`
+16. If you are working on functionality that involves delayed jobs, like uploading data:
     * In another terminal, run the source command output in step 7
     * run `rails jobs:work`
-15. You're all set!  You can now go to https://localhost:3000 and see the website.
-16. Confirm you can sign in and upload a file
+17. You're all set!  You can now go to https://localhost:3000 and see the website.
+18. Confirm you can sign in and upload a file
 
 ## REGULAR DEVELOPMENT
-Adding `source <<path-to-single-cell-portal-core>>/config/secrets/.source_env.bash` to your .bash_profile will source the 
+Adding `source <<path-to-single-cell-portal-core>>/config/secrets/.source_env.bash` to your .zschrc or .bash_profile will source the 
 secrets read from Vault to each new shell, saving you the trouble of rerunning the setup process every time you open a 
 new shell.  
 
@@ -80,7 +81,7 @@ after completion.  You will need to run `./ruby_local_setup.rb` again to repopul
    * if the error is when you're trying to run locally, fix it by running `npm rebuild node-sass`
 
 ## TROUBLESHOOTING  
-1. If the version you specified for Ruby is not the same as the version returned from running `ruby -v`, run `which ruby` to find out what path to Ruby is being used. The path should be something like: `<user>/.rbenv/shims/ruby`. If it is not, try adding `export PATH="$HOME/.rbenv/shims:$PATH"` to your `~/.bash_profile` to point it at the correct path. 
+1. If the version you specified for Ruby is not the same as the version returned from running `ruby -v`, run `which ruby` to find out what path to Ruby is being used. The path should be something like: `<user>/.rbenv/shims/ruby`. If it is not, try adding `export PATH="$HOME/.rbenv/shims:$PATH"` to your `~/.zschrc` or `~/.bash_profile` to point it at the correct path. 
 2. If, after adding your certificate as a trusted certificate, `localhost:3000` still claims that the certificate is not trusted, then ensure you followed the SETUP steps that mention certificates.
 3. If you need to download Xcode for your rbenv install be aware that it can take a very long time (multiple hours) and if you are a Broad employee it is recommended you download through `selfservice` from BITS.
 4. If when trying to run `bundle install` you get an error like `An error occurred while installing bson_ext (1.5.1), and Bundler cannot continue...`, see steps above that mention bson_ext.
