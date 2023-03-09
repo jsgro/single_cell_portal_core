@@ -1,7 +1,6 @@
-# Developing on SCP without a Docker container
+# Developing on SCP natively, without a Docker container
 
-Developing on SCP without a Docker container, while less robust, opens up some faster development paradigms, including 
-live css/js reloading, faster build times, and byebug debugging in rails.
+Developing on SCP natively, i.e. outside a Docker container, is less robust but faster.  In native mode, full pages load are 4-7x faster, tests run faster, and rich [byebug debugging](https://github.com/deivid-rodriguez/byebug/blob/master/GUIDE.md) in Rails is possible.
 
 ## SETUP
 Commands below assume your CPU is Apple Silicon / M1, not Intel.
