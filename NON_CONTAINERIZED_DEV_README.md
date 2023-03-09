@@ -4,7 +4,11 @@ Developing on SCP natively, i.e. outside a Docker container, is less robust but 
 
 ## SETUP
 Commands below assume your CPU is Apple Silicon / M1, not Intel.
-1. Append `CFLAGS="-Wno-error=implicit-function-declaration"` to your `~/.zshrc` (if using Z shell macOS default in Terminal, or `~/.bash_profile` if Bash), then run `source ~/.zschrc`
+1. Append the following to your `~/.zshrc` (if using Z shell macOS default in Terminal, or `~/.bash_profile` if Bash), then run `source ~/.zschrc`:
+```
+# Avoid compilation errors with occasional Ruby gems, e.g. bson_ext, puma
+CFLAGS="-Wno-error=implicit-function-declaration"
+```
 2. Run `rbenv -v`.  If it is not found, `brew install rbenv`, then `rbenv init` to set up rbenv in your shell, then close terminal and reopen it.
 3. Run `ruby -ropenssl -e 'puts OpenSSL::OPENSSL_VERSION'`.  
   - If it outputs contains "OpenSSL 1.1.1", go to Step 4.  
