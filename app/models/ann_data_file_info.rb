@@ -72,7 +72,9 @@ class AnnDataFileInfo
   # merge in form fragments and finalize data for saving
   def merge_form_fragments(form_data, fragments)
     fragments.each do |fragment|
-      matcher = { name: fragment[:name], obsm_key_name: fragment[:obsm_key_name] }.reject { |_, v| v.blank? }
+      matcher = {
+        name: fragment[:name], obsm_key_name: fragment[:obsm_key_name]
+      }.reject { |_, v| v.blank? }
       existing_frag = find_fragment(fragment[:data_type], **matcher)
       idx = existing_frag ? data_fragments.index(existing_frag) : data_fragments.size
       form_data[:data_fragments].insert(idx, fragment)
@@ -94,8 +96,8 @@ class AnnDataFileInfo
   end
 
   # mirror of study_file.get_cluster_domain_ranges for data_fragment
-  def get_cluster_domain_ranges(cluster_name)
-    fragment = data_fragments.detect { |frag| frag[:name] == cluster_name && frag[:data_type] == :cluster }
+  def get_cluster_domain_ranges(name)
+    fragment = find_fragment(:cluster, name:)
     axes = %i[x_axis_min x_axis_max y_axis_min y_axis_max z_axis_min z_axis_max]
     domain_ranges = {}
     axes.each do |axis|
