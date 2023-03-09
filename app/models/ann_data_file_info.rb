@@ -81,12 +81,12 @@ class AnnDataFileInfo
   end
 
   # find a data_fragment of a given type based on arbitrary key/value pairs
-  def find_fragment(data_type, **kwargs)
+  def find_fragment(data_type, **attrs)
     fragments = data_fragments.select { |f| f[:data_type] == data_type }
     return fragments.first if fragments.size == 1
 
     fragments.each do |fragment|
-      if { **kwargs }.map { |k, v| fragment[k] == v }.uniq == [true]
+      if { **attrs }.map { |k, v| fragment[k] == v }.uniq == [true]
         return fragment
       end
     end
