@@ -64,7 +64,7 @@ class AnnDataFileInfo
   # stores information about individual data types, such as names/descriptions or axis info
   def extract_form_fragment(segment, fragment_type, *keys)
     safe_segment = segment.with_indifferent_access
-    fragment = Hash[keys.zip(keys.map { |k| safe_segment[k] })]
+    fragment = Parameterizable.hash_from_keys(safe_segment, *keys)
     fragment[:data_type] = fragment_type
     fragment
   end
@@ -72,9 +72,8 @@ class AnnDataFileInfo
   # merge in form fragments and finalize data for saving
   def merge_form_fragments(form_data, fragments)
     fragments.each do |fragment|
-      matcher = {
-        data_type: fragment[:data_type], name: fragment[:name], obsm_key_name: fragment[:obsm_key_name]
-      }.reject { |_, v| v.blank? }
+      keys = %i[data_type name obsm_key_name]
+      matcher = Parameterizable.hash_from_keys(fragment, *keys)
       existing_frag = find_fragment(**matcher)
       idx = existing_frag ? data_fragments.index(existing_frag) : data_fragments.size
       form_data[:data_fragments].insert(idx, fragment)
@@ -93,10 +92,6 @@ class AnnDataFileInfo
   def get_cluster_domain_ranges(name)
     fragment = find_fragment(data_type: :cluster, name:)
     axes = %i[x_axis_min x_axis_max y_axis_min y_axis_max z_axis_min z_axis_max]
-    domain_ranges = {}
-    axes.each do |axis|
-      domain_ranges[axis] = fragment[axis].to_f if fragment[axis]
-    end
-    domain_ranges
+    Parameterizable.hash_from_keys(fragment, *axes, transform: :to_f)
   end
 end

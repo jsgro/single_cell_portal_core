@@ -29,6 +29,15 @@ module Parameterizable
     "--#{param_name.to_s.gsub(/_/, '-')}"
   end
 
+  # select out keys from source hash and return new one, rejecting blank values
+  # will apply transform method if specified, otherwise returns value in place (Object#presence)
+  def self.hash_from_keys(source_hash, *keys, transform: :presence)
+    values = keys.map do |key|
+      source_hash[key].send(transform) if source_hash[key].present? # skip transform on nil entries
+    end
+    Hash[keys.zip(values)].reject { |_, v| v.blank? }
+  end
+
   # return array of all initialized attributes as CLI arguments, e.g. annotation_name => --annotation-name
   # will also append PARAMETER_NAME at the end as defined by including class
   def to_options_array
