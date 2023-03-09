@@ -78,6 +78,15 @@ new shell.
 NOTE: If you ever use the `bin/run_tests.sh` script locally, this will write out and delete any shell env files 
 after completion.  You will need to run `./ruby_local_setup.rb` again to repopulate them.
 
+Once you're all set up, you'll want to run each of the following commands in a separate terminal (or tab of your terminal):
+* `rails s # Run Rails app server`
+* `bin/vite dev # Run Vite -- enables HMR for reloading JS / CSS changes instantly`
+* `rails jobs:work # Run Delayed Job worker, to enable Ingest Pipeline jobs that parse uploaded files`
+
+Here's what starting up a regular development session in native local SCP looks like:
+
+https://user-images.githubusercontent.com/1334561/223493169-13702c5a-c91d-4389-9b52-5925a43822c9.mov
+
 ## KNOWN ISSUES
 1. Developing outside the docker container inherently runs more risk that your code will not work in the docker environment in staging/production.  Be careful!  If your changes are non-trivial, confirm your changes work in the containerized deploy before committing (especially changes involving package.json and/or the Gemfile)
 2. You may experience difficulty toggling back and forth between containerized and non-containerized deployment, as node-sass bindings are OS-specific.  If you see an error like 'No matching version of node-sass found'
