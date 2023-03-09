@@ -89,7 +89,7 @@ after completion.  You will need to run `./ruby_local_setup.rb` again to repopul
 If the content below doesn't answer your question, try searching.  Beyond Google and Stack Overflow, searching this repo's issues, commits, and other files can help.  Searching in Broad Institute's Slack instance, especially #scp-implementation can also help -- e.g. enter "<your query> in:#scp-implementation" in the Slack search box.  
 
 ### HELP FROM TEAM
-If the above docs and search techniques don't work, then ask for help in #scp-implementation.  Copy and paste relevant text from your error, and a screenshot image if it's relevant.  Please do include at least the error's text, as images can't be searched and are thus much less likely to be helpful in the future.
+If the above docs and search techniques don't work, then ask for help in [#scp-implementation](https://broadinstitute.slack.com/archives/CBEHTH601).  Copy and paste relevant text from your error, and a screenshot image if it's relevant.  Please do include at least the error's text, as images can't be searched and are thus much less likely to be helpful in the future.
 
 ### AD-HOC UPDATES
 Finally, if you think this doc should be updated, please edit it!  Don't feel hindered.  If you don't have a ticket that would otherwise relate, then note [SCP-5023](https://broadworkbench.atlassian.net/browse/SCP-5023) in the title of your PR to merge your ad-hoc changes.
