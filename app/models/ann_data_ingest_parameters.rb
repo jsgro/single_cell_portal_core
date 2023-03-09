@@ -3,12 +3,12 @@
 # extract SCP files: AnnDataIngestParameters.new(anndata_file: study_file.gs_url)
 # parse extracted cluster file: AnnDataIngestParameters.new(
 #   ingest_anndata: false, extract: nil, name: 'X_tsne', ingest_cluster: true, domain_ranges: "{}",
-#   cluster_file: 'gs://bucket-id/_scp_internal/anndata_ingest/<study_file_ID_of_h5ad_file>/h5ad_frag.cluster.X_tsne.tsv', 
+#   cluster_file: 'gs://bucket-id/_scp_internal/anndata_ingest/<study_file_ID_of_h5ad_file>/h5ad_frag.cluster.X_tsne.tsv',
 #   obsm_keys: nil, cell_metadata_file: nil, ingest_cell_metadata: false, study_accession: nil
 # )
 # parse extracted metadata file: AnnDataIngestParameters.new(
 #   ingest_anndata: false, extract: nil, name: 'X_tsne', ingest_cluster: false, domain_ranges: nil
-#   cluster_file: nil, obsm_keys: nil, cell_metadata_file: 'gs://bucket-id/_scp_internal/anndata_ingest/<study_file_ID_of_h5ad_file>/h5ad_frag.metadata.tsv', 
+#   cluster_file: nil, obsm_keys: nil, cell_metadata_file: 'gs://bucket-id/_scp_internal/anndata_ingest/<study_file_ID_of_h5ad_file>/h5ad_frag.metadata.tsv',
 #   ingest_cell_metadata: true, study_accession: SCP111
 # )
 
@@ -78,13 +78,15 @@ class AnnDataIngestParameters
     else
       url += ".tsv"
     end
-    
+
     return url
 
   end
 
   # convert a string value into an array of strings, like obsm_keys
   def attribute_as_array(attr)
+    return [] if attributes[attr].blank?
+
     stripped_value = attributes[attr].gsub(ARRAY_MATCHER, '')
     stripped_value.split(',').map { |substr| substr.gsub(QUOTE_MATCHER, '').strip }
   end

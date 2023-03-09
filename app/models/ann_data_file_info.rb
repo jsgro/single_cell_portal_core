@@ -20,7 +20,7 @@ class AnnDataFileInfo
   # examples:
   # { data_type: 'cluster', obsm_key_name: 'X_umap', name: 'UMAP', description: 'UMAP clustering' }
   # { data_type: 'expression', description: 'log(TMP) expression' }
-  field :data_fragments, type: Array
+  field :data_fragments, type: Array, default: []
 
   # collect data frame key_names for clustering data inside AnnData flle
   def obsm_key_names
@@ -32,20 +32,26 @@ class AnnDataFileInfo
     merged_data = form_data.with_indifferent_access
     # merge in existing information about AnnData file
     anndata_info_attributes = attributes.with_indifferent_access
-    anndata_info_attributes[:reference_file] = !!merged_data[:reference_anndata_file]
+    # check value of :reference_anndata_file which is passed as a string
+    anndata_info_attributes[:reference_file] = merged_data[:reference_anndata_file] == 'true'
+    merged_data.delete(:reference_anndata_file)
     fragments = []
     DATA_TYPE_FORM_KEYS.each do |key, form_segment_name|
       fragment_form = merged_data[form_segment_name]
-      next if fragment_form.blank?
+      next if fragment_form.blank? || fragment_form.empty?
 
       case key
-      when 'metadata'
+      when :metadata
         merged_data[:use_metadata_convention] = fragment_form[:use_metadata_convention]
-      when 'cluster'
-        fragments << extract_form_fragment(fragment_form, key, :name, :description, :obsm_key_name)
-      when 'expression'
+      when :cluster
+        fragments << extract_form_fragment(
+          fragment_form, key,
+          :name, :description, :obsm_key_name, :x_axis_label, :y_axis_label, :x_axis_min, :x_axis_max,
+          :y_axis_min, :y_axis_max, :z_axis_min, :z_axis_max
+        )
+      when :expression
         merged_data[:taxon_id] = fragment_form[:taxon_id]
-        fragments << extract_form_fragment(fragment_form, key, :description)
+        fragments << extract_form_fragment(fragment_form, key, :description, :y_axis_label)
       end
       # remove from form data once processed to allow normal save of nested form data
       merged_data.delete(form_segment_name)
@@ -55,9 +61,10 @@ class AnnDataFileInfo
   end
 
   # extract out a single fragment to append to the entire form later under :data_fragments
-  # stores information about individual data types, such as names/descriptions
+  # stores information about individual data types, such as names/descriptions or axis info
   def extract_form_fragment(segment, fragment_type, *keys)
-    fragment = Hash[keys.zip(keys.map { |k| segment[k] })]
+    safe_segment = segment.with_indifferent_access
+    fragment = Hash[keys.zip(keys.map { |k| safe_segment[k] })]
     fragment[:data_type] = fragment_type
     fragment
   end
@@ -65,7 +72,7 @@ class AnnDataFileInfo
   # merge in form fragments and finalize data for saving
   def merge_form_fragments(form_data, fragments)
     fragments.each do |fragment|
-      existing_frag = find_matching_fragment(fragment)
+      existing_frag = find_existing_fragment(fragment)
       idx = existing_frag ? data_fragments.index(existing_frag) : data_fragments.size
       form_data[:data_fragments].insert(idx, fragment)
     end
@@ -74,11 +81,22 @@ class AnnDataFileInfo
 
   # find an existing data_fragment based on data_type/names
   # allows updating items in place if names/descriptions change
-  def find_matching_fragment(fragment)
+  def find_existing_fragment(fragment)
     data_fragments.detect do |frag|
       frag[:data_type] == fragment[:data_type] &&
         frag[:name] == fragment[:name] &&
         frag[:obsm_key_name] == fragment[:obsm_key_name]
     end
+  end
+
+  # mirror of study_file.get_cluster_domain_ranges for data_fragment
+  def get_cluster_domain_ranges(cluster_name)
+    fragment = data_fragments.detect { |frag| frag[:name] == cluster_name && frag[:data_type] == :cluster }
+    axes = %i[x_axis_min x_axis_max y_axis_min y_axis_max z_axis_min z_axis_max]
+    domain_ranges = {}
+    axes.each do |axis|
+      domain_ranges[axis] = fragment[axis].to_f if fragment[axis]
+    end
+    domain_ranges
   end
 end
