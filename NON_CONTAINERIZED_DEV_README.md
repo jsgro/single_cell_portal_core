@@ -84,6 +84,7 @@ after completion.  You will need to run `./ruby_local_setup.rb` again to repopul
 2. If, after adding your certificate as a trusted certificate, `localhost:3000` still claims that the certificate is not trusted, then ensure you followed the SETUP steps that mention certificates.
 3. If you need to download Xcode for your rbenv install be aware that it can take a very long time (multiple hours) and if you are a Broad employee it is recommended you download through `selfservice` from BITS.
 4. If when trying to run `bundle install` you get an error like `An error occurred while installing bson_ext (1.5.1), and Bundler cannot continue...`, see steps above that mention bson_ext.
+5. If you can't sign in to your local SCP, then look for "SSL_CTX_load_verify_file" in `development.log`.  E.g., run `grep -B 3 -A 2 SSL_CTX_load_verify_file log/development.log`.  If you see that error in your logs, see steps above that mention OpenSSL.
 
 ### SEARCH
 If the content below doesn't answer your question, try searching.  Beyond Google and Stack Overflow, searching this repo's issues, commits, and other files can help.  Searching in Broad Institute's Slack instance, especially #scp-implementation can also help -- e.g. enter "<your query> in:#scp-implementation" in the Slack search box.  
