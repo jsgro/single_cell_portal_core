@@ -88,7 +88,7 @@ class AnnDataFileInfo
     return fragments.first if fragments.size == 1
 
     fragments.each do |fragment|
-      if { **attrs }.map { |k, v| fragment[k] == v }.uniq == [true]
+      unless { **attrs }.map { |k, v| fragment[k] == v }.include?(false)
         return fragment
       end
     end
