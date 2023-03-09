@@ -75,14 +75,22 @@ NOTE: If you ever use the `bin/run_tests.sh` script locally, this will write out
 after completion.  You will need to run `./ruby_local_setup.rb` again to repopulate them.
 
 ## KNOWN ISSUES
-1. Developing outside the docker container inherently runs more risk that your code will not work in the docker environment in staging/production.  BE CAREFUL.  If your changes are non-trivial, confirm your changes work in the containerized deploy before committing (ESPECIALLY changes involving package.json and/or the Gemfile)
+1. Developing outside the docker container inherently runs more risk that your code will not work in the docker environment in staging/production.  Be careful!  If your changes are non-trivial, confirm your changes work in the containerized deploy before committing (especially changes involving package.json and/or the Gemfile)
 2. You may experience difficulty toggling back and forth between containerized and non-containerized deployment, as node-sass bindings are OS-specific.  If you see an error like 'No matching version of node-sass found'
    * if this error occurs when trying to deploy in the container, fix it by deleting the `node-modules/node-sass` folder, and then rerunning the load_env_secrets process
    * if the error is when you're trying to run locally, fix it by running `npm rebuild node-sass`
 
-## TROUBLESHOOTING
-If the content below doesn't answer your question, try searching.  Beyond Google and Stack Overflow, searching this repo's issues, commits, and other files can help.  Searching in Broad Institute's Slack instance, especially #scp-implementation can also help -- e.g. enter "<your query> in:#scp-implementation" in the Slack search box.
+## TROUBLESHOOTING  
 1. If the version you specified for Ruby is not the same as the version returned from running `ruby -v`, run `which ruby` to find out what path to Ruby is being used. The path should be something like: `<user>/.rbenv/shims/ruby`. If it is not, try adding `export PATH="$HOME/.rbenv/shims:$PATH"` to your `~/.bash_profile` to point it at the correct path. 
 2. If, after adding your certificate as a trusted certificate, `localhost:3000` still claims that the certificate is not trusted, then ensure you followed the SETUP steps that mention certificates.
 3. If you need to download Xcode for your rbenv install be aware that it can take a very long time (multiple hours) and if you are a Broad employee it is recommended you download through `selfservice` from BITS.
 4. If when trying to run `bundle install` you get an error like `An error occurred while installing bson_ext (1.5.1), and Bundler cannot continue...`, see steps above that mention bson_ext.
+
+### SEARCH
+If the content below doesn't answer your question, try searching.  Beyond Google and Stack Overflow, searching this repo's issues, commits, and other files can help.  Searching in Broad Institute's Slack instance, especially #scp-implementation can also help -- e.g. enter "<your query> in:#scp-implementation" in the Slack search box.  
+
+### HELP FROM TEAM
+If the above docs and search techniques don't work, then ask for help in #scp-implementation.  Copy and paste relevant text from your error, and a screenshot image if it's relevant.  Please do include at least the error's text, as images can't be searched and are thus much less likely to be helpful in the future.
+
+### AD-HOC UPDATES
+Finally, if you think this doc should be updated, please edit it!  Don't feel hindered.  If you don't have a ticket that would otherwise relate, then note [SCP-5023](https://broadworkbench.atlassian.net/browse/SCP-5023) in the title of your PR to merge your ad-hoc changes.
