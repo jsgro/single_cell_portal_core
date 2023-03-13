@@ -64,7 +64,7 @@ class AnnDataFileInfo
   # stores information about individual data types, such as names/descriptions or axis info
   def extract_form_fragment(segment, fragment_type, *keys)
     safe_segment = segment.with_indifferent_access
-    fragment = _hash_from_keys(safe_segment, *keys)
+    fragment = hash_from_keys(safe_segment, *keys)
     fragment[:data_type] = fragment_type
     fragment
   end
@@ -73,7 +73,7 @@ class AnnDataFileInfo
   def merge_form_fragments(form_data, fragments)
     fragments.each do |fragment|
       keys = %i[data_type name obsm_key_name]
-      matcher = _hash_from_keys(fragment, *keys)
+      matcher = hash_from_keys(fragment, *keys)
       existing_frag = find_fragment(**matcher)
       idx = existing_frag ? data_fragments.index(existing_frag) : data_fragments.size
       form_data[:data_fragments].insert(idx, fragment)
@@ -92,14 +92,14 @@ class AnnDataFileInfo
   def get_cluster_domain_ranges(name)
     fragment = find_fragment(data_type: :cluster, name:)
     axes = %i[x_axis_min x_axis_max y_axis_min y_axis_max z_axis_min z_axis_max]
-    _hash_from_keys(fragment, *axes, transform: :to_f)
+    hash_from_keys(fragment, *axes, transform: :to_f)
   end
 
   private
 
   # select out keys from source hash and return new one, rejecting blank values
   # will apply transform method if specified, otherwise returns value in place (Object#presence)
-  def _hash_from_keys(source_hash, *keys, transform: :presence)
+  def hash_from_keys(source_hash, *keys, transform: :presence)
     values = keys.map do |key|
       source_hash[key].send(transform) if source_hash[key].present? # skip transform on nil entries
     end
