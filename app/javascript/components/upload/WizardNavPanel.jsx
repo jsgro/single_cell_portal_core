@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faChevronDown, faChevronUp, faCheck, faQuestionCircle, faLink} from '@fortawesome/free-solid-svg-icons'
+import { faChevronDown, faChevronUp, faCheck, faQuestionCircle, faLink } from '@fortawesome/free-solid-svg-icons'
 
 import StepTabHeader from './StepTabHeader'
 import { withErrorBoundary } from '~/lib/ErrorBoundary'
@@ -74,10 +74,10 @@ function RawWizardNavPanel({
           setCurrentStep={setCurrentStep}/>) }
 
     </ul>
-    {/* isAnnDataExperience && */}
+    {/* TODO EMILY isAnnDataExperience && */}
     { <span className='margin-left-30'><a href="https://forms.gle/dRUVSh7WAz9Dh6Ag8" target="_blank" title="Take a brief survey on AnnData data upload">
-      Data upload feedback <FontAwesomeIcon icon={faLink}/> 
-      </a> </span>}
+      experience with data upload <FontAwesomeIcon icon={faLink}/>
+    </a> </span>}
   </div>
 }
 
@@ -106,6 +106,31 @@ function nonVizHelpContent() {
   </Popover>
 }
 
+/** gets the popup message to describe .obsm keys */
+function annDataUploadInfoContent() {
+  return <Popover id="anndata-upload-info-popover" className="tooltip-wide">
+    <div>
+      AnnData upload requires you to fill out the necessary information in the tabs for Expression Matrices and Clusterings.
+      You will then upload the single AnnData file in the AnnData tab. 
+    </div>
+  </Popover>
+}
+
+/** create the tooltip and message for the AnnData section */
+function AnnDataHelpMessage() {
+  const annDataInfoToolTip = <span>
+    <OverlayTrigger
+      trigger={['hover', 'focus']}
+      rootClose placement="right"
+      overlay={annDataUploadInfoContent()}>
+      <span>  <FontAwesomeIcon icon={faQuestionCircle}/></span>
+    </OverlayTrigger>
+  </span>
+
+  return <span >
+    {annDataInfoToolTip}
+  </span>
+}
 
 /** shows current expression and clustering visualization status */
 function VisualizationStatuses({ serverState }) {
@@ -162,7 +187,9 @@ function VisualizationStatuses({ serverState }) {
 /** gets the popup message based on whether there are files parsing */
 function expressionHelpContent(isExpressionParsing) {
   return <Popover id="expression-viz-upload-info" className="tooltip-wide">
-    <div> A processed matrix file, metadata file, and clustering file are required for gene expression visualization </div>
+    <div>
+      A processed matrix file, metadata file, and clustering file are required for gene expression visualization 
+    </div>
     { isExpressionParsing && parsingMessage }
   </Popover>
 }
@@ -189,7 +216,7 @@ function MainStepsDisplay(formState, serverState, currentStep, setCurrentStep, m
           </span>
           <span>
             <a className="action link" role="link">
-            AnnData <sup>BETA</sup><FontAwesomeIcon icon={expansionIcon}/>
+            AnnData <sup>BETA</sup> <AnnDataHelpMessage/> <FontAwesomeIcon icon={expansionIcon}/>
             </a>
           </span>
         </button>
