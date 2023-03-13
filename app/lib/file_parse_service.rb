@@ -104,7 +104,7 @@ class FileParseService
         # will ignore reference AnnData files (includes previously uploaded files)
         if do_anndata_file_ingest && !study_file.is_reference_anndata?
           params_object = AnnDataIngestParameters.new(
-            anndata_file: study_file.gs_url, obsm_keys: study_file.ann_data_file_info.obsm_key_names.to_s
+            anndata_file: study_file.gs_url, obsm_keys: study_file.ann_data_file_info.obsm_key_names
           )
           # TODO extract and parse Processed Exp Data (SCP-4709)
           # TODO extract and parse Raw Exp Data (SCP-4710)

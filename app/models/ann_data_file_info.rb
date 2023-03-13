@@ -62,8 +62,8 @@ class AnnDataFileInfo
 
   # extract out a single fragment to append to the entire form later under :data_fragments
   # stores information about individual data types, such as names/descriptions or axis info
-  def extract_form_fragment(segment, fragment_type, *keys)
-    safe_segment = segment.with_indifferent_access
+  def extract_form_fragment(form_segment, fragment_type, *keys)
+    safe_segment = form_segment.with_indifferent_access
     fragment = hash_from_keys(safe_segment, *keys)
     fragment[:data_type] = fragment_type
     fragment

@@ -30,4 +30,65 @@ class AnnDataFileInfoTest < ActiveSupport::TestCase
     expected_range = { x_axis_min: -10.0, x_axis_max: 10.0, y_axis_min: -15.0, y_axis_max: 15.0 }
     assert_equal expected_range, anndata_info.get_cluster_domain_ranges('UMAP')
   end
+
+  test 'should merge form data' do
+    taxon_id = BSON::ObjectId.new.to_s
+    form_params = {
+      name: 'data.h5ad',
+      description: 'anndata file description',
+      extra_expression_form_info_attributes: {
+        description: 'expression description',
+        taxon_id:,
+        y_axis_label: 'log(TPM) expression'
+      },
+      metadata_form_info_attributes: {
+        use_metadata_convention: true
+      },
+      cluster_form_info_attributes: {
+        name: 'UMAP',
+        description: 'cluster description',
+        obsm_key_name: 'X_umap',
+        x_axis_label: 'x axis',
+        y_axis_label: 'y axis',
+        x_axis_min: '-10',
+        x_axis_max: '10',
+        y_axis_min: '-10',
+        y_axis_max: '10'
+      }
+    }
+    merged_data = AnnDataFileInfo.new.merge_form_data(form_params)
+    assert_equal taxon_id, merged_data[:taxon_id]
+    assert merged_data[:use_metadata_convention]
+    cluster_fragment = merged_data.dig(:ann_data_file_info, :data_fragments).detect { |f| f[:name] == 'UMAP' }
+    assert cluster_fragment.present?
+    assert_equal 'x axis', cluster_fragment[:x_axis_label]
+    assert_equal '10', cluster_fragment[:x_axis_max]
+    assert_equal 'cluster description', cluster_fragment[:description]
+    expr_fragment = merged_data.dig(:ann_data_file_info, :data_fragments).detect { |f| f[:data_type] == :expression }
+    assert_equal 'expression description', expr_fragment[:description]
+    assert_equal 'log(TPM) expression', expr_fragment[:y_axis_label]
+  end
+
+  test 'should extract specified data fragment from form data' do
+    taxon_id = BSON::ObjectId.new.to_s
+    description = 'this is the description'
+    form_segment = { description:, taxon_id:, other_data: 'foo' }
+    fragment = AnnDataFileInfo.new.extract_form_fragment(
+      form_segment, :expression,:description, :taxon_id
+    )
+    assert_equal :expression, fragment[:data_type]
+    assert_equal taxon_id, fragment[:taxon_id]
+    assert_equal description, fragment[:description]
+    assert_nil fragment[:other_data]
+  end
+
+  test 'should return obsm_key_names' do
+    ann_data_info = AnnDataFileInfo.new(
+      data_fragments: [
+        { data_type: :cluster, name: 'UMAP', obsm_key_name: 'X_umap' },
+        { data_type: :cluster, name: 'tSNE', obsm_key_name: 'X_tsne' }
+      ]
+    )
+    assert_equal %w[X_umap X_tsne], ann_data_info.obsm_key_names
+  end
 end

@@ -622,11 +622,12 @@ class IngestJob
       case extract
       when 'cluster'
         params_object.obsm_keys.each do |fragment|
+          Rails.logger.info "launching AnnData #{fragment} cluster extraction for #{study_file.upload_file_name}"
           matcher = { data_type: :cluster, obsm_key_name: fragment }
           cluster_data_fragment = study_file.ann_data_file_info.find_fragment(**matcher)
           name = cluster_data_fragment&.[](:name) || fragment # fallback if we can't find data_fragment
           cluster_gs_url = params_object.fragment_file_gs_url(study.bucket_id, 'cluster', study_file.id, fragment)
-          domain_ranges = study_file.ann_data_file_info.get_cluster_domain_ranges(fragment)
+          domain_ranges = study_file.ann_data_file_info.get_cluster_domain_ranges(name).to_json
           cluster_params = AnnDataIngestParameters.new(
             ingest_cluster: true, name:, cluster_file: cluster_gs_url, domain_ranges:, ingest_anndata: false,
             extract: nil, obsm_keys: nil
@@ -635,6 +636,7 @@ class IngestJob
           job.delay.push_remote_and_launch_ingest
         end
       when 'metadata'
+        Rails.logger.info "launching Anndata metadata extraction for #{study_file.upload_file_name}"
         metadata_gs_url = params_object.fragment_file_gs_url(study.bucket_id, 'metadata', study_file.id)
         metadata_params = AnnDataIngestParameters.new(
           ingest_cell_metadata: true, cell_metadata_file: metadata_gs_url,
