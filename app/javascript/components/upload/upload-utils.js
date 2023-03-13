@@ -130,6 +130,28 @@ export function formatFileForApi(file, chunkStart, chunkEnd) {
   return data
 }
 
+/**
+ * Find files of the matching type from server API response to render into forms
+ * can handle AnnData experience where nested forms are populated from study_file.ann_data_file_info.data_fragments
+ *
+ * @param serverFiles {Array} Array of study files from API
+ * @param fileFilter {Function} Filter for matching study files
+ * @param isAnnDataExperience {Boolean} controls finding nested AnnData data fragments
+ * @param fragmentType {String} type of data fragments to extract if isAnnDataExperience is true
+ */
+export function matchingServerFiles(serverFiles, fileFilter, isAnnDataExperience, fragmentType) {
+  if (isAnnDataExperience) {
+    const annDataFile = serverFiles.find(fileFilter)
+    let fragments = annDataFile?.ann_data_file_info?.data_fragments
+    if (typeof fragments === 'undefined') {
+      fragments = []
+    }
+    return fragments.filter(fragment => fragment?.data_type === fragmentType)
+  } else {
+    return serverFiles.filter(fileFilter)
+  }
+}
+
 /** Does basic validation of the file, including file existence, name, file type, and required fields
  * returns a hash of message keys to validation messages
  * allowedFileExts is an array of string extensions, e.g. ['.txt', '.csv']
@@ -205,7 +227,7 @@ function validateNameUniqueness(file, allFiles, validationMessages) {
     */
 export function addObjectPropertyToForm(obj, propertyName, formData, nested) {
   let propString = `study_file[${propertyName}]`
-  
+
   if (nested) {
     propString = `study_file[${nested}_attributes][${propertyName}]`
   }

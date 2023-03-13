@@ -72,7 +72,7 @@ class AnnDataFileInfo
   # merge in form fragments and finalize data for saving
   def merge_form_fragments(form_data, fragments)
     fragments.each do |fragment|
-      keys = %i[data_type name obsm_key_name]
+      keys = %i[_id data_type]
       matcher = hash_from_keys(fragment, *keys)
       existing_frag = find_fragment(**matcher)
       idx = existing_frag ? data_fragments.index(existing_frag) : data_fragments.size
@@ -103,6 +103,7 @@ class AnnDataFileInfo
     values = keys.map do |key|
       source_hash[key].send(transform) if source_hash[key].present? # skip transform on nil entries
     end
-    Hash[keys.zip(values)].reject { |_, v| v.blank? }
+    # preserve object ID
+    Hash[keys.zip(values)].merge(_id: source_hash[:_id]).reject { |_, v| v.blank? }
   end
 end

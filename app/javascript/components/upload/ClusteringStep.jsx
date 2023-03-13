@@ -2,6 +2,8 @@ import React, { useEffect } from 'react'
 
 import ClusteringFileForm from './ClusteringFileForm'
 import { AddFileButton } from './form-components'
+import { AnnDataFileFilter } from './AnnDataStep'
+import { matchingServerFiles } from './upload-utils'
 
 const DEFAULT_NEW_CLUSTER_FILE = {
   is_spatial: false,
@@ -28,7 +30,9 @@ export function ClusteringUploadForm({
   deleteFile,
   isAnnDataExperience
 }) {
-  const clusterFiles = formState.files.filter(clusterFileFilter)
+  const fileFilter = isAnnDataExperience ? AnnDataFileFilter : clusterFileFilter
+  const fragmentType = isAnnDataExperience ? 'cluster' : null
+  const clusterFiles = matchingServerFiles(formState.files, fileFilter, isAnnDataExperience, fragmentType)
 
   useEffect(() => {
     if (clusterFiles.length === 0) {
@@ -105,7 +109,7 @@ export function ClusteringUploadForm({
         isAnnDataExperience={isAnnDataExperience}
       />
     })}
-    
+
     {!isAnnDataExperience && <AddFileButton addNewFile={addNewFile} newFileTemplate={DEFAULT_NEW_CLUSTER_FILE}/>}
   </div>
 }
