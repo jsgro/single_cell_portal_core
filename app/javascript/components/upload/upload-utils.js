@@ -37,6 +37,7 @@ const PROPERTIES_NOT_TO_SEND = [
 ]
 
 const PROPERTIES_AS_JSON = ['custom_color_updates']
+const DEEPLY_NESTED_PROPS = ['data_fragments']
 
 /** gets an object representing a new, empty study file.  Does not communicate to server */
 export function newStudyFileObj(studyId) {
@@ -232,7 +233,34 @@ export function addObjectPropertyToForm(obj, propertyName, formData, nested) {
   if (nested) {
     propString = `study_file[${nested}_attributes][${propertyName}]`
   }
-  if (Array.isArray(obj[propertyName])) {
+  if (DEEPLY_NESTED_PROPS.includes(propertyName)) {
+    // handle deeply nested properties, such as study_file.ann_data_file_info.data_fragments
+    // which can mimic structure of a StudyFile
+    // TODO: This entire method is a dumpster fire and should be properly refactored to deal with recursion better
+    // In addition, future work to properly model AnnDataFileInfo as form components should help with this
+    obj[propertyName].forEach(fragment => {
+      Object.keys(fragment).forEach(fragmentKey => {
+        let nestedPropstring = `${propString}[][${fragmentKey}]`
+        if (Array.isArray(fragment[fragmentKey])) {
+          if (fragment[fragmentKey].length == 0) {
+            // if the array is empty, send an empty string as an indication that it is cleared
+            formData.append(`${nestedPropstring}[]`, '')
+          } else {
+            // add each array entry as a separate form data entry
+            fragment[fragmentKey].forEach(val => {
+              formData.append(`${nestedPropstring}[]`, val)
+            })
+          }
+        } else if (fragment[fragmentKey] && typeof fragment[fragmentKey] === 'object') {
+          Object.keys(fragment[fragmentKey]).forEach(subFragKey => {
+            formData.append(`${nestedPropstring}[${subFragKey}]`, fragment[fragmentKey][subFragKey])
+          })
+        } else {
+          formData.append(nestedPropstring, fragment[fragmentKey])
+        }
+      })
+    })
+  } else if (Array.isArray(obj[propertyName])) {
     if (obj[propertyName].length == 0) {
       // if the array is empty, send an empty string as an indication that it is cleared
       formData.append(`${propString}[]`, '')

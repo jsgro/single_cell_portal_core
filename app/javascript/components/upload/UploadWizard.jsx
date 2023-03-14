@@ -214,8 +214,12 @@ export function RawUploadWizard({ studyAccession, name }) {
   function updateFile(fileId, updates) {
     setFormState(prevFormState => {
       const newFormState = _cloneDeep(prevFormState)
-      const fileChanged = newFormState.files.find(f => f._id === fileId)
-      if (!fileChanged) { // we're updating a stale/no-longer existent file -- discard it
+      let fileChanged = newFormState.files.find(f => f._id === fileId)
+      if (!fileChanged && isAnnDataExperience) {
+        let annDataFile = newFormState.files.find(f => f.file_type === 'AnnData')
+        let fragments = annDataFile.ann_data_file_info?.data_fragments || []
+        fileChanged = fragments.find(f => f._id === fileId)
+      } if (!fileChanged) { // we're updating a stale/no-longer existent file -- discard it
         return prevFormState
       }
       ['heatmap_file_info', 'expression_file_info'].forEach(nestedProp => {

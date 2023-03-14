@@ -10,6 +10,15 @@ class AnnDataFileInfo
     cluster: 'cluster_form_info_attributes'
   }.freeze
 
+  # permitted list of data_fragment strong parameters
+  # allows nesting of StudyFile-like objects inside data_fragments
+  DATA_FRAGMENT_PARAMS = [
+    :_id, :data_type, :name, :description, :obsm_key_name, :x_axis_label, :y_axis_label, :x_axis_min, :x_axis_max,
+    :y_axis_min, :y_axis_max, :z_axis_min, :z_axis_max, :taxon_id,
+    { spatial_cluster_associations: [] },
+    { expression_file_info: ExpressionFileInfo.attribute_names }
+  ].freeze
+
   field :has_clusters, type: Boolean, default: false
   field :has_metadata, type: Boolean, default: false
   field :has_raw_counts, type: Boolean, default: false
@@ -30,8 +39,8 @@ class AnnDataFileInfo
   # handle AnnData upload form data and merge into appropriate fields so that we can make a single update! call
   def merge_form_data(form_data)
     merged_data = form_data.with_indifferent_access
-    # merge in existing information about AnnData file
-    anndata_info_attributes = attributes.with_indifferent_access
+    # merge in existing information about AnnData file, using form data first if present
+    anndata_info_attributes = form_data[:ann_data_file_info_attributes] || attributes.with_indifferent_access
     # check value of :reference_anndata_file which is passed as a string
     anndata_info_attributes[:reference_file] = merged_data[:reference_anndata_file] == 'true'
     merged_data.delete(:reference_anndata_file)
@@ -46,7 +55,7 @@ class AnnDataFileInfo
       when :cluster
         fragments << extract_form_fragment(
           fragment_form, key,
-          :name, :description, :obsm_key_name, :x_axis_label, :y_axis_label, :x_axis_min, :x_axis_max,
+          :_id, :name, :description, :obsm_key_name, :x_axis_label, :y_axis_label, :x_axis_min, :x_axis_max,
           :y_axis_min, :y_axis_max, :z_axis_min, :z_axis_max, :spatial_cluster_associations
         )
       when :expression
@@ -54,13 +63,13 @@ class AnnDataFileInfo
         merged_exp_fragment = fragment_form.merge(expression_file_info: merged_data[:expression_file_info_attributes])
         puts merged_exp_fragment
         fragments << extract_form_fragment(
-          merged_exp_fragment, key, :description, :y_axis_label, :taxon_id, :expression_file_info
+          merged_exp_fragment, key, :_id, :description, :y_axis_label, :taxon_id, :expression_file_info
         )
       end
       # remove from form data once processed to allow normal save of nested form data
       merged_data.delete(form_segment_name)
     end
-    merged_data[:ann_data_file_info] = merge_form_fragments(anndata_info_attributes, fragments)
+    merged_data[:ann_data_file_info_attributes] = merge_form_fragments(anndata_info_attributes, fragments)
     merged_data
   end
 
@@ -108,6 +117,6 @@ class AnnDataFileInfo
       source_hash[key].send(transform) if source_hash[key].present? # skip transform on nil entries
     end
     # preserve object ID
-    Hash[keys.zip(values)].merge(_id: source_hash[:_id]).reject { |_, v| v.blank? }
+    Hash[keys.zip(values)].reject { |_, v| v.blank? }
   end
 end
