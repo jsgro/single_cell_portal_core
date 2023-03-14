@@ -33,12 +33,13 @@ export function ClusteringUploadForm({
   const fileFilter = isAnnDataExperience ? AnnDataFileFilter : clusterFileFilter
   const fragmentType = isAnnDataExperience ? 'cluster' : null
   const clusterFiles = matchingServerFiles(formState.files, fileFilter, isAnnDataExperience, fragmentType)
-
+  console.log('clusterFiles before: ' + JSON.stringify(clusterFiles))
   useEffect(() => {
     if (clusterFiles.length === 0) {
       addNewFile(DEFAULT_NEW_CLUSTER_FILE)
     }
   }, [clusterFiles.length])
+  console.log('clusterFiles after: ' + JSON.stringify(clusterFiles))
 
   return <div>
     {!isAnnDataExperience && <span>

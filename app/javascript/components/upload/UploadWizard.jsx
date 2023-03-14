@@ -153,11 +153,13 @@ export function RawUploadWizard({ studyAccession, name }) {
    * By default, will scroll the window to show the new file
    * */
   function addNewFile(fileProps, scrollToBottom=false) {
+    console.log('fileProps: ' + JSON.stringify(fileProps))
     const newFile = newStudyFileObj(serverState.study._id.$oid)
     Object.assign(newFile, fileProps)
 
     setFormState(prevFormState => {
       const newState = _cloneDeep(prevFormState)
+      console.log('newState: ' + JSON.stringify(newState))
       newState.files.push(newFile)
       return newState
     })
@@ -483,7 +485,7 @@ export function RawUploadWizard({ studyAccession, name }) {
   )
 }
 
-/** Wraps the upload wirzard logic in a router and error handler */
+/** Wraps the upload wizard logic in a router and error handler */
 export default function UploadWizard({ studyAccession, name }) {
   return <ErrorBoundary>
     <UserProvider>
