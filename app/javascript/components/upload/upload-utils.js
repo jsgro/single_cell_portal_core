@@ -131,25 +131,26 @@ export function formatFileForApi(file, chunkStart, chunkEnd) {
 }
 
 /**
- * Find files of the matching type from server API response to render into forms
+ * Find files of the matching type in the current form state that was originally populated from the server
  * can handle AnnData experience where nested forms are populated from study_file.ann_data_file_info.data_fragments
  *
- * @param serverFiles {Array} Array of study files from API
+ * @param formFiles {Array} Array of study files from API
  * @param fileFilter {Function} Filter for matching study files
  * @param isAnnDataExperience {Boolean} controls finding nested AnnData data fragments
  * @param fragmentType {String} type of data fragments to extract if isAnnDataExperience is true
  */
-export function matchingServerFiles(serverFiles, fileFilter, isAnnDataExperience, fragmentType) {
+export function matchingFormFiles(formFiles, fileFilter, isAnnDataExperience, fragmentType) {
+  let files = []
   if (isAnnDataExperience) {
-    const annDataFile = serverFiles.find(fileFilter)
+    const annDataFile = formFiles.find(file => file.file_type == 'AnnData')
     let fragments = annDataFile?.ann_data_file_info?.data_fragments
     if (typeof fragments === 'undefined') {
       fragments = []
     }
-    return fragments.filter(fragment => fragment?.data_type === fragmentType)
-  } else {
-    return serverFiles.filter(fileFilter)
+    files = fragments.filter(fragment => fragment.data_type === fragmentType)
   }
+  // match any files that may have just been added to the forms via the "Add new file" button
+  return [...files, ...formFiles.filter(fileFilter)]
 }
 
 /** Does basic validation of the file, including file existence, name, file type, and required fields

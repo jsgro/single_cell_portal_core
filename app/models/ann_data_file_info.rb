@@ -47,11 +47,15 @@ class AnnDataFileInfo
         fragments << extract_form_fragment(
           fragment_form, key,
           :name, :description, :obsm_key_name, :x_axis_label, :y_axis_label, :x_axis_min, :x_axis_max,
-          :y_axis_min, :y_axis_max, :z_axis_min, :z_axis_max
+          :y_axis_min, :y_axis_max, :z_axis_min, :z_axis_max, :spatial_cluster_associations
         )
       when :expression
         merged_data[:taxon_id] = fragment_form[:taxon_id]
-        fragments << extract_form_fragment(fragment_form, key, :description, :y_axis_label)
+        merged_exp_fragment = fragment_form.merge(expression_file_info: merged_data[:expression_file_info_attributes])
+        puts merged_exp_fragment
+        fragments << extract_form_fragment(
+          merged_exp_fragment, key, :description, :y_axis_label, :taxon_id, :expression_file_info
+        )
       end
       # remove from form data once processed to allow normal save of nested form data
       merged_data.delete(form_segment_name)

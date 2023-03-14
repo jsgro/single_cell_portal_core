@@ -2,8 +2,7 @@ import React, { useEffect } from 'react'
 
 import ClusteringFileForm from './ClusteringFileForm'
 import { AddFileButton } from './form-components'
-import { AnnDataFileFilter } from './AnnDataStep'
-import { matchingServerFiles } from './upload-utils'
+import { matchingFormFiles } from './upload-utils'
 
 const DEFAULT_NEW_CLUSTER_FILE = {
   is_spatial: false,
@@ -30,16 +29,13 @@ export function ClusteringUploadForm({
   deleteFile,
   isAnnDataExperience
 }) {
-  const fileFilter = isAnnDataExperience ? AnnDataFileFilter : clusterFileFilter
   const fragmentType = isAnnDataExperience ? 'cluster' : null
-  const clusterFiles = matchingServerFiles(formState.files, fileFilter, isAnnDataExperience, fragmentType)
-  console.log('clusterFiles before: ' + JSON.stringify(clusterFiles))
+  const clusterFiles = matchingFormFiles(formState.files, clusterFileFilter, isAnnDataExperience, fragmentType)
   useEffect(() => {
     if (clusterFiles.length === 0) {
       addNewFile(DEFAULT_NEW_CLUSTER_FILE)
     }
   }, [clusterFiles.length])
-  console.log('clusterFiles after: ' + JSON.stringify(clusterFiles))
 
   return <div>
     {!isAnnDataExperience && <span>
