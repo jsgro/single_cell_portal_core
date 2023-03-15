@@ -32,8 +32,11 @@ class AnnDataFileInfo
   field :reference_file, type: Boolean, default: true
   # information from form about data contained inside AnnData file, such as names/descriptions
   # examples:
-  # { data_type: 'cluster', obsm_key_name: 'X_umap', name: 'UMAP', description: 'UMAP clustering' }
-  # { data_type: 'expression', description: 'log(TMP) expression' }
+  # {
+  #   _id: '6410b6a9a87b3bbd53fbc351', data_type: :cluster, obsm_key_name: 'X_umap', name: 'UMAP',
+  #   description: 'UMAP clustering'
+  # }
+  # { _id: '6033f531e241391884633748', data_type: :expression, description: 'log(TMP) expression' }
   field :data_fragments, type: Array, default: []
   validate :ids_for_data_fragments
   validate :validate_fragments
