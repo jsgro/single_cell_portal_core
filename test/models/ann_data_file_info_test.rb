@@ -1,12 +1,16 @@
 require 'test_helper'
 
 class AnnDataFileInfoTest < ActiveSupport::TestCase
+  def generate_id
+    BSON::ObjectId.new.to_s
+  end
+
   test 'should find matching fragments' do
     anndata_info = AnnDataFileInfo.new(
       data_fragments: [
-        { data_type: :cluster, name: 'UMAP', obsm_key_name: 'X_umap' },
-        { data_type: :cluster, name: 'tSNE', obsm_key_name: 'X_tsne' },
-        { data_type: :expression, y_axis_title: 'log(TPM) expression' }
+        { _id: generate_id, data_type: :cluster, name: 'UMAP', obsm_key_name: 'X_umap' },
+        { _id: generate_id, data_type: :cluster, name: 'tSNE', obsm_key_name: 'X_tsne' },
+        { _id: generate_id, data_type: :expression, y_axis_title: 'log(TPM) expression' }
       ]
     )
     anndata_info.data_fragments.each do |fragment|
@@ -22,7 +26,7 @@ class AnnDataFileInfoTest < ActiveSupport::TestCase
     anndata_info = AnnDataFileInfo.new(
       data_fragments: [
         {
-          data_type: :cluster, name: 'UMAP', obsm_key_name: 'X_umap',
+          _id: generate_id, data_type: :cluster, name: 'UMAP', obsm_key_name: 'X_umap',
           x_axis_min: -10, x_axis_max: 10, y_axis_min: -15, y_axis_max: 15
         }
       ]
@@ -37,6 +41,7 @@ class AnnDataFileInfoTest < ActiveSupport::TestCase
       name: 'data.h5ad',
       description: 'anndata file description',
       extra_expression_form_info_attributes: {
+        _id: generate_id,
         description: 'expression description',
         taxon_id:,
         y_axis_label: 'log(TPM) expression'
@@ -45,6 +50,7 @@ class AnnDataFileInfoTest < ActiveSupport::TestCase
         use_metadata_convention: true
       },
       cluster_form_info_attributes: {
+        _id: generate_id,
         name: 'UMAP',
         description: 'cluster description',
         obsm_key_name: 'X_umap',
@@ -59,12 +65,13 @@ class AnnDataFileInfoTest < ActiveSupport::TestCase
     merged_data = AnnDataFileInfo.new.merge_form_data(form_params)
     assert_equal taxon_id, merged_data[:taxon_id]
     assert merged_data[:use_metadata_convention]
-    cluster_fragment = merged_data.dig(:ann_data_file_info, :data_fragments).detect { |f| f[:name] == 'UMAP' }
+    root_form_key = :ann_data_file_info_attributes
+    cluster_fragment = merged_data.dig(root_form_key, :data_fragments).detect { |f| f[:name] == 'UMAP' }
     assert cluster_fragment.present?
     assert_equal 'x axis', cluster_fragment[:x_axis_label]
     assert_equal '10', cluster_fragment[:x_axis_max]
     assert_equal 'cluster description', cluster_fragment[:description]
-    expr_fragment = merged_data.dig(:ann_data_file_info, :data_fragments).detect { |f| f[:data_type] == :expression }
+    expr_fragment = merged_data.dig(root_form_key, :data_fragments).detect { |f| f[:data_type] == :expression }
     assert_equal 'expression description', expr_fragment[:description]
     assert_equal 'log(TPM) expression', expr_fragment[:y_axis_label]
   end
@@ -85,10 +92,38 @@ class AnnDataFileInfoTest < ActiveSupport::TestCase
   test 'should return obsm_key_names' do
     ann_data_info = AnnDataFileInfo.new(
       data_fragments: [
-        { data_type: :cluster, name: 'UMAP', obsm_key_name: 'X_umap' },
-        { data_type: :cluster, name: 'tSNE', obsm_key_name: 'X_tsne' }
+        { _id: generate_id, data_type: :cluster, name: 'UMAP', obsm_key_name: 'X_umap' },
+        { _id: generate_id, data_type: :cluster, name: 'tSNE', obsm_key_name: 'X_tsne' }
       ]
     )
     assert_equal %w[X_umap X_tsne], ann_data_info.obsm_key_names
+  end
+
+  test 'should validate data fragments' do
+    ann_data_info = AnnDataFileInfo.new(
+      data_fragments: [
+        { data_type: :cluster, name: 'UMAP', obsm_key_name: 'X_umap' }
+      ]
+    )
+    assert_not ann_data_info.valid?
+    error_msg = ann_data_info.errors.messages_for(:data_fragments).first
+    assert_equal 'do not all have IDs assigned', error_msg
+    ann_data_info.data_fragments = [
+      { _id: generate_id, data_type: :cluster, name: 'UMAP', obsm_key_name: 'X_umap' },
+      { _id: generate_id, data_type: :cluster, name: 'UMAP', obsm_key_name: 'X_umap' }
+    ]
+    assert_not ann_data_info.valid?
+    error_messages = ann_data_info.errors.messages_for(:data_fragments)
+    puts error_messages
+    assert_equal 2, error_messages.count
+    error_messages.each do |message|
+      assert message.include?('are not unique')
+    end
+    ann_data_info.data_fragments = [
+      { _id: generate_id, data_type: :cluster, name: 'UMAP', obsm_key_name: 'X_umap' },
+      { _id: generate_id, data_type: :cluster, name: 'tSNE', obsm_key_name: 'X_tsne' },
+      { _id: generate_id, data_type: :expression, y_axis_title: 'log(TPM) expression' }
+    ]
+    assert ann_data_info.valid?
   end
 end
