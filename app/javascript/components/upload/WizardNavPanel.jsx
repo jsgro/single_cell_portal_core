@@ -26,7 +26,10 @@ function RawWizardNavPanel({
 
 
   return <div className="wizard-side-panel">
-    {MainStepsDisplay(formState, serverState, currentStep, setCurrentStep, mainSteps, isAnnDataExperience, annDataMainExpanded, setAnnDataMainExpanded, expansionIcon3)}
+    {mainStepsDisplay(
+      formState, serverState, currentStep, setCurrentStep, mainSteps, isAnnDataExperience,
+      annDataMainExpanded, setAnnDataMainExpanded, expansionIcon3
+    )}
     <ul className="upload-wizard-steps" role="tablist" data-analytics-name="upload-wizard-secondary-steps">
       <li className="other-header" role="tab" >
         <button className="list-link" onClick={() => setOthersExpanded(!othersExpanded)} >
@@ -75,9 +78,11 @@ function RawWizardNavPanel({
 
     </ul>
     {/* TODO EMILY isAnnDataExperience && */}
-    { <span className='margin-left-30'><a href="https://forms.gle/dRUVSh7WAz9Dh6Ag8" target="_blank" title="Take a brief survey on AnnData data upload">
-      experience with data upload <FontAwesomeIcon icon={faLink}/>
-    </a> </span>}
+    { <span className='margin-left-30'>
+      <a href="https://forms.gle/dRUVSh7WAz9Dh6Ag8" target="_blank" title="Take a brief survey on AnnData data upload">
+        Share your experience <FontAwesomeIcon icon={faLink}/>
+      </a>
+    </span>}
   </div>
 }
 
@@ -205,7 +210,7 @@ function clusteringHelpContent(isClusteringParsing) {
 /**
  * Return the appropriate display of the main steps based on classic or AnnData upload experience
  */
-function MainStepsDisplay(formState, serverState, currentStep, setCurrentStep, mainSteps,
+function mainStepsDisplay(formState, serverState, currentStep, setCurrentStep, mainSteps,
   isAnnDataExperience, annDataMainExpanded, setAnnDataMainExpanded, expansionIcon) {
   if (isAnnDataExperience) {
     return <ul className="upload-wizard-steps" role="tablist" data-analytics-name="upload-wizard-anndata-main-steps">

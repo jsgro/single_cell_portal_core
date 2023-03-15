@@ -469,6 +469,15 @@ export function RawUploadWizard({ studyAccession, name }) {
     }
   }
 
+  /** return a button for switching to the other experience (AnnData or Classic) */
+  function getOtherChoiceButton() {
+    const otherOption = isAnnDataExperience ? 'classic upload' : 'AnnData upload'
+    return <button
+      className="btn terra-primary-btn margin-left-30"
+      onClick={() => setIsAnnDataExperience(!isAnnDataExperience)}> Switch to {otherOption}
+    </button>
+  }
+
   return (
     <StudyContext.Provider value={studyObj}>
       {/* If the formState hasn't loaded show a spinner */}
@@ -481,6 +490,8 @@ export function RawUploadWizard({ studyAccession, name }) {
             <div className="col-md-12 wizard-top-bar no-wrap-ellipsis">
               <a href={`/single_cell/study/${studyAccession}`}>View study</a> / &nbsp;
               <span title="{serverState?.study?.name}">{serverState?.study?.name}</span>
+              {/* only allow switching modes if the user hasn't uploaded a file yet */}
+              {!serverState?.files.length && choiceMade && serverState?.feature_flags?.ingest_anndata_file && getOtherChoiceButton()}
             </div>
             {getWizardContent(formState, serverState)}
           </div>
