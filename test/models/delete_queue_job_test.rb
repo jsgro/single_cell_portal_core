@@ -199,7 +199,7 @@ class DeleteQueueJobTest < ActiveSupport::TestCase
     assert_equal 'x_tsne', study.default_cluster.name
     mock = Minitest::Mock.new
     mock.expect(:get_workspace_files, [], [String, Hash])
-    ApplicationController.stub:firecloud_client, mock do
+    ApplicationController.stub :firecloud_client, mock do
       DeleteQueueJob.new(study_file).perform
       study.reload
       assert_equal 0, study.cluster_groups.size
