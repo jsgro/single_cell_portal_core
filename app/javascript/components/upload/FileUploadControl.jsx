@@ -66,14 +66,14 @@ export default function FileUploadControl({
     //
     // As of Chrome 111 on Mac, compound extensions with gz not only don't resolve, they
     // instantly crash the user's web browser.
-    const allowedExtsWithoutCompoundGz =
+    const allowedExtsWithoutCompounds =
       allowedFileExts.filter(ext => {
-        return (ext.match(/\./g) || []).length === 1 // Omits compound file extensions
+        return (ext.match(/\./g) || []).length === 1 // Files with 1 extension
       })
 
     // Allow any file that ends in .gz.  Still allows compounds extensions for upload, but
     // merely checks against a less precise list of allowed extensions.
-    inputAcceptExts = [...allowedExtsWithoutCompoundGz, '.gz']
+    inputAcceptExts = [...allowedExtsWithoutCompounds, '.gz']
   }
 
   if (file.serverFile?.parse_status === 'failed') {
