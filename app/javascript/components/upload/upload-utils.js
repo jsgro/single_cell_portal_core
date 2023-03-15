@@ -229,62 +229,67 @@ function validateNameUniqueness(file, allFiles, validationMessages) {
     */
 export function addObjectPropertyToForm(obj, propertyName, formData, nested) {
   let propString = `study_file[${propertyName}]`
-
   if (nested) {
     propString = `study_file[${nested}_attributes][${propertyName}]`
   }
+  if (propertyName === '_id') {
+    appendFormData(formData, propertyName, obj[propertyName]['$oid'])
+  }
   if (DEEPLY_NESTED_PROPS.includes(propertyName)) {
-    // handle deeply nested properties, such as study_file.ann_data_file_info.data_fragments
-    // which can mimic structure of a StudyFile
-    // TODO: This entire method is a dumpster fire and should be properly refactored to deal with recursion better
-    // In addition, future work to properly model AnnDataFileInfo as form components should help with this
     obj[propertyName].forEach(fragment => {
       Object.keys(fragment).forEach(fragmentKey => {
-        let nestedPropstring = `${propString}[][${fragmentKey}]`
-        if (Array.isArray(fragment[fragmentKey])) {
-          if (fragment[fragmentKey].length == 0) {
-            // if the array is empty, send an empty string as an indication that it is cleared
-            formData.append(`${nestedPropstring}[]`, '')
-          } else {
-            // add each array entry as a separate form data entry
-            fragment[fragmentKey].forEach(val => {
-              formData.append(`${nestedPropstring}[]`, val)
-            })
-          }
-        } else if (fragment[fragmentKey] && typeof fragment[fragmentKey] === 'object') {
-          Object.keys(fragment[fragmentKey]).forEach(subFragKey => {
-            formData.append(`${nestedPropstring}[${subFragKey}]`, fragment[fragmentKey][subFragKey])
-          })
-        } else {
-          formData.append(nestedPropstring, fragment[fragmentKey])
-        }
+        let nestedPropString = `${propString}[][${fragmentKey}]`
+        appendFormData(formData, nestedPropString, fragment[fragmentKey])
       })
     })
-  } else if (Array.isArray(obj[propertyName])) {
-    if (obj[propertyName].length == 0) {
+  } else if (obj[propertyName] && typeof obj[propertyName] === 'object' && !Array.isArray(obj[propertyName])) {
+    // handle nesting for _attributes fields, except for nested id hashes on embedded documents
+    Object.keys(obj[propertyName]).forEach(subKey => {
+      if (subKey === '_id') {
+        let updatedPropString = `study_file[${propertyName}_attributes][${subKey}]`
+        appendFormData(formData, updatedPropString, obj[propertyName][subKey]['$oid'])
+      } else {
+        addObjectPropertyToForm(obj[propertyName], subKey, formData, propertyName)
+      }
+    })
+  } else {
+    appendFormData(formData, propString, obj[propertyName])
+  }
+}
+
+/**
+ * Helper to append element to form data for API submission
+ * handles recursion so addObjectPropertyToForm() is simpler
+ *
+ * @param formData (FormData) form data for submission
+ * @param formKey (String) location to insert data, formatted like 'study_file[property][nestedProperty]'
+ * @param formElement (Object, String) value(s) to insert into formData
+ */
+function appendFormData(formData, formKey, formElement) {
+  console.log(`calling appendFormData with ${formKey}: ${JSON.stringify(formElement)}`)
+  if (Array.isArray(formElement)) {
+    if (formElement.length === 0) {
       // if the array is empty, send an empty string as an indication that it is cleared
-      formData.append(`${propString}[]`, '')
+      formData.append(`${formKey}[]`, '')
     } else {
       // add each array entry as a separate form data entry
-      obj[propertyName].forEach(val => {
-        formData.append(`${propString}[]`, val)
+      formElement.forEach(val => {
+        formData.append(`${formKey}[]`, val)
       })
     }
-  } else if (obj[propertyName] && typeof obj[propertyName] === 'object') {
-    if (PROPERTIES_AS_JSON.includes(propertyName)) {
+  } else if (formElement && typeof formElement === 'object') {
+    if (PROPERTIES_AS_JSON.includes(formKey)) {
       // serialize the object as json
-      formData.append(propString, JSON.stringify(obj[propertyName]))
+      formData.append(formKey, JSON.stringify(formElement))
     } else {
-      // iterate over the keys and add each as a nested form property
-      Object.keys(obj[propertyName]).forEach(subKey => {
-        addObjectPropertyToForm(obj[propertyName], subKey, formData, propertyName)
+      Object.keys(formElement).forEach(key => {
+        let newKey = `${formKey}[${key}]`
+        appendFormData(formData, newKey, formElement[key])
       })
     }
   } else {
-    // don't set null properties -- those are ones that haven't changed
-    // and having them be sent as 'null' or '' can throw off validations
-    if (obj[propertyName] != null && typeof obj[propertyName] != 'undefined') {
-      formData.append(propString, obj[propertyName])
+    if (formElement != null && typeof formElement != 'undefined') {
+      formData.append(formKey, formElement)
     }
   }
 }
