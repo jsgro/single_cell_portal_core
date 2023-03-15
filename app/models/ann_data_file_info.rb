@@ -113,7 +113,7 @@ class AnnDataFileInfo
 
   # get all fragments of a specific data type
   def fragments_by_type(data_type)
-    data_fragments.select { |fragment| fragment[:data_type] == data_type }
+    data_fragments.select { |fragment| fragment[:data_type].to_s == data_type.to_s }
   end
 
   # mirror of study_file.get_cluster_domain_ranges for data_fragment
