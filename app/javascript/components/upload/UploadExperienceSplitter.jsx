@@ -19,7 +19,7 @@ function RawUploadExperienceSplitter({
         <div className="splitter-info-outside ">
           <div className='split-title'>
           Choose how to upload expression, conventional metadata, and cluster data
-            { <div className='jo'><a href="https://forms.gle/dRUVSh7WAz9Dh6Ag8" target="_blank" title="Take a brief survey on AnnData data upload">
+            { <div className='font-size-14'><a href="https://forms.gle/dRUVSh7WAz9Dh6Ag8" target="_blank" title="Take a brief survey on AnnData data upload">
               Tell us about your experience with data upload <FontAwesomeIcon icon={faLink}/>
             </a> </div>}
           </div>
