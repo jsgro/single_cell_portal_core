@@ -267,6 +267,3 @@ export const FileTypeExtensions = {
   seurat: seuratExtensions
 }
 
-export function explainAnnDataUploadIsAtEnd() {
-
-}
