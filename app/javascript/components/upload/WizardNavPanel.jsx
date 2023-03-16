@@ -80,7 +80,7 @@ function RawWizardNavPanel({
     {/* TODO EMILY isAnnDataExperience && */}
     { <span className='margin-left-30'>
       <a href="https://forms.gle/dRUVSh7WAz9Dh6Ag8" target="_blank" title="Take a brief survey on AnnData data upload">
-        Provide feedback! <FontAwesomeIcon icon={faLink}/>
+        Provide feedback <FontAwesomeIcon icon={faLink}/>
       </a>
     </span>}
   </div>
