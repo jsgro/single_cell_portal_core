@@ -436,7 +436,7 @@ export function RawUploadWizard({ studyAccession, name }) {
           }} />
         </div>
         <div id="overflow-x-scroll">
-          <div className="flexbox-align-center top-margin left-margin">
+          <div className="flexbox-align-center top-margin margin-left">
             <h4>{currentStep.header}</h4>
             <div className="prev-next-buttons">
               {prevStep && <button
@@ -473,7 +473,7 @@ export function RawUploadWizard({ studyAccession, name }) {
   function getOtherChoiceButton() {
     const otherOption = isAnnDataExperience ? 'classic upload' : 'AnnData upload'
     return <button
-      className="btn terra-secondary-btn margin-left-30"
+      className="btn terra-secondary-btn margin-left-extra"
       onClick={() => setIsAnnDataExperience(!isAnnDataExperience)}> Switch to {otherOption}
     </button>
   }

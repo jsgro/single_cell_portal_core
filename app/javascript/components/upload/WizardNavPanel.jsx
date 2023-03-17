@@ -77,7 +77,7 @@ function RawWizardNavPanel({
           setCurrentStep={setCurrentStep}/>) }
 
     </ul>
-    { isAnnDataExperience && <span className='margin-left-30'>
+    { isAnnDataExperience && <span className='margin-left-extra'>
       <a href="https://forms.gle/dRUVSh7WAz9Dh6Ag8" target="_blank" title="Take a brief survey on AnnData data upload">
         Provide feedback <FontAwesomeIcon icon={faLink}/>
       </a>

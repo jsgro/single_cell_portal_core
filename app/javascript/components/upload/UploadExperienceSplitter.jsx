@@ -9,7 +9,7 @@ function RawUploadExperienceSplitter({
 }) {
   navigate('?tab=fileuploadchoice')
 
-  return <div className="top-margin left-margin ">
+  return <div className="top-margin margin-left">
     <div className="row">
       <div className="col-md-12">
         <h1>
@@ -18,7 +18,7 @@ function RawUploadExperienceSplitter({
         <div className="splitter-info-outside ">
           <div className='split-title'>
           Choose how to upload expression, conventional metadata, and cluster data
-            { <div className='font-size-14'><a href="https://forms.gle/dRUVSh7WAz9Dh6Ag8" target="_blank" title="Take a brief survey on AnnData data upload">
+            { <div className='survey-link-font'><a href="https://forms.gle/dRUVSh7WAz9Dh6Ag8" target="_blank" title="Take a brief survey on AnnData data upload">
               Tell us about your experience with AnnData upload!</a>
             </div>}
           </div>
