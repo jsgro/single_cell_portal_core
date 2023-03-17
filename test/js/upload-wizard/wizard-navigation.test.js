@@ -56,6 +56,19 @@ describe('it allows navigating between steps', () => {
 
   })
 
+  it('allows toggling of modes as appropriate', async () => {
+    await renderWizardWithStudy({ featureFlags: { ingest_anndata_file: true } })
+
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Introducing AnnData file upload to power visualizations')
+
+    fireEvent.click(screen.getByText('AnnData'))
+    expect(screen.getByRole('heading', { level: 4 })).toHaveTextContent('Expression matrices')
+
+    fireEvent.click(screen.getByTestId('switch-upload-mode-button'))
+    expect(screen.getByRole('heading', { level: 4 })).toHaveTextContent('Raw count expression files')
+
+  })
+
   it('prevents access to processed matrices when appropriate', async () => {
     await renderWizardWithStudy({ featureFlags: { raw_counts_required_frontend: true, ingest_anndata_file: false } })
 

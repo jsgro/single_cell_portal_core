@@ -473,6 +473,7 @@ export function RawUploadWizard({ studyAccession, name }) {
   function getOtherChoiceButton() {
     const otherOption = isAnnDataExperience ? 'classic upload' : 'AnnData upload'
     return <button
+      data-testid="switch-upload-mode-button"
       className="btn terra-secondary-btn margin-left-extra"
       onClick={() => setIsAnnDataExperience(!isAnnDataExperience)}> Switch to {otherOption}
     </button>
