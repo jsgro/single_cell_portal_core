@@ -473,7 +473,7 @@ export function RawUploadWizard({ studyAccession, name }) {
   function getOtherChoiceButton() {
     const otherOption = isAnnDataExperience ? 'classic upload' : 'AnnData upload'
     return <button
-      className="btn terra-primary-btn margin-left-30"
+      className="btn terra-secondary-btn margin-left-30"
       onClick={() => setIsAnnDataExperience(!isAnnDataExperience)}> Switch to {otherOption}
     </button>
   }
@@ -481,7 +481,7 @@ export function RawUploadWizard({ studyAccession, name }) {
   return (
     <StudyContext.Provider value={studyObj}>
       {/* If the formState hasn't loaded show a spinner */}
-      {(!formState && !serverState) && <div >
+      {(!formState && !serverState) && <div>
         <LoadingSpinner className="spinner-full-page" testId="upload-wizard-spinner" /> </div>
       }
       {!!formState &&

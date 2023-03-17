@@ -118,7 +118,7 @@ export function AnnDataPreUploadDirections() {
     <div className="row">
       <div className="col-md-12">
         <p className="form-terra">
-        Please fill in the necessary data information here, the file upload will occur in the AnnData tab.
+        Fill in data here, the file upload will occur in the AnnData tab.
         </p>
       </div>
     </div></>

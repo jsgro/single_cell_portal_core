@@ -2,8 +2,7 @@ import React from 'react'
 
 import { withErrorBoundary } from '~/lib/ErrorBoundary'
 import { navigate } from '@reach/router'
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faLink } from '@fortawesome/free-solid-svg-icons'
+
 /** renders a list of the steps and summary study information */
 function RawUploadExperienceSplitter({
   setIsAnnDataExperience, setChoiceMade
@@ -20,8 +19,8 @@ function RawUploadExperienceSplitter({
           <div className='split-title'>
           Choose how to upload expression, conventional metadata, and cluster data
             { <div className='font-size-14'><a href="https://forms.gle/dRUVSh7WAz9Dh6Ag8" target="_blank" title="Take a brief survey on AnnData data upload">
-              Tell us about your experience with data upload <FontAwesomeIcon icon={faLink}/>
-            </a> </div>}
+              Tell us about your experience with AnnData upload!</a>
+            </div>}
           </div>
           <div className='flex-grid'>
             <div className='flex-cols'>

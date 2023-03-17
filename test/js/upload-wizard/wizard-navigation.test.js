@@ -3,6 +3,7 @@ import '@testing-library/jest-dom/extend-expect'
 
 import { renderWizardWithStudy } from './upload-wizard-test-utils'
 import * as ScpApi from 'lib/scp-api'
+import { METADATA_AND_EXPRESSION_FILE_STUDY} from './file-info-responses'
 
 
 describe('it allows navigating between steps', () => {
@@ -21,6 +22,26 @@ describe('it allows navigating between steps', () => {
 
     fireEvent.click(screen.getByText('Coordinate labels'))
     expect(screen.getByRole('heading', { level: 4 })).toHaveTextContent('Coordinate labels')
+  })
+
+  it('shows split options page when the study is empty navigate to Classic mode', async () => {
+    await renderWizardWithStudy({ featureFlags: { ingest_anndata_file: true } })
+
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Introducing AnnData file upload to power visualizations')
+
+    fireEvent.click(screen.getByText('Classic'))
+    expect(screen.getByRole('heading', { level: 4 })).toHaveTextContent('Raw count expression files')
+
+  })
+
+  it('shows split options page when the study is empty navigate to AnnData mode', async () => {
+    await renderWizardWithStudy({ featureFlags: { ingest_anndata_file: true } })
+
+    expect(screen.getByRole('heading', { level: 1 })).toHaveTextContent('Introducing AnnData file upload to power visualizations')
+
+    fireEvent.click(screen.getByText('AnnData'))
+    expect(screen.getByRole('heading', { level: 4 })).toHaveTextContent('Expression matrices')
+
   })
 
   it('prevents access to processed matrices when appropriate', async () => {

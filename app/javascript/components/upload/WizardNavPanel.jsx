@@ -26,7 +26,7 @@ function RawWizardNavPanel({
 
 
   return <div className="wizard-side-panel">
-    {mainStepsDisplay(
+    {MainStepsDisplay(
       formState, serverState, currentStep, setCurrentStep, mainSteps, isAnnDataExperience,
       annDataMainExpanded, setAnnDataMainExpanded, expansionIcon3
     )}
@@ -114,8 +114,8 @@ function nonVizHelpContent() {
 function annDataUploadInfoContent() {
   return <Popover id="anndata-upload-info-popover" className="tooltip-wide">
     <div>
-      AnnData upload requires you to fill out the necessary information in the tabs for Expression Matrices and Clusterings.
-      You will then upload the single AnnData file in the AnnData tab. 
+      AnnData upload requires you to fill out the necessary information in the tabs for `&quot;`Expression matrices`&quot;` and `&quot;`Clustering`&quot;`.
+      You will then upload the single AnnData file in the AnnData tab.
     </div>
   </Popover>
 }
@@ -192,7 +192,7 @@ function VisualizationStatuses({ serverState }) {
 function expressionHelpContent(isExpressionParsing) {
   return <Popover id="expression-viz-upload-info" className="tooltip-wide">
     <div>
-      A processed matrix file, metadata file, and clustering file are required for gene expression visualization 
+      A processed matrix file, metadata file, and clustering file are required for gene expression visualization.
     </div>
     { isExpressionParsing && parsingMessage }
   </Popover>
@@ -209,7 +209,7 @@ function clusteringHelpContent(isClusteringParsing) {
 /**
  * Return the appropriate display of the main steps based on classic or AnnData upload experience
  */
-function mainStepsDisplay(formState, serverState, currentStep, setCurrentStep, mainSteps,
+function MainStepsDisplay(formState, serverState, currentStep, setCurrentStep, mainSteps,
   isAnnDataExperience, annDataMainExpanded, setAnnDataMainExpanded, expansionIcon) {
   if (isAnnDataExperience) {
     return <ul className="upload-wizard-steps" role="tablist" data-analytics-name="upload-wizard-anndata-main-steps">
