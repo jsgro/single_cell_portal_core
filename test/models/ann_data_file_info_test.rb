@@ -107,7 +107,7 @@ class AnnDataFileInfoTest < ActiveSupport::TestCase
     )
     assert_not ann_data_info.valid?
     error_msg = ann_data_info.errors.messages_for(:data_fragments).first
-    assert_equal 'do not all have IDs assigned', error_msg
+    assert_equal 'cluster fragment missing one or more required keys: _id', error_msg
     ann_data_info.data_fragments = [
       { _id: generate_id, data_type: :cluster, name: 'UMAP', obsm_key_name: 'X_umap' },
       { _id: generate_id, data_type: :cluster, name: 'UMAP', obsm_key_name: 'X_umap' }
