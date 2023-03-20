@@ -233,12 +233,12 @@ export function addObjectPropertyToForm(obj, propertyName, formData, nested) {
     propString = `study_file[${nested}_attributes][${propertyName}]`
   }
   if (propertyName === '_id') {
-    appendFormData(formData, propertyName, obj[propertyName]['$oid'])
+    appendFormData(formData, propertyName, getIdValue(obj[propertyName]))
   }
   if (DEEPLY_NESTED_PROPS.includes(propertyName)) {
     obj[propertyName].forEach(fragment => {
       Object.keys(fragment).forEach(fragmentKey => {
-        let nestedPropString = `${propString}[][${fragmentKey}]`
+        const nestedPropString = `${propString}[][${fragmentKey}]`
         appendFormData(formData, nestedPropString, fragment[fragmentKey])
       })
     })
@@ -246,8 +246,8 @@ export function addObjectPropertyToForm(obj, propertyName, formData, nested) {
     // handle nesting for _attributes fields, except for nested id hashes on embedded documents
     Object.keys(obj[propertyName]).forEach(subKey => {
       if (subKey === '_id') {
-        let updatedPropString = `study_file[${propertyName}_attributes][${subKey}]`
-        appendFormData(formData, updatedPropString, obj[propertyName][subKey]['$oid'])
+        const updatedPropString = `study_file[${propertyName}_attributes][${subKey}]`
+        appendFormData(formData, updatedPropString, getIdValue(obj[propertyName][subKey]))
       } else {
         addObjectPropertyToForm(obj[propertyName], subKey, formData, propertyName)
       }
@@ -266,7 +266,6 @@ export function addObjectPropertyToForm(obj, propertyName, formData, nested) {
  * @param formElement (Object, String) value(s) to insert into formData
  */
 function appendFormData(formData, formKey, formElement) {
-  console.log(`calling appendFormData with ${formKey}: ${JSON.stringify(formElement)}`)
   if (Array.isArray(formElement)) {
     if (formElement.length === 0) {
       // if the array is empty, send an empty string as an indication that it is cleared
@@ -283,15 +282,20 @@ function appendFormData(formData, formKey, formElement) {
       formData.append(formKey, JSON.stringify(formElement))
     } else {
       Object.keys(formElement).forEach(key => {
-        let newKey = `${formKey}[${key}]`
+        const newKey = `${formKey}[${key}]`
         appendFormData(formData, newKey, formElement[key])
       })
     }
   } else {
-    if (formElement != null && typeof formElement != 'undefined') {
+    if (formElement !== null && typeof formElement !== 'undefined') {
       formData.append(formKey, formElement)
     }
   }
+}
+
+// extract a BSON id value from form object, checking to see if it is a nested _id.$oid object or raw string
+function getIdValue(formElement) {
+  return typeof formElement === 'object' ? formElement['$oid'] : formElement
 }
 
 /** generates an id string suitable as a mongo id (24-character hex), see

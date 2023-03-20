@@ -636,7 +636,7 @@ class IngestJob
           job.delay.push_remote_and_launch_ingest
         end
       when 'metadata'
-        Rails.logger.info "launching Anndata metadata extraction for #{study_file.upload_file_name}"
+        Rails.logger.info "launching AnnData metadata extraction for #{study_file.upload_file_name}"
         metadata_gs_url = params_object.fragment_file_gs_url(study.bucket_id, 'metadata', study_file.id)
         metadata_params = AnnDataIngestParameters.new(
           ingest_cell_metadata: true, cell_metadata_file: metadata_gs_url,

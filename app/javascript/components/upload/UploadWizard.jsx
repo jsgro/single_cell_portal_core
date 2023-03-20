@@ -216,8 +216,8 @@ export function RawUploadWizard({ studyAccession, name }) {
       const newFormState = _cloneDeep(prevFormState)
       let fileChanged = newFormState.files.find(f => f._id === fileId)
       if (!fileChanged && isAnnDataExperience) {
-        let annDataFile = newFormState.files.find(f => f.file_type === 'AnnData')
-        let fragments = annDataFile.ann_data_file_info?.data_fragments || []
+        const annDataFile = newFormState.files.find(f => f.file_type === 'AnnData')
+        const fragments = annDataFile.ann_data_file_info?.data_fragments || []
         fileChanged = fragments.find(f => f._id === fileId)
       } if (!fileChanged) { // we're updating a stale/no-longer existent file -- discard it
         return prevFormState
@@ -275,15 +275,12 @@ export function RawUploadWizard({ studyAccession, name }) {
       formState.files.forEach(fileFormData => {
         if (fileFormData.file_type === 'Cluster') {
           file['cluster_form_info'] = fileFormData
-          deleteFileFromForm(fileFormData._id)
         }
         if (fileFormData.file_type === 'Expression Matrix') {
           file['extra_expression_form_info'] = fileFormData
-          deleteFileFromForm(fileFormData._id)
         }
         if (fileFormData.file_type === 'Metadata') {
           file['metadata_form_info'] = fileFormData
-          deleteFileFromForm(fileFormData._id)
         }
       })
     }
