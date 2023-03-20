@@ -149,6 +149,11 @@ export function matchingFormFiles(formFiles, fileFilter, isAnnDataExperience, fr
       fragments = []
     }
     files = fragments.filter(fragment => fragment.data_type === fragmentType)
+    if (files.length > 0) {
+      const fileIds = files.map(f => f._id)
+      // check if we need to remove any existing files that just got persisted in the database for AnnData sub-forms
+      formFiles.splice(0, formFiles.length, ...formFiles.filter(f => !fileIds.includes(f._id)))
+    }
   }
   // match any files that may have just been added to the forms via the "Add new file" button
   return [...files, ...formFiles.filter(fileFilter)]

@@ -217,7 +217,7 @@ export function RawUploadWizard({ studyAccession, name }) {
       let fileChanged = newFormState.files.find(f => f._id === fileId)
       if (!fileChanged && isAnnDataExperience) {
         const annDataFile = newFormState.files.find(f => f.file_type === 'AnnData')
-        const fragments = annDataFile.ann_data_file_info?.data_fragments || []
+        const fragments = annDataFile?.ann_data_file_info?.data_fragments || []
         fileChanged = fragments.find(f => f._id === fileId)
       } if (!fileChanged) { // we're updating a stale/no-longer existent file -- discard it
         return prevFormState
