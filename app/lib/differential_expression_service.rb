@@ -308,4 +308,27 @@ class DifferentialExpressionService
     puts message
     Rails.logger.info message
   end
+
+  # Return an access token for viewing GCS objects client side, depending on study privacy
+  # Context: https://github.com/broadinstitute/single_cell_portal_core/pull/239
+  def self.get_read_access_token(study, user, renew=false)
+    if study.present? && study.public? && ApplicationController.read_only_firecloud_client.present?
+      read_only_client = ApplicationController.read_only_firecloud_client
+      if !renew
+        Rails.logger.info "Returning valid read-only access token for public study"
+        read_only_client.valid_access_token
+      else
+        # These read-only GCS tokens only last for 1 hour, so force refresh
+        # if `renew` is true, enabling e.g. frontend to not timeout GCS bucket
+        # fetches before 24-hour session expires.
+        Rails.logger.info "Force-refreshing read-only access token for public study"
+        read_only_client.refresh_access_token!
+      end
+    elsif user.present? && user.registered_for_firecloud && study.present?
+      Rails.logger.info "Returning valid user GCS access token for private study"
+      user.token_for_storage_object(study)
+    else
+      nil # there is no 'safe' token that will work as user has no Terra profile
+    end
+  end
 end

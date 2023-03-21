@@ -31,6 +31,8 @@ export const FACET_DELIMITER = ';'
 // value used to separate filter values for a facet in query string params
 export const FILTER_DELIMITER = '|'
 
+const FIVE_MINUTES = 60 * 1000 * 5 // 5 minutes in milliseconds
+
 /** Get default `init` object for SCP API fetches */
 export function defaultInit() {
   const headers = {
@@ -204,7 +206,7 @@ export function stringifyQuery(paramObj, sort) {
 /**
  * Returns initial content for the upload file wizard
  *
- * @param {String} studyAccession Study accession
+ * @param {String} studyAccession Study accession, e.g. SCP123
 */
 export async function fetchStudyFileInfo(studyAccession, includeOptions=true, mock=false) {
   let apiUrl = `/studies/${studyAccession}/file_info`
@@ -219,13 +221,19 @@ export async function fetchStudyFileInfo(studyAccession, includeOptions=true, mo
  * Set up the renewal for read-only access tokens.  Read-only tokens expire in
  * 1 hour, much sooner than the default SCP authentication session duration of
  * 24 hours.
+ *
+ * @param {String} studyAccession Study accession, e.g. SCP123
+ * @param {Number} renewalTime Milliseconds to wait until renewing token.  Null by default,
+ *    specify only when testing.
  */
-export function setupRenewalForReadOnlyToken(studyAccession) {
+export function setupRenewalForReadOnlyToken(studyAccession, renewalTime=null) {
   const readOnlyTokenObject = window.SCP.readOnlyTokenObject
-  const fiveMinutes = 60 * 1000 * 5 // 5 minutes in milliseconds
-  const renewalTime = readOnlyTokenObject.expires_in * 1000 - fiveMinutes // ~55 minutes
+  if (!renewalTime) {
+    // ~55 minutes, in milliseconds
+    renewalTime = readOnlyTokenObject.expires_in * 1000 - FIVE_MINUTES
+  }
   setTimeout(async () => {
-    const apiUrl = `/studies/${studyAccession}/renew_token`
+    const apiUrl = `/site/studies/${studyAccession}/renew_token`
     const [response] = await scpApi(apiUrl, defaultInit())
     const readOnlyTokenObject = response
     window.SCP.readOnlyToken = readOnlyTokenObject.access_token
