@@ -217,19 +217,19 @@ export async function fetchStudyFileInfo(studyAccession, includeOptions=true, mo
 
 /**
  * Set up the renewal for read-only access tokens.  Read-only tokens expire in
- * 1 hour, which is much shorter than the default SCP authentication session
- * duration of 24 hours.
+ * 1 hour, much sooner than the default SCP authentication session duration of
+ * 24 hours.
  */
 export function setupRenewalForReadOnlyToken(studyAccession) {
-  const fullToken = window.SCP.fullReadOnlyToken
+  const readOnlyTokenObject = window.SCP.readOnlyTokenObject
   const fiveMinutes = 60 * 1000 * 5 // 5 minutes in milliseconds
-  const renewalTime = fullToken.expires_in * 1000 - fiveMinutes // ~55 minutes
+  const renewalTime = readOnlyTokenObject.expires_in * 1000 - fiveMinutes // ~55 minutes
   setTimeout(async () => {
     const apiUrl = `/studies/${studyAccession}/renew_token`
     const [response] = await scpApi(apiUrl, defaultInit())
-    const fullToken = response
-    window.SCP.readOnlyToken = fullToken.token
-    window.SCP.fullReadOnlyToken = fullToken
+    const readOnlyTokenObject = response
+    window.SCP.readOnlyToken = readOnlyTokenObject.access_token
+    window.SCP.readOnlyTokenObject = readOnlyTokenObject
     setupRenewalForReadOnlyToken(studyAccession)
   }, renewalTime)
 }
