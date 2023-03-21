@@ -38,6 +38,7 @@ function RawUploadExperienceSplitter({
             <div className='flex-cols'>
               <a
                 className="btn splitter-info-buttons"
+                data-analytics-name="anndata-upload-experience"
                 onClick={() => {
                   setIsAnnDataExperience(true)
                   setChoiceMade(true)

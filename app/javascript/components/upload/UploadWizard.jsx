@@ -216,8 +216,12 @@ export function RawUploadWizard({ studyAccession, name }) {
   function updateFile(fileId, updates) {
     setFormState(prevFormState => {
       const newFormState = _cloneDeep(prevFormState)
-      const fileChanged = newFormState.files.find(f => f._id === fileId)
-      if (!fileChanged) { // we're updating a stale/no-longer existent file -- discard it
+      let fileChanged = newFormState.files.find(f => f._id === fileId)
+      if (!fileChanged && isAnnDataExperience) {
+        const annDataFile = newFormState.files.find(f => f.file_type === 'AnnData')
+        const fragments = annDataFile?.ann_data_file_info?.data_fragments || []
+        fileChanged = fragments.find(f => f._id === fileId)
+      } if (!fileChanged) { // we're updating a stale/no-longer existent file -- discard it
         return prevFormState
       }
       ['heatmap_file_info', 'expression_file_info'].forEach(nestedProp => {
@@ -268,24 +272,22 @@ export function RawUploadWizard({ studyAccession, name }) {
     let studyFileId = file._id
 
     if (isAnnDataExperience) {
+      // enable ingest of data by setting reference_anndata_file = false
+      file['reference_anndata_file'] = false
       formState.files.forEach(fileFormData => {
         if (fileFormData.file_type === 'Cluster') {
           // multiple clustering file forms are allowed, differentiate by clustering id
           const clusteringId = fileFormData._id
-          if (!file.cluster_form_info_attributes) {
-            file.cluster_form_info_attributes = {}
+          if (!file.cluster_form_info) {
+            file.cluster_form_info = {}
           }
-          file['cluster_form_info_attributes'][clusteringId] = fileFormData
-
-          deleteFileFromForm(clusteringId)
+          file['cluster_form_info'][clusteringId] = fileFormData
         }
         if (fileFormData.file_type === 'Expression Matrix') {
-          file['extra_expression_form_info_attributes'] = fileFormData
-          deleteFileFromForm(fileFormData._id)
+          file['extra_expression_form_info'] = fileFormData
         }
         if (fileFormData.file_type === 'Metadata') {
-          file['metadata_form_info_attributes'] = fileFormData
-          deleteFileFromForm(fileFormData._id)
+          file['metadata_form_info'] = fileFormData
         }
       })
     }
@@ -502,7 +504,7 @@ export function RawUploadWizard({ studyAccession, name }) {
   )
 }
 
-/** Wraps the upload wirzard logic in a router and error handler */
+/** Wraps the upload wizard logic in a router and error handler */
 export default function UploadWizard({ studyAccession, name }) {
   return <ErrorBoundary>
     <UserProvider>
