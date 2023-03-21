@@ -20,10 +20,11 @@ module GoogleServiceClient
     self.expires_at = Time.zone.now + new_token['expires_in']
 
     self.access_token = {
-      'access_token' => new_token,
+      'access_token' => new_token['access_token'],
       'expires_in' => new_token['expires_in'],
       'expires_at' => self.expires_at
     }
+
   end
 
   # check if an access_token is expired
