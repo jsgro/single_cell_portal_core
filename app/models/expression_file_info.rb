@@ -64,6 +64,7 @@ class ExpressionFileInfo
                                 'Seq-Well v1', # scRNAseq
                                 'SeqFISH+', # spatial transcriptomic
                                 'SHARE-seq', # multiomic ATAC-seq
+                                'Slide-tags',
                                 'Slide-seq', # spatial transcriptomic
                                 'Slide-seqV2', # spatial transcriptomic
                                 'Smart-like', # scRNAseq
