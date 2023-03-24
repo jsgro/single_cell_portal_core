@@ -66,6 +66,7 @@ class ExpressionFileInfo
                                 'SHARE-seq', # multiomic ATAC-seq
                                 'Slide-seq', # spatial transcriptomic
                                 'Slide-seqV2', # spatial transcriptomic
+                                'Slide-tags',
                                 'Smart-like', # scRNAseq
                                 'Smart-seq2/Fluidigm C1', # scRNAseq
                                 'Smart-seq2/plate-based', # scRNAseq
