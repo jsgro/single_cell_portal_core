@@ -270,19 +270,16 @@ export function RawUploadWizard({ studyAccession, name }) {
 
   /** save the given file and perform an upload if a selected file is present */
   async function saveFile(file) {
-    // in AnnData case of saving file when you're doing an update
-    console.log('file:', file)
     let fileToSave = file
     let studyFileId = file._id
-    // debugger
-    if (isAnnDataExperience) {
-      // If this save is being done on a fragment file
-      if (file.data_type) {
-        // debugger
-        const AnnDataFile = formState.files.filter(AnnDataFileFilter)[0]
-        console.log('here:', AnnDataFile)
-        if (file.data_type === 'cluster') {
 
+    // in AnnData case of saving file when you're doing an update
+    if (isAnnDataExperience) {
+      // necessary check for when updating a Clustering or Expression matrix form
+      // if the file is a Clustering or Expression matrix form the fileToBeSaved needs to be updated to the AnnData file
+      if (file.data_type) {
+        const AnnDataFile = formState.files.filter(AnnDataFileFilter)[0]
+        if (file.data_type === 'cluster') {
           AnnDataFile.ann_data_file_info.data_fragments['cluster_form_info'] = file
         }
         if (file.file_type === 'expression') {
@@ -290,10 +287,7 @@ export function RawUploadWizard({ studyAccession, name }) {
         }
         fileToSave = AnnDataFile
         studyFileId = fileToSave._id
-
-
       } else {
-
         // enable ingest of data by setting reference_anndata_file = false
         fileToSave['reference_anndata_file'] = false
         formState.files.forEach(fileFormData => {
@@ -309,10 +303,6 @@ export function RawUploadWizard({ studyAccession, name }) {
         })
       }
     }
-    // debugger
-    console.log('filetoSave:', fileToSave)
-//  How to get uploadSelection
-// check out a regular upload and see this value uploadSelection
     const fileSize = fileToSave.uploadSelection?.size
     const isChunked = fileSize > CHUNK_SIZE
     let chunkStart = 0
