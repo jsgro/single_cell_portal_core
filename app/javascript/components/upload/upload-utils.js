@@ -240,6 +240,8 @@ export function addObjectPropertyToForm(obj, propertyName, formData, nested) {
   if (propertyName === '_id') {
     appendFormData(formData, propertyName, getIdValue(obj[propertyName]))
   }
+  // emily look here
+  // might need update with the cluster form additions maybe not
   if (DEEPLY_NESTED_PROPS.includes(propertyName)) {
     obj[propertyName].forEach(fragment => {
       Object.keys(fragment).forEach(fragmentKey => {

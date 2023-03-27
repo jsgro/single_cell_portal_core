@@ -216,10 +216,12 @@ class StudyFilesControllerTest < ActionDispatch::IntegrationTest
           use_metadata_convention: true
         },
         cluster_form_info_attributes: {
-          _id: cluster_frag_id,
-          name: 'UMAP',
-          obsm_key_name: 'X_umap',
-          description: 'UMAP cluster'
+          cluster_frag_id: {
+            _id: cluster_frag_id,
+            name: 'UMAP',
+            obsm_key_name: 'X_umap',
+            description: 'UMAP cluster'
+          }
         }
       }
     }

@@ -217,6 +217,7 @@ export function RawUploadWizard({ studyAccession, name }) {
     setFormState(prevFormState => {
       const newFormState = _cloneDeep(prevFormState)
       let fileChanged = newFormState.files.find(f => f._id === fileId)
+      // emily look here for example on AnnData conditonal
       if (!fileChanged && isAnnDataExperience) {
         const annDataFile = newFormState.files.find(f => f.file_type === 'AnnData')
         const fragments = annDataFile?.ann_data_file_info?.data_fragments || []
@@ -269,35 +270,55 @@ export function RawUploadWizard({ studyAccession, name }) {
 
   /** save the given file and perform an upload if a selected file is present */
   async function saveFile(file) {
+    // in AnnData case of saving file when you're doing an update
+    console.log('file:', file)
+    let fileToSave = file
     let studyFileId = file._id
-
+    // debugger
     if (isAnnDataExperience) {
-      // enable ingest of data by setting reference_anndata_file = false
-      file['reference_anndata_file'] = false
-      formState.files.forEach(fileFormData => {
-        if (fileFormData.file_type === 'Cluster') {
-          // multiple clustering file forms are allowed, differentiate by clustering id
-          const clusteringId = fileFormData._id
-          if (!file.cluster_form_info) {
-            file.cluster_form_info = {}
-          }
-          file['cluster_form_info'][clusteringId] = fileFormData
-        }
-        if (fileFormData.file_type === 'Expression Matrix') {
-          file['extra_expression_form_info'] = fileFormData
-        }
-        if (fileFormData.file_type === 'Metadata') {
-          file['metadata_form_info'] = fileFormData
-        }
-      })
-    }
+      // If this save is being done on a fragment file
+      if (file.data_type) {
+        // debugger
+        const AnnDataFile = formState.files.filter(AnnDataFileFilter)[0]
+        console.log('here:', AnnDataFile)
+        if (file.data_type === 'cluster') {
 
-    const fileSize = file.uploadSelection?.size
+          AnnDataFile.ann_data_file_info.data_fragments['cluster_form_info'] = file
+        }
+        if (file.file_type === 'expression') {
+          AnnDataFile.ann_data_file_info.data_fragments['extra_expression_form_info'] = file
+        }
+        fileToSave = AnnDataFile
+        studyFileId = fileToSave._id
+
+
+      } else {
+
+        // enable ingest of data by setting reference_anndata_file = false
+        fileToSave['reference_anndata_file'] = false
+        formState.files.forEach(fileFormData => {
+          if (fileFormData.file_type === 'Cluster') {
+            fileToSave['cluster_form_info'] = fileFormData
+          }
+          if (fileFormData.file_type === 'Expression Matrix') {
+            fileToSave['extra_expression_form_info'] = fileFormData
+          }
+          if (fileFormData.file_type === 'Metadata') {
+            fileToSave['metadata_form_info'] = fileFormData
+          }
+        })
+      }
+    }
+    // debugger
+    console.log('filetoSave:', fileToSave)
+//  How to get uploadSelection
+// check out a regular upload and see this value uploadSelection
+    const fileSize = fileToSave.uploadSelection?.size
     const isChunked = fileSize > CHUNK_SIZE
     let chunkStart = 0
     let chunkEnd = Math.min(CHUNK_SIZE, fileSize)
 
-    const studyFileData = formatFileForApi(file, chunkStart, chunkEnd)
+    const studyFileData = formatFileForApi(fileToSave, chunkStart, chunkEnd)
     try {
       let response
       const requestCanceller = new RequestCanceller(studyFileId)
@@ -308,7 +329,7 @@ export function RawUploadWizard({ studyAccession, name }) {
         updateFile(studyFileId, { isSaving: true })
       }
 
-      if (file.status === 'new') {
+      if (fileToSave.status === 'new') {
         response = await createStudyFile({
           studyAccession, studyFileData, isChunked, chunkStart, chunkEnd, fileSize, requestCanceller,
           onProgress: e => handleSaveProgress(e, studyFileId, fileSize, chunkStart)
@@ -336,7 +357,7 @@ export function RawUploadWizard({ studyAccession, name }) {
         handleSaveResponse(response, false, requestCanceller)
       }
     } catch (error) {
-      Store.addNotification(failureNotification(<span>{file.name} failed to save<br />{error}</span>))
+      Store.addNotification(failureNotification(<span>{fileToSave.name} failed to save<br />{error}</span>))
       updateFile(studyFileId, {
         isSaving: false
       })

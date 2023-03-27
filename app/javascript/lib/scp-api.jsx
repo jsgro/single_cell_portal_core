@@ -272,6 +272,7 @@ export async function updateStudyFile({
   requestCanceller,
   mock=false
 }) {
+  debugger
   const apiUrl = `/studies/${studyAccession}/study_files/${studyFileId}`
   const init = Object.assign({}, defaultInit(), {
     method: 'PATCH'
