@@ -223,19 +223,15 @@ export async function fetchStudyFileInfo(studyAccession, includeOptions=true, mo
  * 24 hours.
  *
  * @param {String} studyAccession Study accession, e.g. SCP123
- * @param {Number} renewalTime Milliseconds to wait until renewing token.  Null by default,
- *    specify only when testing.
  */
-export function setupRenewalForReadOnlyToken(studyAccession, renewalTime=null) {
+export function setupRenewalForReadOnlyToken(studyAccession) {
   // JSON processed by scpApi function gets camelcased, but JSON defined via
   // Rails has snake-cased keys, so camelcase it here as is conventional for
   // JSON that passes through scpApi.  E.g. expires_in -> expiresIn.
   const readOnlyTokenObject = camelcaseKeys(window.SCP.readOnlyTokenObject)
 
-  if (!renewalTime) {
-    // ~55 minutes, in milliseconds
-    renewalTime = readOnlyTokenObject.expiresIn * 1000 - FIVE_MINUTES
-  }
+  // ~55 minutes, in milliseconds
+  const renewalTime = readOnlyTokenObject.expiresIn * 1000 - FIVE_MINUTES
 
   setTimeout(async () => {
     const apiUrl = `/site/studies/${studyAccession}/renew_token`
