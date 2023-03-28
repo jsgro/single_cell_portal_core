@@ -292,7 +292,15 @@ export function RawUploadWizard({ studyAccession, name }) {
         fileToSave['reference_anndata_file'] = false
         formState.files.forEach(fileFormData => {
           if (fileFormData.file_type === 'Cluster') {
-            fileToSave['cluster_form_info'] = fileFormData
+            fileFormData.data_type = 'cluster'
+  
+            // mulitple clustering forms are allowed so add each as a fragment to the AnnData file
+            const annDataFile = formState.files.find(f => f.file_type === 'AnnData')
+            annDataFile?.ann_data_file_info ? '': annDataFile['ann_data_file_info'] = {}
+            const fragments = annDataFile.ann_data_file_info?.data_fragments || []
+            fragments.push(fileFormData)
+  
+            annDataFile.ann_data_file_info.data_fragments = fragments
           }
           if (fileFormData.file_type === 'Expression Matrix') {
             fileToSave['extra_expression_form_info'] = fileFormData
