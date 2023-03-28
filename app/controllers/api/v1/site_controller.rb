@@ -160,7 +160,7 @@ module Api
       end
 
       def renew_token
-        Rails.logger.info "Renewing token via SCP API for study #{@study.accession}"
+        Rails.logger.info "Renewing token via SCP API for user #{user.id} in study #{@study.accession}"
         render json: DifferentialExpressionService.get_read_access_token(@study, current_api_user, renew=true)
       end
 
