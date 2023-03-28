@@ -93,7 +93,6 @@ class FireCloudClient
       storage_attr = {
         project_id: PORTAL_NAMESPACE,
         timeout: 3600
-        # timeout: 180
       }
 
       if !service_account.blank?
@@ -116,14 +115,12 @@ class FireCloudClient
       # set a default timeout if no token was retrieved; this prevents errors when attempting requests, although
       # the request will most likely fail with a 401, which is expected
       self.expires_at = self.access_token['expires_at'].present? ? self.access_token['expires_at'] : Time.now.in_time_zone + 1.hour
-      # self.expires_at = self.access_token['expires_at'].present? ? self.access_token['expires_at'] : Time.now.in_time_zone + 5.minutes
 
       # use user-defined project instead of portal default
       # if no keyfile is present, use environment variables
       storage_attr = {
           project_id: project,
           timeout: 3600
-          # timeout: 240
       }
 
       if !service_account.blank?
@@ -167,7 +164,6 @@ class FireCloudClient
     storage_attr = {
         project_id: project_name,
         timeout: 3600
-        # timeout: 600
     }
     if !ENV['SERVICE_ACCOUNT_KEY'].blank?
       storage_attr.merge!(credentials: self.class.get_primary_keyfile)

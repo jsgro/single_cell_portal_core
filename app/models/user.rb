@@ -148,7 +148,6 @@ class User
             client_id: ENV['OAUTH_CLIENT_ID'],
             client_secret: ENV['OAUTH_CLIENT_SECRET'],
             expires_in: 3600
-            # expires_in: 120 # 2 minutes
         )
         token_vals = client.fetch_access_token
         expires_at = Time.zone.now + token_vals['expires_in'].to_i.seconds

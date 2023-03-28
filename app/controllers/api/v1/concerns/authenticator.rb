@@ -97,7 +97,6 @@ module Api
             response = RestClient.get OAUTH_V3_TOKEN_INFO + "?access_token=#{api_access_token}"
             credentials = JSON.parse response.body
             now = Time.zone.now
-            # expires_in = credentials['expires_in'].to_i - 3420 # 3 minutes
             expires_in = credentials['expires_in'].to_i
             token_values = {
                 'access_token' => api_access_token,
