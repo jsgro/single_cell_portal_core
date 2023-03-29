@@ -13,6 +13,10 @@ class DifferentialExpressionResult
     DEFAULT_COMP_METHOD, 'logreg', 't-test', 't-test_overestim_var'
   ].freeze
 
+  # analysis types, e.g. A vs. B and A vs. All
+  DEFAULT_ANALYSIS = 'a-vs-b'.freeze
+  ANALYSIS_TYPES = [DEFAULT_ANALYSIS, 'a-vs-all'].freeze
+
   belongs_to :study
   belongs_to :cluster_group
   belongs_to :study_file, optional: true
@@ -22,12 +26,14 @@ class DifferentialExpressionResult
   field :annotation_name, type: String
   field :annotation_scope, type: String
   field :computational_method, type: String, default: DEFAULT_COMP_METHOD
+  field :analysis_type, type: String, default: DEFAULT_ANALYSIS
   field :matrix_file_id, type: BSON::ObjectId # associated raw count matrix study file
 
   validates :annotation_scope, inclusion: { in: %w[study cluster] }
   validates :cluster_name, presence: true
   validates :cluster_name, :matrix_file_id, presence: true, unless: proc { study_file.present? }
   validates :computational_method, inclusion: { in: SUPPORTED_COMP_METHODS }
+  validates :analysis_type, inclusion: { in: ANALYSIS_TYPES }
   validates :annotation_name, presence: true, uniqueness: { scope: %i[study cluster_group annotation_scope] }
   validate :has_observed_values?
   validate :matrix_file_exists?
