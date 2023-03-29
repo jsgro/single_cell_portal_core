@@ -214,7 +214,6 @@ export function RawUploadWizard({ studyAccession, name }) {
     setFormState(prevFormState => {
       const newFormState = _cloneDeep(prevFormState)
       let fileChanged = newFormState.files.find(f => f._id === fileId)
-      // emily look here for example on AnnData conditonal
       if (!fileChanged && isAnnDataExperience) {
         const annDataFile = newFormState.files.find(f => f.file_type === 'AnnData')
         const fragments = annDataFile?.ann_data_file_info?.data_fragments || []

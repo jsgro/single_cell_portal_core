@@ -50,7 +50,6 @@ class AnnDataFileInfoTest < ActiveSupport::TestCase
         use_metadata_convention: true
       },
       cluster_form_info_attributes: {
-        generate_id: {
           _id: generate_id,
           name: 'UMAP',
           description: 'cluster description',
@@ -61,7 +60,6 @@ class AnnDataFileInfoTest < ActiveSupport::TestCase
           x_axis_max: '10',
           y_axis_min: '-10',
           y_axis_max: '10'
-        }
       }
     }
     merged_data = AnnDataFileInfo.new.merge_form_data(form_params)
