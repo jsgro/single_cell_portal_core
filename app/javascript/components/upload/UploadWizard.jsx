@@ -92,10 +92,7 @@ export function RawUploadWizard({ studyAccession, name }) {
   const [choiceMade, setChoiceMade] = useState(false)
   const allowReferenceImageUpload = serverState?.feature_flags?.reference_image_upload
   // used for toggling between classic and AnnData experience of upload wizard
-  const [isAnnDataExperience, setIsAnnDataExperience] = useState(
-    formState?.files?.filter(AnnDataFileFilter)?.length > 0 &&
-    serverState?.feature_flags?.ingest_anndata_file
-  )
+  const [isAnnDataExperience, setIsAnnDataExperience] = useState(false)
 
   let MAIN_STEPS
   let SUPPLEMENTAL_STEPS
@@ -237,8 +234,9 @@ export function RawUploadWizard({ studyAccession, name }) {
     })
   }
 
-  /** handler for progress events from an XMLHttpRequest call.
-   *    Updates the overall save progress of the file
+  /**
+   * Handler for progress events from an XMLHttpRequest call.
+   * Updates the overall save progress of the file
    */
   function handleSaveProgress(progressEvent, fileId, fileSize, chunkStart) {
     if (!fileSize) {
@@ -293,13 +291,13 @@ export function RawUploadWizard({ studyAccession, name }) {
         formState.files.forEach(fileFormData => {
           if (fileFormData.file_type === 'Cluster') {
             fileFormData.data_type = 'cluster'
-  
+
             // mulitple clustering forms are allowed so add each as a fragment to the AnnData file
             const annDataFile = formState.files.find(f => f.file_type === 'AnnData')
             annDataFile?.ann_data_file_info ? '': annDataFile['ann_data_file_info'] = {}
             const fragments = annDataFile.ann_data_file_info?.data_fragments || []
             fragments.push(fileFormData)
-  
+
             annDataFile.ann_data_file_info.data_fragments = fragments
           }
           if (fileFormData.file_type === 'Expression Matrix') {
@@ -428,7 +426,7 @@ export function RawUploadWizard({ studyAccession, name }) {
     fetchStudyFileInfo(studyAccession).then(response => {
       response.files.forEach(file => formatFileFromServer(file))
       setIsAnnDataExperience(
-        response.files?.filter(AnnDataFileFilter)?.length > 0 &&
+        !response.files?.filter(AnnDataFileFilter)[0]?.ann_data_file_info?.reference_file &&
         response.feature_flags?.ingest_anndata_file)
       setServerState(response)
       setFormState(_cloneDeep(response))
@@ -440,6 +438,17 @@ export function RawUploadWizard({ studyAccession, name }) {
 
   const nextStep = STEPS[currentStepIndex + 1]
   const prevStep = STEPS[currentStepIndex - 1]
+
+
+  /** return a button for switching to the other experience (AnnData or Classic) */
+  function getOtherChoiceButton() {
+    const otherOption = isAnnDataExperience ? 'classic upload' : 'AnnData upload'
+    return <button
+      data-testid="switch-upload-mode-button"
+      className="btn terra-secondary-btn margin-left-extra"
+      onClick={() => setIsAnnDataExperience(!isAnnDataExperience)}> Switch to {otherOption}
+    </button>
+  }
 
   /**
    * Returns the appropriate content to display for the UploadWizard
@@ -488,16 +497,6 @@ export function RawUploadWizard({ studyAccession, name }) {
         </div>
       </div></>
     }
-  }
-
-  /** return a button for switching to the other experience (AnnData or Classic) */
-  function getOtherChoiceButton() {
-    const otherOption = isAnnDataExperience ? 'classic upload' : 'AnnData upload'
-    return <button
-      data-testid="switch-upload-mode-button"
-      className="btn terra-secondary-btn margin-left-extra"
-      onClick={() => setIsAnnDataExperience(!isAnnDataExperience)}> Switch to {otherOption}
-    </button>
   }
 
   return (
