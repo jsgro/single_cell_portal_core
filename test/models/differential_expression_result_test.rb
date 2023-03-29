@@ -13,6 +13,10 @@ class DifferentialExpressionResultTest  < ActiveSupport::TestCase
     @species = %w[dog cat dog dog cat cat cat]
     @diseases = %w[measles measles measles none none measles measles]
     @library_preparation_protocol = Array.new(7, "10X 5' v3")
+    @cell_types = ['B cell', 'T cell', 'B cell', 'T cell', 'T cell', 'B cell', 'B cell']
+    @custom_cell_types = [
+      'Naive B cell', 'Naive Treg', 'Naive B cell', 'Naive Treg', 'Naive Treg', 'Naive B cell', 'Naive B cell'
+    ]
     @raw_matrix = FactoryBot.create(:expression_file,
                                     name: 'raw.txt',
                                     study: @study,
@@ -47,6 +51,16 @@ class DifferentialExpressionResultTest  < ActiveSupport::TestCase
                                            name: 'library_preparation_protocol',
                                            type: 'group',
                                            values: @library_preparation_protocol
+                                         },
+                                         {
+                                           name: 'cell_type__ontology_label',
+                                           type: 'group',
+                                           values: @cell_types
+                                         },
+                                         {
+                                           name: 'cell_type__custom',
+                                           type: 'group',
+                                           values: @custom_cell_types
                                          }
                                        ])
 
@@ -166,5 +180,19 @@ class DifferentialExpressionResultTest  < ActiveSupport::TestCase
     expected_filename = 'cluster_diffexp_txt--species--CD4pos--study--wilcoxon.tsv'
     filename = @species_result.filename_for(label)
     assert_equal expected_filename, filename
+  end
+
+  test 'should validate differential expression results from file' do
+    de_file = FactoryBot.create(:study_file,
+                                study: @study,
+                                file_type: 'Differential Expression',
+                                name: 'de_results_custom.txt')
+    @study.cell_metadata.where(name: /cell_type/).each do |meta|
+      result = de_file.differential_expression_results.create(
+        study: @study, cluster_group: @cluster_group,
+        annotation_name: meta.name, annotation_scope: 'study', cluster_name: @cluster_group.name
+      )
+      assert result.valid?
+    end
   end
 end

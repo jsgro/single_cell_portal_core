@@ -15,6 +15,7 @@ class DifferentialExpressionResult
 
   belongs_to :study
   belongs_to :cluster_group
+  belongs_to :study_file, optional: true
 
   field :cluster_name, type: String # cache name of cluster at time of creation to avoid renaming issues
   field :observed_values, type: Array, default: []
@@ -24,13 +25,15 @@ class DifferentialExpressionResult
   field :matrix_file_id, type: BSON::ObjectId # associated raw count matrix study file
 
   validates :annotation_scope, inclusion: { in: %w[study cluster] }
-  validates :cluster_name, :matrix_file_id, presence: true
+  validates :cluster_name, presence: true
+  validates :cluster_name, :matrix_file_id, presence: true, unless: proc { study_file.present? }
   validates :computational_method, inclusion: { in: SUPPORTED_COMP_METHODS }
   validates :annotation_name, presence: true, uniqueness: { scope: %i[study cluster_group annotation_scope] }
   validate :has_observed_values?
   validate :matrix_file_exists?
+  validate :annotation_exists?
 
-  before_validation :set_observed_values, :set_cluster_name
+  before_validation :set_observed_values, :set_cluster_name, unless: proc { study.nil? || cluster_group.nil? }
   before_destroy :remove_output_files
 
   # pointer to source annotation object, either CellMetadatum of ClusterGroup#cell_annotation
@@ -58,12 +61,13 @@ class DifferentialExpressionResult
   ## STUDY FILE GETTERS
   # associated raw count matrix
   def matrix_file
-    StudyFile.find(matrix_file_id)
+    # use find_by(id:) to avoid Mongoid::Errors::InvalidFind
+    StudyFile.find_by(id: matrix_file_id)
   end
 
   # name of associated matrix file
   def matrix_file_name
-    matrix_file.upload_file_name
+    matrix_file&.upload_file_name
   end
 
   # associated clustering file
@@ -138,8 +142,21 @@ class DifferentialExpressionResult
     end
   end
 
+  # validate we have a matrix file that was used to compute results (unless this is sourced from a user-uploaded file)
   def matrix_file_exists?
-    matrix_file.present?
+    study_file.present? ? true : matrix_file.present?
+  end
+
+  def annotation_exists?
+    case annotation_scope
+    when 'study'
+      CellMetadatum.where(study:, name: annotation_name).exists?
+    when 'cluster'
+      cluster_group.cell_annotations.detect { |a| a.with_indifferent_access[:name] == annotation_name }.present?
+    else
+      # we don't support other annotation scopes
+      false
+    end
   end
 
   # delete all associated output files on destroy
