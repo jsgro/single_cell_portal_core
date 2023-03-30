@@ -53,8 +53,7 @@ export default function ExpandableFileForm({
               bucketName={bucketName}
               isAnnDataExperience={isAnnDataExperience} />
           </div>}
-          {/* emily to do here */}
-          {isUploadEnabled && <SaveDeleteButtons {...{ file, updateFile, saveFile, deleteFile, validationMessages }} /> }
+          {getIsSaveEnabled(isAnnDataExperience, allFiles, file) && <SaveDeleteButtons {...{ file, updateFile, saveFile, deleteFile, validationMessages }} /> }
         </div>
         {expanded && children}
         <SavingOverlay file={file} updateFile={updateFile} />
@@ -206,11 +205,48 @@ function DeleteButton({ file, deleteFile, setShowConfirmDeleteModal }) {
  * @returns {boolean} Whether to show upload control buttons or not
  */
 function getIsUploadEnabled(isAnnDataExperience, allFiles, file) {
+  const alreadyUploaded = allFiles.forEach(fileObj => {
+    if (fileObj.ann_data_file_info?.has_clusters) {
+      return true
+    }
+  })
   const isClustering = file.file_type === 'Cluster'
   const isExpressionMatrix = file.file_type === 'Expression Matrix'
-
+  if (isClustering && alreadyUploaded && isAnnDataExperience) {return true}
   return !((isClustering || isExpressionMatrix) && isAnnDataExperience)
 }
+
+/**
+ * Determine whether to show the save/delete buttons.
+ *
+ * @param {boolean} isAnnDataExperience
+ * @param {array} allFiles
+ * @returns {boolean} Whether to show upload control buttons or not
+ */
+function getIsSaveEnabled(isAnnDataExperience, allFiles, file) {
+  // if it's not AnnDataExperience don't gate the save/delete buttons
+  if (!isAnnDataExperience) {return true}
+
+  // only allow save/delete for updates after an AnnData file has been uploaded
+  let alreadyUploaded = false
+  allFiles.forEach(fileObj => {
+    if (fileObj.ann_data_file_info?.has_clusters) {
+      alreadyUploaded = true
+    }
+  })
+
+  // cluster files that haven't been saved have a file_type whereas once saved they are fragments which have a data_type
+  const isClustering = file.data_type === 'cluster' || file.file_type === 'Cluster'
+  const isAnnData = file.data_type === 'AnnData' || file.file_type === 'AnnData'
+  const isExpressionMatrix = file.data_type === 'expression'
+
+  if ((isClustering || isExpressionMatrix || isAnnData) && alreadyUploaded && isAnnDataExperience) {
+    return true
+  } else {
+    return false
+  }
+}
+
 
 const parsingPopup = <Popover id="parsing-tooltip" className="tooltip-wide">
   <div>This file is currently being parsed on the server.  <br/>
