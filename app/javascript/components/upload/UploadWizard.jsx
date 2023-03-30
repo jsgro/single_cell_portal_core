@@ -167,12 +167,15 @@ export function RawUploadWizard({ studyAccession, name }) {
   }
 
   /** handle response from server after an upload by updating the serverState with the updated file response */
-  function handleSaveResponse(response, uploadingMoreChunks, requestCanceller) {
+  function handleSaveResponse(response, uploadingMoreChunks, requestCanceller, originalFile) {
     const updatedFile = formatFileFromServer(response)
     const fileId = updatedFile._id
     if (requestCanceller.wasCancelled) {
       Store.addNotification(failureNotification(`${updatedFile.name} save cancelled`))
       updateFile(fileId, { isSaving: false, requestCanceller: null })
+      if (originalFile !== null) {
+        updateFile(originalFile._id, { isSaving: false, requestCanceller: null })
+      }
       return
     }
 
@@ -319,9 +322,15 @@ export function RawUploadWizard({ studyAccession, name }) {
       const requestCanceller = new RequestCanceller(studyFileId)
       if (fileSize) {
         updateFile(studyFileId, { isSaving: true, cancelUpload: () => cancelUpload(requestCanceller) })
+        if (isAnnDataExperience) {
+          updateFile(file._id, { isSaving: true, cancelUpload: () => cancelUpload(requestCanceller) })
+        }
       } else {
         // if there isn't an associated file upload, don't allow the user to cancel the request
         updateFile(studyFileId, { isSaving: true })
+        if (isAnnDataExperience) {
+          updateFile(file._id, { isSaving: true })
+        }
       }
 
       if (fileToSave.status === 'new') {
@@ -335,7 +344,7 @@ export function RawUploadWizard({ studyAccession, name }) {
           onProgress: e => handleSaveProgress(e, studyFileId, fileSize, chunkStart)
         })
       }
-      handleSaveResponse(response, isChunked, requestCanceller)
+      handleSaveResponse(response, isChunked, requestCanceller, file !== fileToSave ? file : null)
       // copy over the new id from the server
       studyFileId = response._id
       requestCanceller.fileId = studyFileId
@@ -349,7 +358,7 @@ export function RawUploadWizard({ studyAccession, name }) {
             onProgress: e => handleSaveProgress(e, studyFileId, fileSize, chunkStart)
           })
         }
-        handleSaveResponse(response, false, requestCanceller)
+        handleSaveResponse(response, false, requestCanceller, file !== fileToSave ? file : null)
       }
     } catch (error) {
       Store.addNotification(failureNotification(<span>{fileToSave.name} failed to save<br />{error}</span>))
