@@ -78,12 +78,12 @@ class StudyFile
   embeds_one :cluster_file_info, cascade_callbacks: true
   embeds_one :heatmap_file_info
   embeds_one :ann_data_file_info
+  embeds_one :differential_expression_file_info
 
   accepts_nested_attributes_for :expression_file_info
   accepts_nested_attributes_for :cluster_file_info
   accepts_nested_attributes_for :heatmap_file_info
   accepts_nested_attributes_for :ann_data_file_info
-  accepts_nested_attributes_for :differential_expression_results
   validate :show_exp_file_info_errors
 
   # field definitions

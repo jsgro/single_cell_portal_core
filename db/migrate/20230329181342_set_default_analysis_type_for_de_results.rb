@@ -4,6 +4,6 @@ class SetDefaultAnalysisTypeForDeResults < Mongoid::Migration
   end
 
   def self.down
-    DifferentialExpressionResult.update_all(analysis_type: nil)
+    DifferentialExpressionResult.all.each { |result| result.unset(:analysis_type) }
   end
 end
