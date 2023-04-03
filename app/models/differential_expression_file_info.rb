@@ -16,6 +16,8 @@ class DifferentialExpressionFileInfo
   validates :analysis_type, inclusion: { in: DifferentialExpressionResult::ANALYSIS_TYPES }
   validate :validate_annotations
 
+  delegate :study, to: :study_file
+
   # retrieve source annotation object
   def annotation_object(annotation)
     safe_annot = annotation.with_indifferent_access

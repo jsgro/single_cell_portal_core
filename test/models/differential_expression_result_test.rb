@@ -1,6 +1,6 @@
 require 'test_helper'
 
-class DifferentialExpressionResultTest  < ActiveSupport::TestCase
+class DifferentialExpressionResultTest < ActiveSupport::TestCase
 
   before(:all) do
     @user = FactoryBot.create(:user, test_array: @@users_to_clean)
