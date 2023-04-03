@@ -31,7 +31,7 @@ class DifferentialExpressionResult
 
   validates :annotation_scope, inclusion: { in: %w[study cluster] }
   validates :cluster_name, presence: true
-  validates :cluster_name, :matrix_file_id, presence: true, unless: proc { study_file.present? }
+  validates :matrix_file_id, presence: true, unless: proc { study_file.present? }
   validates :computational_method, inclusion: { in: SUPPORTED_COMP_METHODS }
   validates :analysis_type, inclusion: { in: ANALYSIS_TYPES }
   validates :annotation_name, presence: true, uniqueness: { scope: %i[study cluster_group annotation_scope] }
@@ -39,7 +39,7 @@ class DifferentialExpressionResult
   validate :matrix_file_exists?
   validate :annotation_exists?
 
-  before_validation :set_observed_values, :set_cluster_name, unless: proc { study.nil? || cluster_group.nil? }
+  before_validation :set_observed_values, :set_cluster_name
   before_destroy :remove_output_files
 
   # pointer to source annotation object, either CellMetadatum of ClusterGroup#cell_annotation
