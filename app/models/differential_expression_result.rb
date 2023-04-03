@@ -14,8 +14,8 @@ class DifferentialExpressionResult
   ].freeze
 
   # analysis types, e.g. A vs. B and A vs. All
-  DEFAULT_ANALYSIS = 'a-vs-b'.freeze
-  ANALYSIS_TYPES = [DEFAULT_ANALYSIS, 'a-vs-all'].freeze
+  DEFAULT_ANALYSIS = 'a-vs-all'.freeze
+  ANALYSIS_TYPES = [DEFAULT_ANALYSIS, 'a-vs-b'].freeze
 
   belongs_to :study
   belongs_to :cluster_group
