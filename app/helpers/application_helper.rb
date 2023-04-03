@@ -346,7 +346,7 @@ module ApplicationHelper
 
   # Return an access token for viewing GCS objects client side, depending on study privacy
   def get_read_access_token(study, user, renew=false)
-    DifferentialExpressionService.get_read_access_token(study, user, renew=renew)
+    RequestUtils.get_read_access_token(study, user, renew=renew)
   end
 
   # Return the user's access token for bulk download of faceted search results
