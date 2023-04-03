@@ -53,7 +53,7 @@ export default function ExpandableFileForm({
               bucketName={bucketName}
               isAnnDataExperience={isAnnDataExperience} />
           </div>}
-          {getIsSaveEnabled(isAnnDataExperience, allFiles, file) && <SaveDeleteButtons {...{ file, updateFile, saveFile, deleteFile, validationMessages }} /> }
+          {getIsSaveEnabled(isAnnDataExperience, allFiles, file) && <SaveDeleteButtons {...{ file, updateFile, saveFile, deleteFile, validationMessages, isAnnDataExperience }} /> }
         </div>
         {expanded && children}
         <SavingOverlay file={file} updateFile={updateFile} />
@@ -102,8 +102,10 @@ export function SavingOverlay({ file, updateFile }) {
 }
 
 /** renders save and delete buttons for a given file */
-export function SaveDeleteButtons({ file, saveFile, deleteFile, validationMessages = {} }) {
+export function SaveDeleteButtons({ file, saveFile, deleteFile, validationMessages = {}, isAnnDataExperience }) {
   const [showConfirmDeleteModal, setShowConfirmDeleteModal] = useState(false)
+  const isExpressionMatrix = isAnnDataExperience && file.data_type === 'expression'
+
   if (file.serverFile?.parse_status === 'failed') {
     return <div className="text-center">
       <div className="validation-error"><FontAwesomeIcon icon={faTimes}/> Parse failed</div>
@@ -112,8 +114,8 @@ export function SaveDeleteButtons({ file, saveFile, deleteFile, validationMessag
     </div>
   }
   return <div className="flexbox-align-center button-panel">
-    <SaveButton file={file} saveFile={saveFile} validationMessages={validationMessages}/>
-    <DeleteButton file={file} deleteFile={deleteFile} setShowConfirmDeleteModal={setShowConfirmDeleteModal}/>
+    <SaveButton file={file} saveFile={saveFile} validationMessages={validationMessages} isAnnDataExperience={isAnnDataExperience}/>
+    {!isExpressionMatrix && <DeleteButton file={file} deleteFile={deleteFile} setShowConfirmDeleteModal={setShowConfirmDeleteModal}/>}
     <Modal
       show={showConfirmDeleteModal}
       onHide={() => setShowConfirmDeleteModal(false)}
@@ -137,8 +139,8 @@ export function SaveDeleteButtons({ file, saveFile, deleteFile, validationMessag
 
 
 /** renders a save button for a given file */
-function SaveButton({ file, saveFile, validationMessages = {} }) {
-  const saveDisabled = Object.keys(validationMessages).length > 0
+function SaveButton({ file, saveFile, validationMessages = {}, isAnnDataExperience }) {
+  const saveDisabled = isAnnDataExperience ? false : Object.keys(validationMessages).length > 0
   let saveButton = <button
     style={{ pointerEvents: saveDisabled ? 'none' : 'auto' }}
     type="button"
@@ -230,7 +232,7 @@ function getIsSaveEnabled(isAnnDataExperience, allFiles, file) {
   // only allow save/delete for updates after an AnnData file has been uploaded
   let alreadyUploaded = false
   allFiles.forEach(fileObj => {
-    if (fileObj.ann_data_file_info?.has_clusters) {
+    if (fileObj.ann_data_file_info?.data_fragments.length > 0) {
       alreadyUploaded = true
     }
   })
@@ -242,11 +244,12 @@ function getIsSaveEnabled(isAnnDataExperience, allFiles, file) {
 
   if ((isClustering || isExpressionMatrix || isAnnData) && alreadyUploaded && isAnnDataExperience) {
     return true
-  } else {
+  } else if (isAnnData && isAnnDataExperience) {
+    return true
+  } {
     return false
   }
 }
-
 
 const parsingPopup = <Popover id="parsing-tooltip" className="tooltip-wide">
   <div>This file is currently being parsed on the server.  <br/>

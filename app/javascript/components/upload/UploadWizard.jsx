@@ -275,8 +275,9 @@ export function RawUploadWizard({ studyAccession, name }) {
 
     // in AnnData case of saving file when you're doing an update
     if (isAnnDataExperience) {
-      // necessary check for when updating a Clustering or Expression matrix form
-      // if the file is a Clustering or Expression matrix form the fileToBeSaved needs to be updated to the AnnData file
+      // necessary check for when updating a Clustering or Expression matrix form the fileToBeSaved needs to be updated to the AnnData file
+      // if the file update is on an existing fragment it will have a data_type rather than file_type
+      // or if it's a new clustering it won't have a data_type but will have an obsm key name field
       if (file.data_type) {
         const AnnDataFile = formState.files.filter(AnnDataFileFilter)[0]
         if (file.data_type === 'cluster') {
@@ -288,19 +289,20 @@ export function RawUploadWizard({ studyAccession, name }) {
         fileToSave = AnnDataFile
         studyFileId = fileToSave._id
       } else {
+        fileToSave = formState.files.find(f => f.file_type === 'AnnData')
+        studyFileId = fileToSave._id
+
         // enable ingest of data by setting reference_anndata_file = false
         fileToSave['reference_anndata_file'] = false
         formState.files.forEach(fileFormData => {
           if (fileFormData.file_type === 'Cluster') {
             fileFormData.data_type = 'cluster'
 
-            // mulitple clustering forms are allowed so add each as a fragment to the AnnData file
-            const annDataFile = formState.files.find(f => f.file_type === 'AnnData')
-            annDataFile?.ann_data_file_info ? '': annDataFile['ann_data_file_info'] = {}
-            const fragments = annDataFile.ann_data_file_info?.data_fragments || []
-            fragments.push(fileFormData)
-
-            annDataFile.ann_data_file_info.data_fragments = fragments
+              // mulitple clustering forms are allowed so add each as a fragment to the AnnData file
+              fileToSave?.ann_data_file_info ? '': fileToSave['ann_data_file_info'] = {}
+              const fragments = fileToSave.ann_data_file_info?.data_fragments || []
+              fragments.push(fileFormData)
+              fileToSave.ann_data_file_info.data_fragments = fragments
           }
           if (fileFormData.file_type === 'Expression Matrix') {
             fileToSave['extra_expression_form_info'] = fileFormData
@@ -361,6 +363,7 @@ export function RawUploadWizard({ studyAccession, name }) {
         handleSaveResponse(response, false, requestCanceller, file !== fileToSave ? file : null)
       }
     } catch (error) {
+      console.log('error:', error)
       Store.addNotification(failureNotification(<span>{fileToSave.name} failed to save<br />{error}</span>))
       updateFile(studyFileId, {
         isSaving: false
@@ -370,20 +373,111 @@ export function RawUploadWizard({ studyAccession, name }) {
 
   /** delete the file from the form, and also the server if it exists there */
   async function deleteFile(file) {
-    const fileId = file._id
-    if (file.status === 'new' || file?.serverFile?.parse_status === 'failed') {
-      deleteFileFromForm(fileId)
-    } else {
-      updateFile(fileId, { isDeleting: true })
-      try {
-        await deleteFileFromServer(fileId)
+    let fileToDelete = file
+    let fileId = file._id
+
+    // in AnnData case of saving file when you're doing an update
+    if (isAnnDataExperience) {
+      if (file.status === 'new' || file?.serverFile?.parse_status === 'failed') {
         deleteFileFromForm(fileId)
-        Store.addNotification(successNotification(`${file.name} deleted successfully`))
-      } catch (error) {
-        Store.addNotification(failureNotification(<span>{file.name} failed to delete<br />{error.message}</span>))
-        updateFile(fileId, {
-          isDeleting: false
-        })
+      } else if (fileToDelete.data_type === 'expression') {
+        // only clear the form, should not actually delete the expression data, only update if new stuff is presented
+        deleteFileFromForm(fileId)
+      } else if (fileToDelete.data_type === 'cluster') {
+        const annDataFile = formState.files.filter(AnnDataFileFilter)[0]
+
+        const fragmentsInAnnDataFile = annDataFile.ann_data_file_info.data_fragments
+        if (annDataFile.ann_data_file_info.data_fragments.filter(f => f.data_type === 'cluster').length > 1) {
+          const newClusteringsArray = fragmentsInAnnDataFile.filter(item => item !== file)
+          annDataFile.ann_data_file_info.data_fragments = newClusteringsArray
+          fileToDelete = annDataFile
+          fileId = annDataFile._id
+
+          const fileSize = fileToDelete.uploadSelection?.size
+          let studyFileId = fileToDelete._id
+          const isChunked = fileSize > CHUNK_SIZE
+          let chunkStart = 0
+          let chunkEnd = Math.min(CHUNK_SIZE, fileSize)
+          const studyFileData = formatFileForApi(fileToDelete, chunkStart, chunkEnd)
+
+          try {
+            let response
+            const requestCanceller = new RequestCanceller(studyFileId)
+            if (fileSize) {
+              updateFile(studyFileId, { isSaving: true, cancelUpload: () => cancelUpload(requestCanceller) })
+              if (isAnnDataExperience) {
+                updateFile(file._id, { isDeleting: true })
+              }
+            } else {
+              // if there isn't an associated file upload, don't allow the user to cancel the request
+              updateFile(studyFileId, { isSaving: true })
+              if (isAnnDataExperience) {
+                updateFile(file._id, { isDeleting: true })
+              }
+            }
+
+            response = await updateStudyFile({
+              studyAccession, studyFileId, studyFileData, isChunked, chunkStart, chunkEnd, fileSize, requestCanceller,
+              onProgress: e => handleSaveProgress(e, studyFileId, fileSize, chunkStart)
+            })
+
+            handleSaveResponse(response, isChunked, requestCanceller, file !== fileToDelete ? file : null)
+            // copy over the new id from the server
+            studyFileId = response._id
+            requestCanceller.fileId = studyFileId
+            if (isChunked && !requestCanceller.wasCancelled) {
+              while (chunkEnd < fileSize && !requestCanceller.wasCancelled) {
+                chunkStart += CHUNK_SIZE
+                chunkEnd = Math.min(chunkEnd + CHUNK_SIZE, fileSize)
+                const chunkApiData = formatFileForApi(file, chunkStart, chunkEnd)
+                response = await sendStudyFileChunk({
+                  studyAccession, studyFileId, studyFileData: chunkApiData, chunkStart, chunkEnd, fileSize, requestCanceller,
+                  onProgress: e => handleSaveProgress(e, studyFileId, fileSize, chunkStart)
+                })
+              }
+              handleSaveResponse(response, false, requestCanceller, file !== fileToDelete ? file : null)
+            }
+          } catch (error) {
+            Store.addNotification(failureNotification(<span>{fileToDelete.name} failed to delete<br />{error}</span>))
+            updateFile(studyFileId, {
+              isSaving: false
+            })
+            updateFile(file._id, {
+              isDeleting: false
+            })
+          }
+        } else {
+          console.log('cannot delete')
+        }
+
+      } else {
+        updateFile(fileId, { isDeleting: true })
+        try {
+          await deleteFileFromServer(fileId)
+          deleteFileFromForm(fileId)
+          Store.addNotification(successNotification(`${file.name} deleted successfully`))
+        } catch (error) {
+          Store.addNotification(failureNotification(<span>{file.name} failed to delete<br />{error.message}</span>))
+          updateFile(fileId, {
+            isDeleting: false
+          })
+        }
+      }
+    } else {
+      if (file.status === 'new' || file?.serverFile?.parse_status === 'failed') {
+        deleteFileFromForm(fileId)
+      } else {
+        updateFile(fileId, { isDeleting: true })
+        try {
+          await deleteFileFromServer(fileId)
+          deleteFileFromForm(fileId)
+          Store.addNotification(successNotification(`${file.name} deleted successfully`))
+        } catch (error) {
+          Store.addNotification(failureNotification(<span>{file.name} failed to delete<br />{error.message}</span>))
+          updateFile(fileId, {
+            isDeleting: false
+          })
+        }
       }
     }
   }
@@ -391,8 +485,10 @@ export function RawUploadWizard({ studyAccession, name }) {
   /** removes a file from the form only, does not touch server data */
   function deleteFileFromForm(fileId) {
     setFormState(prevFormState => {
+      console.log('prevFormState:', prevFormState)
       const newFormState = _cloneDeep(prevFormState)
       newFormState.files = newFormState.files.filter(f => f._id != fileId)
+      console.log('newFormState:', newFormState)
       return newFormState
     })
   }
@@ -433,8 +529,10 @@ export function RawUploadWizard({ studyAccession, name }) {
   useEffect(() => {
     fetchStudyFileInfo(studyAccession).then(response => {
       response.files.forEach(file => formatFileFromServer(file))
+      // debugger
       setIsAnnDataExperience(
-        !response.files?.filter(AnnDataFileFilter)[0]?.ann_data_file_info?.reference_file &&
+        (response.files?.filter(AnnDataFileFilter)[0]?.ann_data_file_info.data_fragments.length > 0 ||
+        response.files?.filter(AnnDataFileFilter)[0]?.ann_data_file_info?.reference_file === false) &&
         response.feature_flags?.ingest_anndata_file)
       setServerState(response)
       setFormState(_cloneDeep(response))
