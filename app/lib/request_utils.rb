@@ -192,7 +192,7 @@ class RequestUtils
 
   # Get token for client-side access to GCS bucket, depending on study privacy
   # Context: https://github.com/broadinstitute/single_cell_portal_core/pull/1747
-  def self.get_read_access_token(study, user, renew=false)
+  def self.get_read_access_token(study, user, renew: false)
     if study.present? && study.public? && ApplicationController.read_only_firecloud_client.present?
       read_only_client = ApplicationController.read_only_firecloud_client
       if !renew
