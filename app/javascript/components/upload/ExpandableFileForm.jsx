@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faChevronDown, faChevronUp, faTimes } from '@fortawesome/free-solid-svg-icons'
 import Modal from 'react-bootstrap/lib/Modal'
@@ -53,7 +53,7 @@ export default function ExpandableFileForm({
               bucketName={bucketName}
               isAnnDataExperience={isAnnDataExperience} />
           </div>}
-          {getIsSaveEnabled(isAnnDataExperience, allFiles, file) && <SaveDeleteButtons {...{ file, updateFile, saveFile, deleteFile, validationMessages, isAnnDataExperience }} /> }
+          {getIsSaveEnabled(isAnnDataExperience, allFiles, file) && <SaveDeleteButtons {...{ file, updateFile, saveFile, deleteFile, validationMessages, isAnnDataExperience, allFiles }} /> }
         </div>
         {expanded && children}
         <SavingOverlay file={file} updateFile={updateFile} />
@@ -102,10 +102,24 @@ export function SavingOverlay({ file, updateFile }) {
 }
 
 /** renders save and delete buttons for a given file */
-export function SaveDeleteButtons({ file, saveFile, deleteFile, validationMessages = {}, isAnnDataExperience }) {
+export function SaveDeleteButtons({ file, saveFile, deleteFile, validationMessages = {}, isAnnDataExperience, allFiles = [] }) {
   const [showConfirmDeleteModal, setShowConfirmDeleteModal] = useState(false)
   const isExpressionMatrix = isAnnDataExperience && file.data_type === 'expression'
+  // const annDataFile = allFiles.filter(f => f.file_type === 'AnnData')[0]
+  // const [isNotFinalClustering, setIsNotFinalClustering] = useState(
+  //   !isAnnDataExperience ? true : annDataFile?.ann_data_file_info?.data_fragments?.filter(f => f.data_type === 'cluster')?.length >= 1
+  //   )
+  
+  // useEffect(() =>{
+  //   if(!isAnnDataExperience){
+  //     setIsNotFinalClustering(true)
+  //   }else {
+  //     setIsNotFinalClustering(isAnnDataExperience && annDataFile?.ann_data_file_info?.data_fragments?.filter(f => f.data_type === 'cluster')?.length > 1)
 
+  //   }
+  //   // console.log('jj:', annDataFile.ann_data_file_info.data_fragments.filter(f => f.data_type === 'cluster').length)
+  // }, [allFiles])
+  
   if (file.serverFile?.parse_status === 'failed') {
     return <div className="text-center">
       <div className="validation-error"><FontAwesomeIcon icon={faTimes}/> Parse failed</div>
@@ -116,6 +130,8 @@ export function SaveDeleteButtons({ file, saveFile, deleteFile, validationMessag
   return <div className="flexbox-align-center button-panel">
     <SaveButton file={file} saveFile={saveFile} validationMessages={validationMessages} isAnnDataExperience={isAnnDataExperience}/>
     {!isExpressionMatrix && <DeleteButton file={file} deleteFile={deleteFile} setShowConfirmDeleteModal={setShowConfirmDeleteModal}/>}
+    {/* {!isExpressionMatrix && !isNotFinalClustering && <DeleteButton file={file} deleteFile={deleteFile} setShowConfirmDeleteModal={setShowConfirmDeleteModal}/>} */}
+
     <Modal
       show={showConfirmDeleteModal}
       onHide={() => setShowConfirmDeleteModal(false)}
@@ -145,7 +161,7 @@ function SaveButton({ file, saveFile, validationMessages = {}, isAnnDataExperien
     style={{ pointerEvents: saveDisabled ? 'none' : 'auto' }}
     type="button"
     className={file.isDirty ? 'btn btn-primary margin-right' : 'btn terra-secondary-btn margin-right'}
-    onClick={() => saveFile(file)}
+    onClick={() => saveFile(file) }
     disabled={saveDisabled}
     data-testid="file-save">
     Save {file.uploadSelection && <span>&amp; Upload</span>}
@@ -208,7 +224,7 @@ function DeleteButton({ file, deleteFile, setShowConfirmDeleteModal }) {
  */
 function getIsUploadEnabled(isAnnDataExperience, allFiles, file) {
   const alreadyUploaded = allFiles.forEach(fileObj => {
-    if (fileObj.ann_data_file_info?.has_clusters) {
+    if (fileObj?.ann_data_file_info?.has_clusters) {
       return true
     }
   })
@@ -232,7 +248,7 @@ function getIsSaveEnabled(isAnnDataExperience, allFiles, file) {
   // only allow save/delete for updates after an AnnData file has been uploaded
   let alreadyUploaded = false
   allFiles.forEach(fileObj => {
-    if (fileObj.ann_data_file_info?.data_fragments.length > 0) {
+    if (fileObj?.ann_data_file_info?.data_fragments.length > 0) {
       alreadyUploaded = true
     }
   })

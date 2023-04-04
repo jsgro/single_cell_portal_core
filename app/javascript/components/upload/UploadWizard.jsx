@@ -376,89 +376,57 @@ export function RawUploadWizard({ studyAccession, name }) {
     let fileToDelete = file
     let fileId = file._id
 
-    // in AnnData case of saving file when you're doing an update
-    if (isAnnDataExperience) {
-      if (file.status === 'new' || file?.serverFile?.parse_status === 'failed') {
-        deleteFileFromForm(fileId)
-      } else if (fileToDelete.data_type === 'expression') {
-        // only clear the form, should not actually delete the expression data, only update if new stuff is presented
-        deleteFileFromForm(fileId)
-      } else if (fileToDelete.data_type === 'cluster') {
-        const annDataFile = formState.files.filter(AnnDataFileFilter)[0]
+    // if AnnDataExperience clusterings need to be handled like an update
+    if (isAnnDataExperience && fileToDelete.data_type === 'cluster') {
+      const annDataFile = formState.files.filter(AnnDataFileFilter)[0]
+      const fragmentsInAnnDataFile = annDataFile.ann_data_file_info.data_fragments
+      if (annDataFile.ann_data_file_info.data_fragments.filter(f => f.data_type === 'cluster').length > 1) {
+        const newClusteringsArray = fragmentsInAnnDataFile.filter(item => item !== file)
+        annDataFile.ann_data_file_info.data_fragments = newClusteringsArray
+        fileToDelete = annDataFile
+        fileId = annDataFile._id
 
-        const fragmentsInAnnDataFile = annDataFile.ann_data_file_info.data_fragments
-        if (annDataFile.ann_data_file_info.data_fragments.filter(f => f.data_type === 'cluster').length > 1) {
-          const newClusteringsArray = fragmentsInAnnDataFile.filter(item => item !== file)
-          annDataFile.ann_data_file_info.data_fragments = newClusteringsArray
-          fileToDelete = annDataFile
-          fileId = annDataFile._id
+        const fileSize = fileToDelete.uploadSelection?.size
+        let studyFileId = fileToDelete._id
+        const isChunked = fileSize > CHUNK_SIZE
+        let chunkStart = 0
+        let chunkEnd = Math.min(CHUNK_SIZE, fileSize)
+        const studyFileData = formatFileForApi(fileToDelete, chunkStart, chunkEnd)
 
-          const fileSize = fileToDelete.uploadSelection?.size
-          let studyFileId = fileToDelete._id
-          const isChunked = fileSize > CHUNK_SIZE
-          let chunkStart = 0
-          let chunkEnd = Math.min(CHUNK_SIZE, fileSize)
-          const studyFileData = formatFileForApi(fileToDelete, chunkStart, chunkEnd)
-
-          try {
-            let response
-            const requestCanceller = new RequestCanceller(studyFileId)
-            if (fileSize) {
-              updateFile(studyFileId, { isSaving: true, cancelUpload: () => cancelUpload(requestCanceller) })
-              if (isAnnDataExperience) {
-                updateFile(file._id, { isDeleting: true })
-              }
-            } else {
-              // if there isn't an associated file upload, don't allow the user to cancel the request
-              updateFile(studyFileId, { isSaving: true })
-              if (isAnnDataExperience) {
-                updateFile(file._id, { isDeleting: true })
-              }
-            }
-
-            response = await updateStudyFile({
-              studyAccession, studyFileId, studyFileData, isChunked, chunkStart, chunkEnd, fileSize, requestCanceller,
-              onProgress: e => handleSaveProgress(e, studyFileId, fileSize, chunkStart)
-            })
-
-            handleSaveResponse(response, isChunked, requestCanceller, file !== fileToDelete ? file : null)
-            // copy over the new id from the server
-            studyFileId = response._id
-            requestCanceller.fileId = studyFileId
-            if (isChunked && !requestCanceller.wasCancelled) {
-              while (chunkEnd < fileSize && !requestCanceller.wasCancelled) {
-                chunkStart += CHUNK_SIZE
-                chunkEnd = Math.min(chunkEnd + CHUNK_SIZE, fileSize)
-                const chunkApiData = formatFileForApi(file, chunkStart, chunkEnd)
-                response = await sendStudyFileChunk({
-                  studyAccession, studyFileId, studyFileData: chunkApiData, chunkStart, chunkEnd, fileSize, requestCanceller,
-                  onProgress: e => handleSaveProgress(e, studyFileId, fileSize, chunkStart)
-                })
-              }
-              handleSaveResponse(response, false, requestCanceller, file !== fileToDelete ? file : null)
-            }
-          } catch (error) {
-            Store.addNotification(failureNotification(<span>{fileToDelete.name} failed to delete<br />{error}</span>))
-            updateFile(studyFileId, {
-              isSaving: false
-            })
-            updateFile(file._id, {
-              isDeleting: false
-            })
-          }
-        } else {
-          console.log('cannot delete')
-        }
-
-      } else {
-        updateFile(fileId, { isDeleting: true })
         try {
-          await deleteFileFromServer(fileId)
-          deleteFileFromForm(fileId)
-          Store.addNotification(successNotification(`${file.name} deleted successfully`))
+          let response
+          const requestCanceller = new RequestCanceller(studyFileId)
+
+          updateFile(studyFileId, { isSaving: true })
+          updateFile(file._id, { isDeleting: true })
+
+          response = await updateStudyFile({
+            studyAccession, studyFileId, studyFileData, isChunked, chunkStart, chunkEnd, fileSize, requestCanceller,
+            onProgress: e => handleSaveProgress(e, studyFileId, fileSize, chunkStart)
+          })
+
+          handleSaveResponse(response, isChunked, requestCanceller, file !== fileToDelete ? file : null)
+          // copy over the new id from the server
+          studyFileId = response._id
+          requestCanceller.fileId = studyFileId
+          if (isChunked && !requestCanceller.wasCancelled) {
+            while (chunkEnd < fileSize && !requestCanceller.wasCancelled) {
+              chunkStart += CHUNK_SIZE
+              chunkEnd = Math.min(chunkEnd + CHUNK_SIZE, fileSize)
+              const chunkApiData = formatFileForApi(file, chunkStart, chunkEnd)
+              response = await sendStudyFileChunk({
+                studyAccession, studyFileId, studyFileData: chunkApiData, chunkStart, chunkEnd, fileSize, requestCanceller,
+                onProgress: e => handleSaveProgress(e, studyFileId, fileSize, chunkStart)
+              })
+            }
+            handleSaveResponse(response, false, requestCanceller, file !== fileToDelete ? file : null)
+          }
         } catch (error) {
-          Store.addNotification(failureNotification(<span>{file.name} failed to delete<br />{error.message}</span>))
-          updateFile(fileId, {
+          Store.addNotification(failureNotification(<span>{file.name} failed to delete<br />{error}</span>))
+          updateFile(studyFileId, {
+            isSaving: false
+          })
+          updateFile(file._id, {
             isDeleting: false
           })
         }
