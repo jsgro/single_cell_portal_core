@@ -89,7 +89,6 @@ export function RawUploadWizard({ studyAccession, name }) {
 
 
   // used for toggling between the split view for the upload experiences
-  const [choiceMade, setChoiceMade] = useState(false)
   const [overrideExperienceMode, setOverrideExperienceMode] = useState(false)
   const allowReferenceImageUpload = serverState?.feature_flags?.reference_image_upload
   // used for toggling between classic and AnnData experience of upload wizard
