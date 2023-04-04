@@ -90,6 +90,7 @@ export function RawUploadWizard({ studyAccession, name }) {
 
   // used for toggling between the split view for the upload experiences
   const [choiceMade, setChoiceMade] = useState(false)
+  const [overrideExperienceMode, setOverrideExperienceMode] = useState(false)
   const allowReferenceImageUpload = serverState?.feature_flags?.reference_image_upload
   // used for toggling between classic and AnnData experience of upload wizard
   const [isAnnDataExperience, setIsAnnDataExperience] = useState(false)
@@ -475,12 +476,12 @@ export function RawUploadWizard({ studyAccession, name }) {
   function pollServerState() {
     fetchStudyFileInfo(studyAccession, false).then(response => {
       response.files.forEach(file => formatFileFromServer(file))
+      response.files.length > 0 && setOverrideExperienceMode(true)
       setServerState(oldState => {
         // copy over the menu options since they aren't included in the polling response
         response.menu_options = oldState.menu_options
         return response
       })
-
       setTimeout(pollServerState, POLLING_INTERVAL)
     }).catch(response => {
       // if the get fails, it's very likely that the error recur on a retry
@@ -529,9 +530,9 @@ export function RawUploadWizard({ studyAccession, name }) {
    * @returns The content for the upload wizard, either the steps for upload or the split view for choosing the data upload experience
    */
   function getWizardContent(formState, serverState) {
-    if (!formState?.files.length && !choiceMade && serverState?.feature_flags?.ingest_anndata_file) {
-      return <UploadExperienceSplitter {...{ setIsAnnDataExperience, setChoiceMade }} />
-    } else if (choiceMade || formState?.files.length || !serverState?.feature_flags?.ingest_anndata_file) {
+    if (!formState?.files.length && !overrideExperienceMode && serverState?.feature_flags?.ingest_anndata_file) {
+      return <UploadExperienceSplitter {...{ setIsAnnDataExperience, setOverrideExperienceMode }} />
+    } else if (overrideExperienceMode || formState?.files.length || !serverState?.feature_flags?.ingest_anndata_file) {
       return <> <div className="row wizard-content">
         <div>
           <WizardNavPanel {...{
@@ -586,7 +587,7 @@ export function RawUploadWizard({ studyAccession, name }) {
               <a href={`/single_cell/study/${studyAccession}`}>View study</a> / &nbsp;
               <span title="{serverState?.study?.name}">{serverState?.study?.name}</span>
               {/* only allow switching modes if the user hasn't uploaded a file yet */}
-              {!serverState?.files.length && choiceMade && serverState?.feature_flags?.ingest_anndata_file && getOtherChoiceButton()}
+              {!serverState?.files.length && overrideExperienceMode && serverState?.feature_flags?.ingest_anndata_file && getOtherChoiceButton()}
             </div>
             {getWizardContent(formState, serverState)}
           </div>
