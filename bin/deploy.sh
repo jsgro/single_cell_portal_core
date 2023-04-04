@@ -13,8 +13,8 @@ THIS_DIR="$(cd "$(dirname -- "$0")"; pwd)"
 
 function main {
   # defaults
-  SSH_USER="docker-user"
-  DESTINATION_BASE_DIR='/home/docker-user/deployments/single_cell_portal_core'
+  SSH_USER="jenkins"
+  DESTINATION_BASE_DIR='/home/jenkins/deployments/single_cell_portal_core'
   GIT_BRANCH="master"
   PASSENGER_APP_ENV="production"
   BOOT_COMMAND="bin/remote_deploy.sh"
