@@ -2,6 +2,7 @@
 class DifferentialExpressionResult
   include Mongoid::Document
   include Mongoid::Timestamps
+  include Annotatable # handles getting/setting annotation objects
 
   # minimum number of observed_values, or cells per observed_value
   MIN_OBSERVED_VALUES = 2
@@ -14,8 +15,8 @@ class DifferentialExpressionResult
   ].freeze
 
   # analysis types, e.g. A vs. B and A vs. All
-  DEFAULT_ANALYSIS = 'a-vs-all'.freeze
-  ANALYSIS_TYPES = [DEFAULT_ANALYSIS, 'a-vs-b'].freeze
+  DEFAULT_ANALYSIS = 'one-vs-rest'.freeze
+  ANALYSIS_TYPES = [DEFAULT_ANALYSIS, 'pairwise'].freeze
 
   belongs_to :study
   belongs_to :cluster_group
@@ -41,28 +42,6 @@ class DifferentialExpressionResult
 
   before_validation :set_observed_values, :set_cluster_name
   before_destroy :remove_output_files
-
-  # pointer to source annotation object, either CellMetadatum of ClusterGroup#cell_annotation
-  def annotation_object
-    case annotation_scope
-    when 'study'
-      study.cell_metadata.by_name_and_type(annotation_name, 'group')
-    when 'cluster'
-      cluster_group.cell_annotations.detect do |annotation|
-        annotation[:name] == annotation_name && annotation[:type] == 'group'
-      end
-    end
-  end
-
-  # get query string formatted annotation identifier, e.g. cell_type__ontology_label--group--study
-  def annotation_identifier
-    case annotation_scope
-    when 'study'
-      annotation_object.annotation_select_value
-    when 'cluster'
-      cluster_group.annotation_select_value(annotation_object)
-    end
-  end
 
   ## STUDY FILE GETTERS
   # associated raw count matrix
@@ -154,14 +133,8 @@ class DifferentialExpressionResult
   end
 
   def annotation_exists?
-    case annotation_scope
-    when 'study'
-      CellMetadatum.where(study:, name: annotation_name).exists?
-    when 'cluster'
-      cluster_group.cell_annotations.detect { |a| a.with_indifferent_access[:name] == annotation_name }.present?
-    else
-      # we don't support other annotation scopes
-      false
+    if annotation_object.blank?
+      errors.add(:base, "Annotation: #{annotation_name} (#{annotation_scope}) not found")
     end
   end
 
