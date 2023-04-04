@@ -160,8 +160,12 @@ module Api
       end
 
       def renew_token
-        Rails.logger.info "Renewing token via SCP API for user #{user.id} in study #{@study.accession}"
-        render json: DifferentialExpressionService.get_read_access_token(@study, current_api_user, renew=true)
+        renewing_user = "an unauthenticated user (via read-only service account)"
+        if current_api_user
+          renewing_user = "user #{current_api_user.id}"
+        end
+        Rails.logger.info "Renewing token via SCP API for #{renewing_user} in study #{@study.accession}"
+        render json: RequestUtils.get_read_access_token(@study, current_api_user, renew: true)
       end
 
       swagger_path '/site/studies/{accession}/download' do
