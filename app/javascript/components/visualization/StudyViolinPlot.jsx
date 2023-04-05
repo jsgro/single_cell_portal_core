@@ -33,6 +33,7 @@ function RawStudyViolinPlot({
   studyAccession, genes, cluster, annotation, subsample, consensus, distributionPlot, distributionPoints,
   updateDistributionPlot, setAnnotationList, dimensions={}
 }) {
+  console.log('dimensions', dimensions)
   const [isLoading, setIsLoading] = useState(false)
   // array of gene names as they are listed in the study itself
   const [studyGeneNames, setStudyGeneNames] = useState([])
@@ -50,7 +51,8 @@ function RawStudyViolinPlot({
 
     renderViolinPlot(graphElementId, results, {
       plotType: distributionPlotToUse,
-      showPoints: distributionPoints
+      showPoints: distributionPoints,
+      dimensions
     })
 
     perfTimes.plot = performance.now() - startTime
@@ -112,6 +114,7 @@ function RawStudyViolinPlot({
     if (!isLoading && studyGeneNames.length > 0) {
       const { width, height } = dimensions
       const layoutUpdate = { width, height }
+      console.log('in useUpdateEffect for [dimensions.width, dimensions.height], layoutUpdate:', layoutUpdate)
       Plotly.relayout(graphElementId, layoutUpdate)
     }
   }, [dimensions.width, dimensions.height])
@@ -145,9 +148,10 @@ export default StudyViolinPlot
 
 
 /** Formats expression data for Plotly, draws violin (or box) plot */
-function renderViolinPlot(target, results, { plotType, showPoints }) {
+function renderViolinPlot(target, results, { plotType, showPoints, dimensions }) {
   const traceData = getViolinTraces(results.values, showPoints, plotType)
-  const layout = getViolinLayout(results.rendered_cluster, results.y_axis_title)
+  const layout = getViolinLayout(results.rendered_cluster, results.y_axis_title, dimensions)
+  console.log('in renderViolinPlot, layout', layout)
   Plotly.newPlot(target, traceData, layout)
 }
 
@@ -158,6 +162,7 @@ function updateViolinPlot(target, plotType, showPoints) {
     return map
   }, {})
   const traceData = getViolinTraces(existingData, showPoints, plotType)
+  console.log('in updateViolinPlot, target.layout', target.layout)
   Plotly.react(target, traceData, target.layout)
 }
 
@@ -234,8 +239,11 @@ function getViolinTraces(
 }
 
 /** Get Plotly layout for violin plot */
-function getViolinLayout(title, expressionLabel) {
+function getViolinLayout(title, expressionLabel, dimensions) {
+  const { width, height } = dimensions
   return {
+    width,
+    height,
     title,
     // Force axis labels, including number strings, to be treated as
     // categories.  See Python docs (same generic API as JavaScript):
