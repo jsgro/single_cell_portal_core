@@ -14,33 +14,31 @@ class DifferentialExpressionResult
     DEFAULT_COMP_METHOD, 'logreg', 't-test', 't-test_overestim_var'
   ].freeze
 
-  # analysis types, e.g. A vs. B and A vs. All
-  DEFAULT_ANALYSIS = 'one-vs-rest'.freeze
-  ANALYSIS_TYPES = [DEFAULT_ANALYSIS, 'pairwise'].freeze
-
   belongs_to :study
   belongs_to :cluster_group
   belongs_to :study_file, optional: true
 
   field :cluster_name, type: String # cache name of cluster at time of creation to avoid renaming issues
   field :observed_values, type: Array, default: []
+  # hash of any pairwise comparisons representing possible combinations of labels (may not be exhaustive)
+  # e.g. { A: [B, C, D], B: [C, D], C: [D] }
+  field :pairwise_comparisons, type: Hash, default: {}
   field :annotation_name, type: String
   field :annotation_scope, type: String
   field :computational_method, type: String, default: DEFAULT_COMP_METHOD
-  field :analysis_type, type: String, default: DEFAULT_ANALYSIS
   field :matrix_file_id, type: BSON::ObjectId # associated raw count matrix study file
 
   validates :annotation_scope, inclusion: { in: %w[study cluster] }
   validates :cluster_name, presence: true
   validates :matrix_file_id, presence: true, unless: proc { study_file.present? }
   validates :computational_method, inclusion: { in: SUPPORTED_COMP_METHODS }
-  validates :analysis_type, inclusion: { in: ANALYSIS_TYPES }
   validates :annotation_name, presence: true, uniqueness: { scope: %i[study cluster_group annotation_scope] }
-  validate :has_observed_values?
+  validate :comparisons_available?
   validate :matrix_file_exists?
   validate :annotation_exists?
 
-  before_validation :set_observed_values, :set_cluster_name
+  before_validation :set_cluster_name
+  before_validation :set_observed_values, unless: proc { study_file.present? }
   before_destroy :remove_output_files
 
   ## STUDY FILE GETTERS
@@ -70,22 +68,22 @@ class DifferentialExpressionResult
     end
   end
 
-  # compute the relative path inside a GCS bucket of a DE output file for a given label
-  def bucket_path_for(label)
-    "_scp_internal/differential_expression/#{filename_for(label)}"
+  # compute the relative path inside a GCS bucket of a DE output file for a given label/comparison
+  def bucket_path_for(label, comparison: nil)
+    "_scp_internal/differential_expression/#{filename_for(label, comparison:)}"
   end
 
-  # individual filename of label-specific result
+  # individual filename of label-specific result, or pairwise comparison
   # will convert non-word characters to underscores "_", except plus signs "+" which are changed to "pos"
   # this is to handle cases where + or - are the only difference in labels, such as CD4+ and CD4-
-  def filename_for(label)
-    basename = [
-      cluster_name,
-      annotation_name,
-      label,
-      annotation_scope,
-      computational_method
-    ].map { |val| val.gsub(/\+/, 'pos').gsub(/\W/, '_') }.join('--')
+  def filename_for(label, comparison: nil)
+    if comparison.present?
+      first_label, second_label = [label, comparison].sort # comparisons must be sorted alphabetically
+      values = [cluster_name, annotation_name, first_label, second_label, annotation_scope, computational_method]
+    else
+      values = [cluster_name, annotation_name, label, annotation_scope, computational_method]
+    end
+    basename = values.map { |val| val.gsub(/\+/, 'pos').gsub(/\W/, '_') }.join('--')
     "#{basename}.tsv"
   end
 
@@ -121,9 +119,12 @@ class DifferentialExpressionResult
     self.cluster_name = cluster_group.name
   end
 
-  def has_observed_values?
-    if observed_values.count < MIN_OBSERVED_VALUES
-      errors.add(:observed_values, "must have at least #{MIN_OBSERVED_VALUES} values")
+  def comparisons_available?
+    if observed_values.empty? && pairwise_comparisons.empty?
+      errors.add(:base, 'result is missing both observed_values and pairwise_comparisons')
+    elsif observed_values.count < MIN_OBSERVED_VALUES && pairwise_comparisons.empty?
+      errors.add(:observed_values,
+                 "must have at least #{MIN_OBSERVED_VALUES} values without pairwise_comparisons specified")
     end
   end
 

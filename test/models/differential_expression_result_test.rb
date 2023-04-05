@@ -4,7 +4,7 @@ class DifferentialExpressionResultTest < ActiveSupport::TestCase
 
   before(:all) do
     @user = FactoryBot.create(:user, test_array: @@users_to_clean)
-    @study = FactoryBot.create(:study,
+    @study = FactoryBot.create(:detached_study,
                                name_prefix: 'DifferentialExpressionResult Test',
                                user: @user,
                                test_array: @@studies_to_clean)
@@ -122,6 +122,22 @@ class DifferentialExpressionResultTest < ActiveSupport::TestCase
     end
   end
 
+  test 'should generate pairwise bucket pathname' do
+    name = 'cell_type__custom'
+    result = DifferentialExpressionResult.new(
+      study: @study, cluster_group: @cluster_group, cluster_name: @cluster_group.name, annotation_name: name,
+      annotation_scope: 'study', matrix_file_id: @raw_matrix.id,
+      pairwise_comparisons: { 'Naive B cell' => ['Naive Treg'] }
+    )
+    prefix = "_scp_internal/differential_expression"
+    result.pairwise_comparisons.each_pair do |label, comparisons|
+      comparisons.each do |comparison|
+        expected_filename = "#{prefix}/cluster_diffexp_txt--#{name}--Naive_B_cell--Naive_Treg--study--wilcoxon.tsv"
+        assert_equal expected_filename, result.bucket_path_for(label, comparison:)
+      end
+    end
+  end
+
   test 'should return array of select options for observed outputs' do
     species_opts = {
       dog: 'cluster_diffexp_txt--species--dog--study--wilcoxon.tsv',
@@ -145,6 +161,7 @@ class DifferentialExpressionResultTest < ActiveSupport::TestCase
   end
 
   test 'should clean up files on destroy' do
+    @study.detached = false # temporarily set to false to allow delete code to be called, which is mocked below
     sub_cluster = DifferentialExpressionResult.create(
       study: @study, cluster_group: @cluster_file.cluster_groups.first, annotation_name: 'sub-cluster',
       annotation_scope: 'cluster', matrix_file_id: @raw_matrix.id
@@ -189,10 +206,11 @@ class DifferentialExpressionResultTest < ActiveSupport::TestCase
                                 name: 'de_results_custom.txt')
     @study.cell_metadata.where(name: /cell_type/).each do |meta|
       result = de_file.differential_expression_results.create(
-        study: @study, cluster_group: @cluster_group,
+        study: @study, cluster_group: @cluster_group, observed_values: meta.values,
         annotation_name: meta.name, annotation_scope: 'study', cluster_name: @cluster_group.name
       )
       assert result.valid?
+      assert_equal de_file.id, result.study_file_id
     end
   end
 end
