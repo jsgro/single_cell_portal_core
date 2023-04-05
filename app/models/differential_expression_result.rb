@@ -11,7 +11,7 @@ class DifferentialExpressionResult
   # from https://scanpy.readthedocs.io/en/stable/generated/scanpy.tl.rank_genes_groups.html
   DEFAULT_COMP_METHOD = 'wilcoxon'.freeze
   SUPPORTED_COMP_METHODS = [
-    DEFAULT_COMP_METHOD, 'logreg', 't-test', 't-test_overestim_var'
+    DEFAULT_COMP_METHOD, 'logreg', 't-test', 't-test_overestim_var', 'custom'
   ].freeze
 
   belongs_to :study
