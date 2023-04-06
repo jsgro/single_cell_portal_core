@@ -78,7 +78,7 @@ class DifferentialExpressionResult
   # this is to handle cases where + or - are the only difference in labels, such as CD4+ and CD4-
   def filename_for(label, comparison: nil)
     if comparison.present?
-      first_label, second_label = [label, comparison].sort # comparisons must be sorted alphabetically
+      first_label, second_label = Naturally.sort([label, comparison]) # comparisons must be sorted alphabetically
       values = [cluster_name, annotation_name, first_label, second_label, annotation_scope, computational_method]
     else
       values = [cluster_name, annotation_name, label, annotation_scope, computational_method]
