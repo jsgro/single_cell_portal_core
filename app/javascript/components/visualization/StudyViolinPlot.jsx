@@ -239,7 +239,7 @@ function getViolinLayout(title, expressionLabel, dimensions) {
   const { width, height } = dimensions
   return {
     width,
-    height,
+    height: height + 10,
     title,
     // Force axis labels, including number strings, to be treated as
     // categories.  See Python docs (same generic API as JavaScript):
