@@ -347,10 +347,8 @@ PlotUtils.getPlotDimensions = function({
   hasLabelLegend=false,
   hasTitle=false,
   showRelatedGenesIdeogram=false,
-  showViewOptionsControls=true,
-  doPause=false
+  showViewOptionsControls=true
 }) {
-  // if (doPause) {debugger}
   // Get width, and account for expanding "View Options" after page load
   let baseWidth = $(window).width()
   if (showViewOptionsControls) {
@@ -390,11 +388,6 @@ PlotUtils.getPlotDimensions = function({
   // view: "Something went wrong with axes scaling"
   height = Math.max(height, 200)
   width = Math.max(width, 200)
-
-  console.log('width', width)
-  console.log('height', height)
-
-  // if (doPause) {debugger}
 
   return { width, height }
 }

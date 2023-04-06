@@ -33,7 +33,6 @@ function RawStudyViolinPlot({
   studyAccession, genes, cluster, annotation, subsample, consensus, distributionPlot, distributionPoints,
   updateDistributionPlot, setAnnotationList, dimensions={}
 }) {
-  console.log('dimensions', dimensions)
   const [isLoading, setIsLoading] = useState(false)
   // array of gene names as they are listed in the study itself
   const [studyGeneNames, setStudyGeneNames] = useState([])
@@ -114,7 +113,6 @@ function RawStudyViolinPlot({
     if (!isLoading && studyGeneNames.length > 0) {
       const { width, height } = dimensions
       const layoutUpdate = { width, height }
-      console.log('in useUpdateEffect for [dimensions.width, dimensions.height], layoutUpdate:', layoutUpdate)
       Plotly.relayout(graphElementId, layoutUpdate)
     }
   }, [dimensions.width, dimensions.height])
@@ -151,7 +149,6 @@ export default StudyViolinPlot
 function renderViolinPlot(target, results, { plotType, showPoints, dimensions }) {
   const traceData = getViolinTraces(results.values, showPoints, plotType)
   const layout = getViolinLayout(results.rendered_cluster, results.y_axis_title, dimensions)
-  console.log('in renderViolinPlot, layout', layout)
   Plotly.newPlot(target, traceData, layout)
 }
 
@@ -162,7 +159,6 @@ function updateViolinPlot(target, plotType, showPoints) {
     return map
   }, {})
   const traceData = getViolinTraces(existingData, showPoints, plotType)
-  console.log('in updateViolinPlot, target.layout', target.layout)
   Plotly.react(target, traceData, target.layout)
 }
 

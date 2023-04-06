@@ -442,7 +442,7 @@ export default function ExploreDisplayTabs({
                   studyAccession={studyAccession}
                   updateDistributionPlot={distributionPlot => updateExploreParams({ distributionPlot }, false)}
                   dimensions={getPlotDimensions({
-                    showRelatedGenesIdeogram, showViewOptionsControls, doPause: true
+                    showRelatedGenesIdeogram, showViewOptionsControls
                   })}
                   {...exploreParams}/>
               </div>
