@@ -415,6 +415,8 @@ class IngestJob
       set_subsampling_flags
     when :differential_expression
       create_differential_expression_results
+    when :ingest_differential_expression
+      load_differential_expression_manifest
     when :render_expression_arrays
       launch_image_pipeline_job
     when :image_pipeline
@@ -578,7 +580,7 @@ class IngestJob
   # set corresponding differential expression flags on associated annotation
   def create_differential_expression_results
     annotation_identifier = "#{params_object.annotation_name}--group--#{params_object.annotation_scope}"
-    Rails.logger.info "Creating differential expression results objects for annotation: #{annotation_identifier}"
+    Rails.logger.info "Creating differential expression result object for annotation: #{annotation_identifier}"
     cluster = ClusterGroup.find_by(study_id: study.id, study_file_id: study_file.id)
     matrix_url = params_object.matrix_file_path
     matrix_filename = matrix_url.split("gs://#{study.bucket_id}/").last
@@ -591,6 +593,16 @@ class IngestJob
       matrix_file_id: matrix_file.id
     )
     de_result.save
+  end
+
+  # read the DE manifest file generated during ingest_differential_expression to create DifferentialExpressionResult
+  # entry for given annotation/cluster, and populate any one-vs-rest or pairwise_comparisons
+  def load_differential_expression_manifest
+    de_info = study_file.differential_expression_file_info
+    annotation_identifier = "#{de_info.annotation_name}--group--#{de_info.annotation_scope}"
+    Rails.logger.info "Creating differential expression result object for annotation: #{annotation_identifier} from " \
+                      "user-uploaded file #{study_file.upload_file_name}"
+    # TODO: once SCP-4999 & SCP-5087 are completed
   end
 
   # launch an image pipeline job once :render_expression_arrays completes

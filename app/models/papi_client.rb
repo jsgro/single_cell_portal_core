@@ -24,6 +24,7 @@ class PapiClient
     ingest_cell_metadata: %w[Metadata AnnData],
     ingest_subsample: ['Cluster'],
     differential_expression: ['Cluster'],
+    ingest_differential_expression: ['Differential Expression'],
     render_expression_arrays: ['Cluster'],
     image_pipeline: ['Cluster'],
     ingest_anndata: ['AnnData']
@@ -308,11 +309,13 @@ class PapiClient
     command_line = "python ingest_pipeline.py --study-id #{study.id} --study-file-id #{study_file.id} " \
                    "--user-metrics-uuid #{user_metrics_uuid} #{action}"
 
+    # name of action as a command line options, e.g. --ingest-cluster
+    action_cli_opt = Parameterizable.to_cli_opt(action)
     case action.to_s
     when 'ingest_expression'
       if study_file.file_type == 'Expression Matrix'
         command_line += " --matrix-file #{study_file.gs_url} --matrix-file-type dense"
-      elsif study_file.file_type === 'MM Coordinate Matrix'
+      elsif study_file.file_type == 'MM Coordinate Matrix'
         bundled_files = study_file.bundled_files
         genes_file = bundled_files.detect {|f| f.file_type == '10X Genes File'}
         barcodes_file = bundled_files.detect {|f| f.file_type == '10X Barcodes File'}
@@ -322,19 +325,24 @@ class PapiClient
     when 'ingest_cell_metadata'
       # skip if parent file is AnnData as params_object will format command line
       command_line += " --cell-metadata-file #{study_file.gs_url} --study-accession #{study.accession} " \
-                      "--ingest-cell-metadata" unless study_file.is_anndata?
+                      "#{action_cli_opt}" unless study_file.is_anndata?
       if study_file.use_metadata_convention
         command_line += " --validate-convention --bq-dataset #{CellMetadatum::BIGQUERY_DATASET} " \
                         "--bq-table #{CellMetadatum::BIGQUERY_TABLE}"
       end
     when 'ingest_cluster'
       # skip if parent file is AnnData as params_object will format command line
-      command_line += " --cluster-file #{study_file.gs_url} --ingest-cluster" unless study_file.is_anndata?
+      command_line += " --cluster-file #{study_file.gs_url} #{action_cli_opt}" unless study_file.is_anndata?
     when 'ingest_subsample'
       metadata_file = study.metadata_file
       command_line += " --cluster-file #{study_file.gs_url} --cell-metadata-file #{metadata_file.gs_url} --subsample"
     when 'differential_expression'
       command_line += " --study-accession #{study.accession}"
+    when 'ingest_differential_expression'
+      de_info = study_file.differential_expression_file_info
+      command_line += " --annotation-name #{de_info.annotation_name} --annotation-scope #{de_info.annotation_scope}" \
+                      " --cluster-name #{de_info.cluster_group.name} --differential-expression-file #{study_file.gs_url}" \
+                      " --computational-method #{de_info.computational_method} #{action_cli_opt}"
     when 'image_pipeline'
       # image_pipeline is node-based, so python command line to this point no longer applies
       command_line = 'node expression-scatter-plots.js'
