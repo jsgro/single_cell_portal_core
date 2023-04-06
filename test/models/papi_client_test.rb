@@ -174,7 +174,7 @@ class PapiClientTest < ActiveSupport::TestCase
     annotation_name = 'Category'
     annotation_scope = 'cluster'
     de_file = @study.study_files.build(file_type: 'Differential Expression', upload_file_name: 'de.tsv')
-    de_file.build_differential_expression_file_info(annotation_name: , annotation_scope: , cluster_group:)
+    de_file.build_differential_expression_file_info(annotation_name:, annotation_scope:, cluster_group:)
     de_cmd = @client.get_command_line(study_file: de_file, action: :ingest_differential_expression, user_metrics_uuid:)
     assert de_cmd.any?
     assert de_cmd.include? de_file.id.to_s
