@@ -104,6 +104,13 @@ class DifferentialExpressionResult
     result_files.to_a
   end
 
+  # number of different pairwise comparisons
+  # e.g. { a: [b,c] } => 2 comparisons (a:b, a:c)
+  #      { a: [b,c], b: [c] } => 3 comparisons (a:b, a:c, b:c)
+  def num_pairwise_comparisons
+    pairwise_comparisons.values.map(&:count).reduce(0, &:+)
+  end
+
   private
 
   # find the intersection of annotation values from the source, filtered for cells observed in cluster

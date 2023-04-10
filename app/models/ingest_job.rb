@@ -14,8 +14,8 @@ class IngestJob
 
   # valid ingest actions to perform
   VALID_ACTIONS = %i[
-    ingest_expression ingest_cluster ingest_cell_metadata ingest_anndata subsample differential_expression
-    render_expression_arrays
+    ingest_expression ingest_cluster ingest_cell_metadata ingest_anndata ingest_differential_expression subsample
+    differential_expression render_expression_arrays
   ].freeze
 
   # Mappings between actions & models (for cleaning up data on re-parses)
@@ -23,6 +23,7 @@ class IngestJob
     ingest_expression: Gene,
     ingest_cluster: ClusterGroup,
     ingest_cell_metadata: CellMetadatum,
+    ingest_differential_expression: DifferentialExpressionResult,
     ingest_subsample: ClusterGroup
   }.freeze
 
@@ -901,6 +902,11 @@ class IngestJob
       cluster = ClusterGroup.find_by(study_id: study.id, study_file_id: study_file.id)
       message << "Subsampling has completed for #{cluster.name}"
       message << "Subsamples generated: #{cluster.subsample_thresholds_required.join(', ')}"
+    when :ingest_differential_expression
+      result = DifferentialExpressionResult.find_by(study:, study_file:)
+      message << "Differential expression ingest completed for #{result.annotation_name}"
+      message << "One-vs-rest comparisons: #{result.observed_values.join(', ')}" if result.observed_values.any?
+      message << "Total pairwise comparisons: #{result.num_pairwise_comparisons}" if result.pairwise_comparisons.any?
     when :differential_expression
       message << "Differential expression calculations for #{params_object.cluster_name} have completed"
       message << "Selected annotation: #{params_object.annotation_name} (#{params_object.annotation_scope})"
