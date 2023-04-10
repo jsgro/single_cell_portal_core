@@ -603,7 +603,7 @@ class IngestJob
     annotation_identifier = "#{de_info.annotation_name}--group--#{de_info.annotation_scope}"
     Rails.logger.info "Creating differential expression result object for annotation: #{annotation_identifier} from " \
                       "user-uploaded file #{study_file.upload_file_name}"
-    # TODO: once SCP-4999 & SCP-5087 are completed
+    # TODO: SCP-5096, once SCP-4999 & SCP-5087 are completed
   end
 
   # launch an image pipeline job once :render_expression_arrays completes
