@@ -15,7 +15,7 @@ class DifferentialExpressionResultTest < ActiveSupport::TestCase
     @library_preparation_protocol = Array.new(7, "10X 5' v3")
     @cell_types = ['B cell', 'T cell', 'B cell', 'T cell', 'T cell', 'B cell', 'B cell']
     @custom_cell_types = [
-      'Naive B cell', 'Naive Treg', 'Naive B cell', 'Naive Treg', 'Naive Treg', 'Naive B cell', 'Naive B cell'
+      'Custom 2', 'Custom 10', 'Custom 2', 'Custom 10', 'Custom 10', 'Custom 2', 'Custom 2'
     ]
     @raw_matrix = FactoryBot.create(:expression_file,
                                     name: 'raw.txt',
@@ -127,12 +127,13 @@ class DifferentialExpressionResultTest < ActiveSupport::TestCase
     result = DifferentialExpressionResult.new(
       study: @study, cluster_group: @cluster_group, cluster_name: @cluster_group.name, annotation_name: name,
       annotation_scope: 'study', matrix_file_id: @raw_matrix.id,
-      pairwise_comparisons: { 'Naive B cell' => ['Naive Treg'] }
+      pairwise_comparisons: { 'Custom 10' => ['Custom 2'] }
     )
     prefix = "_scp_internal/differential_expression"
     result.pairwise_comparisons.each_pair do |label, comparisons|
       comparisons.each do |comparison|
-        expected_filename = "#{prefix}/cluster_diffexp_txt--#{name}--Naive_B_cell--Naive_Treg--study--wilcoxon.tsv"
+        # should sort labels naturally and put 'Custom 2' in front of 'Custom 10'
+        expected_filename = "#{prefix}/cluster_diffexp_txt--#{name}--Custom_2--Custom_10--study--wilcoxon.tsv"
         assert_equal expected_filename, result.bucket_path_for(label, comparison:)
       end
     end
