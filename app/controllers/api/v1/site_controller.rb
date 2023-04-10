@@ -69,7 +69,7 @@ module Api
       def check_terra_tos_acceptance
         must_accept = false
         if api_user_signed_in?
-          must_accept = true # current_api_user.must_accept_terra_tos?
+          must_accept = current_api_user.must_accept_terra_tos?
         end
         render json: {must_accept: must_accept}
       end
