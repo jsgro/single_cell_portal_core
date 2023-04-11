@@ -76,10 +76,14 @@ class ApplicationController < ActionController::Base
     end
     begin
       yield
-    rescue RuntimeError => e
-      # Efficiently handle when user needs to accept updated Terra ToS
-      if e.message == "User must accept the latest terms of service."
-        redirect_to exceptions_terra_tos_path and return
+    rescue RestClient::Exception => e
+      if e.http_code === 401
+        # Efficiently and robustly check for error that corresponds to
+        # "User must accept the latest terms of service." for Terra,
+        # but without relying on that particular error message.
+        if user_signed_in? && current_user.must_accept_terra_tos?
+          redirect_to exceptions_terra_tos_path and return
+        end
       end
     end
   ensure
