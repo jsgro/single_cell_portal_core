@@ -83,11 +83,11 @@ class DifferentialExpressionResultTest < ActiveSupport::TestCase
 
   test 'should validate DE results and set observed values' do
     assert @species_result.valid?
-    assert_equal %w[cat dog], @species_result.observed_values.sort
+    assert_equal %w[cat dog], @species_result.one_vs_rest_comparisons.sort
     assert_equal @cluster_group.name, @species_result.cluster_name
 
     assert @disease_result.valid?
-    assert_equal %w[measles none], @disease_result.observed_values.sort
+    assert_equal %w[measles none], @disease_result.one_vs_rest_comparisons.sort
     assert_equal @cluster_group.name, @disease_result.cluster_name
 
     library_result = DifferentialExpressionResult.new(
@@ -101,22 +101,22 @@ class DifferentialExpressionResultTest < ActiveSupport::TestCase
   test 'should retrieve source annotation object' do
     assert @species_result.annotation_object.present?
     assert @species_result.annotation_object.is_a?(CellMetadatum)
-    assert_equal @species_result.observed_values.sort,
+    assert_equal @species_result.one_vs_rest_comparisons.sort,
                  @species_result.annotation_object.values.sort
 
     assert @disease_result.annotation_object.present?
     assert @disease_result.annotation_object.is_a?(Hash) # cell_annotation from ClusterGroup
-    assert_equal @disease_result.observed_values.sort, @disease_result.annotation_object[:values].sort
+    assert_equal @disease_result.one_vs_rest_comparisons.sort, @disease_result.annotation_object[:values].sort
   end
 
   test 'should return relative bucket pathname for individual label' do
     prefix = "_scp_internal/differential_expression"
-    @species_result.observed_values.each do |label|
+    @species_result.one_vs_rest_comparisons.each do |label|
       expected_filename = "#{prefix}/cluster_diffexp_txt--species--#{label}--study--wilcoxon.tsv"
       assert_equal expected_filename, @species_result.bucket_path_for(label)
     end
 
-    @disease_result.observed_values.each do |label|
+    @disease_result.one_vs_rest_comparisons.each do |label|
       expected_filename = "#{prefix}/cluster_diffexp_txt--disease--#{label}--cluster--wilcoxon.tsv"
       assert_equal expected_filename, @disease_result.bucket_path_for(label)
     end
@@ -206,7 +206,7 @@ class DifferentialExpressionResultTest < ActiveSupport::TestCase
                                 name: 'de_results_custom.txt')
     @study.cell_metadata.where(name: /cell_type/).each do |meta|
       result = de_file.differential_expression_results.create(
-        study: @study, cluster_group: @cluster_group, observed_values: meta.values,
+        study: @study, cluster_group: @cluster_group, one_vs_rest_comparisons: meta.values,
         annotation_name: meta.name, annotation_scope: 'study', cluster_name: @cluster_group.name
       )
       assert result.valid?

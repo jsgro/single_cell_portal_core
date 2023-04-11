@@ -905,7 +905,7 @@ class IngestJob
     when :ingest_differential_expression
       result = DifferentialExpressionResult.find_by(study:, study_file:)
       message << "Differential expression ingest completed for #{result.annotation_name}"
-      message << "One-vs-rest comparisons: #{result.observed_values.join(', ')}" if result.observed_values.any?
+      message << "One-vs-rest comparisons: #{result.one_vs_rest_comparisons.join(', ')}" if result.one_vs_rest_comparisons.any?
       message << "Total pairwise comparisons: #{result.num_pairwise_comparisons}" if result.pairwise_comparisons.any?
     when :differential_expression
       message << "Differential expression calculations for #{params_object.cluster_name} have completed"
