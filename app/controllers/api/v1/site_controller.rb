@@ -54,11 +54,11 @@ module Api
           key :tags, [
               'Site'
           ]
-          key :summary, 'Check if user has accepted current Terms of Service'
-          key :description, 'Returns boolean for whether user has accepted current ToS'
+          key :summary, 'Check if user has accepted current Terra Terms of Service'
+          key :description, 'Returns boolean for whether user has accepted current Terra ToS'
           key :operationId, 'site_check_terra_tos_acceptance_path'
           response 200 do
-            key :description, 'Boolean for whether user has accepted current ToS'
+            key :description, 'Boolean for whether user has accepted current Terra ToS'
           end
           response 406 do
             key :description, ApiBaseController.not_acceptable
