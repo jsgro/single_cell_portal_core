@@ -34,6 +34,7 @@ export default function DownloadButton({ searchResults={} }) {
     id="download-button"
     className="btn btn-primary"
     disabled={downloadDisabled}
+    aria-label='Download'
     onClick={() => {setShowModal(!showModal)}}>
     <span>
       <FontAwesomeIcon className="icon-left" icon={faDownload}/> Download

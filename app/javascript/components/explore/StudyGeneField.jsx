@@ -160,7 +160,7 @@ export default function StudyGeneField({ genes, searchGenes, allGenes, speciesLi
       <div className="flexbox align-center">
         <div className="input-group">
           <div className="input-group-append">
-            <Button type="button" data-analytics-name="gene-search-submit" onClick={handleSearch} disabled={searchDisabled}>
+            <Button type="button" aria-label="Search genes" data-analytics-name="gene-search-submit" onClick={handleSearch} disabled={searchDisabled}>
               <FontAwesomeIcon icon={faSearch} />
             </Button>
           </div>
