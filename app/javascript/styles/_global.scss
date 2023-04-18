@@ -876,24 +876,23 @@ figcaption.ck-editor__editable {
   border-bottom: 1px #555 dashed;
 }
 
-.accessible-orange-button {
-    background-color: #C45500;
-    color: #fff;
-    border-color: #C45500;
+.btn-warning-scp {
+  background-color: #C45500;
+  color: #fff;
+  border-color: #C45500;
 }
 
-.accessible-orange-button:hover, .accessible-orange-button:focus{
+.btn-warning-scp:hover, .btn-warning-scp:focus{
   color: #fff;
   background-color: #a54a05;
   border-color: #a54a05;
 }
 
-.accessible-orange-button-icon {
+.btn-warning-scp-icon {
   background-color: #fff;
   color: #C45500;
 }
 
-
-.link-with-blue-background {
+.link-darker-blue {
   color: #1b476d
 }
