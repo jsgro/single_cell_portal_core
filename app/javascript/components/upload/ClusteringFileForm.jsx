@@ -33,6 +33,7 @@ export default function ClusteringFileForm({
     file, allFiles, allowedFileExts, requiredFields
   })
 
+  const isLastClustering = allFiles.filter(f => f.file_type === 'AnnData')[0]?.ann_data_file_info?.data_fragments?.filter(f => f.data_type === 'cluster')?.length === 1
 
   /** create the tooltip and message for the .obsm key name section */
   function obsmKeyNameMessage() {
@@ -78,7 +79,7 @@ export default function ClusteringFileForm({
 
   return <ExpandableFileForm {...{
     file, allFiles, updateFile, saveFile,
-    allowedFileExts, deleteFile, validationMessages, bucketName, isInitiallyExpanded, isAnnDataExperience
+    allowedFileExts, deleteFile, validationMessages, bucketName, isInitiallyExpanded, isAnnDataExperience, isLastClustering
   }}>
     {nameFields(isAnnDataExperience)}
     { (file.is_spatial && !isAnnDataExperience) &&

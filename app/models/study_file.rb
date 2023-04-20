@@ -627,6 +627,8 @@ class StudyFile
   before_validation   :set_file_name_and_data_dir, on: :create
   before_save         :sanitize_name
   after_save          :set_cluster_group_ranges, :set_options_by_file_type
+  after_update        :call_ingest_on_updated_clustering_fragments 
+
   validates_uniqueness_of :upload_file_name, scope: :study_id, unless: Proc.new { |f| f.human_data? }
   validates_presence_of :name
   validates_presence_of :human_fastq_url, if: proc { |f| f.human_data }
@@ -1305,6 +1307,9 @@ class StudyFile
   end
 
   # set ranges for cluster_groups if necessary
+  # emily do similiar in anndata w an aftersave add a method
+  #  on clause like on update as well to prevent occuring on inital create
+  # after_save :my_method, on: :update
   def set_cluster_group_ranges
     if self.file_type == 'Cluster' && self.cluster_groups.any?
       cluster = self.cluster_groups.first
@@ -1324,6 +1329,34 @@ class StudyFile
       end
     end
   end
+
+    # update clustering fragments to be called on updates to study_file
+    def call_ingest_on_updated_clustering_fragments
+
+      # ensure that the update is on the data_fragments before parsing
+      if self.ann_data_file_info.data_fragments_changed?
+        if self.file_type == "AnnData" && (!is_reference_anndata? || is_reference_anndata? != nil) && !self.queued_for_deletion && !self.parsing? 
+
+          do_anndata_file_ingest = FeatureFlaggable.feature_flags_for_instances(study.user, study)['ingest_anndata_file']
+
+          if do_anndata_file_ingest && !is_reference_anndata?
+            params_object = AnnDataIngestParameters.new(
+              anndata_file: self.gs_url, extract: %w[cluster], obsm_keys: self.ann_data_file_info.obsm_key_names
+            )
+
+            self.update(parse_status: 'parsing')
+
+            job = IngestJob.new(
+              study:, study_file: self, user: study.user, action: :ingest_anndata, params_object:
+            )
+            job.delay.push_remote_and_launch_ingest
+        
+            self.update(parse_status: 'parsed')
+
+          end
+        end
+      end
+    end
 
   # handler to set certain options based on a study_file's file_type
   def set_options_by_file_type

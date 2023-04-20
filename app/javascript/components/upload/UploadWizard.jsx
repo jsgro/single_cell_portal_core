@@ -272,6 +272,7 @@ export function RawUploadWizard({ studyAccession, name }) {
   async function saveFile(file) {
     let fileToSave = file
     let studyFileId = file._id
+    debugger
 
     // in AnnData case of saving file when you're doing an update
     if (isAnnDataExperience) {
@@ -279,6 +280,7 @@ export function RawUploadWizard({ studyAccession, name }) {
       // if the file update is on an existing fragment it will have a data_type rather than file_type
       // or if it's a new clustering it won't have a data_type but will have an obsm key name field
       if (file.data_type) {
+        debugger
         const AnnDataFile = formState.files.filter(AnnDataFileFilter)[0]
         if (file.data_type === 'cluster') {
           AnnDataFile.ann_data_file_info.data_fragments['cluster_form_info'] = file
@@ -287,15 +289,17 @@ export function RawUploadWizard({ studyAccession, name }) {
           AnnDataFile.ann_data_file_info.data_fragments['extra_expression_form_info'] = file
         }
         fileToSave = AnnDataFile
+        fileToSave['reference_anndata_file'] = false
         studyFileId = fileToSave._id
       } else {
-        fileToSave = formState.files.find(f => f.file_type === 'AnnData')
-        studyFileId = fileToSave._id
+        debugger
 
         // enable ingest of data by setting reference_anndata_file = false
-        fileToSave['reference_anndata_file'] = false
+        if (fileToSave.file_type === 'AnnData') {fileToSave['reference_anndata_file'] = false}
         formState.files.forEach(fileFormData => {
           if (fileFormData.file_type === 'Cluster') {
+            fileToSave = formState.files.find(f => f.file_type === 'AnnData')
+            studyFileId = fileToSave._id
             fileFormData.data_type = 'cluster'
 
               // mulitple clustering forms are allowed so add each as a fragment to the AnnData file
@@ -324,13 +328,13 @@ export function RawUploadWizard({ studyAccession, name }) {
       const requestCanceller = new RequestCanceller(studyFileId)
       if (fileSize) {
         updateFile(studyFileId, { isSaving: true, cancelUpload: () => cancelUpload(requestCanceller) })
-        if (isAnnDataExperience) {
+        if (isAnnDataExperience && studyFileId !== file._id) {
           updateFile(file._id, { isSaving: true, cancelUpload: () => cancelUpload(requestCanceller) })
         }
       } else {
         // if there isn't an associated file upload, don't allow the user to cancel the request
         updateFile(studyFileId, { isSaving: true })
-        if (isAnnDataExperience) {
+        if (isAnnDataExperience && studyFileId !== file._id) {
           updateFile(file._id, { isSaving: true })
         }
       }
@@ -378,6 +382,7 @@ export function RawUploadWizard({ studyAccession, name }) {
 
     // if AnnDataExperience clusterings need to be handled like an update
     if (isAnnDataExperience && fileToDelete.data_type === 'cluster') {
+      debugger
       const annDataFile = formState.files.filter(AnnDataFileFilter)[0]
       const fragmentsInAnnDataFile = annDataFile.ann_data_file_info.data_fragments
       if (annDataFile.ann_data_file_info.data_fragments.filter(f => f.data_type === 'cluster').length > 1) {
@@ -499,7 +504,7 @@ export function RawUploadWizard({ studyAccession, name }) {
       response.files.forEach(file => formatFileFromServer(file))
       // debugger
       setIsAnnDataExperience(
-        (response.files?.filter(AnnDataFileFilter)[0]?.ann_data_file_info.data_fragments.length > 0 ||
+        (response.files?.filter(AnnDataFileFilter)[0]?.ann_data_file_info?.data_fragments?.length > 0 ||
         response.files?.filter(AnnDataFileFilter)[0]?.ann_data_file_info?.reference_file === false) &&
         response.feature_flags?.ingest_anndata_file)
       setServerState(response)

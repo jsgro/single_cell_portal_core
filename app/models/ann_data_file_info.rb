@@ -106,9 +106,22 @@ class AnnDataFileInfo
 
   # find a data_fragment of a given type based on arbitrary key/value pairs
   # any key/value pairs that don't match return false and fail the check for :detect
+  # also supports finding values as both strings and symbols (for data_type values)
   def find_fragment(**attrs)
     data_fragments.detect do |fragment|
-      !{ **attrs }.map { |k, v| fragment[k] == v }.include?(false)
+      !{ **attrs }.map { |k, v| fragment[k] == v || fragment[k] == v.send(transform_for(v)) }.include?(false)
+    end
+  end
+
+  # handle matching values for both strings & symbols when retrieving data_fragments
+  def transform_for(value)
+    case value.class.name
+    when 'String'
+      :to_sym
+    when 'Symbol'
+      :to_s
+    else
+      :presence
     end
   end
 

@@ -9,7 +9,7 @@ import FileUploadControl from './FileUploadControl'
 /** renders its children inside an expandable form with a header for file selection */
 export default function ExpandableFileForm({
   file, allFiles, updateFile, allowedFileExts, validationMessages, bucketName,
-  saveFile, deleteFile, isInitiallyExpanded, isAnnDataExperience, children
+  saveFile, deleteFile, isInitiallyExpanded, isAnnDataExperience, isLastClustering = false, children
 }) {
   const [expanded, setExpanded] = useState(isInitiallyExpanded || file.status === 'new')
 
@@ -53,7 +53,7 @@ export default function ExpandableFileForm({
               bucketName={bucketName}
               isAnnDataExperience={isAnnDataExperience} />
           </div>}
-          {getIsSaveEnabled(isAnnDataExperience, allFiles, file) && <SaveDeleteButtons {...{ file, updateFile, saveFile, deleteFile, validationMessages, isAnnDataExperience, allFiles }} /> }
+          {getIsSaveEnabled(isAnnDataExperience, allFiles, file) && <SaveDeleteButtons {...{ file, updateFile, saveFile, deleteFile, validationMessages, isAnnDataExperience, allFiles, isLastClustering }} /> }
         </div>
         {expanded && children}
         <SavingOverlay file={file} updateFile={updateFile} />
@@ -102,24 +102,26 @@ export function SavingOverlay({ file, updateFile }) {
 }
 
 /** renders save and delete buttons for a given file */
-export function SaveDeleteButtons({ file, saveFile, deleteFile, validationMessages = {}, isAnnDataExperience, allFiles = [] }) {
+export function SaveDeleteButtons({ file, saveFile, deleteFile, validationMessages = {}, isAnnDataExperience, allFiles = [], isLastClustering = false }) {
   const [showConfirmDeleteModal, setShowConfirmDeleteModal] = useState(false)
   const isExpressionMatrix = isAnnDataExperience && file.data_type === 'expression'
-  // const annDataFile = allFiles.filter(f => f.file_type === 'AnnData')[0]
-  // const [isNotFinalClustering, setIsNotFinalClustering] = useState(
-  //   !isAnnDataExperience ? true : annDataFile?.ann_data_file_info?.data_fragments?.filter(f => f.data_type === 'cluster')?.length >= 1
-  //   )
-  
-  // useEffect(() =>{
-  //   if(!isAnnDataExperience){
-  //     setIsNotFinalClustering(true)
-  //   }else {
-  //     setIsNotFinalClustering(isAnnDataExperience && annDataFile?.ann_data_file_info?.data_fragments?.filter(f => f.data_type === 'cluster')?.length > 1)
+  const annDataFile = allFiles.filter(f => f.file_type === 'AnnData')[0]
+  //   const [isFinalClustering, setIsFinalClustering] = useState(
+  //     !isAnnDataExperience ? false : annDataFile?.ann_data_file_info?.data_fragments?.filter(f => f.data_type === 'cluster')?.length === 1
+  //     )
 
-  //   }
-  //   // console.log('jj:', annDataFile.ann_data_file_info.data_fragments.filter(f => f.data_type === 'cluster').length)
-  // }, [allFiles])
-  
+  //   useEffect(() =>{
+  // console.log('allFiles:', allFiles)
+  //     if(!isAnnDataExperience){
+  //       setIsFinalClustering(false)
+  //     }else if (file.data_type === 'cluster' || file.file_type === 'Cluster') {
+  //       console.log('j:', annDataFile?.ann_data_file_info?.data_fragments?.filter(f => f.data_type === 'cluster')?.length === 1)
+  //       setIsFinalClustering(isAnnDataExperience && !annDataFile?.ann_data_file_info?.data_fragments?.filter(f => f.data_type === 'cluster')?.length === 1)
+  //       console.log('isFinalClustering:', isFinalClustering)
+  //     }
+  //     // console.log('jj:', annDataFile.ann_data_file_info.data_fragments.filter(f => f.data_type === 'cluster').length)
+  //   }, [allFiles])
+
   if (file.serverFile?.parse_status === 'failed') {
     return <div className="text-center">
       <div className="validation-error"><FontAwesomeIcon icon={faTimes}/> Parse failed</div>
@@ -129,8 +131,9 @@ export function SaveDeleteButtons({ file, saveFile, deleteFile, validationMessag
   }
   return <div className="flexbox-align-center button-panel">
     <SaveButton file={file} saveFile={saveFile} validationMessages={validationMessages} isAnnDataExperience={isAnnDataExperience}/>
-    {!isExpressionMatrix && <DeleteButton file={file} deleteFile={deleteFile} setShowConfirmDeleteModal={setShowConfirmDeleteModal}/>}
-    {/* {!isExpressionMatrix && !isNotFinalClustering && <DeleteButton file={file} deleteFile={deleteFile} setShowConfirmDeleteModal={setShowConfirmDeleteModal}/>} */}
+    {!isExpressionMatrix && !isLastClustering && <DeleteButton file={file} deleteFile={deleteFile} setShowConfirmDeleteModal={setShowConfirmDeleteModal}/>}
+    {/* {console.log('!isExpressionMatrix && !isFinalClustering:', !isExpressionMatrix && !isFinalClustering)} */}
+    {/* {!isExpressionMatrix && !isFinalClustering && <DeleteButton file={file} deleteFile={deleteFile} setShowConfirmDeleteModal={setShowConfirmDeleteModal}/>} */}
 
     <Modal
       show={showConfirmDeleteModal}
@@ -157,11 +160,19 @@ export function SaveDeleteButtons({ file, saveFile, deleteFile, validationMessag
 /** renders a save button for a given file */
 function SaveButton({ file, saveFile, validationMessages = {}, isAnnDataExperience }) {
   const saveDisabled = isAnnDataExperience ? false : Object.keys(validationMessages).length > 0
-  let saveButton = <button
+  let saveButton
+
+  if (file.serverFile?.parse_status === 'parsing' && isAnnDataExperience) {
+    saveButton = <OverlayTrigger trigger={['hover', 'focus']} rootClose placement="top" overlay={parsingPopup}>
+      <span className="detail">Parsing <LoadingSpinner/></span>
+    </OverlayTrigger>
+  }
+
+  saveButton = <button
     style={{ pointerEvents: saveDisabled ? 'none' : 'auto' }}
     type="button"
     className={file.isDirty ? 'btn btn-primary margin-right' : 'btn terra-secondary-btn margin-right'}
-    onClick={() => saveFile(file) }
+    onClick={() => saveFile(file)}
     disabled={saveDisabled}
     data-testid="file-save">
     Save {file.uploadSelection && <span>&amp; Upload</span>}
