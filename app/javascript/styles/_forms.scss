@@ -151,12 +151,16 @@
     font-size: 13px;
   }
 
+  tr td {
+    font-size: 12px;
+  }
+
   th:last-child {
     padding-right: 2;
   }
 
   td {
-    padding: 2px;
+    padding: 0 2px;
     vertical-align: baseline;
   }
 }

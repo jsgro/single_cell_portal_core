@@ -49,6 +49,7 @@ function DownloadButton({ bucketId, deFilePath }) {
   )
 }
 
+/** Table of DE data for genes */
 function DifferentialExpressionTable({
   genesToShow, searchGenes, checked, clusterName, annotation, species, changeRadio
 }) {
