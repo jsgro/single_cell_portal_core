@@ -175,6 +175,12 @@ export default function ExploreDisplayTabs({
   // Hash of trace label names to the number of points in that trace
   const [countsByLabel, setCountsByLabel] = useState(null)
 
+  const showDifferentialExpressionTable = (
+    showViewOptionsControls &&
+    deGenes !== null
+  )
+  console.log('in EDT, showDifferentialExpressionTable', showDifferentialExpressionTable)
+
   const plotContainerClass = 'explore-plot-tab-content'
 
   const {
@@ -323,8 +329,7 @@ export default function ExploreDisplayTabs({
     let main
     let side
     if (showViewOptionsControls) {
-      const showDeTable = deGenes !== null
-      if (showDeTable) {
+      if (showDifferentialExpressionTable) {
         // DE table is shown.  Least horizontal space for plots.
         main = 'col-md-9'
         side = 'col-md-3'
@@ -453,6 +458,7 @@ export default function ExploreDisplayTabs({
                     plotPointsSelected,
                     showRelatedGenesIdeogram,
                     showViewOptionsControls,
+                    showDifferentialExpressionTable,
                     scatterColor: exploreParamsWithDefaults.scatterColor,
                     countsByLabel,
                     setCountsByLabel,
@@ -466,7 +472,7 @@ export default function ExploreDisplayTabs({
                   studyAccession={studyAccession}
                   updateDistributionPlot={distributionPlot => updateExploreParams({ distributionPlot }, false)}
                   dimensions={getPlotDimensions({
-                    showRelatedGenesIdeogram, showViewOptionsControls
+                    showRelatedGenesIdeogram, showViewOptionsControls, showDifferentialExpressionTable
                   })}
                   {...exploreParams}/>
               </div>
@@ -480,7 +486,7 @@ export default function ExploreDisplayTabs({
                      exploreParamsWithDefaults?.annotation,
                      exploreParamsWithDefaults?.annotationList?.annotations
                   )}
-                  dimensions={getPlotDimensions({ showViewOptionsControls })}
+                  dimensions={getPlotDimensions({ showViewOptionsControls, showDifferentialExpressionTable })}
                 />
               </div>
             }
@@ -489,7 +495,7 @@ export default function ExploreDisplayTabs({
                 <Heatmap
                   studyAccession={studyAccession}
                   {... exploreParamsWithDefaults}
-                  dimensions={getPlotDimensions({ showViewOptionsControls })}
+                  dimensions={getPlotDimensions({ showViewOptionsControls, showDifferentialExpressionTable })}
                 />
               </div>
             }
@@ -499,7 +505,7 @@ export default function ExploreDisplayTabs({
                   studyAccession={studyAccession}
                   {... exploreParamsWithDefaults}
                   geneLists={exploreInfo.geneLists}
-                  dimensions={getPlotDimensions({ showViewOptionsControls })}
+                  dimensions={getPlotDimensions({ showViewOptionsControls, showDifferentialExpressionTable })}
                 />
               </div>
             }
