@@ -318,6 +318,29 @@ export default function ExploreDisplayTabs({
     setRenderForcer({})
   }, 300)
 
+  /** Get widths for main (plots) and side (options or DE) panels, for current Explore state */
+  function getPanelWidths() {
+    let main
+    let side
+    if (showViewOptionsControls) {
+      const showDeTable = deGenes !== null
+      if (showDeTable) {
+        // DE table is shown.  Least horizontal space for plots.
+        main = 'col-md-9'
+        side = 'col-md-3'
+      } else {
+        // Default state, when side panel is "Options" and not collapsed
+        main = 'col-md-10'
+        side = 'col-md-2'
+      }
+    } else {
+      // When options panel is collapsed.  Maximize horizontal space for plots.
+      main = 'col-md-12'
+      side = 'hidden'
+    }
+    return { main, side }
+  }
+
   return (
     <>
       <div className="row">
@@ -359,7 +382,7 @@ export default function ExploreDisplayTabs({
       </div>
 
       <div className="row explore-tab-content">
-        <div className={showViewOptionsControls ? 'col-md-10' : 'col-md-12'}>
+        <div className={getPanelWidths().main}>
           <div className="explore-plot-tab-content row">
             { showRelatedGenesIdeogram &&
               <RelatedGenesIdeogram
@@ -522,7 +545,7 @@ export default function ExploreDisplayTabs({
             }
           </div>
         </div>
-        <div className={showViewOptionsControls ? 'col-md-2 ' : 'hidden'}>
+        <div className={getPanelWidths().side}>
           <div className="view-options-toggle">
             {!showDifferentialExpressionPanel && !showUpstreamDifferentialExpressionPanel &&
               <>
