@@ -61,12 +61,12 @@ function DifferentialExpressionTable({
             <th>Name</th>
             <th>
               <span className="glossary" data-toggle="tooltip" data-original-title="Log (base 2) of fold change">
-              log<sub>2</sub>(FC)
+              LFC
               </span>
             </th>
             <th>
               <span className="glossary" data-toggle="tooltip" data-original-title="p-value adjusted with Benjamini-Hochberg FDR correction">
-              Adj. p-value
+              Adj. p
               </span>
             </th>
           </tr>
