@@ -68,6 +68,7 @@ to determine which `vault` paths to read from).
 ```
 # Avoid errors caused by Vite in native local SCP using many sockets, e.g.:
 #   "Errno::EMFILE: Failed to open TCP connection to 127.0.0.1:3036 (Too many open files - socket(2) for "127.0.0.1" port 3036"
+# More context: https://github.com/broadinstitute/single_cell_portal_core/pull/1765
 ulimit -Sn 10240
 ```
   - Run `source ~/.zshrc` (or `source ~/.bash_profile`), to update your running shell with those changes
