@@ -353,7 +353,6 @@ PlotUtils.getPlotDimensions = function({
   // Account for options panel and DE table
   let baseWidth = $(window).width()
   if (showViewOptionsControls) {
-    console.log('showDifferentialExpressionTable', showDifferentialExpressionTable)
     const unitWidth = showDifferentialExpressionTable ? 9 : 10
     baseWidth = Math.round(baseWidth * unitWidth / 12)
   }

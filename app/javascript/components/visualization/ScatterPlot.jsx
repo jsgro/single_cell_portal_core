@@ -637,7 +637,6 @@ function getScatterDimensions(scatter, dimensionProps, genes) {
     hasTitle: true
   }, dimensionProps)
 
-  console.log('dimensionProps', dimensionProps)
   return getPlotDimensions(dimensionProps)
 }
 

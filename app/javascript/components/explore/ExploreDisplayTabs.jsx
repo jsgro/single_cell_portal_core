@@ -179,7 +179,6 @@ export default function ExploreDisplayTabs({
     showViewOptionsControls &&
     deGenes !== null
   )
-  console.log('in EDT, showDifferentialExpressionTable', showDifferentialExpressionTable)
 
   const plotContainerClass = 'explore-plot-tab-content'
 

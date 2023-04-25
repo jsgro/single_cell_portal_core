@@ -3,6 +3,12 @@ import React, { useState, useEffect, useRef } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faArrowLeft, faDownload, faSearch, faTimes } from '@fortawesome/free-solid-svg-icons'
 import Button from 'react-bootstrap/lib/Button'
+import {
+  createColumnHelper,
+  flexRender,
+  getCoreRowModel,
+  useReactTable
+} from '@tanstack/react-table'
 
 import DifferentialExpressionModal from '~/components/explore/DifferentialExpressionModal'
 import DifferentialExpressionGroupPicker from '~/components/visualization/controls/DifferentialExpressionGroupPicker'
@@ -49,65 +55,163 @@ function DownloadButton({ bucketId, deFilePath }) {
   )
 }
 
+const columnHelper = createColumnHelper()
+
+// ,
+//   columnHelper.accessor('age', {
+//     header: () => 'Age',
+//     cell: info => info.renderValue(),
+//     footer: info => info.column.id
+//   }),
+//   columnHelper.accessor('visits', {
+//     header: () => <span>Visits</span>,
+//     footer: info => info.column.id
+//   }),
+//   columnHelper.accessor('status', {
+//     header: 'Status',
+//     footer: info => info.column.id
+//   }),
+//   columnHelper.accessor('progress', {
+//     header: 'Profile Progress',
+//     footer: info => info.column.id
+//   })
+// ]
+
 /** Table of DE data for genes */
 function DifferentialExpressionTable({
   genesToShow, searchGenes, checked, clusterName, annotation, species, changeRadio
 }) {
+  console.log('genesToShow', genesToShow)
+  // const table = useReactTable({
+  //   data,
+  //   columns,
+  //   getCoreRowModel: getCoreRowModel()
+  // })
+
+  const columns = React.useMemo(() => [
+    columnHelper.accessor('name', {
+      header: () => 'Name',
+      cell: (deGene, i) => {
+        return (
+          <label
+            title="Click to view gene expression.  Arrow down (↓) and up (↑) to quickly scan."
+          >
+            <input
+              type="radio"
+              checked={checked[deGene.getValue()]}
+              data-analytics-name="selected-gene-differential-expression"
+              value={deGene.getValue()}
+              onClick={event => {
+                searchGenes([deGene.getValue()])
+
+                // Log this search to Mixpanel
+                const rank = i
+                logSearchFromDifferentialExpression(
+                  event, deGene, species, rank,
+                  clusterName, annotation.name
+                )
+
+                changeRadio(event)
+              }}/>
+            {deGene.getValue()}
+          </label>
+        )
+      }
+    })
+  ]
+  , []
+  )
+
+  const data = React.useMemo(
+    () => genesToShow,
+    [genesToShow]
+  )
+
+  const table = useReactTable({
+    columns,
+    data,
+    getCoreRowModel: getCoreRowModel()
+  })
+
   return (
     <>
-      <table className="de-table table table-terra table-scp-compact">
-        <thead>
-          <tr>
-            <th>Name</th>
-            <th>
-              <span className="glossary" data-toggle="tooltip" data-original-title="Log (base 2) of fold change">
-              LFC
-              </span>
-            </th>
-            <th>
-              <span className="glossary" data-toggle="tooltip" data-original-title="p-value adjusted with Benjamini-Hochberg FDR correction">
-              Adj. p
-              </span>
-            </th>
-          </tr>
-        </thead>
+      <table className='de-table'>
         <tbody>
-          {genesToShow.map((deGene, i) => {
-            return (
-              <tr className="de-gene-row" key={i}>
-                <td>
-                  <label
-                    title="Click to view gene expression.  Arrow down (↓) and up (↑) to quickly scan."
-                  ><input
-                      type="radio"
-                      checked={checked[deGene.name]}
-                      data-analytics-name="selected-gene-differential-expression"
-                      value={deGene.name}
-                      onClick={event => {
-                        searchGenes([deGene.name])
-
-                        // Log this search to Mixpanel
-                        const rank = i
-                        logSearchFromDifferentialExpression(
-                          event, deGene, species, rank,
-                          clusterName, annotation.name
-                        )
-
-                        changeRadio(event)
-                      }}/>
-                    {deGene.name}</label></td>
-                <td>{deGene.log2FoldChange}</td>
-                <td>{deGene.pvalAdj}</td>
-              </tr>)
-          })}
+          {table.getRowModel().rows.map(row => (
+            <tr key={row.id}>
+              {row.getVisibleCells().map(cell => (
+                <td key={cell.id}>
+                  {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                </td>
+              ))}
+            </tr>
+          )
+          )}
         </tbody>
       </table>
       <a href="https://forms.gle/qPGH5J9oFkurpbD76" target="_blank" title="Take a 1 minute survey">
-      Help improve this new feature
+          Help improve this new feature
       </a>
     </>
   )
 }
+
+
+//   return (
+//     <>
+//       <table className="de-table table table-terra table-scp-compact">
+//         <thead>
+//           <tr>
+//             <th>Name</th>
+//             <th>
+//               <span className="glossary" data-toggle="tooltip" data-original-title="Log (base 2) of fold change">
+//               LFC
+//               </span>
+//             </th>
+//             <th>
+//               <span className="glossary" data-toggle="tooltip" data-original-title="p-value adjusted with Benjamini-Hochberg FDR correction">
+//               Adj. p
+//               </span>
+//             </th>
+//           </tr>
+//         </thead>
+//         <tbody>
+//           {genesToShow.map((deGene, i) => {
+//             return (
+//               <tr className="de-gene-row" key={i}>
+//                 <td>
+//                   <label
+//                     title="Click to view gene expression.  Arrow down (↓) and up (↑) to quickly scan."
+//                   ><input
+//                       type="radio"
+//                       checked={checked[deGene.name]}
+//                       data-analytics-name="selected-gene-differential-expression"
+//                       value={deGene.name}
+//                       onClick={event => {
+//                         searchGenes([deGene.name])
+
+//                         // Log this search to Mixpanel
+//                         const rank = i
+//                         logSearchFromDifferentialExpression(
+//                           event, deGene, species, rank,
+//                           clusterName, annotation.name
+//                         )
+
+//                         changeRadio(event)
+//                       }}/>
+//                     {deGene.name}</label></td>
+//                 <td>{deGene.log2FoldChange}</td>
+//                 <td>{deGene.pvalAdj}</td>
+//               </tr>)
+//           })}
+//         </tbody>
+//       </table>
+//       <a href="https://forms.gle/qPGH5J9oFkurpbD76" target="_blank" title="Take a 1 minute survey">
+//       Help improve this new feature
+//       </a>
+//     </>
+//   )
+// }
 
 /** Differential expression panel shown at right in Explore tab */
 export default function DifferentialExpressionPanel({
