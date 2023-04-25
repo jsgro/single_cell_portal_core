@@ -117,6 +117,18 @@ function DifferentialExpressionTable({
           </label>
         )
       }
+    }),
+    columnHelper.accessor('log2FoldChange', {
+      header: () => 'LFC',
+      cell: deGene => {
+        return deGene.getValue()
+      }
+    }),
+    columnHelper.accessor('pvalAdj', {
+      header: () => 'Adj. p',
+      cell: deGene => {
+        return deGene.getValue()
+      }
     })
   ]
   , []
@@ -135,7 +147,7 @@ function DifferentialExpressionTable({
 
   return (
     <>
-      <table className='de-table'>
+      <table className="de-table table table-terra table-scp-compact">
         <tbody>
           {table.getRowModel().rows.map(row => (
             <tr key={row.id}>
