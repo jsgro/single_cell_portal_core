@@ -82,26 +82,34 @@ function DifferentialExpressionTable({
   genesToShow, searchGenes, checked, clusterName, annotation, species, changeRadio
 }) {
   console.log('genesToShow', genesToShow)
-  // const table = useReactTable({
-  //   data,
-  //   columns,
-  //   getCoreRowModel: getCoreRowModel()
-  // })
+
+  const [rowSelection, setRowSelection] = useState({})
 
   const columns = React.useMemo(() => [
     columnHelper.accessor('name', {
-      header: () => 'Name',
-      cell: (deGene, i) => {
+      header: ({ table }) => (
+        <label>
+          <input
+            type="checkbox"
+            checked={table.getIsAllRowsSelected()}
+            indeterminate={table.getIsSomeRowsSelected().toString()}
+            onChange={table.getToggleAllRowsSelectedHandler()}
+          />
+          Name
+        </label>
+      ),
+      cell: deGene => {
+        const i = deGene.i
         return (
           <label
             title="Click to view gene expression.  Arrow down (↓) and up (↑) to quickly scan."
           >
             <input
-              type="radio"
-              checked={checked[deGene.getValue()]}
+              type="checkbox"
+              checked={deGene.row.getIsSelected()}
               data-analytics-name="selected-gene-differential-expression"
               value={deGene.getValue()}
-              onClick={event => {
+              onChange={event => {
                 searchGenes([deGene.getValue()])
 
                 // Log this search to Mixpanel
@@ -131,7 +139,7 @@ function DifferentialExpressionTable({
       }
     })
   ]
-  , []
+  , [genesToShow]
   )
 
   const data = React.useMemo(
@@ -142,7 +150,13 @@ function DifferentialExpressionTable({
   const table = useReactTable({
     columns,
     data,
-    getCoreRowModel: getCoreRowModel()
+    getCoreRowModel: getCoreRowModel(),
+    state: {
+      rowSelection
+    },
+    enableRowSelection: true, // enable row selection for all rows
+    // enableRowSelection: row => row.original.age > 18, // or enable row selection conditionally per row
+    onRowSelectionChange: setRowSelection
   })
 
   return (
