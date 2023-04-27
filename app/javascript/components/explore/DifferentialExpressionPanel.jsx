@@ -42,6 +42,7 @@ function initChecked(deGenes, checkedGene) {
   return checked
 }
 
+/** A small icon-like button that downloads DE data as a file */
 function DownloadButton({ bucketId, deFilePath }) {
   return (
     <a className="de-download-button"
@@ -57,32 +58,10 @@ function DownloadButton({ bucketId, deFilePath }) {
 
 const columnHelper = createColumnHelper()
 
-// ,
-//   columnHelper.accessor('age', {
-//     header: () => 'Age',
-//     cell: info => info.renderValue(),
-//     footer: info => info.column.id
-//   }),
-//   columnHelper.accessor('visits', {
-//     header: () => <span>Visits</span>,
-//     footer: info => info.column.id
-//   }),
-//   columnHelper.accessor('status', {
-//     header: 'Status',
-//     footer: info => info.column.id
-//   }),
-//   columnHelper.accessor('progress', {
-//     header: 'Profile Progress',
-//     footer: info => info.column.id
-//   })
-// ]
-
 /** Table of DE data for genes */
 function DifferentialExpressionTable({
   genesToShow, searchGenes, checked, clusterName, annotation, species, changeRadio
 }) {
-  console.log('genesToShow', genesToShow)
-
   const [rowSelection, setRowSelection] = useState({})
 
   const columns = React.useMemo(() => [
@@ -100,6 +79,7 @@ function DifferentialExpressionTable({
       ),
       cell: deGene => {
         const i = deGene.i
+
         return (
           <label
             title="Click to view gene expression.  Arrow down (↓) and up (↑) to quickly scan."
@@ -110,7 +90,16 @@ function DifferentialExpressionTable({
               data-analytics-name="selected-gene-differential-expression"
               value={deGene.getValue()}
               onChange={event => {
-                searchGenes([deGene.getValue()])
+                deGene.row.toggleSelected()
+
+                let selectedGenes = table.getSelectedRowModel().rows.map(r => r.original.name)
+                const thisGene = deGene.getValue()
+                if (deGene.row.getIsSelected()) {
+                  selectedGenes = selectedGenes.filter(g => g !== thisGene)
+                } else {
+                  selectedGenes.push(thisGene)
+                }
+                searchGenes(selectedGenes)
 
                 // Log this search to Mixpanel
                 const rank = i
@@ -119,7 +108,7 @@ function DifferentialExpressionTable({
                   clusterName, annotation.name
                 )
 
-                changeRadio(event)
+                deGene.row.getToggleSelectedHandler()
               }}/>
             {deGene.getValue()}
           </label>
