@@ -151,7 +151,11 @@ class User
         )
         token_vals = client.fetch_access_token
         expires_at = Time.zone.now + token_vals['expires_in'].to_i.seconds
-        user_access_token = {'access_token' => token_vals['access_token'], 'expires_in' => token_vals['expires_in'], 'expires_at' => expires_at}
+        user_access_token = {
+          'access_token' => token_vals['access_token'],
+          'expires_in' => token_vals['expires_in'],
+          'expires_at' => expires_at
+        }
         self.update!(access_token: user_access_token)
         user_access_token
       rescue => e
@@ -379,7 +383,7 @@ class User
       true
     rescue => e
       # report error upstream to Sentry
-      # cannot report to MixPanel via MetricsService#report_error as there is no associated HTTP request
+      # cannot report to Mixpanel via MetricsService#report_error as there is no associated HTTP request
       Rails.logger.error "Error checking user:#{id} Terra ToS status: #{e.class.name} - #{e.message}"
       ErrorTracker.report_exception(e, self)
       false # we don't know the status of the user here, so default to false

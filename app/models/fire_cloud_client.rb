@@ -232,6 +232,11 @@ class FireCloudClient
       context = " encountered when requesting '#{path}', attempt ##{current_retry}"
       log_message = "#{e.message}: #{e.http_body}; #{context}"
       Rails.logger.error log_message
+
+      if e.http_code == 401
+        raise e
+      end
+
       # only retry if status code indicates a possible temporary error, and we are under the retry limit and
       # not calling a method that is blocked from retries
       if should_retry?(e.http_code) && retry_count < ApiHelpers::MAX_RETRY_COUNT && !ERROR_IGNORE_LIST.include?(path)
@@ -1258,12 +1263,25 @@ class FireCloudClient
   #   - +project_name+ (String) => Name of a FireCloud billing project in which pet service account resides
   #
   # * *returns*
-  #   - +String+ pet service account OAuth2 access_token
+  #   - (Hash) => OAuth2 access token hash, with the following attributes
+  #     - +access_token+ (String) => OAuth2 access token
+  #     - +expires_in+ (Integer) => duration of token, in seconds
+  #     - +expires_at+ (String) => timestamp of when token expires
   def get_pet_service_account_token(project_name)
     path = BASE_SAM_SERVICE_URL + "/api/google/v1/user/petServiceAccount/#{project_name}/token"
-    # normal scopes, plus RO access for storage objects (removes unnecessary billing scope from GOOGLE_SCOPES)
+    # normal scopes, plus read-only access for storage objects,
+    # which omits unnecessary billing scope from GOOGLE_SCOPES
     token = process_firecloud_request(:post, path, GOOGLE_SCOPES.to_json)
     token.gsub(/\"/, '') # gotcha for removing escaped quotes in response body
+
+    expires_in = 3600 # 1 hour, in seconds
+    expires_at = Time.zone.now + expires_in
+
+    return {
+      'access_token' => token,
+      'expires_in' => expires_in,
+      'expires_at' => expires_at
+    }
   end
 
   # get JSON keyfile contents for a user's pet service account in the requested project

@@ -78,9 +78,11 @@ Rails.application.routes.draw do
           get 'status', to: 'status#index'
           scope :site do
             get 'studies', to: 'site#studies', as: :site_studies
+            get 'check_terra_tos_acceptance', to: 'site#check_terra_tos_acceptance', as: :site_check_terra_tos_acceptance
             get 'studies/:accession', to: 'site#view_study', as: :site_study_view
             get 'studies/:accession/download', to: 'site#download_data', as: :site_study_download_data
             get 'studies/:accession/stream', to: 'site#stream_data', as: :site_study_stream_data
+            get 'studies/:accession/renew_token', to: 'site#renew_token', as: :site_study_renew_token
 
           end
           scope :search do
