@@ -58,6 +58,33 @@ function DownloadButton({ bucketId, deFilePath }) {
 
 const columnHelper = createColumnHelper()
 
+/**
+ * Tri-state checkbox from React Table example
+ * Adapted from: https://github.com/TanStack/table/blob/367a27286d44ab48262c71d8042b169a4e564316/examples/react/expanding/src/main.tsx#LL323C33-L323C33
+ */
+function IndeterminateCheckbox({
+  indeterminate,
+  className = '',
+  ...rest
+}) {
+  const ref = React.useRef(!null)
+
+  React.useEffect(() => {
+    if (typeof indeterminate === 'boolean') {
+      ref.current.indeterminate = !rest.checked && indeterminate
+    }
+  }, [ref, indeterminate])
+
+  return (
+    <input
+      type="checkbox"
+      ref={ref}
+      className={`${className } cursor-pointer`}
+      {...rest}
+    />
+  )
+}
+
 /** Table of DE data for genes */
 function DifferentialExpressionTable({
   genesToShow, searchGenes, checked, clusterName, annotation, species, changeRadio
@@ -68,11 +95,12 @@ function DifferentialExpressionTable({
     columnHelper.accessor('name', {
       header: ({ table }) => (
         <label>
-          <input
-            type="checkbox"
-            checked={table.getIsAllRowsSelected()}
-            indeterminate={table.getIsSomeRowsSelected().toString()}
-            onChange={table.getToggleAllRowsSelectedHandler()}
+          <IndeterminateCheckbox
+            {...{
+              checked: table.getIsAllPageRowsSelected(),
+              indeterminate: table.getIsSomePageRowsSelected(),
+              onChange: table.getToggleAllPageRowsSelectedHandler()
+            }}
           />
           Name
         </label>
