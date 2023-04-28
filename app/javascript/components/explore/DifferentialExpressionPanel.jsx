@@ -85,11 +85,26 @@ function IndeterminateCheckbox({
   )
 }
 
+/** Search genes from DE table */
+function searchGenesFromTable(selectedGenes, searchGenes, logProps) {
+  searchGenes(selectedGenes)
+
+  // Log this search to Mixpanel
+  logSearchFromDifferentialExpression(
+    logProps.event, selectedGenes, logProps.species, logProps.rank,
+    logProps.clusterName, logProps.annotation.name
+  )
+}
+
 /** Table of DE data for genes */
 function DifferentialExpressionTable({
   genesToShow, searchGenes, checked, clusterName, annotation, species, changeRadio
 }) {
   const [rowSelection, setRowSelection] = useState({})
+
+  const logProps = {
+    species, clusterName, annotation
+  }
 
   const columns = React.useMemo(() => [
     columnHelper.accessor('name', {
@@ -99,15 +114,24 @@ function DifferentialExpressionTable({
             {...{
               checked: table.getIsAllPageRowsSelected(),
               indeterminate: table.getIsSomePageRowsSelected(),
-              onChange: table.getToggleAllPageRowsSelectedHandler()
+              onChange(event) {
+                const handle = table.getToggleAllPageRowsSelectedHandler()
+                handle(event)
+
+                const isAllSelected = !table.getIsAllPageRowsSelected()
+                const allGenes = table.getRowModel().rows.map(r => r.original.name)
+                const selectedGenes = isAllSelected ? allGenes : []
+
+                logProps.event = event
+                logProps.rank = -1
+                searchGenesFromTable(selectedGenes, searchGenes, logProps)
+              }
             }}
           />
           Name
         </label>
       ),
       cell: deGene => {
-        const i = deGene.i
-
         return (
           <label
             title="Click to view gene expression.  Arrow down (↓) and up (↑) to quickly scan."
@@ -127,14 +151,11 @@ function DifferentialExpressionTable({
                 } else {
                   selectedGenes.push(thisGene)
                 }
-                searchGenes(selectedGenes)
 
-                // Log this search to Mixpanel
-                const rank = i
-                logSearchFromDifferentialExpression(
-                  event, deGene, species, rank,
-                  clusterName, annotation.name
-                )
+                logProps.event = event
+                logProps.rank = deGene.i
+
+                searchGenesFromTable(selectedGenes, searchGenes, logProps)
 
                 deGene.row.getToggleSelectedHandler()
               }}/>
