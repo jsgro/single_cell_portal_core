@@ -114,7 +114,7 @@ export default function DifferentialExpressionGroupPicker({
     <>
       {!deGenes &&
         <div className="flexbox-align-center flexbox-column">
-          <span>Compare one group to all others</span>
+          <span>Compare one group to the rest</span>
           <Select
             defaultMenuIsOpen
             options={getSimpleOptions(groups)}
@@ -140,7 +140,7 @@ export default function DifferentialExpressionGroupPicker({
           onChange={newGroup => updateDeGroup(newGroup.value)}
           styles={clusterSelectStyle}
         />
-        <span>vs. all other groups</span>
+        <span>vs. rest of groups</span>
         <br/>
         <br/>
       </>
