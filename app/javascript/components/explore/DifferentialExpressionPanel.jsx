@@ -120,6 +120,10 @@ function DifferentialExpressionTable({
   console.log('numRows', numRows)
   const [rowSelection, setRowSelection] = useState({})
   const [sorting, setSorting] = React.useState([])
+  const [pagination, setPagination] = React.useState({
+    pageIndex: 0,
+    pageSize: numRows
+  })
 
   const logProps = {
     species, clusterName, annotation
@@ -219,12 +223,13 @@ function DifferentialExpressionTable({
     state: {
       rowSelection,
       sorting,
-      pagination: { pageSize: numRows, pageIndex: 0 }
+      pagination
     },
     enableRowSelection: true, // enable row selection for all rows
     // enableRowSelection: row => row.original.age > 18, // or enable row selection conditionally per row
     onRowSelectionChange: setRowSelection,
     getSortedRowModel: getSortedRowModel(),
+    onPaginationChange: setPagination,
     onSortingChange: setSorting,
     getPaginationRowModel: getPaginationRowModel()
   })
