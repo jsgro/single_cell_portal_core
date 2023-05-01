@@ -205,6 +205,9 @@ function DifferentialExpressionTable({
     })[0]
   ))
 
+  const verticalPad = 400 // Accounts for all UI real estate above table header
+  const tableHeight = $(window).height() - verticalPad
+
   return (
     <>
       <div className="de-table-buttons">
@@ -212,7 +215,10 @@ function DifferentialExpressionTable({
         <DownloadButton bucketId={bucketId} deFilePath={deFilePath} />
         <DifferentialExpressionModal />
       </div>
-      <table className="de-table table table-terra table-scp-compact">
+      <table
+        className="de-table table table-terra table-scp-compact"
+        style={{ height: `${tableHeight}px` }}
+      >
         <thead>
           {table.getHeaderGroups().map(headerGroup => (
             <tr key={headerGroup.id}>
