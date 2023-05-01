@@ -72,11 +72,18 @@ function DownloadButton({ bucketId, deFilePath }) {
 function SortIcon({ order }) {
   const isAscending = order === 'asc'
   const dirIcon = isAscending ? faAngleUp : faAngleDown
-  const label = `Sort in ${isAscending ? 'as' : 'des'}cending order`
+  const label = `Sorted in ${isAscending ? 'as' : 'des'}cending order`
   return (
     <button
       className="sort-icon"
-      aria-label={label}>
+      data-toggle="tooltip"
+      data-original-title={label}
+      aria-label={label}
+      onClick={() => {
+        const tooltips = document.querySelectorAll('.tooltip')
+        tooltips.forEach(tooltip => tooltip.remove())
+      }}
+    >
       <FontAwesomeIcon icon={dirIcon}/>
     </button>
   )
