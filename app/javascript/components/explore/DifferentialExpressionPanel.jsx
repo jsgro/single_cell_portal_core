@@ -199,8 +199,8 @@ function DifferentialExpressionTable({
     getPaginationRowModel: getPaginationRowModel()
   })
 
-  const dotPlotGenes = table.getRowModel().rows.slice(0, numRows).map(row => (
-    row.getVisibleCells().map(cell => {
+  const dotPlotGenes = table.getPaginationRowModel().rows.slice(0, numRows).map(row => (
+    row.getAllCells().map(cell => {
       return cell.getValue()
     })[0]
   ))
