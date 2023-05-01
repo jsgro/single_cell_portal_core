@@ -1,8 +1,9 @@
 
 import React, { useState, useEffect, useRef } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faArrowLeft, faDownload, faSearch, faTimes } from '@fortawesome/free-solid-svg-icons'
+import { faArrowLeft, faDownload, faSearch, faTimes, faAngleUp, faAngleDown } from '@fortawesome/free-solid-svg-icons'
 import Button from 'react-bootstrap/lib/Button'
+
 import PagingControl from '~/components/search/results/PagingControl'
 import {
   createColumnHelper,
@@ -70,6 +71,24 @@ function DownloadButton({ bucketId, deFilePath }) {
     >
       <FontAwesomeIcon icon={faDownload}/>
     </a>
+  )
+}
+
+/**
+ * Icon for current sort order direction in table column header
+ *
+ * @param {String} order Direction of current sort order: 'asc' or 'desc'
+ */
+function SortIcon({ order }) {
+  const isAscending = order === 'asc'
+  const dirIcon = isAscending ? faAngleUp : faAngleDown
+  const label = `Sort in ${isAscending ? 'as' : 'des'}cending order`
+  return (
+    <button
+      className="sort-icon"
+      aria-label={label}>
+      <FontAwesomeIcon icon={dirIcon}/>
+    </button>
   )
 }
 
@@ -256,8 +275,8 @@ function DifferentialExpressionTable({
                         header.getContext()
                       )}
                       {{
-                        asc: ' 🔼',
-                        desc: ' 🔽'
+                        asc: <SortIcon order='asc' />,
+                        desc: <SortIcon order='desc' />
                       }[header.column.getIsSorted()] ?? null}
                     </div>
                   )}
