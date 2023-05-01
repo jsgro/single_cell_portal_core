@@ -212,3 +212,17 @@
     display: inline-block;
   }
 }
+
+.differential-expression-picker {
+  margin-bottom: 20px;
+
+  .narrow-select {
+    float: left;
+    width: calc(100% - 100px); // leave room for vs-note content
+  }
+  .vs-note {
+    position: relative;
+    top: 10px;
+    margin-left: 10px;
+  }
+}

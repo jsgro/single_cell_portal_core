@@ -129,21 +129,23 @@ export default function DifferentialExpressionGroupPicker({
         </div>
       }
       {deGenes &&
-      <>
-        <Select
-          options={getSimpleOptions(groups)}
-          data-analytics-name="de-group-select"
-          value={{
-            label: deGroup === null ? noneSelected : deGroup,
-            value: deGroup
-          }}
-          onChange={newGroup => updateDeGroup(newGroup.value)}
-          styles={clusterSelectStyle}
-        />
-        <span>vs. rest of groups</span>
+      <div className="differential-expression-picker">
+        <div className="narrow-select">
+          <Select
+            options={getSimpleOptions(groups)}
+            data-analytics-name="de-group-select"
+            value={{
+              label: deGroup === null ? noneSelected : deGroup,
+              value: deGroup
+            }}
+            onChange={newGroup => updateDeGroup(newGroup.value)}
+            styles={clusterSelectStyle}
+          />
+        </div>
+        <span className="vs-note">vs. rest</span>
         <br/>
         <br/>
-      </>
+      </div>
       }
     </>
   )
