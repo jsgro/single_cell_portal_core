@@ -248,6 +248,7 @@ function DifferentialExpressionTable({
     // enableRowSelection: row => row.original.age > 18, // or enable row selection conditionally per row
     onRowSelectionChange: setRowSelection,
     getSortedRowModel: getSortedRowModel(),
+    enableMultisort: true,
     onPaginationChange: setPagination,
     onSortingChange: setSorting,
     getPaginationRowModel: getPaginationRowModel()
