@@ -50,16 +50,6 @@ function getAnnotationObject(exploreParamsWithDefaults, exploreInfo) {
   })
 }
 
-/** Set up radio buttons to be all unchecked upon changing dropdown value */
-function initChecked(deGenes, checkedGene) {
-  const checked = {}
-  if (!deGenes) {return checked}
-  deGenes.forEach(deGene => {
-    checked[deGene.name] = checkedGene && checkedGene === deGene.name
-  })
-  return checked
-}
-
 /** A small icon-like button that downloads DE data as a file */
 function DownloadButton({ bucketId, deFilePath }) {
   return (
@@ -94,33 +84,6 @@ function SortIcon({ order }) {
 
 const columnHelper = createColumnHelper()
 
-/**
- * Tri-state checkbox from React Table example
- * Adapted from: https://github.com/TanStack/table/blob/367a27286d44ab48262c71d8042b169a4e564316/examples/react/expanding/src/main.tsx#LL323C33-L323C33
- */
-function IndeterminateCheckbox({
-  indeterminate,
-  className = '',
-  ...rest
-}) {
-  const ref = React.useRef(!null)
-
-  React.useEffect(() => {
-    if (typeof indeterminate === 'boolean') {
-      ref.current.indeterminate = !rest.checked && indeterminate
-    }
-  }, [ref, indeterminate])
-
-  return (
-    <input
-      type="checkbox"
-      ref={ref}
-      className={`${className } cursor-pointer`}
-      {...rest}
-    />
-  )
-}
-
 /** Search genes from DE table */
 function searchGenesFromTable(selectedGenes, searchGenes, logProps) {
   searchGenes(selectedGenes)
@@ -134,8 +97,7 @@ function searchGenesFromTable(selectedGenes, searchGenes, logProps) {
 
 /** Table of DE data for genes */
 function DifferentialExpressionTable({
-  genesToShow, searchGenes, checked, clusterName, annotation, species, changeRadio,
-  numRows
+  genesToShow, searchGenes, clusterName, annotation, species, numRows
 }) {
   const defaultSorting = [
     { id: 'pvalAdj', desc: false },
@@ -154,54 +116,25 @@ function DifferentialExpressionTable({
 
   const columns = React.useMemo(() => [
     columnHelper.accessor('name', {
-      header: ({ table }) => (
-        <label>
-          <IndeterminateCheckbox
-            {...{
-              checked: table.getIsAllPageRowsSelected(),
-              indeterminate: table.getIsSomePageRowsSelected(),
-              onChange(event) {
-                const handle = table.getToggleAllPageRowsSelectedHandler()
-                handle(event)
-
-                const isAllSelected = !table.getIsAllPageRowsSelected()
-                const allGenes = table.getRowModel().rows.map(r => r.original.name)
-                const selectedGenes = isAllSelected ? allGenes : []
-
-                logProps.event = event
-                logProps.rank = -1
-                searchGenesFromTable(selectedGenes, searchGenes, logProps)
-              }
-            }}
-          />
-          Name
-        </label>
-      ),
+      header: 'Name',
       cell: deGene => {
         return (
           <label
             title="Click to view gene expression.  Arrow down (↓) and up (↑) to quickly scan."
           >
             <input
-              type="checkbox"
-              checked={deGene.row.getIsSelected()}
+              type="radio"
+              name="selected-gene-de-table"
               data-analytics-name="selected-gene-differential-expression"
               value={deGene.getValue()}
               onChange={event => {
-                deGene.row.toggleSelected()
-
-                let selectedGenes = table.getSelectedRowModel().rows.map(r => r.original.name)
-                const thisGene = deGene.getValue()
-                if (deGene.row.getIsSelected()) {
-                  selectedGenes = selectedGenes.filter(g => g !== thisGene)
-                } else {
-                  selectedGenes.push(thisGene)
-                }
+                deGene.table.resetRowSelection(deGene.row)
+                deGene.table.setRowSelection(deGene.row)
 
                 logProps.event = event
                 logProps.rank = deGene.i
 
-                searchGenesFromTable(selectedGenes, searchGenes, logProps)
+                searchGenesFromTable([deGene.getValue()], searchGenes, logProps)
 
                 deGene.row.getToggleSelectedHandler()
               }}/>
@@ -239,6 +172,7 @@ function DifferentialExpressionTable({
     [genesToShow]
   )
 
+  console.log('rowSelection', rowSelection)
   const table = useReactTable({
     columns,
     data,
@@ -248,7 +182,6 @@ function DifferentialExpressionTable({
       sorting,
       pagination
     },
-    enableRowSelection: true, // enable row selection for all rows
     // enableRowSelection: row => row.original.age > 18, // or enable row selection conditionally per row
     onRowSelectionChange: setRowSelection,
     getSortedRowModel: getSortedRowModel(),
@@ -318,63 +251,6 @@ function DifferentialExpressionTable({
   )
 }
 
-
-//   return (
-//     <>
-//       <table className="de-table table table-terra table-scp-compact">
-//         <thead>
-//           <tr>
-//             <th>Name</th>
-//             <th>
-//               <span className="glossary" data-toggle="tooltip" data-original-title="Log (base 2) of fold change">
-//               LFC
-//               </span>
-//             </th>
-//             <th>
-//               <span className="glossary" data-toggle="tooltip" data-original-title="p-value adjusted with Benjamini-Hochberg FDR correction">
-//               Adj. p
-//               </span>
-//             </th>
-//           </tr>
-//         </thead>
-//         <tbody>
-//           {genesToShow.map((deGene, i) => {
-//             return (
-//               <tr className="de-gene-row" key={i}>
-//                 <td>
-//                   <label
-//                     title="Click to view gene expression.  Arrow down (↓) and up (↑) to quickly scan."
-//                   ><input
-//                       type="radio"
-//                       checked={checked[deGene.name]}
-//                       data-analytics-name="selected-gene-differential-expression"
-//                       value={deGene.name}
-//                       onClick={event => {
-//                         searchGenes([deGene.name])
-
-//                         // Log this search to Mixpanel
-//                         const rank = i
-//                         logSearchFromDifferentialExpression(
-//                           event, deGene, species, rank,
-//                           clusterName, annotation.name
-//                         )
-
-//                         changeRadio(event)
-//                       }}/>
-//                     {deGene.name}</label></td>
-//                 <td>{deGene.log2FoldChange}</td>
-//                 <td>{deGene.pvalAdj}</td>
-//               </tr>)
-//           })}
-//         </tbody>
-//       </table>
-//       <a href="https://forms.gle/qPGH5J9oFkurpbD76" target="_blank" title="Take a 1 minute survey">
-//       Help improve this new feature
-//       </a>
-//     </>
-//   )
-// }
-
 /** Differential expression panel shown at right in Explore tab */
 export default function DifferentialExpressionPanel({
   deGroup, deGenes, searchGenes,
@@ -392,16 +268,9 @@ export default function DifferentialExpressionPanel({
   const [genesToShow, setGenesToShow] = useState(deGenes)
   const [searchedGene, setSearchedGene] = useState('')
 
-  const [checked, setChecked] = useState(initChecked(deGenes))
   const [deFilePath, setDeFilePath] = useState(null)
 
   const species = exploreInfo?.taxonNames
-
-  /** Check radio button such that changing group unchecks all buttons */
-  function changeRadio(event) {
-    const newChecked = initChecked(deGenes, event.target.value)
-    setChecked(newChecked)
-  }
 
   /** Handle a user pressing the 'x' to clear the field */
   function handleClear() {
@@ -492,11 +361,9 @@ export default function DifferentialExpressionPanel({
         <DifferentialExpressionTable
           genesToShow={genesToShow}
           searchGenes={searchGenes}
-          checked={checked}
           clusterName={clusterName}
           annotation={annotation}
           species={species}
-          changeRadio={changeRadio}
           numRows={numRows}
         />
       </>
