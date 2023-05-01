@@ -11,6 +11,20 @@ import {
   useReactTable
 } from '@tanstack/react-table'
 
+
+// Whipped up via https://boxy-svg.com/app,
+// based on Alexandria-approved mockup at:
+// https://docs.google.com/presentation/d/1j8zt1Hj4otD593FtkXlBsPw4GsxkU4XOVYXQx3Ec--E/edit#slide=id.g19cbfc5899b_0_9
+const dotPlotIcon =
+`
+<svg viewBox="119.295 104.022 40.338 40.976" width="40.338" height="40.976">
+  <ellipse style="fill: rgb(61, 90, 135);" cx="130.295" cy="115.041" rx="11" ry="11.019"></ellipse>
+  <ellipse style="fill: rgb(61, 90, 135);" cx="153.18" cy="115.779" rx="2.5" ry="2.5"></ellipse>
+  <ellipse style="fill: rgb(61, 90, 135);" cx="128.719" cy="137.129" rx="5" ry="5"></ellipse>
+  <ellipse style="fill: rgb(61, 90, 135);" cx="151.633" cy="136.998" rx="8" ry="8"></ellipse>
+</svg>
+`
+
 import DifferentialExpressionModal from '~/components/explore/DifferentialExpressionModal'
 import DifferentialExpressionGroupPicker from '~/components/visualization/controls/DifferentialExpressionGroupPicker'
 
@@ -167,13 +181,21 @@ function DifferentialExpressionTable({
       }
     }),
     columnHelper.accessor('log2FoldChange', {
-      header: () => 'LFC',
+      header: () => (
+        <span className="glossary" data-toggle="tooltip" data-original-title="Log (base 2) of fold change">
+          log<sub>2</sub>(FC)
+        </span>
+      ),
       cell: deGene => {
         return deGene.getValue()
       }
     }),
     columnHelper.accessor('pvalAdj', {
-      header: () => 'Adj. p',
+      header: () => (
+        <span className="glossary" data-toggle="tooltip" data-original-title="p-value adjusted with Benjamini-Hochberg FDR correction">
+          Adj. p-value
+        </span>
+      ),
       cell: deGene => {
         return deGene.getValue()
       }
