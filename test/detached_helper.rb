@@ -1,7 +1,8 @@
 # helper to mock a study not being detached
 # useful for when we don't really need a workspace
 def mock_not_detached(study, find_method, &block)
-  Study.stub find_method, study do
+  return_val = find_method.to_sym == :any_of ? [study] : study
+  Study.stub find_method, return_val do
     study.stub :detached?, false, &block
   end
 end
@@ -24,10 +25,10 @@ def generate_signed_urls_mock(study_files, parent_study: nil)
 end
 
 # adds :get_workspace_file to array of mock expects - useful for testing a user clicking download link
-def generate_download_file_mock(study_files, parent_study: nil)
+def generate_download_file_mock(study_files, parent_study: nil, private: false)
   download_file_mock = Minitest::Mock.new
   study_files.each do |file|
-    assign_services_mock!(download_file_mock, 1)
+    assign_services_mock!(download_file_mock, private)
     assign_get_file_mock!(download_file_mock)
     assign_url_mock!(download_file_mock, file, parent_study:)
   end
@@ -53,6 +54,10 @@ def assign_get_file_mock!(mock)
   mock.expect :execute_gcloud_method, file_mock, [:get_workspace_file, 0, String, String]
 end
 
-def assign_services_mock!(mock, service_count)
-  mock.expect :services_available?, true, Array.new(service_count) { String }
+def assign_services_mock!(mock, private)
+  if private
+    # private file downloads have an extra call to :services_available? for Sam and Rawls in addition to GoogleBuckets
+    mock.expect :services_available?, true, [String, String]
+  end
+  mock.expect :services_available?, true, [String]
 end

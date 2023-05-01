@@ -102,16 +102,18 @@ class SiteControllerTest < ActionDispatch::IntegrationTest
   test 'should control access to files in private studies' do
     mock_not_detached @study, :find_by do
       file = @study.study_files.sample
-      # we will make two valid requests, so double the mock
-      mock = generate_download_file_mock([file, file])
-      ApplicationController.stub :firecloud_client, mock do
+      public_mock = generate_download_file_mock([file])
+      ApplicationController.stub :firecloud_client, public_mock do
         get download_file_path(accession: @study.accession, study_name: @study.url_safe_name, filename: file.upload_file_name)
         assert_response 302
         # since this is an external redirect, we cannot call follow_redirect! but instead have to get the location header
         signed_url = response.headers['Location']
-        puts signed_url
         assert signed_url.include?(file.upload_file_name), 'Redirect url does not point at requested file'
+        public_mock.verify
+      end
 
+      private_mock = generate_download_file_mock([file], private: true)
+      ApplicationController.stub :firecloud_client, private_mock do
         # set to private, validate study owner/admin can still access
         # note that download_file_path and download_private_file_path both resolve to the same method and enforce the same
         # restrictions; both paths are preserved for legacy redirects from published papers
@@ -120,7 +122,7 @@ class SiteControllerTest < ActionDispatch::IntegrationTest
         assert_response 302
         signed_url = response.headers['Location']
         assert signed_url.include?(file.upload_file_name), 'Redirect url does not point at requested file'
-        mock.verify
+        private_mock.verify
       end
 
       # negative tests
