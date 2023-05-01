@@ -339,8 +339,13 @@ label {
   top: -5px;
 }
 
-.disabled > a {
+.disabled > a,
+button[disabled] {
   color: #999 !important;
+}
+
+button[disabled] {
+  cursor: initial !important;
 }
 
 .enabled > a {
