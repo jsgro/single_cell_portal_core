@@ -139,7 +139,7 @@
   overflow-y: scroll;
   display: flex;
   flex-flow: column;
-  height: 375px;
+  min-height: 200px;
   margin-bottom: 10px;
   width: 108%;
   max-width: inherit;

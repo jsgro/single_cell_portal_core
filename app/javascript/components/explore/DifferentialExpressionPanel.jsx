@@ -227,8 +227,8 @@ function DifferentialExpressionTable({
                   {header.isPlaceholder ? null : (
                     <div
                       {...{
-                        className: header.column.getCanSort() ?
-                          'cursor-pointer select-none' :
+                        style: header.column.getCanSort() ?
+                          { cursor: 'pointer', userSelect: 'none' } :
                           '',
                         onClick: header.column.getToggleSortingHandler()
                       }}
