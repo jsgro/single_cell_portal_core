@@ -137,8 +137,12 @@ function DifferentialExpressionTable({
   genesToShow, searchGenes, checked, clusterName, annotation, species, changeRadio,
   numRows
 }) {
+  const defaultSorting = [
+    { id: 'pvalAdj', desc: false },
+    { id: 'log2FoldChange', desc: true }
+  ]
   const [rowSelection, setRowSelection] = useState({})
-  const [sorting, setSorting] = React.useState([])
+  const [sorting, setSorting] = React.useState(defaultSorting)
   const [pagination, setPagination] = React.useState({
     pageIndex: 0,
     pageSize: numRows
