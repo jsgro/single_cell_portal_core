@@ -3,6 +3,7 @@ import React, { useState, useEffect, useRef } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faArrowLeft, faDownload, faSearch, faTimes } from '@fortawesome/free-solid-svg-icons'
 import Button from 'react-bootstrap/lib/Button'
+import PagingControl from '~/components/search/results/PagingControl'
 import {
   createColumnHelper,
   flexRender,
@@ -117,7 +118,6 @@ function DifferentialExpressionTable({
   genesToShow, searchGenes, checked, clusterName, annotation, species, changeRadio,
   numRows
 }) {
-  console.log('numRows', numRows)
   const [rowSelection, setRowSelection] = useState({})
   const [sorting, setSorting] = React.useState([])
   const [pagination, setPagination] = React.useState({
@@ -279,67 +279,14 @@ function DifferentialExpressionTable({
           )}
         </tbody>
       </table>
-      <div className="flex items-center gap-2">
-        <button
-          className="border rounded p-1"
-          onClick={() => table.setPageIndex(0)}
-          disabled={!table.getCanPreviousPage()}
-        >
-          {'<<'}
-        </button>
-        <button
-          className="border rounded p-1"
-          onClick={() => table.previousPage()}
-          disabled={!table.getCanPreviousPage()}
-        >
-          {'<'}
-        </button>
-        <button
-          className="border rounded p-1"
-          onClick={() => table.nextPage()}
-          disabled={!table.getCanNextPage()}
-        >
-          {'>'}
-        </button>
-        <button
-          className="border rounded p-1"
-          onClick={() => table.setPageIndex(table.getPageCount() - 1)}
-          disabled={!table.getCanNextPage()}
-        >
-          {'>>'}
-        </button>
-        <span className="flex items-center gap-1">
-          <div>Page</div>
-          <strong>
-            {table.getState().pagination.pageIndex + 1} of{' '}
-            {table.getPageCount()}
-          </strong>
-        </span>
-        <span className="flex items-center gap-1">
-          | Go to page:
-          <input
-            type="number"
-            defaultValue={table.getState().pagination.pageIndex + 1}
-            onChange={e => {
-              const page = e.target.value ? Number(e.target.value) - 1 : 0
-              table.setPageIndex(page)
-            }}
-            className="border p-1 rounded w-16"
-          />
-        </span>
-        <select
-          value={table.getState().pagination.pageSize}
-          onChange={e => {
-            table.setPageSize(Number(e.target.value))
-          }}
-        >
-          {[10, 20, 30, 40, 50].map(pageSize => (
-            <option key={pageSize} value={pageSize}>
-              Show {pageSize}
-            </option>
-          ))}
-        </select>
-      </div>
+      <PagingControl
+        currentPage={table.getState().pagination.pageIndex}
+        totalPages={table.getPageCount()}
+        changePage={table.setPageIndex}
+        canPreviousPage={table.getCanPreviousPage()}
+        canNextPage={table.getCanNextPage()}
+        zeroIndexed={true}
+      />
       <a href="https://forms.gle/qPGH5J9oFkurpbD76" target="_blank" title="Take a 1 minute survey">
           Help improve this new feature
       </a>
