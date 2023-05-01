@@ -71,19 +71,9 @@ function DownloadButton({ bucketId, deFilePath }) {
  */
 function SortIcon({ order }) {
   const isAscending = order === 'asc'
-  const dirIcon = isAscending ? faAngleUp : faAngleDown
-  const label = `Sorted in ${isAscending ? 'as' : 'des'}cending order`
+  const dirIcon = isAscending ? faAngleDown : faAngleUp
   return (
-    <button
-      className="sort-icon"
-      data-toggle="tooltip"
-      data-original-title={label}
-      aria-label={label}
-      onClick={() => {
-        const tooltips = document.querySelectorAll('.tooltip')
-        tooltips.forEach(tooltip => tooltip.remove())
-      }}
-    >
+    <button className="sort-icon">
       <FontAwesomeIcon icon={dirIcon}/>
     </button>
   )
@@ -179,7 +169,6 @@ function DifferentialExpressionTable({
     [genesToShow]
   )
 
-  console.log('rowSelection', rowSelection)
   const table = useReactTable({
     columns,
     data,
