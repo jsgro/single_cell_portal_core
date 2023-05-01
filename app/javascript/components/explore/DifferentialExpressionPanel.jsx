@@ -52,9 +52,7 @@ function DownloadButton({ bucketId, deFilePath }) {
 }
 
 /** A small icon-like button that makes a dot plot */
-function DotPlotButton({ shownGenes, searchGenes }) {
-  const shownGeneNames = shownGenes.map(shownGene => shownGene.name).slice(0, 50)
-
+function DotPlotButton({ dotPlotGenes, searchGenes }) {
   const actionColor = '#3D5A87'
   // Whipped up via https://boxy-svg.com/app,
   // based on Alexandria-approved mockup at:
@@ -62,13 +60,13 @@ function DotPlotButton({ shownGenes, searchGenes }) {
   return (
     <a
       className="de-dot-plot-button"
-      onClick={() => {searchGenes(shownGeneNames)}}
+      onClick={() => {searchGenes(dotPlotGenes)}}
       data-analytics-name="differential-expression-download"
       data-toggle="tooltip"
       data-original-title="View dot plot for genes on this DE table page"
     >
       <svg viewBox="119.295 104.022 40.338 40.976" width="14" height="14">
-        <ellipse style={{ 'fill': actionColor }} cx="130.295" cy="115.041" rx="11" ry="11.019"></ellipse>
+        <ellipse style={{ 'fill': actionColor }} cx="130.295" cy="115.041" rx="11" ry="11"></ellipse>
         <ellipse style={{ 'fill': actionColor }} cx="153.18" cy="115.779" rx="2.5" ry="2.5"></ellipse>
         <ellipse style={{ 'fill': actionColor }} cx="128.719" cy="137.129" rx="5" ry="5"></ellipse>
         <ellipse style={{ 'fill': actionColor }} cx="151.633" cy="136.998" rx="8" ry="8"></ellipse>
@@ -107,7 +105,8 @@ function searchGenesFromTable(selectedGenes, searchGenes, logProps) {
 
 /** Table of DE data for genes */
 function DifferentialExpressionTable({
-  genesToShow, searchGenes, clusterName, annotation, species, numRows
+  genesToShow, searchGenes, clusterName, annotation, species, numRows,
+  bucketId, deFilePath
 }) {
   const defaultSorting = [
     { id: 'pvalAdj', desc: false },
@@ -200,8 +199,19 @@ function DifferentialExpressionTable({
     getPaginationRowModel: getPaginationRowModel()
   })
 
+  const dotPlotGenes = table.getRowModel().rows.slice(0, numRows).map(row => (
+    row.getVisibleCells().map(cell => {
+      return cell.getValue()
+    })[0]
+  ))
+
   return (
     <>
+      <div className="de-table-buttons">
+        <DotPlotButton dotPlotGenes={dotPlotGenes} searchGenes={searchGenes} />
+        <DownloadButton bucketId={bucketId} deFilePath={deFilePath} />
+        <DifferentialExpressionModal />
+      </div>
       <table className="de-table table table-terra table-scp-compact">
         <thead>
           {table.getHeaderGroups().map(headerGroup => (
@@ -362,11 +372,6 @@ export default function DifferentialExpressionPanel({
           </Button> }
         </div>
 
-        <div className="de-table-buttons">
-          <DotPlotButton shownGenes={genesToShow} searchGenes={searchGenes} />
-          <DownloadButton bucketId={bucketId} deFilePath={deFilePath} />
-          <DifferentialExpressionModal />
-        </div>
 
         <DifferentialExpressionTable
           genesToShow={genesToShow}
@@ -375,6 +380,8 @@ export default function DifferentialExpressionPanel({
           annotation={annotation}
           species={species}
           numRows={numRows}
+          bucketId={bucketId}
+          deFilePath={deFilePath}
         />
       </>
       }
