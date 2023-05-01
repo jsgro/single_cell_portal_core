@@ -8,7 +8,8 @@ import {
   flexRender,
   getCoreRowModel,
   getSortedRowModel,
-  useReactTable
+  useReactTable,
+  getPaginationRowModel
 } from '@tanstack/react-table'
 
 
@@ -113,8 +114,10 @@ function searchGenesFromTable(selectedGenes, searchGenes, logProps) {
 
 /** Table of DE data for genes */
 function DifferentialExpressionTable({
-  genesToShow, searchGenes, checked, clusterName, annotation, species, changeRadio
+  genesToShow, searchGenes, checked, clusterName, annotation, species, changeRadio,
+  numRows
 }) {
+  console.log('numRows', numRows)
   const [rowSelection, setRowSelection] = useState({})
   const [sorting, setSorting] = React.useState([])
 
@@ -215,13 +218,15 @@ function DifferentialExpressionTable({
     getCoreRowModel: getCoreRowModel(),
     state: {
       rowSelection,
-      sorting
+      sorting,
+      pagination: { pageSize: numRows, pageIndex: 0 }
     },
     enableRowSelection: true, // enable row selection for all rows
     // enableRowSelection: row => row.original.age > 18, // or enable row selection conditionally per row
     onRowSelectionChange: setRowSelection,
     getSortedRowModel: getSortedRowModel(),
-    onSortingChange: setSorting
+    onSortingChange: setSorting,
+    getPaginationRowModel: getPaginationRowModel()
   })
 
   return (
@@ -257,7 +262,7 @@ function DifferentialExpressionTable({
           ))}
         </thead>
         <tbody>
-          {table.getRowModel().rows.map(row => (
+          {table.getRowModel().rows.slice(0, numRows).map(row => (
             <tr key={row.id}>
               {row.getVisibleCells().map(cell => (
                 <td key={cell.id}>
@@ -269,6 +274,67 @@ function DifferentialExpressionTable({
           )}
         </tbody>
       </table>
+      <div className="flex items-center gap-2">
+        <button
+          className="border rounded p-1"
+          onClick={() => table.setPageIndex(0)}
+          disabled={!table.getCanPreviousPage()}
+        >
+          {'<<'}
+        </button>
+        <button
+          className="border rounded p-1"
+          onClick={() => table.previousPage()}
+          disabled={!table.getCanPreviousPage()}
+        >
+          {'<'}
+        </button>
+        <button
+          className="border rounded p-1"
+          onClick={() => table.nextPage()}
+          disabled={!table.getCanNextPage()}
+        >
+          {'>'}
+        </button>
+        <button
+          className="border rounded p-1"
+          onClick={() => table.setPageIndex(table.getPageCount() - 1)}
+          disabled={!table.getCanNextPage()}
+        >
+          {'>>'}
+        </button>
+        <span className="flex items-center gap-1">
+          <div>Page</div>
+          <strong>
+            {table.getState().pagination.pageIndex + 1} of{' '}
+            {table.getPageCount()}
+          </strong>
+        </span>
+        <span className="flex items-center gap-1">
+          | Go to page:
+          <input
+            type="number"
+            defaultValue={table.getState().pagination.pageIndex + 1}
+            onChange={e => {
+              const page = e.target.value ? Number(e.target.value) - 1 : 0
+              table.setPageIndex(page)
+            }}
+            className="border p-1 rounded w-16"
+          />
+        </span>
+        <select
+          value={table.getState().pagination.pageSize}
+          onChange={e => {
+            table.setPageSize(Number(e.target.value))
+          }}
+        >
+          {[10, 20, 30, 40, 50].map(pageSize => (
+            <option key={pageSize} value={pageSize}>
+              Show {pageSize}
+            </option>
+          ))}
+        </select>
+      </div>
       <a href="https://forms.gle/qPGH5J9oFkurpbD76" target="_blank" title="Take a 1 minute survey">
           Help improve this new feature
       </a>
@@ -364,12 +430,13 @@ export default function DifferentialExpressionPanel({
   /** Handle a user pressing the 'x' to clear the field */
   function handleClear() {
     updateSearchedGene('', 'clear')
-    setGenesToShow(deGenes.slice(0, numRows))
+    setGenesToShow(deGenes)
   }
 
   /** Only show clear button if text is entered in search box */
   const showClear = searchedGene !== ''
 
+  /** Set searched gene, and log search after 1 second delay */
   function updateSearchedGene(newSearchedGene, trigger) {
     setSearchedGene(newSearchedGene)
 
@@ -396,7 +463,6 @@ export default function DifferentialExpressionPanel({
       filteredGenes = deGenes.filter(d => d.name.toLowerCase().includes(lowerCaseSearchedGene))
     }
 
-    if (deGenes) {filteredGenes = filteredGenes.slice(0, numRows)}
     setGenesToShow(filteredGenes)
   }, [deGenes, searchedGene])
 
@@ -455,6 +521,7 @@ export default function DifferentialExpressionPanel({
           annotation={annotation}
           species={species}
           changeRadio={changeRadio}
+          numRows={numRows}
         />
       </>
       }
