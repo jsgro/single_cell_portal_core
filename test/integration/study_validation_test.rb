@@ -170,7 +170,7 @@ class StudyValidationTest < ActionDispatch::IntegrationTest
                    "FireCloud project was not correct, expected #{FireCloudClient::PORTAL_NAMESPACE} but found #{study.firecloud_project}"
       assert_equal workspace_name, study.firecloud_workspace,
                    "FireCloud workspace was not correct, expected '#{workspace_name}' but found '#{study.firecloud_workspace}'"
-   end
+    end
   end
 
   test 'should disable downloads for reviewers' do
@@ -215,12 +215,13 @@ class StudyValidationTest < ActionDispatch::IntegrationTest
   end
 
   test 'should redirect for detached studies' do
-    mock_not_detached @study, :find_by do
-      file = @study.study_files.first
-      get download_file_path(accession: @study.accession, study_name: @study.url_safe_name, filename: file.upload_file_name)
-      assert_response 302,
-                      "Did not attempt to redirect on a download from a detached study, expected 302 but found #{response.code}"
-    end
+    study = FactoryBot.create(:detached_study,
+                              user: @user,
+                              name_prefix: 'Detached Redirect Test',
+                              test_array: @@studies_to_clean)
+    get download_file_path(accession: study.accession, study_name: study.url_safe_name, filename: 'file.txt')
+    assert_response 302,
+                    "Did not attempt to redirect on a download from a detached study, expected 302 but found #{response.code}"
   end
 
   # ensure data removal from BQ on metadata delete
