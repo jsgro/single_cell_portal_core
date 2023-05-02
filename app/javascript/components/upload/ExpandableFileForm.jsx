@@ -102,25 +102,12 @@ export function SavingOverlay({ file, updateFile }) {
 }
 
 /** renders save and delete buttons for a given file */
-export function SaveDeleteButtons({ file, saveFile, deleteFile, validationMessages = {}, isAnnDataExperience, allFiles = [], isLastClustering = false }) {
+export function SaveDeleteButtons({
+  file, saveFile, deleteFile, validationMessages = {}, isAnnDataExperience, allFiles = [], isLastClustering = false
+}) {
   const [showConfirmDeleteModal, setShowConfirmDeleteModal] = useState(false)
   const isExpressionMatrix = isAnnDataExperience && file.data_type === 'expression'
   const annDataFile = allFiles.filter(f => f.file_type === 'AnnData')[0]
-  //   const [isFinalClustering, setIsFinalClustering] = useState(
-  //     !isAnnDataExperience ? false : annDataFile?.ann_data_file_info?.data_fragments?.filter(f => f.data_type === 'cluster')?.length === 1
-  //     )
-
-  //   useEffect(() =>{
-  // console.log('allFiles:', allFiles)
-  //     if(!isAnnDataExperience){
-  //       setIsFinalClustering(false)
-  //     }else if (file.data_type === 'cluster' || file.file_type === 'Cluster') {
-  //       console.log('j:', annDataFile?.ann_data_file_info?.data_fragments?.filter(f => f.data_type === 'cluster')?.length === 1)
-  //       setIsFinalClustering(isAnnDataExperience && !annDataFile?.ann_data_file_info?.data_fragments?.filter(f => f.data_type === 'cluster')?.length === 1)
-  //       console.log('isFinalClustering:', isFinalClustering)
-  //     }
-  //     // console.log('jj:', annDataFile.ann_data_file_info.data_fragments.filter(f => f.data_type === 'cluster').length)
-  //   }, [allFiles])
 
   if (file.serverFile?.parse_status === 'failed') {
     return <div className="text-center">
@@ -131,10 +118,9 @@ export function SaveDeleteButtons({ file, saveFile, deleteFile, validationMessag
   }
   return <div className="flexbox-align-center button-panel">
     <SaveButton file={file} saveFile={saveFile} validationMessages={validationMessages} isAnnDataExperience={isAnnDataExperience}/>
-    {!isExpressionMatrix && !isLastClustering && <DeleteButton file={file} deleteFile={deleteFile} setShowConfirmDeleteModal={setShowConfirmDeleteModal}/>}
-    {/* {console.log('!isExpressionMatrix && !isFinalClustering:', !isExpressionMatrix && !isFinalClustering)} */}
-    {/* {!isExpressionMatrix && !isFinalClustering && <DeleteButton file={file} deleteFile={deleteFile} setShowConfirmDeleteModal={setShowConfirmDeleteModal}/>} */}
-
+    {!isExpressionMatrix && !isLastClustering &&
+      <DeleteButton file={file} deleteFile={deleteFile} setShowConfirmDeleteModal={setShowConfirmDeleteModal}/>
+    }
     <Modal
       show={showConfirmDeleteModal}
       onHide={() => setShowConfirmDeleteModal(false)}

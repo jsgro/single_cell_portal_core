@@ -1313,9 +1313,6 @@ class StudyFile
   end
 
   # set ranges for cluster_groups if necessary
-  # emily do similiar in anndata w an aftersave add a method
-  #  on clause like on update as well to prevent occuring on inital create
-  # after_save :my_method, on: :update
   def set_cluster_group_ranges
     if self.file_type == 'Cluster' && self.cluster_groups.any?
       cluster = self.cluster_groups.first

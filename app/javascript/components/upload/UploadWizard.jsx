@@ -382,7 +382,6 @@ export function RawUploadWizard({ studyAccession, name }) {
 
     // if AnnDataExperience clusterings need to be handled like an update
     if (isAnnDataExperience && fileToDelete.data_type === 'cluster') {
-      debugger
       const annDataFile = formState.files.filter(AnnDataFileFilter)[0]
       const fragmentsInAnnDataFile = annDataFile.ann_data_file_info.data_fragments
       if (annDataFile.ann_data_file_info.data_fragments.filter(f => f.data_type === 'cluster').length > 1) {
@@ -458,10 +457,8 @@ export function RawUploadWizard({ studyAccession, name }) {
   /** removes a file from the form only, does not touch server data */
   function deleteFileFromForm(fileId) {
     setFormState(prevFormState => {
-      console.log('prevFormState:', prevFormState)
       const newFormState = _cloneDeep(prevFormState)
       newFormState.files = newFormState.files.filter(f => f._id != fileId)
-      console.log('newFormState:', newFormState)
       return newFormState
     })
   }
