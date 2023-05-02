@@ -931,7 +931,7 @@ class IngestJob
         genes = Gene.where(study_id: study.id, study_file_id: study_file.id).count
         message << "Gene-level entries created: #{genes}"
       end
-      message << 'Other data types are being extracted as specified in your AnnData file.'
+      message << 'Clustering and metadata entries are being extracted as specified in your AnnData file.'
     end
     message
   end
