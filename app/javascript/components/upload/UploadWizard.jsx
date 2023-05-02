@@ -272,7 +272,6 @@ export function RawUploadWizard({ studyAccession, name }) {
   async function saveFile(file) {
     let fileToSave = file
     let studyFileId = file._id
-    debugger
 
     // in AnnData case of saving file when you're doing an update
     if (isAnnDataExperience) {
@@ -280,7 +279,6 @@ export function RawUploadWizard({ studyAccession, name }) {
       // if the file update is on an existing fragment it will have a data_type rather than file_type
       // or if it's a new clustering it won't have a data_type but will have an obsm key name field
       if (file.data_type) {
-        debugger
         const AnnDataFile = formState.files.filter(AnnDataFileFilter)[0]
         if (file.data_type === 'cluster') {
           AnnDataFile.ann_data_file_info.data_fragments['cluster_form_info'] = file
@@ -292,8 +290,6 @@ export function RawUploadWizard({ studyAccession, name }) {
         fileToSave['reference_anndata_file'] = false
         studyFileId = fileToSave._id
       } else {
-        debugger
-
         // enable ingest of data by setting reference_anndata_file = false
         if (fileToSave.file_type === 'AnnData') {fileToSave['reference_anndata_file'] = false}
         formState.files.forEach(fileFormData => {
@@ -499,7 +495,6 @@ export function RawUploadWizard({ studyAccession, name }) {
   useEffect(() => {
     fetchStudyFileInfo(studyAccession).then(response => {
       response.files.forEach(file => formatFileFromServer(file))
-      // debugger
       setIsAnnDataExperience(
         (response.files?.filter(AnnDataFileFilter)[0]?.ann_data_file_info?.data_fragments?.length > 0 ||
         response.files?.filter(AnnDataFileFilter)[0]?.ann_data_file_info?.reference_file === false) &&
