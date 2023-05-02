@@ -1338,31 +1338,83 @@ class StudyFile
 
     # update clustering fragments to be called on updates to study_file
     def call_ingest_on_updated_clustering_fragments
+      
+      # ensure that the update is on the data_fragments of an AnnData file before parsing
+      if self.ann_data_file_info.present? && self.ann_data_file_info.data_fragments_changed? && self.file_type == "AnnData" && (!is_reference_anndata? || is_reference_anndata? != nil)
+        #  ensure the file is not in a deleting or parsing state already
+        if !self.queued_for_deletion && !self.parsing? && !self.name.start_with?("DELETE-")
 
-      # ensure that the update is on the data_fragments before parsing
-      if self.ann_data_file_info.data_fragments_changed?
-        if self.file_type == "AnnData" && (!is_reference_anndata? || is_reference_anndata? != nil) && !self.queued_for_deletion && !self.parsing? 
-
+          # check that the feature flag is true for ingesting AnnData
           do_anndata_file_ingest = FeatureFlaggable.feature_flags_for_instances(study.user, study)['ingest_anndata_file']
+          
+          if do_anndata_file_ingest
 
-          if do_anndata_file_ingest && !is_reference_anndata?
-            params_object = AnnDataIngestParameters.new(
-              anndata_file: self.gs_url, extract: %w[cluster], obsm_keys: self.ann_data_file_info.obsm_key_names
-            )
+            # collect the previous data fragment ids to choose the appropriate job for new or existing clusterings
+            prev_ids = []
+            self.ann_data_file_info.data_fragments_was.each do |data_frag|
+              prev_ids << data_frag&.[]("_id")
+            end
 
-            self.update(parse_status: 'parsing')
+          self.update(parse_status: 'parsing')
 
-            job = IngestJob.new(
-              study:, study_file: self, user: study.user, action: :ingest_anndata, params_object:
-            )
-            job.delay.push_remote_and_launch_ingest
-        
+          # going through the obsm key names ensures parse jobs are only being called on clusterings
+          self.ann_data_file_info.obsm_key_names.each do |fragment|
+              Rails.logger.info "launching AnnData #{fragment} cluster extraction"
+              matcher = { data_type: :cluster, obsm_key_name: fragment }
+              cluster_data_fragment = self.ann_data_file_info.find_fragment(**matcher)
+              
+              # set reparse to true only if the clustering already exists and is being updated
+              to_reparse = false
+              if prev_ids.include? cluster_data_fragment&.[]("_id")
+                to_reparse = true
+              end
+
+              # if new clustering need to extract first
+              if to_reparse == false 
+                params_object = AnnDataIngestParameters.new(
+                  anndata_file: self.gs_url, extract: %w[cluster], obsm_keys: [fragment]
+                )    
+                job = IngestJob.new(
+                  study:, study_file: self, user: study.user, action: :ingest_anndata, params_object:
+                )
+                job.delay.push_remote_and_launch_ingest
+
+              else
+                # primarily copied from launch_anndata_subparse_jobs in ingest_job 
+                name = cluster_data_fragment&.[](:name) || fragment # fallback if we can't find data_fragment
+                cluster_gs_url = fragment_file_gs_url(study.bucket_id, 'cluster', self.id, fragment)
+                domain_ranges = self.ann_data_file_info.get_cluster_domain_ranges(name).to_json
+                cluster_params = AnnDataIngestParameters.new(
+                  ingest_cluster: true, name:, cluster_file: cluster_gs_url, domain_ranges:, ingest_anndata: false,
+                  extract: nil, obsm_keys: nil
+                )
+
+                job = IngestJob.new(study:, study_file: self, user: study.user, action: :ingest_cluster, reparse: to_reparse, params_object: cluster_params)
+                job.delay.push_remote_and_launch_ingest
+              end
+            end
+
             self.update(parse_status: 'parsed')
 
           end
         end
       end
     end
+
+  # Copied from ann_data_ingest_parameters.rb
+  # generate a GS URL to a derived fragment that was extracted from the parent AnnData file
+  # File name structure is: <input_filetype>_frag.<file_type>.<file_type_detail>.tsv
+  #   file_type = cluster|metadata|matrix
+  #   file_type_detail [optional] = cluster name (for cluster files), raw|processed (for matrix files)
+  def fragment_file_gs_url(bucket_id, fragment_type, h5ad_file_id, file_type_detail = "")
+    url = "gs://#{bucket_id}/_scp_internal/anndata_ingest/#{h5ad_file_id}/h5ad_frag.#{fragment_type}"
+    if file_type_detail.present?
+      url += ".#{file_type_detail}.tsv"
+    else
+      url += ".tsv"
+    end
+    url
+  end
 
   # handler to set certain options based on a study_file's file_type
   def set_options_by_file_type
