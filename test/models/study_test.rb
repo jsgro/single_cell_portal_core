@@ -3,8 +3,7 @@ require 'test_helper'
 class StudyTest < ActiveSupport::TestCase
 
   before(:all) do
-    @user = FactoryBot.create(:admin_user, test_array: @@users_to_clean)
-    @user.update(registered_for_firecloud: true)
+    @user = FactoryBot.create(:admin_user, registered_for_firecloud: true, test_array: @@users_to_clean)
     @study = FactoryBot.create(:detached_study, user: @user, name_prefix: 'Study Test', test_array: @@studies_to_clean)
     StudyShare.create!(email: 'my-user-group@firecloud.org', permission: 'Reviewer', study: @study,
                        firecloud_project: @study.firecloud_project, firecloud_workspace: @study.firecloud_workspace)
@@ -83,14 +82,17 @@ class StudyTest < ActiveSupport::TestCase
       ok_status_mock.verify
     end
 
-
     group_mock = MiniTest::Mock.new
     group_mock.expect :get_user_groups, @user_groups
-    group_mock.expect :services_available?, true, @services_args
+    services_mock = Minitest::Mock.new
+    services_mock.expect :services_available?, true, @services_args
     FireCloudClient.stub :new, group_mock do
-      in_group_share = @study.user_in_group_share?(user, 'Reviewer')
-      group_mock.verify
-      assert in_group_share, "Did not correctly pick up group share, expected true but found #{in_group_share}"
+      ApplicationController.stub :firecloud_client, services_mock do
+        in_group_share = @study.user_in_group_share?(user, 'Reviewer')
+        group_mock.verify
+        services_mock.verify
+        assert in_group_share, "Did not correctly pick up group share, expected true but found #{in_group_share}"
+      end
     end
 
     outage_status_mock = Minitest::Mock.new
