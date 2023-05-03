@@ -206,7 +206,7 @@ function DifferentialExpressionTable({
   ))
 
   const verticalPad = 400 // Accounts for all UI real estate above table header
-  const tableHeight = $(window).height() - verticalPad
+  const tableHeight = window.innerHeight - verticalPad
 
   return (
     <>
@@ -250,7 +250,7 @@ function DifferentialExpressionTable({
         </thead>
         <tbody>
           {table.getRowModel().rows.slice(0, numRows).map(row => (
-            <tr key={row.id}>
+            <tr className="de-gene-row" key={row.id}>
               {row.getVisibleCells().map(cell => (
                 <td key={cell.id}>
                   {flexRender(cell.column.columnDef.cell, cell.getContext())}
