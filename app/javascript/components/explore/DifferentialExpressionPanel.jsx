@@ -154,7 +154,11 @@ function DifferentialExpressionTable({
     }),
     columnHelper.accessor('log2FoldChange', {
       header: () => (
-        <span className="glossary" data-toggle="tooltip" data-original-title="Log (base 2) of fold change">
+        <span
+          id="log2-fold-change-header"
+          className="glossary"
+          data-toggle="tooltip"
+          data-original-title="Log (base 2) of fold change">
           log<sub>2</sub>(FC)
         </span>
       ),
@@ -164,7 +168,11 @@ function DifferentialExpressionTable({
     }),
     columnHelper.accessor('pvalAdj', {
       header: () => (
-        <span className="glossary" data-toggle="tooltip" data-original-title="p-value adjusted with Benjamini-Hochberg FDR correction">
+        <span
+          id="pval-adj-header"
+          className="glossary"
+          data-toggle="tooltip"
+          data-original-title="p-value adjusted with Benjamini-Hochberg FDR correction">
           Adj. p-value
         </span>
       ),
