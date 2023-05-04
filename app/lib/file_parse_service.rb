@@ -96,7 +96,6 @@ class FileParseService
         else
           Rails.logger.info "Aborting parse of #{@study_file.name} as #{@study_file.file_type} in study #{@study.name}; not applicable"
         end
-        # use this as a template for the code to run emily
       when 'AnnData'
         # create AnnDataFileInfo document so that it is present to be updated later on ingest completion
         if study_file.ann_data_file_info.nil?
