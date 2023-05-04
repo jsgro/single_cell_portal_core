@@ -117,18 +117,6 @@ class AnnDataFileInfo
     end
   end
 
-  # handle matching values for both strings & symbols when retrieving data_fragments
-  def transform_for(value)
-    case value.class.name
-    when 'String'
-      :to_sym
-    when 'Symbol'
-      :to_s
-    else
-      :presence
-    end
-  end
-
   # get all fragments of a specific data type
   def fragments_by_type(data_type)
     data_fragments.select { |fragment| fragment[:data_type].to_s == data_type.to_s }
@@ -150,6 +138,18 @@ class AnnDataFileInfo
       source_hash[key].send(transform) if source_hash[key].present? # skip transform on nil entries
     end
     Hash[keys.zip(values)].reject { |_, v| v.blank? }
+  end
+
+  # handle matching values for both strings & symbols when retrieving data_fragments
+  def transform_for(value)
+    case value.class.name
+    when 'String'
+      :to_sym
+    when 'Symbol'
+      :to_s
+    else
+      :presence
+    end
   end
 
   # ensure all fragments have required keys and are unique

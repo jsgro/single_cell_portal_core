@@ -114,7 +114,6 @@ class AnnDataFileInfoTest < ActiveSupport::TestCase
     ]
     assert_not ann_data_info.valid?
     error_messages = ann_data_info.errors.messages_for(:data_fragments)
-    puts error_messages
     assert_equal 2, error_messages.count
     error_messages.each do |message|
       assert message.include?('are not unique')
