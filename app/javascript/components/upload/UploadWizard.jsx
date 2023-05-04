@@ -273,46 +273,11 @@ export function RawUploadWizard({ studyAccession, name }) {
     let fileToSave = file
     let studyFileId = file._id
 
-    // in AnnData case of saving file when you're doing an update
     if (isAnnDataExperience) {
-      // necessary check for when updating a Clustering or Expression matrix form the fileToBeSaved needs to be updated to the AnnData file
-      // if the file update is on an existing fragment it will have a data_type rather than file_type
-      // or if it's a new clustering it won't have a data_type but will have an obsm key name field
-      if (file.data_type) {
-        const AnnDataFile = formState.files.filter(AnnDataFileFilter)[0]
-        if (file.data_type === 'cluster') {
-          AnnDataFile.ann_data_file_info.data_fragments['cluster_form_info'] = file
-        }
-        if (file.file_type === 'expression') {
-          AnnDataFile.ann_data_file_info.data_fragments['extra_expression_form_info'] = file
-        }
-        fileToSave = AnnDataFile
-        fileToSave['reference_anndata_file'] = false
-        studyFileId = fileToSave._id
-      } else {
-        // enable ingest of data by setting reference_anndata_file = false
-        if (fileToSave.file_type === 'AnnData') {fileToSave['reference_anndata_file'] = false}
-        formState.files.forEach(fileFormData => {
-          if (fileFormData.file_type === 'Cluster') {
-            fileToSave = formState.files.find(f => f.file_type === 'AnnData')
-            studyFileId = fileToSave._id
-            fileFormData.data_type = 'cluster'
-
-              // mulitple clustering forms are allowed so add each as a fragment to the AnnData file
-              fileToSave?.ann_data_file_info ? '': fileToSave['ann_data_file_info'] = {}
-              const fragments = fileToSave.ann_data_file_info?.data_fragments || []
-              fragments.push(fileFormData)
-              fileToSave.ann_data_file_info.data_fragments = fragments
-          }
-          if (fileFormData.file_type === 'Expression Matrix') {
-            fileToSave['extra_expression_form_info'] = fileFormData
-          }
-          if (fileFormData.file_type === 'Metadata') {
-            fileToSave['metadata_form_info'] = fileFormData
-          }
-        })
-      }
+      fileToSave = saveAnnDataFileHelper(file, fileToSave)
+      studyFileId = fileToSave._id
     }
+
     const fileSize = fileToSave.uploadSelection?.size
     const isChunked = fileSize > CHUNK_SIZE
     let chunkStart = 0
@@ -369,6 +334,49 @@ export function RawUploadWizard({ studyAccession, name }) {
         isSaving: false
       })
     }
+  }
+
+  /**
+  * In AnnDataExperience `saveFile()` is also called for updating existing fragments.
+  * If the call to `saveFile()` is an update on an existing AnnData fragment, that fragment
+  * will have a `data_type` rather than `file_type`. This is an important distinction needed
+  * for handling adding a new clustering fragment vs updating an existing clustering fragment
+  **/
+  function saveAnnDataFileHelper(file, fileToSave) {
+    if (file.data_type) {
+      const AnnDataFile = formState.files.filter(AnnDataFileFilter)[0]
+      console.log(AnnDataFile)
+
+      if (file.data_type === 'cluster') {
+        AnnDataFile.ann_data_file_info.data_fragments['cluster_form_info'] = file
+      }
+      if (file.file_type === 'expression') {
+        AnnDataFile.ann_data_file_info.data_fragments['extra_expression_form_info'] = file
+      }
+      fileToSave = AnnDataFile
+    } else {
+      // enable ingest of data by setting reference_anndata_file = false
+      if (fileToSave.file_type === 'AnnData') {fileToSave['reference_anndata_file'] = false}
+      formState.files.forEach(fileFormData => {
+        if (fileFormData.file_type === 'Cluster') {
+          fileToSave = formState.files.find(f => f.file_type === 'AnnData')
+          fileFormData.data_type = 'cluster'
+
+            // multiple clustering forms are allowed so add each as a fragment to the AnnData file
+            fileToSave?.ann_data_file_info ? '': fileToSave['ann_data_file_info'] = {}
+            const fragments = fileToSave.ann_data_file_info?.data_fragments || []
+            fragments.push(fileFormData)
+            fileToSave.ann_data_file_info.data_fragments = fragments
+        }
+        if (fileFormData.file_type === 'Expression Matrix') {
+          fileToSave['extra_expression_form_info'] = fileFormData
+        }
+        if (fileFormData.file_type === 'Metadata') {
+          fileToSave['metadata_form_info'] = fileFormData
+        }
+      })
+    }
+    return fileToSave
   }
 
   /** delete the file from the form, and also the server if it exists there */

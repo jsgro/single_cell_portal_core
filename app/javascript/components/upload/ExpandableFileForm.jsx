@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useState } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
 import { faChevronDown, faChevronUp, faTimes } from '@fortawesome/free-solid-svg-icons'
 import Modal from 'react-bootstrap/lib/Modal'
@@ -13,7 +13,7 @@ export default function ExpandableFileForm({
 }) {
   const [expanded, setExpanded] = useState(isInitiallyExpanded || file.status === 'new')
 
-  const isUploadEnabled = getIsUploadEnabled(isAnnDataExperience, allFiles, file)
+  const isUploadEnabled = getIsUploadEnabled(isAnnDataExperience, file)
 
   /** handle a click on the header bar (not the expand button itself) */
   function handleDivClick(e) {
@@ -53,7 +53,7 @@ export default function ExpandableFileForm({
               bucketName={bucketName}
               isAnnDataExperience={isAnnDataExperience} />
           </div>}
-          {getIsSaveEnabled(isAnnDataExperience, allFiles, file) && <SaveDeleteButtons {...{ file, updateFile, saveFile, deleteFile, validationMessages, isAnnDataExperience, allFiles, isLastClustering }} /> }
+          {getIsSaveEnabled(isAnnDataExperience, allFiles, file) && <SaveDeleteButtons {...{ file, updateFile, saveFile, deleteFile, validationMessages, isAnnDataExperience, allFiles, isLastClustering }} />}
         </div>
         {expanded && children}
         <SavingOverlay file={file} updateFile={updateFile} />
@@ -107,19 +107,18 @@ export function SaveDeleteButtons({
 }) {
   const [showConfirmDeleteModal, setShowConfirmDeleteModal] = useState(false)
   const isExpressionMatrix = isAnnDataExperience && file.data_type === 'expression'
-  const annDataFile = allFiles.filter(f => f.file_type === 'AnnData')[0]
 
   if (file.serverFile?.parse_status === 'failed') {
     return <div className="text-center">
-      <div className="validation-error"><FontAwesomeIcon icon={faTimes}/> Parse failed</div>
+      <div className="validation-error"><FontAwesomeIcon icon={faTimes} /> Parse failed</div>
       <div className="detail">Check your email for details - this file will be removed from the server.</div>
       <button className="terra-secondary-btn" onClick={() => deleteFile(file)}>OK</button>
     </div>
   }
   return <div className="flexbox-align-center button-panel">
-    <SaveButton file={file} saveFile={saveFile} validationMessages={validationMessages} isAnnDataExperience={isAnnDataExperience}/>
+    <SaveButton file={file} saveFile={saveFile} validationMessages={validationMessages} isAnnDataExperience={isAnnDataExperience} />
     {!isExpressionMatrix && !isLastClustering &&
-      <DeleteButton file={file} deleteFile={deleteFile} setShowConfirmDeleteModal={setShowConfirmDeleteModal}/>
+      <DeleteButton file={file} deleteFile={deleteFile} setShowConfirmDeleteModal={setShowConfirmDeleteModal} />
     }
     <Modal
       show={showConfirmDeleteModal}
@@ -150,7 +149,7 @@ function SaveButton({ file, saveFile, validationMessages = {}, isAnnDataExperien
 
   if (file.serverFile?.parse_status === 'parsing' && isAnnDataExperience) {
     saveButton = <OverlayTrigger trigger={['hover', 'focus']} rootClose placement="top" overlay={parsingPopup}>
-      <span className="detail">Parsing <LoadingSpinner/></span>
+      <span className="detail">Parsing <LoadingSpinner /></span>
     </OverlayTrigger>
   }
 
@@ -205,7 +204,7 @@ function DeleteButton({ file, deleteFile, setShowConfirmDeleteModal }) {
   </button>
   if (file.serverFile?.parse_status === 'parsing') {
     deleteButton = <OverlayTrigger trigger={['hover', 'focus']} rootClose placement="top" overlay={parsingPopup}>
-      <span className="detail">Parsing <LoadingSpinner/></span>
+      <span className="detail">Parsing <LoadingSpinner /></span>
     </OverlayTrigger>
   }
   return deleteButton
@@ -220,15 +219,9 @@ function DeleteButton({ file, deleteFile, setShowConfirmDeleteModal }) {
  * @param {array} allFiles
  * @returns {boolean} Whether to show upload control buttons or not
  */
-function getIsUploadEnabled(isAnnDataExperience, allFiles, file) {
-  const alreadyUploaded = allFiles.forEach(fileObj => {
-    if (fileObj?.ann_data_file_info?.has_clusters) {
-      return true
-    }
-  })
+function getIsUploadEnabled(isAnnDataExperience, file) {
   const isClustering = file.file_type === 'Cluster'
   const isExpressionMatrix = file.file_type === 'Expression Matrix'
-  if (isClustering && alreadyUploaded && isAnnDataExperience) {return true}
   return !((isClustering || isExpressionMatrix) && isAnnDataExperience)
 }
 
@@ -243,14 +236,10 @@ function getIsSaveEnabled(isAnnDataExperience, allFiles, file) {
   // if it's not AnnDataExperience don't gate the save/delete buttons
   if (!isAnnDataExperience) {return true}
 
-  // only allow save/delete for updates after an AnnData file has been uploaded
+  // allow save/delete for updates after an AnnData file has been uploaded
   let alreadyUploaded = false
-  allFiles.forEach(fileObj => {
-    if (fileObj?.ann_data_file_info?.data_fragments.length > 0) {
-      alreadyUploaded = true
-    }
-  })
 
+  alreadyUploaded = allFiles.some(fileObj => fileObj?.ann_data_file_info?.data_fragments.length > 0)
   // cluster files that haven't been saved have a file_type whereas once saved they are fragments which have a data_type
   const isClustering = file.data_type === 'cluster' || file.file_type === 'Cluster'
   const isAnnData = file.data_type === 'AnnData' || file.file_type === 'AnnData'
@@ -258,17 +247,15 @@ function getIsSaveEnabled(isAnnDataExperience, allFiles, file) {
 
   if ((isClustering || isExpressionMatrix || isAnnData) && alreadyUploaded && isAnnDataExperience) {
     return true
-  } else if (isAnnData && isAnnDataExperience) {
-    return true
-  } {
-    return false
+  } else {
+    return isAnnData && isAnnDataExperience
   }
 }
 
 const parsingPopup = <Popover id="parsing-tooltip" className="tooltip-wide">
-  <div>This file is currently being parsed on the server.  <br/>
-    You will receive an email when the parse is complete (typically within 5-30 minutes, depending on file size). <br/>
-    You can continue to upload other files during this time. <br/>
+  <div>This file is currently being parsed on the server.  <br />
+    You will receive an email when the parse is complete (typically within 5-30 minutes, depending on file size). <br />
+    You can continue to upload other files during this time. <br />
     You cannot delete files while they are being parsed.
   </div>
 </Popover>
