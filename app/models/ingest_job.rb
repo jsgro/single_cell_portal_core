@@ -424,6 +424,7 @@ class IngestJob
       set_has_image_cache
     when :ingest_anndata
       launch_anndata_subparse_jobs
+      set_anndata_file_info
     end
     set_study_initialized
   end
@@ -660,6 +661,10 @@ class IngestJob
         )
         job = IngestJob.new(study:, study_file:, user:, action: :ingest_cell_metadata, params_object: metadata_params)
         job.delay.push_remote_and_launch_ingest
+      else
+        # processed_expression data is parsed during the initial extract phase, so nothing is required here
+        # logging is for debugging purposes only
+        Rails.logger.info "skipping extraction of #{extract} for #{study_file.upload_file_name}"
       end
     end
   end
@@ -922,6 +927,11 @@ class IngestJob
       message << "Complete runtime (data cache & image rendering): #{complete_pipeline_runtime}"
     when :ingest_anndata
       message << "AnnData file ingest has completed"
+      if study_file.ann_data_file_info.has_expression
+        genes = Gene.where(study_id: study.id, study_file_id: study_file.id).count
+        message << "Gene-level entries created: #{genes}"
+      end
+      message << 'Clustering and metadata entries are being extracted as specified in your AnnData file.'
     end
     message
   end

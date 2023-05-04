@@ -107,7 +107,6 @@ class FileParseService
           params_object = AnnDataIngestParameters.new(
             anndata_file: study_file.gs_url, obsm_keys: study_file.ann_data_file_info.obsm_key_names
           )
-          # TODO extract and parse Processed Exp Data (SCP-4709)
           # TODO extract and parse Raw Exp Data (SCP-4710)
         else
           # setting attributes to false/nil will omit them from the command line later
