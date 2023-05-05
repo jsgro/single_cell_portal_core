@@ -343,7 +343,7 @@ export default function ExploreDisplayTabs({
           </div>
         </div>
         <div className="col-md-4 col-md-offset-1">
-          <ul className="nav nav-tabs" role="tablist" data-analytics-name="explore-default">
+          <ul className="nav nav-tabs study_plot_tabs" role="tablist" data-analytics-name="explore-default">
             { enabledTabs.map(tabKey => {
               const label = tabList.find(({ key }) => key === tabKey).label
               return (
