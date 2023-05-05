@@ -328,7 +328,6 @@ export function RawUploadWizard({ studyAccession, name }) {
         handleSaveResponse(response, false, requestCanceller, file !== fileToSave ? file : null)
       }
     } catch (error) {
-      console.log('error:', error)
       Store.addNotification(failureNotification(<span>{fileToSave.name} failed to save<br />{error}</span>))
       updateFile(studyFileId, {
         isSaving: false
