@@ -10,10 +10,7 @@ class FileParseService
   #
   # * *returns*
   #   - (Hash) => Status object with http status_code and optional error message
-  def self.run_parse_job(study_file, study, user, reparse: false, persist_on_fail: false)
-    # , do_all_obsm_keys: true, obsm_key: nil
-    # emily do not use this, use ingest directly
-    # obsm_key
+  def self.run_parse_job(study_file, study, user, reparse: false, persist_on_fail: false, obsm_key: nil)
     logger = Rails.logger
     logger.info "#{Time.zone.now}: Parsing #{study_file.name} as #{study_file.file_type} in study #{study.name}"
     do_anndata_file_ingest = FeatureFlaggable.feature_flags_for_instances(user, study)['ingest_anndata_file']
@@ -105,7 +102,7 @@ class FileParseService
 
         if do_anndata_file_ingest && !study_file.is_reference_anndata?
           # obsm_key is only set for parsing a new singular clustering
-          if obsm_key != nil
+          if obsm_key.present?
             params_object = AnnDataIngestParameters.new(
               anndata_file: study_file.gs_url, extract: %w[cluster], obsm_keys: [obsm_key]
             )

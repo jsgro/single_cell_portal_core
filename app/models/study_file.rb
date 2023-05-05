@@ -633,7 +633,7 @@ class StudyFile
   before_validation   :set_file_name_and_data_dir, on: :create
   before_save         :sanitize_name
   after_save          :set_cluster_group_ranges, :set_options_by_file_type
-  after_update        :call_ingest_on_updated_clustering_fragments 
+  after_update        :handle_clustering_fragment_updates 
 
   validates_uniqueness_of :upload_file_name, scope: :study_id, unless: Proc.new { |f| f.human_data? }
   validates_presence_of :name
@@ -1334,7 +1334,7 @@ class StudyFile
   end
 
   # update clustering fragments to be called on updates to study_file
-  def call_ingest_on_updated_clustering_fragments
+  def handle_clustering_fragment_updates
     if self.ann_data_file_info.present? && self.ann_data_file_info.data_fragments_changed? && self.file_type == "AnnData" && (!is_reference_anndata? || is_reference_anndata? != nil)
       if !self.queued_for_deletion && !self.parsing? && !self.name.start_with?("DELETE-")
 
@@ -1355,7 +1355,7 @@ class StudyFile
             name = cluster_data_fragment&.[](:name) || fragment # fallback if we can't find data_fragment
 
             if prev_ids[curr_id]["name"] != name
-              @cluster = ClusterGroup.find_by(study_id: study.id)
+              @cluster = ClusterGroup.find_by(study:, study_file: self, name: prev_ids.dig(curr_id, 'name'))
               # before updating, check if the defaults also need to change
               if study.default_cluster == @cluster
                 study.default_options[:cluster] = name
@@ -1364,7 +1364,7 @@ class StudyFile
               @cluster.update(name:)
             end
           else
-          FileParseService.run_parse_job(self, study, study.user, obsm_key: fragment)
+            FileParseService.run_parse_job(self, study, study.user, obsm_key: fragment)
           end
         end     
       end
