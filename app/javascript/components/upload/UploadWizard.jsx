@@ -361,7 +361,7 @@ export function RawUploadWizard({ studyAccession, name }) {
           fileFormData.data_type = 'cluster'
 
             // multiple clustering forms are allowed so add each as a fragment to the AnnData file
-            fileToSave?.ann_data_file_info ? '': fileToSave['ann_data_file_info'] = {}
+            fileToSave?.ann_data_file_info ? '' : fileToSave['ann_data_file_info'] = {}
             const fragments = fileToSave.ann_data_file_info?.data_fragments || []
             fragments.push(fileFormData)
             fileToSave.ann_data_file_info.data_fragments = fragments
