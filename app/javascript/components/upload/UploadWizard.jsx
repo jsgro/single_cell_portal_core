@@ -344,7 +344,6 @@ export function RawUploadWizard({ studyAccession, name }) {
   function saveAnnDataFileHelper(file, fileToSave) {
     if (file.data_type) {
       const AnnDataFile = formState.files.filter(AnnDataFileFilter)[0]
-      console.log(AnnDataFile)
 
       if (file.data_type === 'cluster') {
         AnnDataFile.ann_data_file_info.data_fragments['cluster_form_info'] = file
