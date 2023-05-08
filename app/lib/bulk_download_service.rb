@@ -146,13 +146,11 @@ class BulkDownloadService
     file_bytes_requested = files.map(&:upload_file_size).compact.reduce(0, :+)
     dir_bytes_requested = directories.map(&:total_bytes).reduce(0, :+)
     bytes_requested = file_bytes_requested + dir_bytes_requested
-    bytes_allowed = download_quota - user.daily_download_quota
-    if bytes_requested > bytes_allowed
+    if DownloadQuotaService.download_exceeds_quota?(user, filesize)
       raise RuntimeError.new "Total file size exceeds user download quota: #{bytes_requested} bytes requested, #{bytes_allowed} bytes allowed"
     else
       Rails.logger.info "Adding #{bytes_requested} bytes to user: #{user.id} download quota for bulk download"
-      user.daily_download_quota += bytes_requested
-      user.save
+      DownloadQuotaService.increment_user_quota(user, bytes_requested)
     end
   end
 
