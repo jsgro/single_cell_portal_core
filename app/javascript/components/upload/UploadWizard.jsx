@@ -18,7 +18,7 @@ import { faChevronLeft, faChevronRight } from '@fortawesome/free-solid-svg-icons
 import { formatFileFromServer, formatFileForApi, newStudyFileObj, StudyContext } from './upload-utils'
 import {
   createStudyFile, updateStudyFile, deleteStudyFile,
-  fetchStudyFileInfo, sendStudyFileChunk, RequestCanceller
+  fetchStudyFileInfo, sendStudyFileChunk, RequestCanceller, deleteAnnDataFragment
 } from '~/lib/scp-api'
 import MessageModal, { successNotification, failureNotification } from '~/lib/MessageModal'
 import UserProvider from '~/providers/UserProvider'
@@ -328,7 +328,6 @@ export function RawUploadWizard({ studyAccession, name }) {
         handleSaveResponse(response, false, requestCanceller, file !== fileToSave ? file : null)
       }
     } catch (error) {
-      console.log('error:', error)
       Store.addNotification(failureNotification(<span>{fileToSave.name} failed to save<br />{error}</span>))
       updateFile(studyFileId, {
         isSaving: false
@@ -344,8 +343,7 @@ export function RawUploadWizard({ studyAccession, name }) {
   **/
   function saveAnnDataFileHelper(file, fileToSave) {
     if (file.data_type) {
-      const AnnDataFile = formState.files.filter(AnnDataFileFilter)[0]
-      console.log(AnnDataFile)
+      const AnnDataFile = formState.files.find(AnnDataFileFilter)
 
       if (file.data_type === 'cluster') {
         AnnDataFile.ann_data_file_info.data_fragments['cluster_form_info'] = file
@@ -381,64 +379,12 @@ export function RawUploadWizard({ studyAccession, name }) {
 
   /** delete the file from the form, and also the server if it exists there */
   async function deleteFile(file) {
-    let fileToDelete = file
-    let fileId = file._id
+    const fileId = file._id
 
+    debugger
     // if AnnDataExperience clusterings need to be handled like an update
-    if (isAnnDataExperience && fileToDelete.data_type === 'cluster') {
-      const annDataFile = formState.files.filter(AnnDataFileFilter)[0]
-      const fragmentsInAnnDataFile = annDataFile.ann_data_file_info.data_fragments
-      if (annDataFile.ann_data_file_info.data_fragments.filter(f => f.data_type === 'cluster').length > 1) {
-        const newClusteringsArray = fragmentsInAnnDataFile.filter(item => item !== file)
-        annDataFile.ann_data_file_info.data_fragments = newClusteringsArray
-        fileToDelete = annDataFile
-        fileId = annDataFile._id
-
-        const fileSize = fileToDelete.uploadSelection?.size
-        let studyFileId = fileToDelete._id
-        const isChunked = fileSize > CHUNK_SIZE
-        let chunkStart = 0
-        let chunkEnd = Math.min(CHUNK_SIZE, fileSize)
-        const studyFileData = formatFileForApi(fileToDelete, chunkStart, chunkEnd)
-
-        try {
-          let response
-          const requestCanceller = new RequestCanceller(studyFileId)
-
-          updateFile(studyFileId, { isSaving: true })
-          updateFile(file._id, { isDeleting: true })
-
-          response = await updateStudyFile({
-            studyAccession, studyFileId, studyFileData, isChunked, chunkStart, chunkEnd, fileSize, requestCanceller,
-            onProgress: e => handleSaveProgress(e, studyFileId, fileSize, chunkStart)
-          })
-
-          handleSaveResponse(response, isChunked, requestCanceller, file !== fileToDelete ? file : null)
-          // copy over the new id from the server
-          studyFileId = response._id
-          requestCanceller.fileId = studyFileId
-          if (isChunked && !requestCanceller.wasCancelled) {
-            while (chunkEnd < fileSize && !requestCanceller.wasCancelled) {
-              chunkStart += CHUNK_SIZE
-              chunkEnd = Math.min(chunkEnd + CHUNK_SIZE, fileSize)
-              const chunkApiData = formatFileForApi(file, chunkStart, chunkEnd)
-              response = await sendStudyFileChunk({
-                studyAccession, studyFileId, studyFileData: chunkApiData, chunkStart, chunkEnd, fileSize, requestCanceller,
-                onProgress: e => handleSaveProgress(e, studyFileId, fileSize, chunkStart)
-              })
-            }
-            handleSaveResponse(response, false, requestCanceller, file !== fileToDelete ? file : null)
-          }
-        } catch (error) {
-          Store.addNotification(failureNotification(<span>{file.name} failed to delete<br />{error}</span>))
-          updateFile(studyFileId, {
-            isSaving: false
-          })
-          updateFile(file._id, {
-            isDeleting: false
-          })
-        }
-      }
+    if (isAnnDataExperience && file.data_type === 'cluster') {
+      annDataClusteringFragmentsDeletionHelper(file)
     } else {
       if (file.status === 'new' || file?.serverFile?.parse_status === 'failed') {
         deleteFileFromForm(fileId)
@@ -455,6 +401,68 @@ export function RawUploadWizard({ studyAccession, name }) {
           })
         }
       }
+    }
+  }
+
+  /** */
+  async function annDataClusteringFragmentsDeletionHelper(file) {
+    const annDataFile = formState.files.find(AnnDataFileFilter)
+    const fragmentsInAnnDataFile = annDataFile.ann_data_file_info.data_fragments
+    debugger
+    // const study = useContext(StudyContext)
+    // StudyContext
+    // If the AnnData file contains more than one clustering proceed with deletion
+    if (fragmentsInAnnDataFile.filter(f => f.data_type === 'cluster').length > 1) {
+      // await deleteStudyFile(studyAccession, file._id)
+      // await deleteClusteringFragment(studyAccession, annDataFile._id, file._id)
+
+      // updateFile(file._id, { isDeleting: true })
+      updateFile(annDataFile._id, { iSaving: true })
+      // const clusteringToDelete = fragmentsInAnnDataFile.find(fi => fi._id === file._id)
+      // updateFile(clusteringToDelete._id, { name: 'DELETE_ME' })
+
+      debugger
+
+      await deleteAnnDataFragment(studyAccession, annDataFile._id, file._id)
+      // await deleteStudyFile(studyAccession, annDataFile._id)
+
+
+      // const thirdClusteringArray = newClusteringsArray.concat([clusteringToDelete])
+      // annDataFile.ann_data_file_info.data_fragments = thirdClusteringArray
+
+      // const annDataFileForDeletionLogic = annDataFile
+
+      debugger
+
+      // Update the AnnData fragments to no longer include this fragment
+      const newClusteringsArray = fragmentsInAnnDataFile.filter(item => item !== file)
+      annDataFile.ann_data_file_info.data_fragments = newClusteringsArray
+
+      // Update the server and form state to reflect this change
+      setServerState(prevServerState => {
+        const newServerState = _cloneDeep(prevServerState)
+        const fileIndex = newServerState.files.findIndex(f => f._id === annDataFile._id)
+        newServerState.files[fileIndex] = annDataFile
+        return newServerState
+      })
+
+      // then update the form state
+      setFormState(prevFormState => {
+        const newFormState = _cloneDeep(prevFormState)
+        const fileIndex = newFormState.files.findIndex(f => f._id === annDataFile._id)
+        const formFile = _cloneDeep(annDataFile)
+        newFormState.files[fileIndex] = formFile
+        return newFormState
+      })
+
+      // DELETE FRAGMENT
+
+      // DeleteQueueJob
+
+      updateFile(annDataFile._id, { iSaving: false })
+    } else {
+      // Just for safety, the deletion button should not be available for a single clustering
+      Store.addNotification(failureNotification(<span>{file.name} failed to delete</span>))
     }
   }
 
@@ -504,8 +512,8 @@ export function RawUploadWizard({ studyAccession, name }) {
     fetchStudyFileInfo(studyAccession).then(response => {
       response.files.forEach(file => formatFileFromServer(file))
       setIsAnnDataExperience(
-        (response.files?.filter(AnnDataFileFilter)[0]?.ann_data_file_info?.data_fragments?.length > 0 ||
-        response.files?.filter(AnnDataFileFilter)[0]?.ann_data_file_info?.reference_file === false) &&
+        (response.files?.find(AnnDataFileFilter)?.ann_data_file_info?.data_fragments?.length > 0 ||
+        response.files?.find(AnnDataFileFilter)?.ann_data_file_info?.reference_file === false) &&
         response.feature_flags?.ingest_anndata_file)
       setServerState(response)
       setFormState(_cloneDeep(response))
@@ -521,11 +529,11 @@ export function RawUploadWizard({ studyAccession, name }) {
 
   /** return a button for switching to the other experience (AnnData or Classic) */
   function getOtherChoiceButton() {
-    const otherOption = isAnnDataExperience ? 'classic upload' : 'AnnData upload'
+    const otherOption = isAnnDataExperience ? 'classic' : 'AnnData'
     return <button
       data-testid="switch-upload-mode-button"
       className="btn terra-secondary-btn margin-left-extra"
-      onClick={() => setIsAnnDataExperience(!isAnnDataExperience)}> Switch to {otherOption}
+      onClick={() => setIsAnnDataExperience(!isAnnDataExperience)}> Switch to {otherOption} upload
     </button>
   }
 

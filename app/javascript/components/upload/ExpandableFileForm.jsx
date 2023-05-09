@@ -145,15 +145,8 @@ export function SaveDeleteButtons({
 /** renders a save button for a given file */
 function SaveButton({ file, saveFile, validationMessages = {}, isAnnDataExperience }) {
   const saveDisabled = isAnnDataExperience ? false : Object.keys(validationMessages).length > 0
-  let saveButton
-
-  if (file.serverFile?.parse_status === 'parsing' && isAnnDataExperience) {
-    saveButton = <OverlayTrigger trigger={['hover', 'focus']} rootClose placement="top" overlay={parsingPopup}>
-      <span className="detail">Parsing <LoadingSpinner /></span>
-    </OverlayTrigger>
-  }
-
-  saveButton = <button
+// ewmily
+  let saveButton = <button
     style={{ pointerEvents: saveDisabled ? 'none' : 'auto' }}
     type="button"
     className={file.isDirty ? 'btn btn-primary margin-right' : 'btn terra-secondary-btn margin-right'}
@@ -163,6 +156,12 @@ function SaveButton({ file, saveFile, validationMessages = {}, isAnnDataExperien
     data-testid="file-save">
     Save {file.uploadSelection && <span>&amp; Upload</span>}
   </button>
+
+  if (file.serverFile?.parse_status === 'parsing' && isAnnDataExperience) {
+    saveButton = <OverlayTrigger trigger={['hover', 'focus']} rootClose placement="top" overlay={parsingPopup}>
+      <span className="detail">Parsing <LoadingSpinner /></span>
+    </OverlayTrigger>
+  }
 
   if (saveDisabled) {
     // if saving is disabled, wrap the disabled button in a popover that will show the errors
@@ -237,9 +236,7 @@ function getIsSaveEnabled(isAnnDataExperience, allFiles, file) {
   if (!isAnnDataExperience) {return true}
 
   // allow save/delete for updates after an AnnData file has been uploaded
-  let alreadyUploaded = false
-
-  alreadyUploaded = allFiles.some(fileObj => fileObj?.ann_data_file_info?.data_fragments.length > 0)
+  const alreadyUploaded = allFiles.some(fileObj => fileObj?.ann_data_file_info?.data_fragments.length > 0)
   // cluster files that haven't been saved have a file_type whereas once saved they are fragments which have a data_type
   const isClustering = file.data_type === 'cluster' || file.file_type === 'Cluster'
   const isAnnData = file.data_type === 'AnnData' || file.file_type === 'AnnData'

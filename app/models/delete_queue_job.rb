@@ -9,8 +9,11 @@ class DeleteQueueJob < Struct.new(:object)
 
   def perform
     # determine type of delete job
+    byebug
     case object.class.name
+    
     when 'Study'
+      byebug
       # first check if we have convention metadata to delete
       if object.metadata_file.present?
         delete_convention_data(study: object, metadata_file: object.metadata_file)
@@ -23,9 +26,11 @@ class DeleteQueueJob < Struct.new(:object)
       object.assign_attributes(public: false, name: new_name, url_safe_name: new_name, firecloud_workspace: new_name)
       object.save(validate: false)
     when 'StudyFile'
+      byebug
+      
       file_type = object.file_type
       study = object.study
-
+      byebug
       # remove all nested documents if present to avoid validation issues later
       # not all of them have validations but this guards against future errors in case they are added later
       # :nested_attributes returns all :accepts_nested_attributes_for documents in StudyFile as a Hash
@@ -37,6 +42,7 @@ class DeleteQueueJob < Struct.new(:object)
       # now remove all child objects first to free them up to be re-used.
       case file_type
       when 'Cluster'
+        byebug
         delete_differential_expression_results(study: study, study_file: object)
         delete_parsed_data(object.id, study.id, ClusterGroup, DataArray)
         delete_user_annotations(study:, study_file: object)
@@ -120,6 +126,7 @@ class DeleteQueueJob < Struct.new(:object)
         study.update(initialized: false)
       end
     when 'UserAnnotation'
+      byebug
       study = object.study
       # unset default annotation if it was this user_annotation
       if study.default_annotation == object.formatted_annotation_identifier
@@ -134,6 +141,7 @@ class DeleteQueueJob < Struct.new(:object)
       object.user_data_arrays.delete_all
       object.user_annotation_shares.delete_all
     when 'Google::Cloud::Storage::File::List'
+      byebug
       # called when a user wants to delete an entire directory of files from a FireCloud submission
       # this is run in the foreground as Delayed::Job cannot deserialize the list anymore
       files = object
@@ -235,6 +243,11 @@ class DeleteQueueJob < Struct.new(:object)
       study.default_options[:annotation] = current_default
       study.save
     end
+  end
+
+  def delete_single_clustering_fragment(study:, study_file:)
+    prefix = "_scp_internal/anndata_ingest/#{study_file.id}"
+    remotes = ApplicationController.firecloud_client.get_workspace_files(study.bucket_id, prefix:)  
   end
 
   # delete all AnnData "fragment" files upon study file deletion

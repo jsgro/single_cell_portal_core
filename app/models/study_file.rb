@@ -1335,6 +1335,7 @@ class StudyFile
 
   # update clustering fragments to be called on updates to study_file
   def handle_clustering_fragment_updates
+    # byebug
     if self.ann_data_file_info.present? && self.ann_data_file_info.data_fragments_changed? && self.file_type == "AnnData" && (!is_reference_anndata? || is_reference_anndata? != nil)
       if !self.queued_for_deletion && !self.parsing? && !self.name.start_with?("DELETE-")
 
@@ -1369,8 +1370,8 @@ class StudyFile
         end     
       end
     end
-       
   end
+
 
   # handler to set certain options based on a study_file's file_type
   def set_options_by_file_type
