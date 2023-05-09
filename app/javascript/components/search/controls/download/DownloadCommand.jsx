@@ -13,6 +13,7 @@ const isWindows = clientOS.match(/Win/)
 export default function DownloadCommand({ fileIds=[], azulFiles }) {
   const [isLoading, setIsLoading] = useState(true)
   const [authInfo, setAuthInfo] = useState({ authCode: null, timeInterval: 3000 })
+  const [authError, setAuthError] = useState(null)
   const [refreshNum, setRefreshNum] = useState(0)
   const textInputRef = useRef(null)
 
@@ -28,9 +29,13 @@ export default function DownloadCommand({ fileIds=[], azulFiles }) {
     fetchAuthCode(fileIds, azulFiles).then(result => {
       setAuthInfo(result)
       setIsLoading(false)
+    }).catch(error => {
+      console.log(error)
+      setAuthError(error)
+      setIsLoading(false)
     })
   }, [refreshNum])
-
+  console.log(`authError ${authError}`)
   const downloadCommand = getDownloadCommand(authInfo.authCode, authInfo.downloadId)
   const terminalDescription = isWindows ? 'Windows PowerShell' : 'Mac/Linux/Unix'
 
@@ -44,7 +49,14 @@ export default function DownloadCommand({ fileIds=[], azulFiles }) {
       </div>
     }
     {
-      !isLoading &&
+      !isLoading && typeof authError !== 'undefined' &&
+      <div className="text-center text-danger">
+        <h4>There was a problem authorizing your request</h4>
+        <p>{authError}</p>
+      </div>
+    }
+    {
+      !isLoading && typeof authError === 'undefined' &&
       <div className="col-md-12">
         <h4>Copy the command below and paste it into your {terminalDescription} terminal</h4>
         This command is valid for one use within <span className='countdown'>
