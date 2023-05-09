@@ -520,6 +520,7 @@ module Api
       #"/single_cell/api/v1/studies/SCP19/study_files/:id/:fragment_id"
       def delete_anndata_fragment
         @fragment = @study_file.ann_data_file_info.find_fragment(_id: params[:fragment_id])
+        DeleteQueueJob.new(@fragment).delay.perform
 
         byebug
         url = @study_file.ann_data_file_info.fragment_file_gs_url(@study.bucket_id, 'cluster', @study_file._id, @fragment["obsm_key_name"])
@@ -545,7 +546,7 @@ module Api
           #  all_files = ApplicationController.firecloud_client.get_workspace_files(@study.bucket_id)
           # # all_files.find(@id == )
           # clustering_to_delete = all_files.select{|i| i.name == url}
-      
+
             # def delete_workspace_file(workspace_bucket_id, filename)
         # puts(@fragment)
         # byebug
@@ -553,7 +554,7 @@ module Api
         # @study_file.ann_data_file_info.fragment_file_gs_url(@study.bucket_id, 'cluster', @study_file._id)
         # "fc-c2609524-30ae-4602-98b7-8eb058379618/_scp_internal/anndata_ingest/64593751d3231f44d6a42b61/h5ad_frag.cluster.tsv"
 
-        # 
+        #
         #     prefix = "_scp_internal/anndata_ingest/#{study_file.id}"
         # remotes = ApplicationController.firecloud_client.get_workspace_files(study.bucket_id, prefix:)
         # remotes.each(&:delete)

@@ -1,4 +1,4 @@
-class DeleteQueueJob < Struct.new(:object)
+class DeleteQueueJob < Struct.new(:object, :study_file_id)
 
   ###
   #
@@ -11,7 +11,7 @@ class DeleteQueueJob < Struct.new(:object)
     # determine type of delete job
     byebug
     case object.class.name
-    
+
     when 'Study'
       byebug
       # first check if we have convention metadata to delete
@@ -27,7 +27,7 @@ class DeleteQueueJob < Struct.new(:object)
       object.save(validate: false)
     when 'StudyFile'
       byebug
-      
+
       file_type = object.file_type
       study = object.study
       byebug
@@ -150,11 +150,12 @@ class DeleteQueueJob < Struct.new(:object)
         files = object.next
         files.each {|f| f.delete}
       end
-      when 'BSON::Document'
-        byebug
+    when 'BSON::Document'
+      study_file = StudyFile.find(study_file_id:)
+      delete_parsed_anndata_entries(study_file_id, study_file.study_id, object)
     end
     #  add for the clustering
-    
+
   end
 
   private
@@ -255,7 +256,7 @@ class DeleteQueueJob < Struct.new(:object)
 
   def delete_single_clustering_fragment(study:, study_file:)
     prefix = "_scp_internal/anndata_ingest/#{study_file.id}"
-    remotes = ApplicationController.firecloud_client.get_workspace_files(study.bucket_id, prefix:)  
+    ApplicationController.firecloud_client.get_workspace_files(study.bucket_id, prefix:)
   end
 
   # delete all AnnData "fragment" files upon study file deletion
@@ -263,5 +264,21 @@ class DeleteQueueJob < Struct.new(:object)
     prefix = "_scp_internal/anndata_ingest/#{study_file.id}"
     remotes = ApplicationController.firecloud_client.get_workspace_files(study.bucket_id, prefix:)
     remotes.each(&:delete)
+  end
+
+  # to delete clustering data from parsed AnnData files
+  # uses data_fragment entries to refine queries
+  def delete_parsed_anndata_entries(study_file_id, study_id, fragment)
+    safe_fragment = fragment.with_indifferent_access
+    fragment_type = safe_fragment[:data_type]
+    case fragment_type
+    when :cluster
+      cluster_group = ClusterGroup.find_by(study_file_id:, study_id:, name: fragment[:name])
+      data_arrays = DataArray.where(
+        linear_data_type: 'ClusterGroup', linear_data_id: cluster_group.id, study_id:, study_file_id:
+      )
+      cluster_group.delete
+      data_arrays.delete_all
+    end
   end
 end
