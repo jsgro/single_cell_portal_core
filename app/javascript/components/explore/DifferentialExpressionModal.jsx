@@ -25,7 +25,7 @@ export default function DifferentialExpressionModal() {
       data-analytics-name="differential-expression-info"
       data-toggle="tooltip"
       data-original-title="Learn about differential expression in SCP"
-      className='de-info-help-icon'
+      className="de-info-help-icon"
     >
       <FontAwesomeIcon className="action help-icon" icon={faInfoCircle} />
     </a>
