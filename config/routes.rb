@@ -35,7 +35,7 @@ Rails.application.routes.draw do
                 post 'parse', to: 'study_files#parse'
                 patch 'chunk', to: 'study_files#chunk'
                 delete ':fragment_id', to: 'study_files#delete_anndata_fragment'
-                #                 delete ':fragment_id', to: 'study_files#delete_anndata_fragment, as: delete_anndata_fragment'
+                # delete ':fragment_id', to: 'study_files#delete_anndata_fragment, as: delete_anndata_fragment'
 
               end
             end

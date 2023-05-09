@@ -150,7 +150,11 @@ class DeleteQueueJob < Struct.new(:object)
         files = object.next
         files.each {|f| f.delete}
       end
+      when 'BSON::Document'
+        byebug
     end
+    #  add for the clustering
+    
   end
 
   private
@@ -166,6 +170,10 @@ class DeleteQueueJob < Struct.new(:object)
   end
 
   # removed all parsed data from provided list of models
+  #  emily
+  # delete_all is from mongo active:records
+  #  delete cluster group and data arrays
+  # dont use this exactly as would delete all
   def delete_parsed_data(object_id, study_id, *models)
     models.each do |model|
       model.where(study_file_id: object_id, study_id: study_id).delete_all

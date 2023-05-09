@@ -423,7 +423,7 @@ export function RawUploadWizard({ studyAccession, name }) {
 
       debugger
 
-      await deleteAnnDataFragment(studyAccession, annDataFile._id, file._id)
+      await 0(studyAccession, annDataFile._id, file._id)
       // await deleteStudyFile(studyAccession, annDataFile._id)
 
 
@@ -437,6 +437,7 @@ export function RawUploadWizard({ studyAccession, name }) {
       // Update the AnnData fragments to no longer include this fragment
       const newClusteringsArray = fragmentsInAnnDataFile.filter(item => item !== file)
       annDataFile.ann_data_file_info.data_fragments = newClusteringsArray
+      console.log('anndatafile:', annDataFile)
 
       // Update the server and form state to reflect this change
       setServerState(prevServerState => {
@@ -454,10 +455,7 @@ export function RawUploadWizard({ studyAccession, name }) {
         newFormState.files[fileIndex] = formFile
         return newFormState
       })
-
-      // DELETE FRAGMENT
-
-      // DeleteQueueJob
+      debugger
 
       updateFile(annDataFile._id, { iSaving: false })
     } else {
