@@ -79,9 +79,8 @@ module Api
         requested_files = self.class.load_study_files(ids: bulk_download_params[:file_ids])
         requested_bytes = ::BulkDownloadService.get_requested_bytes(requested_files)
         if ::DownloadQuotaService.download_exceeds_quota?(current_api_user, requested_bytes)
-          error_msg = "This download will exceed your daily quota.  To continue with this request please email " \
-                      "scp-support@zendesk.com to request a temporary quota exemption."
-          render json: { error: error_msg }, status: 424 and return
+          error_msg = "'This download will exceed your daily quota.  #{::DownloadQuotaService::QUOTA_HELP_EMAIL}"
+          render json: { error: error_msg }, status: :failed_dependency and return
         end
 
         auth_download = DownloadRequest.create!(

@@ -9,8 +9,7 @@
         <% puts "#{study_file.name} exceeds quota" %>
         <span class="btn btn-sm btn-danger disabled-download"
               data-content="This file exceeds your daily download quota of <%= number_to_human_size(@download_quota) %>.
-                            To download this file email <a href='mailto:scp-support@zendesk.com'>scp-support@zendesk.com</a>
-                            to request a temporary quota exemption."
+                            <%= DownloadQuotaService::QUOTA_HELP_EMAIL %>"
               data-toggle="popover" data-placement="left"><i class="fas fa-times"></i> Exceeds Quota</span>
       <% elsif !study_file.generation %>
             <span class="label label-warning no-download-available"

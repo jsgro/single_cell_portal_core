@@ -30,12 +30,10 @@ export default function DownloadCommand({ fileIds=[], azulFiles }) {
       setAuthInfo(result)
       setIsLoading(false)
     }).catch(error => {
-      console.log(error)
-      setAuthError(error)
+      setAuthError(error.message)
       setIsLoading(false)
     })
   }, [refreshNum])
-  console.log(`authError ${authError}`)
   const downloadCommand = getDownloadCommand(authInfo.authCode, authInfo.downloadId)
   const terminalDescription = isWindows ? 'Windows PowerShell' : 'Mac/Linux/Unix'
 
@@ -49,14 +47,14 @@ export default function DownloadCommand({ fileIds=[], azulFiles }) {
       </div>
     }
     {
-      !isLoading && typeof authError !== 'undefined' &&
+      !isLoading && !!authError &&
       <div className="text-center text-danger">
         <h4>There was a problem authorizing your request</h4>
-        <p>{authError}</p>
+        <p dangerouslySetInnerHTML={{__html: authError }} />
       </div>
     }
     {
-      !isLoading && typeof authError === 'undefined' &&
+      !isLoading && !authError &&
       <div className="col-md-12">
         <h4>Copy the command below and paste it into your {terminalDescription} terminal</h4>
         This command is valid for one use within <span className='countdown'>

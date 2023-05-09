@@ -1,5 +1,9 @@
 # consolidate actions for dealing with daily download quotas for users
 class DownloadQuotaService
+  # error message to instruct users to email Zendesk for temporary quota exceptions
+  QUOTA_HELP_EMAIL = 'Please try again tomorrow after it resets, or email ' \
+                     '<a href="mailto:scp-support@zendesk.com">scp-support@zendesk.com</a> if you require ' \
+                     'immediate assistance to request a temporary quota exemption.'.freeze
   # daily reset of user quotas
   def self.reset_all_quotas
     User.update_all(daily_download_quota: 0)
