@@ -213,7 +213,7 @@
   }
 }
 
-.study_plot_tabs {
+.study-plot-tabs {
   li  {
     a {
       font-size: larger;
@@ -237,6 +237,8 @@
   li.disabled > a {
     background: #fff;
     color: #999999;
+    border-bottom: 1px solid #ddd;
+    aria-disabled: true;
   }
 
   padding-left: 0;
