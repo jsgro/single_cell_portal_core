@@ -44,7 +44,7 @@ function DownloadButton({ bucketId, deFilePath }) {
       onClick={async () => {await downloadBucketFile(bucketId, deFilePath)}}
       data-analytics-name="differential-expression-download"
       data-toggle="tooltip"
-      data-original-title="Download all DE genes data for this group"
+      data-original-title="Download all differential expression data for this group"
     >
       <FontAwesomeIcon icon={faDownload}/>
     </a>
@@ -63,7 +63,7 @@ function DotPlotButton({ dotPlotGenes, searchGenes }) {
       onClick={() => {searchGenes(dotPlotGenes)}}
       data-analytics-name="differential-expression-dot-plot"
       data-toggle="tooltip"
-      data-original-title="View dot plot for genes on this DE table page"
+      data-original-title="View dot plot for genes on this differential expression table page"
     >
       <svg viewBox="119.295 104.022 40.338 40.976" width="14" height="14">
         <ellipse style={{ 'fill': actionColor }} cx="130.295" cy="115.041" rx="11" ry="11"></ellipse>
@@ -76,11 +76,13 @@ function DotPlotButton({ dotPlotGenes, searchGenes }) {
 }
 
 /** Button to refresh DE table to original view */
-function DifferentialExpressionRefreshButton({ onClick }) {
+function DifferentialExpressionResetButton({ onClick }) {
   return <a
     onClick={() => onClick()}
-    className="de-refresh-icon"
-    data-analytics-name="differential-expression-refresh"
+    className="de-reset-button"
+    data-analytics-name="differential-expression-reset"
+    data-toggle="tooltip"
+    data-original-title="Reset view in differential expression table"
   >
     <FontAwesomeIcon icon={faUndo}/>
   </a>
@@ -243,7 +245,7 @@ function DifferentialExpressionTable({
       <div className="de-table-buttons">
         <DotPlotButton dotPlotGenes={dotPlotGenes} searchGenes={searchGenes} />
         <DownloadButton bucketId={bucketId} deFilePath={deFilePath} />
-        <DifferentialExpressionRefreshButton onClick={resetDifferentialExpression} />
+        <DifferentialExpressionResetButton onClick={resetDifferentialExpression} />
         <DifferentialExpressionModal />
       </div>
       <table
