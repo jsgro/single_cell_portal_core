@@ -97,7 +97,7 @@ function SortIcon({ order }) {
   const isAscending = order === 'asc'
   const dirIcon = isAscending ? faAngleDown : faAngleUp
   return (
-    <button className="sort-icon">
+    <button className="sort-icon" aria-label="Sort this column">
       <FontAwesomeIcon icon={dirIcon}/>
     </button>
   )
