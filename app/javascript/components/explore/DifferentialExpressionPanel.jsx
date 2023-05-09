@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useRef } from 'react'
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome'
-import { faArrowLeft, faDownload, faSearch, faTimes, faAngleUp, faAngleDown } from '@fortawesome/free-solid-svg-icons'
+import { faArrowLeft, faDownload, faSearch, faTimes, faAngleUp, faAngleDown, faUndo } from '@fortawesome/free-solid-svg-icons'
 import Button from 'react-bootstrap/lib/Button'
 
 import PagingControl from '~/components/search/results/PagingControl'
@@ -61,7 +61,7 @@ function DotPlotButton({ dotPlotGenes, searchGenes }) {
     <a
       className="de-dot-plot-button"
       onClick={() => {searchGenes(dotPlotGenes)}}
-      data-analytics-name="differential-expression-download"
+      data-analytics-name="differential-expression-dot-plot"
       data-toggle="tooltip"
       data-original-title="View dot plot for genes on this DE table page"
     >
@@ -73,6 +73,17 @@ function DotPlotButton({ dotPlotGenes, searchGenes }) {
       </svg>
     </a>
   )
+}
+
+/** Button to refresh DE table to original view */
+function DifferentialExpressionRefreshButton({ onClick }) {
+  return <a
+    onClick={() => onClick()}
+    className="de-refresh-icon"
+    data-analytics-name="differential-expression-refresh"
+  >
+    <FontAwesomeIcon icon={faUndo}/>
+  </a>
 }
 
 /**
@@ -103,21 +114,25 @@ function searchGenesFromTable(selectedGenes, searchGenes, logProps) {
   )
 }
 
+
+const defaultSorting = [
+  { id: 'pvalAdj', desc: false },
+  { id: 'log2FoldChange', desc: true }
+]
+
 /** Table of DE data for genes */
 function DifferentialExpressionTable({
   genesToShow, searchGenes, clusterName, annotation, species, numRows,
-  bucketId, deFilePath
+  bucketId, deFilePath, handleClear
 }) {
-  const defaultSorting = [
-    { id: 'pvalAdj', desc: false },
-    { id: 'log2FoldChange', desc: true }
-  ]
-  const [rowSelection, setRowSelection] = useState({})
-  const [sorting, setSorting] = React.useState(defaultSorting)
-  const [pagination, setPagination] = React.useState({
+  const defaultPagination = {
     pageIndex: 0,
     pageSize: numRows
-  })
+  }
+
+  const [rowSelection, setRowSelection] = useState({})
+  const [sorting, setSorting] = React.useState(defaultSorting)
+  const [pagination, setPagination] = React.useState(defaultPagination)
 
   const logProps = {
     species, clusterName, annotation
@@ -215,11 +230,20 @@ function DifferentialExpressionTable({
   const verticalPad = 400 // Accounts for all UI real estate above table header
   const tableHeight = window.innerHeight - verticalPad
 
+  /** Put DE table back to its original state */
+  function resetDifferentialExpression() {
+    setRowSelection({})
+    setSorting(defaultSorting)
+    setPagination(defaultPagination)
+    handleClear()
+  }
+
   return (
     <>
       <div className="de-table-buttons">
         <DotPlotButton dotPlotGenes={dotPlotGenes} searchGenes={searchGenes} />
         <DownloadButton bucketId={bucketId} deFilePath={deFilePath} />
+        <DifferentialExpressionRefreshButton onClick={resetDifferentialExpression} />
         <DifferentialExpressionModal />
       </div>
       <table
@@ -395,6 +419,7 @@ export default function DifferentialExpressionPanel({
           numRows={numRows}
           bucketId={bucketId}
           deFilePath={deFilePath}
+          handleClear={handleClear}
         />
       </>
       }
