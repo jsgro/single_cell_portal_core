@@ -49,4 +49,12 @@ class DownloadQuotaServiceTest < ActiveSupport::TestCase
     @user.reload
     assert_equal starting_quota + @study_file.upload_file_size, @user.daily_download_quota
   end
+
+  test 'should retrieve download quota value' do
+    assert_equal 2.terabytes, DownloadQuotaService.download_quota
+    AdminConfiguration.find_or_create_by(
+      config_type: 'Daily User Download Quota', value: '1', value_type: 'Numeric', multiplier: 'megabyte'
+    )
+    assert_equal 1.megabyte, DownloadQuotaService.download_quota
+  end
 end

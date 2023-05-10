@@ -13,7 +13,7 @@ const isWindows = clientOS.match(/Win/)
 export default function DownloadCommand({ fileIds=[], azulFiles }) {
   const [isLoading, setIsLoading] = useState(true)
   const [authInfo, setAuthInfo] = useState({ authCode: null, timeInterval: 3000 })
-  const [authError, setAuthError] = useState(null)
+  const [authCodeError, setAuthCodeError] = useState(null)
   const [refreshNum, setRefreshNum] = useState(0)
   const textInputRef = useRef(null)
 
@@ -30,7 +30,7 @@ export default function DownloadCommand({ fileIds=[], azulFiles }) {
       setAuthInfo(result)
       setIsLoading(false)
     }).catch(error => {
-      setAuthError(error.message)
+      setAuthCodeError(error.message)
       setIsLoading(false)
     })
   }, [refreshNum])
@@ -47,14 +47,14 @@ export default function DownloadCommand({ fileIds=[], azulFiles }) {
       </div>
     }
     {
-      !isLoading && !!authError &&
+      !isLoading && !!authCodeError &&
       <div className="text-center text-danger">
         <h4>There was a problem authorizing your request</h4>
-        <p dangerouslySetInnerHTML={{__html: authError }} />
+        <p dangerouslySetInnerHTML={{__html: authCodeError }} />
       </div>
     }
     {
-      !isLoading && !authError &&
+      !isLoading && !authCodeError &&
       <div className="col-md-12">
         <h4>Copy the command below and paste it into your {terminalDescription} terminal</h4>
         This command is valid for one use within <span className='countdown'>
