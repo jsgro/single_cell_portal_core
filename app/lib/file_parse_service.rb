@@ -100,6 +100,9 @@ class FileParseService
           study_file.save
         end
 
+        # enable / disable full ingest of AnnData files using the feature flag 'ingest_anndata_file'
+        # will ignore reference AnnData files (includes previously uploaded files) as the default for
+        # ann_data_file_info.reference_file is true legacy files were covered in data migration
         if do_anndata_file_ingest && !study_file.is_reference_anndata?
           # obsm_key is only set for parsing a new singular clustering
           if obsm_key.present?

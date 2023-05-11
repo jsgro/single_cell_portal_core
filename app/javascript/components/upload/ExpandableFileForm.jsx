@@ -145,7 +145,6 @@ export function SaveDeleteButtons({
 /** renders a save button for a given file */
 function SaveButton({ file, saveFile, validationMessages = {}, isAnnDataExperience }) {
   const saveDisabled = isAnnDataExperience ? false : Object.keys(validationMessages).length > 0
-// ewmily
   let saveButton = <button
     style={{ pointerEvents: saveDisabled ? 'none' : 'auto' }}
     type="button"

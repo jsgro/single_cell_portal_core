@@ -1374,8 +1374,6 @@ class FireCloudClient
   # * *return*
   #   - +Google::Cloud::Storage::File+
   def get_workspace_file(workspace_bucket_id, filename)
-    # def delete_workspace_file(workspace_bucket_id, filename)
-
     bucket = self.get_workspace_bucket(workspace_bucket_id)
     bucket.file filename
   end

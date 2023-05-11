@@ -426,15 +426,13 @@ export function RawUploadWizard({ studyAccession, name }) {
       // Update the AnnData fragments to no longer include this fragment for setting the state in the UploadWizard
       const newClusteringsArray = fragmentsInAnnDataFile.filter(item => item !== file)
       annDataFile.ann_data_file_info.data_fragments = newClusteringsArray
-      console.log('anndatafile:', annDataFile)
       // borrowed much from SaveFile for an update of a studyFile
       const fileSize = annDataFile.uploadSelection?.size
       const isChunked = fileSize > CHUNK_SIZE
       let chunkStart = 0
       let chunkEnd = Math.min(CHUNK_SIZE, fileSize)
       const studyFileData = formatFileForApi(annDataFile, chunkStart, chunkEnd)
-      debugger
-      
+
       try {
         let response
         const requestCanceller = new RequestCanceller(studyFileId)
@@ -537,7 +535,6 @@ export function RawUploadWizard({ studyAccession, name }) {
   useEffect(() => {
     fetchStudyFileInfo(studyAccession).then(response => {
       response.files.forEach(file => formatFileFromServer(file))
-      debugger
       setIsAnnDataExperience(
         (response.files?.find(AnnDataFileFilter)?.ann_data_file_info?.data_fragments?.length > 0 ||
         response.files?.find(AnnDataFileFilter)?.ann_data_file_info?.reference_file === false) &&

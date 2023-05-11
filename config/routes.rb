@@ -35,8 +35,6 @@ Rails.application.routes.draw do
                 post 'parse', to: 'study_files#parse'
                 patch 'chunk', to: 'study_files#chunk'
                 delete ':fragment_id', to: 'study_files#delete_anndata_fragment'
-                # delete ':fragment_id', to: 'study_files#delete_anndata_fragment, as: delete_anndata_fragment'
-
               end
             end
             resources :study_file_bundles, only: [:index, :show, :create, :destroy]
@@ -213,7 +211,6 @@ Rails.application.routes.draw do
               as: :sync_directory_listing
         post 'send_to_firecloud', to: 'studies#send_to_firecloud', as: :send_to_firecloud
         delete 'study_files/:study_file_id', to: 'studies#delete_study_file', as: :delete_study_file
-        # delete 'study_files/:study_file_id/:fragId', to: 'studies#delete_clustering_fragment', as: :delete_clustering_fragment
         delete 'study_files/unsync/:study_file_id', to: 'studies#unsync_study_file', as: :unsync_study_file
         delete 'directory_listings/:directory_listing_id', to: 'studies#delete_directory_listing',
                as: :delete_directory_listing

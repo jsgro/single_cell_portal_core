@@ -163,10 +163,6 @@ class DeleteQueueJob < Struct.new(:object, :study_file_id)
   end
 
   # removed all parsed data from provided list of models
-  #  emily
-  # delete_all is from mongo active:records
-  #  delete cluster group and data arrays
-  # dont use this exactly as would delete all
   def delete_parsed_data(object_id, study_id, *models)
     models.each do |model|
       model.where(study_file_id: object_id, study_id: study_id).delete_all
@@ -244,11 +240,6 @@ class DeleteQueueJob < Struct.new(:object, :study_file_id)
       study.default_options[:annotation] = current_default
       study.save
     end
-  end
-
-  def delete_single_clustering_fragment(study:, study_file:)
-    prefix = "_scp_internal/anndata_ingest/#{study_file.id}"
-    ApplicationController.firecloud_client.get_workspace_files(study.bucket_id, prefix:)
   end
 
   # delete all AnnData "fragment" files upon study file deletion
