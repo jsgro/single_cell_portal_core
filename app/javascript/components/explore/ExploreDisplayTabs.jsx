@@ -73,6 +73,12 @@ function getClusterHasDe(exploreInfo, exploreParams) {
   return clusterHasDe
 }
 
+/** Determine if the flag show_explore_tab_ux_updates is toggled to show explore tab UX updates */
+function getShowExploreTabUpdates() {
+  const flags = getFeatureFlagsWithDefaults()
+  return flags?.show_explore_tab_ux_updates
+}
+
 /** Return list of annotations that have differential expression enabled */
 function getAnnotationsWithDE(exploreInfo) {
   if (!exploreInfo) {return false}
@@ -370,12 +376,14 @@ export default function ExploreDisplayTabs({
           </div>
         </div>
         <div className="col-md-4 col-md-offset-1">
-          <ul className="nav nav-tabs" role="tablist" data-analytics-name="explore-default">
+          <ul className={getShowExploreTabUpdates() ? "nav nav-tabs study-plot-tabs" : "nav nav-tabs"} role="tablist" data-analytics-name="explore-default">
             { enabledTabs.map(tabKey => {
               const label = tabList.find(({ key }) => key === tabKey).label
               return (
                 <li key={tabKey}
                   role="presentation"
+                  // TODO: (SCP-5050): Update aria-disabled to be conditionally set if tab is disabled
+                  aria-disabled={false}
                   className={`study-nav ${tabKey === shownTab ? 'active' : ''} ${tabKey}-tab-anchor`}>
                   <a onClick={() => updateExploreParams({ tab: tabKey })}>{label}</a>
                 </li>
