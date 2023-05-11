@@ -353,7 +353,6 @@ export async function sendStudyFileChunk({
  * @param {fileId} the guid of the file to delete
 */
 export async function deleteStudyFile(studyAccession, fileId, mock=false) {
-  // debugger
   const apiUrl = `/studies/${studyAccession}/study_files/${fileId}`
   const init = Object.assign({}, defaultInit(), {
     method: 'DELETE'
@@ -371,7 +370,6 @@ export async function deleteStudyFile(studyAccession, fileId, mock=false) {
 
 */
 export async function deleteAnnDataFragment(studyAccession, fileId, fragId, mock=false) {
-  debugger
   const apiUrl = `/studies/${studyAccession}/study_files/${fileId}/${fragId}`
   const init = Object.assign({}, defaultInit(), {
     method: 'DELETE'
@@ -379,7 +377,6 @@ export async function deleteAnnDataFragment(studyAccession, fileId, fragId, mock
   const [response] = await scpApi(apiUrl, init, mock, false)
   return response
 }
-
 
 
 /**
@@ -901,7 +898,6 @@ export default async function scpApi(
       legacyBackendTime = performance.now() - perfTimeStart
     }
   } else {
-    // debugger
     response = await fetch(url, init).catch(error => error)
 
     // Milliseconds taken to fetch data from API

@@ -108,7 +108,6 @@ module Api
 
       # GET /single_cell/api/v1/studies/:study_id/study_files/:id
       def show
-        byebug
       end
 
       swagger_path '/studies/{study_id}/study_files' do
@@ -517,64 +516,38 @@ module Api
         end
       end
 
-      #"/single_cell/api/v1/studies/SCP19/study_files/:id/:fragment_id"
+      # /single_cell/api/v1/studies/SCP19/study_files/:id/:fragment_id
+      # delete an individual AnnData clustering
       def delete_anndata_fragment
         @fragment = @study_file.ann_data_file_info.find_fragment(_id: params[:fragment_id])
-        DeleteQueueJob.new(@fragment).delay.perform
+        study_file_id = @study_file._id
 
-        byebug
         url = @study_file.ann_data_file_info.fragment_file_gs_url(@study.bucket_id, 'cluster', @study_file._id, @fragment["obsm_key_name"])
 
-        clustering_to_delete =  ApplicationController.firecloud_client.get_workspace_file(@study.bucket_id, url)
+        # get the remote clustering fragment to be deleted
+        clustering_to_delete = ApplicationController.firecloud_client.get_workspace_file(@study.bucket_id, url)
 
-        #  .present? isn't enough still tries if not there (tho this won;t be so bad once ui/server is fixed)
-        if clustering_to_delete.present?
-          Rails.logger.info "Deleting clustering at #{url}"
+        begin
+          if clustering_to_delete.present?
+          
+            Rails.logger.info "Deleting clustering at #{url}"
 
-          ApplicationController.firecloud_client.delete_workspace_file(@study.bucket_id, url)
+            # delete matching caches
+            @study_file.invalidate_cache_by_file_type
+            CacheRemovalJob.new(@study.accession).delay(queue: :cache).perform
 
-          # DeleteQueueJob.new(clustering_to_delete).delay.perform
+            DeleteQueueJob.new(@fragment, study_file_id).delay.perform
 
+            ApplicationController.firecloud_client.delete_workspace_file(@study.bucket_id, url)
+            head 204
+          end
+        rescue => e
+          ErrorTracker.report_exception(e, current_api_user, @study_file, params)
+          MetricsService.report_error(e, request, current_api_user, @study)
+          logger.error "Error in deleting clustering #{@study_file.upload_file_name} - #{e.message}"
+          render json: {error: "Error deleting remote file in bucket: #{e.message}"}, status: 500
+        
         end
-
-
-        # url = prefix + ".#{@fragment["obsm_key_name"]}"
-        # byebug
-        # remotes = ApplicationController.firecloud_client.get_workspace_files(study.bucket_id, prefix:)
-        #             remotes = ApplicationController.firecloud_client.get_workspace_files(@study.bucket_id, )
-        # @name="_scp_internal/anndata_ingest/64593751d3231f44d6a42b61/h5ad_frag.cluster.X_tsne.tsv"
-          #  all_files = ApplicationController.firecloud_client.get_workspace_files(@study.bucket_id)
-          # # all_files.find(@id == )
-          # clustering_to_delete = all_files.select{|i| i.name == url}
-
-            # def delete_workspace_file(workspace_bucket_id, filename)
-        # puts(@fragment)
-        # byebug
-        # DeleteQueueJob.new(@fragment).delay.perform
-        # @study_file.ann_data_file_info.fragment_file_gs_url(@study.bucket_id, 'cluster', @study_file._id)
-        # "fc-c2609524-30ae-4602-98b7-8eb058379618/_scp_internal/anndata_ingest/64593751d3231f44d6a42b61/h5ad_frag.cluster.tsv"
-
-        #
-        #     prefix = "_scp_internal/anndata_ingest/#{study_file.id}"
-        # remotes = ApplicationController.firecloud_client.get_workspace_files(study.bucket_id, prefix:)
-        # remotes.each(&:delete)
-
-#           bucket_files.each do |filepath|
-#             identifier = " #{study.accession}:#{annotation_name}--group--#{annotation_scope}"
-#             remote = ApplicationController.firecloud_client.get_workspace_file(study.bucket_id, filepath)
-#             if remote.present?
-#               Rails.logger.info "Removing DE output #{identifier} at #{filepath}"
-#               remote.delete
-#             end
-#           end
-
-            # present = ApplicationController.firecloud_client.execute_gcloud_method(:get_workspace_file, @study.bucket_id, @study_file.ann_data_file_info.fragment_file_gs_url(@study.bucket_id, 'cluster', @study_file._id))
-            # if present
-            # 'h5ad_frag.cluster.tsv'
-              # ApplicationController.firecloud_client.execute_gcloud_method(:delete_workspace_file,  )
-            # end
-        #   end
-
       end
 
       swagger_path '/studies/{study_id}/study_files/{id}/parse' do

@@ -381,8 +381,7 @@ export function RawUploadWizard({ studyAccession, name }) {
   async function deleteFile(file) {
     const fileId = file._id
 
-    debugger
-    // if AnnDataExperience clusterings need to be handled like an update
+    // if AnnDataExperience clusterings need to be handled differently
     if (isAnnDataExperience && file.data_type === 'cluster') {
       annDataClusteringFragmentsDeletionHelper(file)
     } else {
@@ -404,40 +403,70 @@ export function RawUploadWizard({ studyAccession, name }) {
     }
   }
 
-  /** */
+  /**
+   * Separate logic for deleting a clustering from an AnnData file.
+   * Deleting a single clustering from the AnnData file requires:
+   * deleting the fragment from the google bucket, deleting the parsed data,
+   * updating the AnnData file and the ClusterGroup with this deletion
+  */
   async function annDataClusteringFragmentsDeletionHelper(file) {
     const annDataFile = formState.files.find(AnnDataFileFilter)
     const fragmentsInAnnDataFile = annDataFile.ann_data_file_info.data_fragments
-    debugger
-    // const study = useContext(StudyContext)
-    // StudyContext
+
     // If the AnnData file contains more than one clustering proceed with deletion
     if (fragmentsInAnnDataFile.filter(f => f.data_type === 'cluster').length > 1) {
-      // await deleteStudyFile(studyAccession, file._id)
-      // await deleteClusteringFragment(studyAccession, annDataFile._id, file._id)
 
-      // updateFile(file._id, { isDeleting: true })
-      updateFile(annDataFile._id, { iSaving: true })
-      // const clusteringToDelete = fragmentsInAnnDataFile.find(fi => fi._id === file._id)
-      // updateFile(clusteringToDelete._id, { name: 'DELETE_ME' })
+      // delete the clustering from the bucket and update the ClusterGroup
+      let studyFileId = annDataFile._id
+      updateFile(studyFileId, { isSaving: true })
 
-      debugger
-
-      await 0(studyAccession, annDataFile._id, file._id)
-      // await deleteStudyFile(studyAccession, annDataFile._id)
+      await deleteAnnDataFragment(studyAccession, studyFileId, file._id)
 
 
-      // const thirdClusteringArray = newClusteringsArray.concat([clusteringToDelete])
-      // annDataFile.ann_data_file_info.data_fragments = thirdClusteringArray
-
-      // const annDataFileForDeletionLogic = annDataFile
-
-      debugger
-
-      // Update the AnnData fragments to no longer include this fragment
+      // Update the AnnData fragments to no longer include this fragment for setting the state in the UploadWizard
       const newClusteringsArray = fragmentsInAnnDataFile.filter(item => item !== file)
       annDataFile.ann_data_file_info.data_fragments = newClusteringsArray
       console.log('anndatafile:', annDataFile)
+      // borrowed much from SaveFile for an update of a studyFile
+      const fileSize = annDataFile.uploadSelection?.size
+      const isChunked = fileSize > CHUNK_SIZE
+      let chunkStart = 0
+      let chunkEnd = Math.min(CHUNK_SIZE, fileSize)
+      const studyFileData = formatFileForApi(annDataFile, chunkStart, chunkEnd)
+      debugger
+      
+      try {
+        let response
+        const requestCanceller = new RequestCanceller(studyFileId)
+
+        // update the AnnData file
+        response = await updateStudyFile({
+          studyAccession, studyFileId, studyFileData, isChunked, chunkStart, chunkEnd, fileSize, requestCanceller,
+          onProgress: e => handleSaveProgress(e, studyFileId, fileSize, chunkStart)
+        })
+
+        handleSaveResponse(response, isChunked, requestCanceller, file !== annDataFile ? file : null)
+        // copy over the new id from the server
+        studyFileId = response._id
+        requestCanceller.fileId = studyFileId
+        if (isChunked && !requestCanceller.wasCancelled) {
+          while (chunkEnd < fileSize && !requestCanceller.wasCancelled) {
+            chunkStart += CHUNK_SIZE
+            chunkEnd = Math.min(chunkEnd + CHUNK_SIZE, fileSize)
+            const chunkApiData = formatFileForApi(file, chunkStart, chunkEnd)
+            response = await sendStudyFileChunk({
+              studyAccession, studyFileId, studyFileData: chunkApiData, chunkStart, chunkEnd, fileSize, requestCanceller,
+              onProgress: e => handleSaveProgress(e, studyFileId, fileSize, chunkStart)
+            })
+          }
+          handleSaveResponse(response, false, requestCanceller, file !== annDataFile ? file : null)
+        }
+      } catch (error) {
+        Store.addNotification(failureNotification(<span>{annDataFile.name} failed to save<br />{error}</span>))
+        updateFile(studyFileId, {
+          isSaving: false
+        })
+      }
 
       // Update the server and form state to reflect this change
       setServerState(prevServerState => {
@@ -455,7 +484,6 @@ export function RawUploadWizard({ studyAccession, name }) {
         newFormState.files[fileIndex] = formFile
         return newFormState
       })
-      debugger
 
       updateFile(annDataFile._id, { iSaving: false })
     } else {
@@ -509,6 +537,7 @@ export function RawUploadWizard({ studyAccession, name }) {
   useEffect(() => {
     fetchStudyFileInfo(studyAccession).then(response => {
       response.files.forEach(file => formatFileFromServer(file))
+      debugger
       setIsAnnDataExperience(
         (response.files?.find(AnnDataFileFilter)?.ann_data_file_info?.data_fragments?.length > 0 ||
         response.files?.find(AnnDataFileFilter)?.ann_data_file_info?.reference_file === false) &&
