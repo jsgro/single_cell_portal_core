@@ -522,7 +522,7 @@ module Api
         @fragment = @study_file.ann_data_file_info.find_fragment(_id: params[:fragment_id])
         study_file_id = @study_file._id
 
-        url = @study_file.ann_data_file_info.fragment_file_gs_url(@study.bucket_id, 'cluster', @study_file._id, @fragment["obsm_key_name"])
+        url = @study_file.ann_data_file_info.fragment_file_url(@study.bucket_id, 'cluster', @study_file._id, @fragment["obsm_key_name"])
 
         # get the remote clustering fragment to be deleted
         clustering_to_delete = ApplicationController.firecloud_client.get_workspace_file(@study.bucket_id, url)

@@ -129,6 +129,20 @@ class AnnDataFileInfo
     hash_from_keys(fragment, *axes, transform: :to_f)
   end
 
+  # generate a GS URL to a derived fragment that was extracted from the parent AnnData file
+  # File name structure is: <input_filetype>_frag.<file_type>.<file_type_detail>.tsv
+  #   file_type = cluster|metadata|matrix
+  #   file_type_detail [optional] = cluster name (for cluster files), raw|processed (for matrix files)
+  def fragment_file_url(bucket_id, fragment_type, h5ad_file_id, file_type_detail = "", obsm_key)
+    url = "_scp_internal/anndata_ingest/#{h5ad_file_id}/h5ad_frag.#{fragment_type}.#{obsm_key}"
+    if file_type_detail.present?
+      url += ".#{file_type_detail}.tsv"
+    else
+      url += ".tsv"
+    end
+    url
+  end
+
   private
 
   # select out keys from source hash and return new one, rejecting blank values
@@ -150,20 +164,6 @@ class AnnDataFileInfo
     else
       :presence
     end
-  end
-
-    # generate a GS URL to a derived fragment that was extracted from the parent AnnData file
-  # File name structure is: <input_filetype>_frag.<file_type>.<file_type_detail>.tsv
-  #   file_type = cluster|metadata|matrix
-  #   file_type_detail [optional] = cluster name (for cluster files), raw|processed (for matrix files)
-  def fragment_file_gs_url(bucket_id, fragment_type, h5ad_file_id, file_type_detail = "", obsm_key)
-    url = "_scp_internal/anndata_ingest/#{h5ad_file_id}/h5ad_frag.#{fragment_type}.#{obsm_key}"
-    if file_type_detail.present?
-      url += ".#{file_type_detail}.tsv"
-    else
-      url += ".tsv"
-    end
-    url
   end
 
   # ensure all fragments have required keys and are unique
