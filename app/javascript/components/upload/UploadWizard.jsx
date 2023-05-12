@@ -422,22 +422,23 @@ export function RawUploadWizard({ studyAccession, name }) {
 
       await deleteAnnDataFragment(studyAccession, studyFileId, file._id)
 
-
       // Update the AnnData fragments to no longer include this fragment for setting the state in the UploadWizard
       const newClusteringsArray = fragmentsInAnnDataFile.filter(item => item !== file)
       annDataFile.ann_data_file_info.data_fragments = newClusteringsArray
+
       // borrowed much from SaveFile for an update of a studyFile
+      // likely worth revisiting in future to clean up more
       const fileSize = annDataFile.uploadSelection?.size
       const isChunked = fileSize > CHUNK_SIZE
       let chunkStart = 0
       let chunkEnd = Math.min(CHUNK_SIZE, fileSize)
       const studyFileData = formatFileForApi(annDataFile, chunkStart, chunkEnd)
 
+      // attempt to update the AnnData file to refelect the deleted clustering
       try {
         let response
         const requestCanceller = new RequestCanceller(studyFileId)
 
-        // update the AnnData file
         response = await updateStudyFile({
           studyAccession, studyFileId, studyFileData, isChunked, chunkStart, chunkEnd, fileSize, requestCanceller,
           onProgress: e => handleSaveProgress(e, studyFileId, fileSize, chunkStart)
@@ -448,6 +449,7 @@ export function RawUploadWizard({ studyAccession, name }) {
         studyFileId = response._id
         requestCanceller.fileId = studyFileId
         if (isChunked && !requestCanceller.wasCancelled) {
+          // updating the AnnData file requires sending some of the file, but not saving the entire file again.
           while (chunkEnd < fileSize && !requestCanceller.wasCancelled) {
             chunkStart += CHUNK_SIZE
             chunkEnd = Math.min(chunkEnd + CHUNK_SIZE, fileSize)
