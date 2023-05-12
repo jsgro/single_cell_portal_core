@@ -116,7 +116,7 @@ export function SaveDeleteButtons({
     </div>
   }
   return <div className="flexbox-align-center button-panel">
-    <SaveButton file={file} saveFile={saveFile} validationMessages={validationMessages} isAnnDataExperience={isAnnDataExperience} />
+    <SaveButton file={file} saveFile={saveFile} allFiles={allFiles} validationMessages={validationMessages} isAnnDataExperience={isAnnDataExperience} />
     {!isExpressionMatrix && !isLastClustering &&
       <DeleteButton file={file} deleteFile={deleteFile} setShowConfirmDeleteModal={setShowConfirmDeleteModal} />
     }
@@ -143,8 +143,18 @@ export function SaveDeleteButtons({
 
 
 /** renders a save button for a given file */
-function SaveButton({ file, saveFile, validationMessages = {}, isAnnDataExperience }) {
+function SaveButton({ file, saveFile, allFiles, validationMessages = {}, isAnnDataExperience }) {
   const saveDisabled = isAnnDataExperience ? false : Object.keys(validationMessages).length > 0
+
+  // show parsing in the save button for cluster and expression fragments if AnnData file is parsing
+  let showParsingForFragment = false
+  if (isAnnDataExperience) {
+    const annDataFile = allFiles.find(f => f.file_type === 'AnnData')
+    showParsingForFragment = annDataFile?.serverFile?.parse_status === 'parsing' &&
+      (file?.data_type === 'cluster' || file?.data_type === 'expression')
+  }
+
+  //  primary save button, white background with blue text and border, shown by default as the save button
   let saveButton = <button
     style={{ pointerEvents: saveDisabled ? 'none' : 'auto' }}
     type="button"
@@ -156,21 +166,22 @@ function SaveButton({ file, saveFile, validationMessages = {}, isAnnDataExperien
     Save {file.uploadSelection && <span>&amp; Upload</span>}
   </button>
 
-  if (file.serverFile?.parse_status === 'parsing' && isAnnDataExperience) {
+  // the parsing status will show over the save button when file is saving
+  if (file.serverFile?.parse_status === 'parsing' || showParsingForFragment) {
     saveButton = <OverlayTrigger trigger={['hover', 'focus']} rootClose placement="top" overlay={parsingPopup}>
       <span className="detail">Parsing <LoadingSpinner /></span>
     </OverlayTrigger>
   }
 
+  // if saving is disabled, wrap the disabled button in a popover that will show the errors
   if (saveDisabled) {
-    // if saving is disabled, wrap the disabled button in a popover that will show the errors
     const validationPopup = <Popover id={`save-invalid-${file._id}`} className="tooltip-wide">
       {Object.keys(validationMessages).map(key => <div key={key}>{validationMessages[key]}</div>)}
     </Popover>
     saveButton = <OverlayTrigger trigger={['hover', 'focus']} rootClose placement="left" overlay={validationPopup}>
       <div>{saveButton}</div>
     </OverlayTrigger>
-  } else if (file.isSaving) {
+  } else if (file.isSaving) { // if file is currently saving will show the text "saving" in the button
     const savingText = file.saveProgress ? <span>Uploading {file.saveProgress}% </span> : 'Saving'
     saveButton = <button type="button"
       className="btn btn-primary margin-right">
@@ -180,7 +191,8 @@ function SaveButton({ file, saveFile, validationMessages = {}, isAnnDataExperien
   return saveButton
 }
 
-/** renders a delete button for a given file
+/**
+ * renders a delete button for a given file
  * will show a parsing indicator if the file is parsing (and therefore not deletable) */
 function DeleteButton({ file, deleteFile, setShowConfirmDeleteModal }) {
   /** delete file with/without confirmation dialog as appropriate */
