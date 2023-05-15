@@ -82,7 +82,7 @@ export default function KeywordSearch({ keywordPrompt }) {
           placeholder={placeholder}
           name="keywordText"/>
         <div className="input-group-append">
-          <Button type='submit' aria-label='Search keywords'>
+          <Button type='submit' aria-label='Search keywords' data-testid="submit-search">
             <FontAwesomeIcon icon={faSearch} />
           </Button>
         </div>
