@@ -25,14 +25,14 @@ describe('<KeywordSearch/> rendering>', () => {
   })
 })
 
-describe('Searching and routerNav', () => {
+describe('Searching lowercased accession style strings', () => {
   it('should do a search with uppercased accession even if given lowercased term', () => {
     const routerNav = jest.spyOn(Reach, 'navigate')
 
     render((
       <PropsStudySearchProvider searchParams={{ terms: 'scp9', facets: {}, page: 1 }}>
         <KeywordSearch></KeywordSearch>
-=        </PropsStudySearchProvider>
+      </PropsStudySearchProvider>
     ))
 
     fireEvent.click(screen.getByTestId('submit-search'))
@@ -40,4 +40,20 @@ describe('Searching and routerNav', () => {
     // see that the term is now uppercased
     expect(routerNav).toHaveBeenLastCalledWith('?type=study&page=1&terms=SCP9')
   })
+
+  it('should do a search without altering terms', () => {
+    const routerNav = jest.spyOn(Reach, 'navigate')
+
+    render((
+      <PropsStudySearchProvider searchParams={{ terms: 'lscp9 scp', facets: {}, page: 1 }}>
+        <KeywordSearch></KeywordSearch>
+      </PropsStudySearchProvider>
+    ))
+
+    fireEvent.click(screen.getByTestId('submit-search'))
+
+    // see that the terms have not changed
+    expect(routerNav).toHaveBeenLastCalledWith('?type=study&page=1&terms=lscp9 scp')
+  })
+
 })
