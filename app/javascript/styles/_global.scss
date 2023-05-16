@@ -339,8 +339,13 @@ label {
   top: -5px;
 }
 
-.disabled > a {
+.disabled > a,
+button[disabled] {
   color: #999 !important;
+}
+
+button[disabled] {
+  cursor: initial !important;
 }
 
 .enabled > a {
@@ -874,6 +879,13 @@ figcaption.ck-editor__editable {
 
 .glossary {
   border-bottom: 1px #555 dashed;
+}
+
+.sort-icon {
+  margin-left: 4px;
+  border: none;
+  background: transparent;
+  color: $action-color;
 }
 
 .btn-warning-scp {
