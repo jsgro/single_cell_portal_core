@@ -36,6 +36,7 @@ class SiteControllerTest < ActionDispatch::IntegrationTest
     OmniAuth.config.mock_auth[:google_oauth2] = nil
     # reset public permission
     @study.update(public: true)
+    AdminConfiguration.find_by(config_type: 'Daily User Download Quota')&.destroy
   end
 
   test 'should redirect to home page from bare domain' do
@@ -139,6 +140,38 @@ class SiteControllerTest < ActionDispatch::IntegrationTest
       assert_response 302
       follow_redirect!
       assert_equal site_path, path, 'Did not redirect to home page'
+    end
+  end
+
+  test 'should enforce download quota for files' do
+    AdminConfiguration.find_or_create_by(
+      config_type: 'Daily User Download Quota', value: '1', value_type: 'Numeric', multiplier: 'kilobyte'
+    )
+    mock_not_detached @study, :find_by do
+      file = @study.study_files.sample
+      mock = Minitest::Mock.new
+      mock.expect :services_available?, true, [String]
+      systems = [FireCloudClient::SAM_SERVICE, FireCloudClient::RAWLS_SERVICE, FireCloudClient::BUCKETS_SERVICE]
+      ok = { ok: true }
+      api_status = {
+        systems: Hash[systems.zip(Array.new(3) { ok })]
+      }.with_indifferent_access
+      mock.expect :api_status, api_status
+      file_mock = Minitest::Mock.new
+      file_mock.expect :present?, true
+      file_mock.expect :size, file.upload_file_size
+      mock.expect :execute_gcloud_method, file_mock, [:get_workspace_file, 0, String, String]
+      ApplicationController.stub :firecloud_client, mock do
+        download = download_file_path(
+          accession: @study.accession, study_name: @study.url_safe_name, filename: file.upload_file_name
+        )
+        get download
+        assert_response 302
+        follow_redirect!
+        assert_equal view_study_path(@study.accession, @study.url_safe_name), path
+        mock.verify
+        file_mock.verify
+      end
     end
   end
 
