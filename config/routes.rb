@@ -34,6 +34,7 @@ Rails.application.routes.draw do
               member do
                 post 'parse', to: 'study_files#parse'
                 patch 'chunk', to: 'study_files#chunk'
+                delete ':fragment_id', to: 'study_files#delete_anndata_fragment'
               end
             end
             resources :study_file_bundles, only: [:index, :show, :create, :destroy]
