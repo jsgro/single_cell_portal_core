@@ -217,13 +217,7 @@
                   <td class="actions">
                     <%= link_to "<span class='fas fa-edit'></span> Edit User".html_safe, edit_user_path(user),
                                 class: "btn btn-xs btn-primary", id: "#{user.email_as_id}-edit" %>
-                    <%= link_to "<span class='fas fa-ban'></span> Disable Quota".html_safe,
-                                grant_download_exemption_path(user.id),
-                                method: :post,
-                                class: "btn btn-xs btn-default",
-                                id: "#{user.email_as_id}-dl-exempt",
-                                title: "Disable download quota tracking until tomorrow for #{user.email}",
-                                data: { toggle: 'tooltip' }%>
+                    <%= link_to quota_exemption_button(user) %>
                   </td>
                 </tr>
               <% end %>

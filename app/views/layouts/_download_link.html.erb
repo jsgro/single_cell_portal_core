@@ -6,7 +6,6 @@
                   target: :_blank, rel: 'noopener noreferrer', data: {"analytics-name": 'file-download:study-single:external'} %>
   <% else %>
       <% if study_file.generation && DownloadQuotaService.download_exceeds_quota?(current_user, study_file.upload_file_size) %>
-        <% puts "#{study_file.name} exceeds quota" %>
         <span class="btn btn-sm btn-danger disabled-download"
               data-content="This file exceeds your daily download quota of <%= number_to_human_size(@download_quota) %>.
                             <%= DownloadQuotaService::QUOTA_HELP_EMAIL %>"
