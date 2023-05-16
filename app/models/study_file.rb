@@ -1335,19 +1335,19 @@ class StudyFile
 
   # update clustering fragments to be called on updates to study_file
   def handle_clustering_fragment_updates
-    if self.ann_data_file_info.present? && self.ann_data_file_info.data_fragments_changed? && self.file_type == "AnnData" && (!is_reference_anndata? || is_reference_anndata? != nil)
-      if !self.queued_for_deletion && !self.parsing? && !self.name.start_with?("DELETE-")
+    if !is_reference_anndata? && ann_data_file_info&.data_fragments_changed?
+      if !queued_for_deletion && !parsing? && !name.start_with?("DELETE-")
 
         # collect the previous data fragment ids to choose the appropriate action for new or existing clusterings
         prev_ids = {}
-        self.ann_data_file_info.data_fragments_was.each do |data_frag|
+        ann_data_file_info.data_fragments_was.each do |data_frag|
           prev_ids[data_frag&.[]("_id")] = data_frag
         end
 
         # going through the obsm key names ensures actions are only being called on clusterings
-        self.ann_data_file_info.obsm_key_names.each do |fragment|
+        ann_data_file_info.obsm_key_names.each do |fragment|
           matcher = { data_type: :cluster, obsm_key_name: fragment }
-          cluster_data_fragment = self.ann_data_file_info.find_fragment(**matcher)
+          cluster_data_fragment = ann_data_file_info.find_fragment(**matcher)
           curr_id = cluster_data_fragment&.[]("_id")
 
           # if it's an existing clustering just update don't parse
@@ -1355,7 +1355,7 @@ class StudyFile
             name = cluster_data_fragment&.[](:name) || fragment # fallback if we can't find data_fragment
 
             if prev_ids[curr_id]["name"] != name
-              @cluster = ClusterGroup.find_by(study:, study_file: self, name: prev_ids.dig(curr_id, 'name'))
+              @cluster = ClusterGroup.find_by(study:, study_file:, name: prev_ids.dig(curr_id, 'name'))
               # before updating, check if the defaults also need to change
               if study.default_cluster == @cluster
                 study.default_options[:cluster] = name

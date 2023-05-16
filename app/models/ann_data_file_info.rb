@@ -129,6 +129,8 @@ class AnnDataFileInfo
     hash_from_keys(fragment, *axes, transform: :to_f)
   end
 
+  private
+
   # generate a GS URL to a derived fragment that was extracted from the parent AnnData file
   # File name structure is: <input_filetype>_frag.<file_type>.<file_type_detail>.tsv
   #   file_type = cluster|metadata|matrix
@@ -142,9 +144,7 @@ class AnnDataFileInfo
     end
     url
   end
-
-  private
-
+  
   # select out keys from source hash and return new one, rejecting blank values
   # will apply transform method if specified, otherwise returns value in place (Object#presence)
   def hash_from_keys(source_hash, *keys, transform: :presence)
