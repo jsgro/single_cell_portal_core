@@ -54,10 +54,9 @@ export default function ExpandableFileForm({
               bucketName={bucketName}
               isAnnDataExperience={isAnnDataExperience} />
           </div>}
-           <SaveDeleteButtons {...{ file, updateFile, saveFile, deleteFile, validationMessages, isAnnDataExperience, allFiles, isLastClustering }} />
-          {/* {getIsSaveEnabled(isAnnDataExperience, allFiles, file) && */}
-          {/* allow a user to 'x' out an added clustering before saving even if only one clustering */}
-
+          <SaveDeleteButtons {...{
+            file, updateFile, saveFile, deleteFile, validationMessages, isAnnDataExperience, allFiles, isLastClustering
+          }} />
         </div>
         {expanded && children}
         <SavingOverlay file={file} updateFile={updateFile} />
@@ -110,7 +109,6 @@ export function SaveDeleteButtons({
   file, saveFile, deleteFile, validationMessages = {}, isAnnDataExperience, allFiles = [], isLastClustering = false
 }) {
   const [showConfirmDeleteModal, setShowConfirmDeleteModal] = useState(false)
-  const isExpressionMatrix = isAnnDataExperience && file.data_type === 'expression'
 
   if (file.serverFile?.parse_status === 'failed') {
     return <div className="text-center">
@@ -121,8 +119,14 @@ export function SaveDeleteButtons({
   }
 
   let deleteButtonToShow
-  if (!isExpressionMatrix && !isLastClustering) {
-    deleteButtonToShow = <DeleteButton file={file} deleteFile={deleteFile} setShowConfirmDeleteModal={setShowConfirmDeleteModal} isAnnDataExperience={isAnnDataExperience} allFiles={allFiles} />
+  // if its not AnnDataExperience or if it is as long as it's not Expression nor the last clustering
+  // render the normal delete button
+  if (!isAnnDataExperience || (file.data_type !== 'expression' && !isLastClustering)) {
+    deleteButtonToShow = <DeleteButton
+      file={file} deleteFile={deleteFile} setShowConfirmDeleteModal={setShowConfirmDeleteModal}
+      isAnnDataExperience={isAnnDataExperience} allFiles={allFiles}
+    />
+  // if it is AnnDataExperience and is a fresh unparsed clustering allow "x"-ing out
   } else if (isAnnDataExperience && file.status === 'new') {
     deleteButtonToShow = <Button className="terra-secondary-btn"
       type='button'
@@ -133,7 +137,10 @@ export function SaveDeleteButtons({
 
 
   return <div className="flexbox-align-center button-panel">
-    <SaveButton file={file} saveFile={saveFile} allFiles={allFiles} validationMessages={validationMessages} isAnnDataExperience={isAnnDataExperience} />
+    <SaveButton
+      file={file} saveFile={saveFile} allFiles={allFiles}
+      validationMessages={validationMessages} isAnnDataExperience={isAnnDataExperience}
+    />
     {deleteButtonToShow}
     <Modal
       show={showConfirmDeleteModal}
@@ -172,7 +179,7 @@ function SaveButton({ file, saveFile, allFiles, validationMessages = {}, isAnnDa
       (file?.data_type === 'cluster' || file?.data_type === 'expression')
   }
 
-  //  primary save button, white background with blue text and border, shown by default as the save button
+  //  primary save button shown by default as the save button
   let saveButton = <button
     style={{ pointerEvents: saveDisabled ? 'none' : 'auto' }}
     type="button"
@@ -243,9 +250,6 @@ function DeleteButton({ file, deleteFile, setShowConfirmDeleteModal, isAnnDataEx
     </OverlayTrigger>
   }
 
-  console.log('de:', allFiles.find(f => f.file_type === 'AnnData')?.serverFile?.parse_status === 'parsing' &&
-  (file?.data_type === 'cluster' || file?.data_type === 'expression'))
-
   // do not show delete button in fragments if AnnData file is updating, saving, or parsing
   if (isAnnDataExperience) {
     const annDataFile = allFiles.find(f => f.file_type === 'AnnData')
@@ -271,31 +275,6 @@ function getIsUploadEnabled(isAnnDataExperience, file) {
   const isClustering = file.file_type === 'Cluster'
   const isExpressionMatrix = file.file_type === 'Expression Matrix'
   return !((isClustering || isExpressionMatrix) && isAnnDataExperience)
-}
-
-/**
- * Determine whether to show the save/delete buttons.
- *
- * @param {boolean} isAnnDataExperience
- * @param {array} allFiles
- * @returns {boolean} Whether to show upload control buttons or not
- */
-function getIsSaveEnabled(isAnnDataExperience, allFiles, file) {
-  // if it's not AnnDataExperience don't gate the save/delete buttons
-  if (!isAnnDataExperience) {return true}
-
-  // allow save/delete for updates after an AnnData file has been uploaded
-  const alreadyUploaded = allFiles.some(fileObj => fileObj?.ann_data_file_info?.data_fragments.length > 0)
-  // cluster files that haven't been saved have a file_type whereas once saved they are fragments which have a data_type
-  const isClustering = file.data_type === 'cluster' || file.file_type === 'Cluster'
-  const isAnnData = file.data_type === 'AnnData' || file.file_type === 'AnnData'
-  const isExpressionMatrix = file.data_type === 'expression'
-
-  if ((isClustering || isExpressionMatrix || isAnnData) && alreadyUploaded && isAnnDataExperience) {
-    return true
-  } else {
-    return isAnnData && isAnnDataExperience
-  }
 }
 
 const parsingPopup = <Popover id="parsing-tooltip" className="tooltip-wide">

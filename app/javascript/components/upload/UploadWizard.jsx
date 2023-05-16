@@ -385,7 +385,6 @@ export function RawUploadWizard({ studyAccession, name }) {
     if (isAnnDataExperience && file.data_type === 'cluster') {
       annDataClusteringFragmentsDeletionHelper(file)
     } else if (isAnnDataExperience && file.status === 'new' && file.file_type === 'Cluster') {
-      console.log('in here')
       updateFile(fileId, { isDeleting: true })
 
       // allow a user to delete an added clustering that hasn't been saved
@@ -547,7 +546,6 @@ export function RawUploadWizard({ studyAccession, name }) {
         (response.files?.find(AnnDataFileFilter)?.ann_data_file_info?.data_fragments?.length > 0 ||
         response.files?.find(AnnDataFileFilter)?.ann_data_file_info?.reference_file === false) &&
         response.feature_flags?.ingest_anndata_file)
-        console.log(response.files)
       setServerState(response)
       setFormState(_cloneDeep(response))
       setTimeout(pollServerState, POLLING_INTERVAL)

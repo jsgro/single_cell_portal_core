@@ -17,12 +17,13 @@ export default function MiscellaneousFileForm({
   deleteFile,
   miscFileTypes,
   bucketName,
-  isInitiallyExpanded
+  isInitiallyExpanded,
+  isAnnDataExperience
 }) {
   const validationMessages = validateFile({ file, allFiles, allowedFileExts })
   return <ExpandableFileForm {...{
     file, allFiles, updateFile, saveFile,
-    allowedFileExts, deleteFile, validationMessages, bucketName, isInitiallyExpanded
+    allowedFileExts, deleteFile, validationMessages, bucketName, isInitiallyExpanded, isAnnDataExperience
   }}>
     <div className="form-group">
       <label className="labeled-select">File type:
