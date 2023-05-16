@@ -70,36 +70,10 @@ export default function SearchSelectionProvider(props) {
     }
     setSelection(newSelection)
   }
-  /**
-   * if there are lowercased accessions in the search terms,
-   * make them uppercased before performing the server search
-   */
-  function uppercaseAccessionTerms(selection) {
-    const arrayOfTerms = selection.terms.split(' ')
-
-    //  find all search terms that begin with lowercase 'scp' and end with a digit
-    const result = arrayOfTerms.filter(word => word.startsWith('scp') && /\d$/.test(word))
-
-    // for each found term, replace the lowercased 'scp' with uppercased 'SCP' so that
-    // the accessions will be found when the search if performed
-    result && result.forEach(term => {
-      const newTerm = term.replace('scp', 'SCP')
-      arrayOfTerms[arrayOfTerms.indexOf(term)] = newTerm
-    })
-
-    selection.terms = arrayOfTerms.join(' ')
-    return selection
-  }
 
   /** execute the search on the server */
   function performSearch() {
-    let searchSelection = selection
-
-    if (selection.terms.includes('scp')) {
-      searchSelection = uppercaseAccessionTerms(selection)
-    }
-
-    searchContext.updateSearch(searchSelection)
+    searchContext.updateSearch(selection)
   }
 
   return (

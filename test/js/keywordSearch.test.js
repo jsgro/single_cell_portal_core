@@ -1,9 +1,8 @@
 import React from 'react'
-import { render, fireEvent, screen } from '@testing-library/react'
+import { render, fireEvent } from '@testing-library/react'
 
 import KeywordSearch from 'components/search/controls/KeywordSearch'
 import { PropsStudySearchProvider } from 'providers/StudySearchProvider'
-import * as Reach from '@reach/router'
 
 describe('<KeywordSearch/> rendering>', () => {
   it('should render </KeywordSearch> elements', () => {
@@ -23,37 +22,4 @@ describe('<KeywordSearch/> rendering>', () => {
     fireEvent.change(input, { target: { value: 'test123' } })
     expect(container.getElementsByClassName('fa-times')).toHaveLength(1)
   })
-})
-
-describe('Searching lowercased accession style strings', () => {
-  it('should do a search with uppercased accession even if given lowercased term', () => {
-    const routerNav = jest.spyOn(Reach, 'navigate')
-
-    render((
-      <PropsStudySearchProvider searchParams={{ terms: 'scp9', facets: {}, page: 1 }}>
-        <KeywordSearch></KeywordSearch>
-      </PropsStudySearchProvider>
-    ))
-
-    fireEvent.click(screen.getByTestId('submit-search'))
-
-    // see that the term is now uppercased
-    expect(routerNav).toHaveBeenLastCalledWith('?type=study&page=1&terms=SCP9')
-  })
-
-  it('should do a search without altering terms', () => {
-    const routerNav = jest.spyOn(Reach, 'navigate')
-
-    render((
-      <PropsStudySearchProvider searchParams={{ terms: 'lscp9 scp', facets: {}, page: 1 }}>
-        <KeywordSearch></KeywordSearch>
-      </PropsStudySearchProvider>
-    ))
-
-    fireEvent.click(screen.getByTestId('submit-search'))
-
-    // see that the terms have not changed
-    expect(routerNav).toHaveBeenLastCalledWith('?type=study&page=1&terms=lscp9 scp')
-  })
-
 })
