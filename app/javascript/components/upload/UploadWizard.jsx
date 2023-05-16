@@ -384,6 +384,12 @@ export function RawUploadWizard({ studyAccession, name }) {
     // if AnnDataExperience clusterings need to be handled differently
     if (isAnnDataExperience && file.data_type === 'cluster') {
       annDataClusteringFragmentsDeletionHelper(file)
+    } else if (isAnnDataExperience && file.status === 'new' && file.file_type === 'Cluster') {
+      console.log('in here')
+      updateFile(fileId, { isDeleting: true })
+
+      // allow a user to delete an added clustering that hasn't been saved
+      deleteFileFromForm(fileId)
     } else {
       if (file.status === 'new' || file?.serverFile?.parse_status === 'failed') {
         deleteFileFromForm(fileId)
@@ -415,10 +421,10 @@ export function RawUploadWizard({ studyAccession, name }) {
 
     // If the AnnData file contains more than one clustering proceed with deletion
     if (fragmentsInAnnDataFile.filter(f => f.data_type === 'cluster').length > 1) {
-
       // delete the clustering from the bucket and update the ClusterGroup
       let studyFileId = annDataFile._id
       updateFile(studyFileId, { isSaving: true })
+      updateFile(file._id, { isDeleting: true })
 
       await deleteAnnDataFragment(studyAccession, studyFileId, file._id)
 
@@ -541,6 +547,7 @@ export function RawUploadWizard({ studyAccession, name }) {
         (response.files?.find(AnnDataFileFilter)?.ann_data_file_info?.data_fragments?.length > 0 ||
         response.files?.find(AnnDataFileFilter)?.ann_data_file_info?.reference_file === false) &&
         response.feature_flags?.ingest_anndata_file)
+        console.log(response.files)
       setServerState(response)
       setFormState(_cloneDeep(response))
       setTimeout(pollServerState, POLLING_INTERVAL)
