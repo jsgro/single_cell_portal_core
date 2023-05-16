@@ -8,7 +8,7 @@ class StudyAccession
   validates_uniqueness_of :accession
 
   # exclude everything that does not start with "SCP" and end with digits
-  ACCESSION_SANITIZER = /[^SCP\d+$]/
+  ACCESSION_SANITIZER = /[^SCP\d+$]/i
   # match on accepted accession format of "SCP" and ending with digits
   ACCESSION_FORMAT = /^SCP\d+$/
 
