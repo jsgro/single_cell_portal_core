@@ -173,10 +173,12 @@ function SaveButton({ file, saveFile, allFiles, validationMessages = {}, isAnnDa
   let showSavingForFragment = false
   if (isAnnDataExperience) {
     const annDataFile = allFiles.find(f => f.file_type === 'AnnData')
+
     showParsingForFragment = annDataFile?.serverFile?.parse_status === 'parsing' &&
-      (file?.data_type === 'cluster' || file?.data_type === 'expression')
+    ['cluster', 'expression'].includes(file?.data_type)
+
     showSavingForFragment = annDataFile?.serverFile?.parse_status === 'saving' &&
-      (file?.data_type === 'cluster' || file?.data_type === 'expression')
+    ['cluster', 'expression'].includes(file?.data_type)
   }
 
   //  primary save button shown by default as the save button
@@ -253,8 +255,10 @@ function DeleteButton({ file, deleteFile, setShowConfirmDeleteModal, isAnnDataEx
   // do not show delete button in fragments if AnnData file is updating, saving, or parsing
   if (isAnnDataExperience) {
     const annDataFile = allFiles.find(f => f.file_type === 'AnnData')
-    if ((annDataFile?.serverFile?.parse_status === 'parsing' || annDataFile?.serverFile?.parse_status === 'saving') &&
-     (file?.data_type === 'cluster' || file?.data_type === 'expression')) {
+    if (
+      ['parsing', 'saving'].includes(annDataFile?.serverFile?.parse_status) &&
+      ['cluster', 'expression'].includes(file?.data_type)
+    ) {
       return null
     }
   }
