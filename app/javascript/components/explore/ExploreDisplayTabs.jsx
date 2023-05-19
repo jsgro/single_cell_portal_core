@@ -363,8 +363,8 @@ export default function ExploreDisplayTabs({
               speciesList={exploreInfo ? exploreInfo.taxonNames : []}/>
             { // show if this is gene search || gene list
               (isGene || isGeneList || hasIdeogramOutputs) &&
-                <OverlayTrigger placement='top' overlay={
-                  <Tooltip id='back-to-cluster-view'>{'Return to cluster view'}</Tooltip>
+                <OverlayTrigger placement="top" overlay={
+                  <Tooltip id="back-to-cluster-view">{'Return to cluster view'}</Tooltip>
                 }>
                   <button className="action fa-lg"
                     aria-label="Back arrow"
@@ -376,7 +376,7 @@ export default function ExploreDisplayTabs({
           </div>
         </div>
         <div className="col-md-4 col-md-offset-1">
-          <ul className={getShowExploreTabUpdates() ? "nav nav-tabs study-plot-tabs" : "nav nav-tabs"} role="tablist" data-analytics-name="explore-default">
+          <ul className={getShowExploreTabUpdates() ? 'nav nav-tabs study-plot-tabs' : 'nav nav-tabs'} role="tablist" data-analytics-name="explore-default">
             { enabledTabs.map(tabKey => {
               const label = tabList.find(({ key }) => key === tabKey).label
               return (
