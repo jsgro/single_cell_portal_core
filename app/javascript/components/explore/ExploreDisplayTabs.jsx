@@ -354,7 +354,7 @@ export default function ExploreDisplayTabs({
   }
 
   // Determine if the flag show_explore_tab_ux_updates is toggled to show explore tab UX updates
-  const isNewExploreUX = true // getFeatureFlagsWithDefaults()?.show_explore_tab_ux_updates
+  const isNewExploreUX = getFeatureFlagsWithDefaults()?.show_explore_tab_ux_updates
 
   return (
     <>
