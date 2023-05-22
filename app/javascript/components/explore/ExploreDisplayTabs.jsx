@@ -759,8 +759,13 @@ export function getEnabledTabs(exploreInfo, exploreParams) {
   const hasImages = exploreInfo?.imageFiles?.length > 0
   const isNumeric = exploreParams.annotation.type === 'numeric'
 
+  const coreTabs = [
+    !isNumeric ? 'scatter' : 'annotatedScatter',
+    'distribution', 'correlatedScatter',
+    'dotplot', 'heatmap'
+  ]
+
   let enabledTabs = []
-  let disabledTabs = []
 
   if (isGeneList) {
     enabledTabs = ['geneListHeatmap']
@@ -782,14 +787,11 @@ export function getEnabledTabs(exploreInfo, exploreParams) {
       }
     } else if (isNumeric) {
       enabledTabs = ['annotatedScatter', 'scatter']
-      disabledTabs = ['distribution', 'correlatedScatter', 'dotplot', 'heatmap']
     } else {
       enabledTabs = ['scatter', 'distribution']
-      disabledTabs = ['correlatedScatter', 'dotplot', 'heatmap']
     }
   } else if (hasClusters) {
     enabledTabs = ['scatter']
-    disabledTabs = ['distribution', 'correlatedScatter', 'dotplot', 'heatmap']
   }
   if (hasGenomeFiles) {
     enabledTabs.push('genome')
@@ -804,6 +806,8 @@ export function getEnabledTabs(exploreInfo, exploreParams) {
   if (!exploreInfo) {
     enabledTabs = ['loading']
   }
+
+  const disabledTabs = coreTabs.filter(coreTab => !enabledTabs.includes(coreTab))
 
   console.log('disabledTabs', disabledTabs)
 
