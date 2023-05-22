@@ -75,6 +75,7 @@ function getClusterHasDe(exploreInfo, exploreParams) {
 
 /** Determine if the flag show_explore_tab_ux_updates is toggled to show explore tab UX updates */
 function getShowExploreTabUpdates() {
+  return true
   const flags = getFeatureFlagsWithDefaults()
   return flags?.show_explore_tab_ux_updates
 }
@@ -189,7 +190,7 @@ export default function ExploreDisplayTabs({
   const plotContainerClass = 'explore-plot-tab-content'
 
   const {
-    enabledTabs, isGeneList, isGene, isMultiGene, hasIdeogramOutputs
+    enabledTabs, disabledTabs, isGeneList, isGene, isMultiGene, hasIdeogramOutputs
   } = getEnabledTabs(exploreInfo, exploreParamsWithDefaults)
 
   // exploreParams object without genes specified, to pass to cluster comparison plots
@@ -375,16 +376,25 @@ export default function ExploreDisplayTabs({
             }
           </div>
         </div>
-        <div className="col-md-4 col-md-offset-1">
+        <div>
           <ul className={getShowExploreTabUpdates() ? 'nav nav-tabs study-plot-tabs' : 'nav nav-tabs'} role="tablist" data-analytics-name="explore-default">
             { enabledTabs.map(tabKey => {
               const label = tabList.find(({ key }) => key === tabKey).label
               return (
                 <li key={tabKey}
                   role="presentation"
-                  // TODO: (SCP-5050): Update aria-disabled to be conditionally set if tab is disabled
-                  aria-disabled={false}
                   className={`study-nav ${tabKey === shownTab ? 'active' : ''} ${tabKey}-tab-anchor`}>
+                  <a onClick={() => updateExploreParams({ tab: tabKey })}>{label}</a>
+                </li>
+              )
+            })}
+            { disabledTabs.map(tabKey => {
+              const label = tabList.find(({ key }) => key === tabKey).label
+              return (
+                <li key={tabKey}
+                  role="presentation"
+                  aria-disabled={true}
+                  className={`study-nav disabled ${tabKey}-tab-anchor`}>
                   <a onClick={() => updateExploreParams({ tab: tabKey })}>{label}</a>
                 </li>
               )
@@ -747,14 +757,17 @@ export function getEnabledTabs(exploreInfo, exploreParams) {
   const hasGenomeFiles = exploreInfo && exploreInfo?.bamBundleList?.length > 0
   const hasIdeogramOutputs = !!exploreInfo?.inferCNVIdeogramFiles
   const hasImages = exploreInfo?.imageFiles?.length > 0
+  const isNumeric = exploreParams.annotation.type === 'numeric'
 
   let enabledTabs = []
+  let disabledTabs = []
+
   if (isGeneList) {
     enabledTabs = ['geneListHeatmap']
   } else if (isGene) {
     if (isMultiGene) {
       if (isConsensus) {
-        if (exploreParams.annotation.type === 'numeric') {
+        if (isNumeric) {
           enabledTabs = ['annotatedScatter', 'dotplot', 'heatmap']
         } else {
           enabledTabs = ['scatter', 'distribution', 'dotplot']
@@ -767,13 +780,16 @@ export function getEnabledTabs(exploreInfo, exploreParams) {
           enabledTabs = ['correlatedScatter', 'dotplot', 'heatmap']
         }
       }
-    } else if (exploreParams.annotation.type === 'numeric') {
+    } else if (isNumeric) {
       enabledTabs = ['annotatedScatter', 'scatter']
+      disabledTabs = ['distribution', 'correlatedScatter', 'dotplot', 'heatmap']
     } else {
       enabledTabs = ['scatter', 'distribution']
+      disabledTabs = ['correlatedScatter', 'dotplot', 'heatmap']
     }
   } else if (hasClusters) {
     enabledTabs = ['scatter']
+    disabledTabs = ['distribution', 'correlatedScatter', 'dotplot', 'heatmap']
   }
   if (hasGenomeFiles) {
     enabledTabs.push('genome')
@@ -789,5 +805,7 @@ export function getEnabledTabs(exploreInfo, exploreParams) {
     enabledTabs = ['loading']
   }
 
-  return { enabledTabs, isGeneList, isGene, isMultiGene, hasIdeogramOutputs }
+  console.log('disabledTabs', disabledTabs)
+
+  return { enabledTabs, disabledTabs, isGeneList, isGene, isMultiGene, hasIdeogramOutputs }
 }
