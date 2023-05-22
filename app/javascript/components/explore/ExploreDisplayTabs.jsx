@@ -822,11 +822,12 @@ export function getEnabledTabs(exploreInfo, exploreParams) {
     enabledTabs.push('images')
   }
 
+  let disabledTabs = coreTabs.filter(coreTab => !enabledTabs.includes(coreTab))
+
   if (!exploreInfo) {
     enabledTabs = ['loading']
+    disabledTabs = []
   }
-
-  const disabledTabs = coreTabs.filter(coreTab => !enabledTabs.includes(coreTab))
 
   return { enabledTabs, disabledTabs, isGeneList, isGene, isMultiGene, hasIdeogramOutputs }
 }
