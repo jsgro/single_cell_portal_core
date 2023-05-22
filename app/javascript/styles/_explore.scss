@@ -222,8 +222,9 @@
       background: $action-color;
       align-self: baseline;
     }
-  } :hover {
-    color: #2a3f5f;
+    a:hover {
+      background: lighten($action-color, 10%);
+    }
   }
   li.active > a {
     border-left: 1px solid $action-color;
