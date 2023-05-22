@@ -37,7 +37,7 @@ import Tooltip from 'react-bootstrap/lib/Tooltip'
 import DifferentialExpressionModal from '~/components/explore/DifferentialExpressionModal'
 
 const tabList = [
-  { key: 'loading', label: 'loading...' },
+  { key: 'loading', label: 'Loading...' },
   { key: 'scatter', label: 'Scatter' },
   { key: 'annotatedScatter', label: 'Annotated scatter' },
   { key: 'correlatedScatter', label: 'Correlation' },
@@ -50,6 +50,14 @@ const tabList = [
   { key: 'infercnv-genome', label: 'Genome (inferCNV)' },
   { key: 'images', label: 'Images' }
 ]
+
+const disabledTooltips = {
+  'scatter': { numToSearch: '1', isMulti: false },
+  'distribution': { numToSearch: '1', isMulti: false },
+  'correlatedScatter': { numToSearch: '2', isMulti: true },
+  'dotplot': { numToSearch: '2 or more', isMulti: true },
+  'heatmap': { numToSearch: '2 or more', isMulti: true }
+}
 
 /** Determine if currently selected cluster has differential expression outputs available */
 function getClusterHasDe(exploreInfo, exploreParams) {
@@ -383,6 +391,7 @@ export default function ExploreDisplayTabs({
               return (
                 <li key={tabKey}
                   role="presentation"
+                  aria-disabled="false"
                   className={`study-nav ${tabKey === shownTab ? 'active' : ''} ${tabKey}-tab-anchor`}>
                   <a onClick={() => updateExploreParams({ tab: tabKey })}>{label}</a>
                 </li>
@@ -390,12 +399,18 @@ export default function ExploreDisplayTabs({
             })}
             { disabledTabs.map(tabKey => {
               const label = tabList.find(({ key }) => key === tabKey).label
+              const tooltip = disabledTooltips[tabKey]
+              const numGenes = tooltip.numToSearch
+              const geneText = `gene${tooltip.isMulti ? 's' : ''}`
+              const text = `To show this plot, search ${numGenes} ${geneText} using the box at left`
               return (
                 <li key={tabKey}
                   role="presentation"
-                  aria-disabled={true}
-                  className={`study-nav disabled ${tabKey}-tab-anchor`}>
-                  <a onClick={() => updateExploreParams({ tab: tabKey })}>{label}</a>
+                  aria-disabled="true"
+                  className={`study-nav ${tabKey}-tab-anchor disabled`}
+                  data-toggle="tooltip"
+                  data-original-title={text}
+                ><a>{label}</a>
                 </li>
               )
             })}
@@ -808,8 +823,6 @@ export function getEnabledTabs(exploreInfo, exploreParams) {
   }
 
   const disabledTabs = coreTabs.filter(coreTab => !enabledTabs.includes(coreTab))
-
-  console.log('disabledTabs', disabledTabs)
 
   return { enabledTabs, disabledTabs, isGeneList, isGene, isMultiGene, hasIdeogramOutputs }
 }
