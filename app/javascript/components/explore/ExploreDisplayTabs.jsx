@@ -81,13 +81,6 @@ function getClusterHasDe(exploreInfo, exploreParams) {
   return clusterHasDe
 }
 
-/** Determine if the flag show_explore_tab_ux_updates is toggled to show explore tab UX updates */
-function getShowExploreTabUpdates() {
-  return true
-  const flags = getFeatureFlagsWithDefaults()
-  return flags?.show_explore_tab_ux_updates
-}
-
 /** Return list of annotations that have differential expression enabled */
 function getAnnotationsWithDE(exploreInfo) {
   if (!exploreInfo) {return false}
@@ -360,6 +353,9 @@ export default function ExploreDisplayTabs({
     return { main, side }
   }
 
+  // Determine if the flag show_explore_tab_ux_updates is toggled to show explore tab UX updates
+  const isNewExploreUX = true // getFeatureFlagsWithDefaults()?.show_explore_tab_ux_updates
+
   return (
     <>
       <div className="row">
@@ -385,7 +381,7 @@ export default function ExploreDisplayTabs({
           </div>
         </div>
         <div>
-          <ul className={getShowExploreTabUpdates() ? 'nav nav-tabs study-plot-tabs' : 'nav nav-tabs'} role="tablist" data-analytics-name="explore-default">
+          <ul className={isNewExploreUX ? 'nav nav-tabs study-plot-tabs' : 'nav nav-tabs'} role="tablist" data-analytics-name="explore-tab">
             { enabledTabs.map(tabKey => {
               const label = tabList.find(({ key }) => key === tabKey).label
               return (
@@ -397,7 +393,8 @@ export default function ExploreDisplayTabs({
                 </li>
               )
             })}
-            { disabledTabs.map(tabKey => {
+            {isNewExploreUX &&
+            disabledTabs.map(tabKey => {
               const label = tabList.find(({ key }) => key === tabKey).label
               const tooltip = disabledTooltips[tabKey]
               const numGenes = tooltip.numToSearch
@@ -413,7 +410,8 @@ export default function ExploreDisplayTabs({
                 ><a>{label}</a>
                 </li>
               )
-            })}
+            })
+            }
           </ul>
         </div>
       </div>
