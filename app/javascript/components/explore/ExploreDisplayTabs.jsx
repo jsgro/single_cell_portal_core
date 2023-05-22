@@ -381,7 +381,11 @@ export default function ExploreDisplayTabs({
           </div>
         </div>
         <div>
-          <ul className={isNewExploreUX ? 'nav nav-tabs study-plot-tabs' : 'nav nav-tabs'} role="tablist" data-analytics-name="explore-tab">
+          <ul
+            className={isNewExploreUX ? 'nav nav-tabs study-plot-tabs' : 'nav nav-tabs'}
+            role="tablist"
+            data-analytics-name="explore-tab"
+          >
             { enabledTabs.map(tabKey => {
               const label = tabList.find(({ key }) => key === tabKey).label
               return (
@@ -770,9 +774,9 @@ export function getEnabledTabs(exploreInfo, exploreParams) {
   const hasGenomeFiles = exploreInfo && exploreInfo?.bamBundleList?.length > 0
   const hasIdeogramOutputs = !!exploreInfo?.inferCNVIdeogramFiles
   const hasImages = exploreInfo?.imageFiles?.length > 0
-  const isNumeric = exploreParams.annotation.type === 'numeric'
+  const isNumeric = exploreParams?.annotation?.type === 'numeric'
 
-  const coreTabs = [
+  let coreTabs = [
     !isNumeric ? 'scatter' : 'annotatedScatter',
     'distribution', 'correlatedScatter',
     'dotplot', 'heatmap'
@@ -785,10 +789,12 @@ export function getEnabledTabs(exploreInfo, exploreParams) {
   } else if (isGene) {
     if (isMultiGene) {
       if (isConsensus) {
+        coreTabs = coreTabs.filter(tab => tab !== 'correlatedScatter') // omit for consensus
         if (isNumeric) {
           enabledTabs = ['annotatedScatter', 'dotplot', 'heatmap']
         } else {
           enabledTabs = ['scatter', 'distribution', 'dotplot']
+          coreTabs = coreTabs.filter(tab => tab !== 'heatmap') // omit for consensus
         }
       } else if (hasSpatialGroups) {
         enabledTabs = ['scatter', 'dotplot', 'heatmap']
