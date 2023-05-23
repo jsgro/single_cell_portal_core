@@ -380,7 +380,7 @@ export default function ExploreDisplayTabs({
             }
           </div>
         </div>
-        <div>
+        <div className={isNewExploreUX ? '' : 'col-md-4 col-md-offset-1'}>
           <ul
             className={isNewExploreUX ? 'nav nav-tabs study-plot-tabs' : 'nav nav-tabs'}
             role="tablist"
